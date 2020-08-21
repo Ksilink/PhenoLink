@@ -1,0 +1,97 @@
+addProcessResultImage 2
+addProcessResultImage QJsonObject({"Aggregation":"Sum","Comment":"Compute the number of pixels above the threshold","Data":"1","Level":"Basic","Meta":[{"DataHash":"83c2d3bf3f69ea092bc66e30160532ac","FieldId":1,"Pos":"E4","TimePos":1,"channel":0,"zPos":1}],"Position":-1,"Process":"Basic/Threshold","Range/High":2147483647,"Range/Low":-2147483648,"Range/Set":false,"Tag":"Pixel Count","isIntegral":true,"isSlider":false})
+addProcessResultImage QJsonObject({"Comment":"The thresholed image","Data":"Image results","ImageType":"ImageContainer","Level":"Basic","Meta":[{"DataHash":"83c2d3bf3f69ea092bc66e30160532ac","FieldId":1,"Pos":"E4","TimePos":1,"channel":0,"zPos":1}],"Payload":{"Cols":2560,"Data":[""],"DataTypeSize":1,"Rows":2160,"cvType":0},"Position":-1,"Process":"Basic/Threshold","Tag":"result-image","asVectorImage":false,"isImage":true})
+Found a result with associated image payload QJsonValue(array,
+                                                        QJsonArray([{"DataHash":"83c2d3bf3f69ea092bc66e30160532ac","FieldId":1,"Pos":"E4","TimePos":1,"channel":0,"zPos":1}]) )
+QJsonObject(
+            {
+                "Comment":"The thresholed image",
+                "Data":"Image results",
+                "ImageType":"ImageContainer",
+                "Level":"Basic",
+                "Meta":
+                    [
+                    {
+                        "DataHash":"83c2d3bf3f69ea092bc66e30160532ac",
+                        "FieldId":1,
+                        "Pos":"E4",
+                        "TimePos":1,
+                        "channel":0,
+                        "zPos":1
+                    }
+                ],
+                "Payload":
+                {
+                    "Cols":2560,
+                    "Data":[""],
+                    "DataTypeSize":1,
+                    "Rows":2160,
+                    "cvType":0
+                },
+                "Position":-1,
+                "Process":"Basic/Threshold",
+                "Tag":"result-image",
+                "asVectorImage":false,
+                "isImage":true
+            }
+            )
+QJsonObject(
+            {
+                "Data":
+                    [
+                    {"Aggregation":"Sum","Comment":"Returns the means of each class","Data":"5529600","Level":"Basic",
+                        "Meta":
+                            [
+                            {"DataHash":"83c2d3bf3f69ea092bc66e30160532ac","FieldId":1,"Pos":"E4","TimePos":1,"channel":1,"zPos":1}
+                            ]
+                        ,"Position":-1,"Process":"Basic/KMeans","Range/High":2147483647,"Range/Low":-2147483648,"Range/Set":false,"Tag":"Class Means",
+                        "isIntegral":true,"isSlider":false},
+                    {"Comment":"Segmented image resulting from kmeans","Data":"Image results","ImageType":"ImageContainer","Level":"Basic",
+                        "Meta":
+                            [
+                            {"DataHash":"83c2d3bf3f69ea092bc66e30160532ac","FieldId":1,"Pos":"E4","TimePos":1,"channel":1,"zPos":1}
+                        ],
+                        "Payload":
+                            {
+                            "Cols":2560,"Data":[""],
+                            "DataTypeSize":1,"Rows":2160,"cvType":0
+                            },
+                        "Position":-1,"Process":"Basic/KMeans","Tag":"segmented_image","asVectorImage":false,"isImage":true}
+                ],
+                "ElapsedTime":"21429","Hash":"c9fbb26e6fc9640abae039f684de1a84","Infos":["[59656]"],
+                "LoadingTime":"123",
+                "Parameters":
+                    [
+
+                    {
+                        "Channel":-1,"Channels":[1,2],
+                        "Comment":"Input Time Image",
+                        "Data":["C:/TEMP/build/Data/Assay Plate/AssayPlate_Greiner_#781956/AssayPlate_Greiner_#781956_C04_T0001F001L01A01Z01C01.tif",
+                            "C:/TEMP/build/Data/Assay Plate/AssayPlate_Greiner_#781956/AssayPlate_Greiner_#781956_C04_T0001F001L01A02Z01C02.tif"],
+                        "DataHash":"83c2d3bf3f69ea092bc66e30160532ac",
+                        "FieldId":1,
+                        "ImageType":"ImageContainer",
+                        "Level":"Basic",
+                        "Pos":"E4","Position":-1,
+                        "Tag":"input-image",
+                        "TimePos":1,"asVectorImage":true,"isImage":true,"zPos":1},
+
+                    {"Aggregation":"Max","Comment":"Maximum number of iterations","Default":1000,"Level":"Basic","Position":-1,"Range/High":100000,"Range/Low":10,"Range/Set":true,"Tag":"maxiter","Value":1000,"isIntegral":true,"isSlider":false},
+                    {"Comment":"Minimum mean change allowed","Default":1,"Level":"Basic","Position":-1,"Range/High":10,"Range/Low":9.9999999747524271e-07,"Range/Set":true,"Tag":"minmvt","Value":1,"isIntegral":false,"isSlider":false},
+                    {"Aggregation":"Max",
+                        "Comment":"Number of expected classes",
+                        "Default":3,
+                        "Level":"Basic",
+                        "Position":0,
+                        "Range/High":100,
+                        "Range/Low":0,
+                        "Range/Set":true,
+                        "Tag":"nbclass","Value":3,"isIntegral":true,"isSlider":false}
+                ],
+                "Path":"Basic/KMeans","Pos":"E4","Result":{"LoadingTime":"123"},"State":"Finished"})
+
+
+
+
+
+

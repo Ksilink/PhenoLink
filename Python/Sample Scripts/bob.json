@@ -1,0 +1,36 @@
+  {
+  "Comment":"Test Script!!!",
+  "Computer":"admin-HP",
+  "CoreProcess_hash":"4f95b7404de43543f4f03251477ccbaa",
+    "Parameters":[
+      {
+        "Comment":"",
+        "Enum":["Linear","Cubic","OrthoCubic"],
+        "Level":"Basic",
+        "PerChannelParameter":false,
+        "Position":-1,
+        "Tag":"Algorithm",
+        "Value":"Linear"
+      },
+      {
+        "Channels":[1],
+        "Comment":"boby",
+        "Data":["C:/TEMP/build/Data/Assay Plate/AssayPlate_Greiner_#781956/AssayPlate_Greiner_#781956_B04_T0001F001L01A01Z01C01.tif"],
+        "DataHash":"83c2d3bf3f69ea092bc66e30160532ac",
+        "FieldId":1,
+        "ImageType":"ImageContainer",
+        "Level":"Basic",
+        "PerChannelParameter":false,
+        "Pos":"B4","Position":-1,"Tag":"refImage","TimePos":1,"asVectorImage":true,"isImage":true,"zPos":1
+      }
+    ],
+    "Path":"Python/Kmeans",
+    "Pos":"B4",
+    "ProcessStartId":1,
+    "Process_hash":"4e2a6b6b5f72fb44345cc5c9e78609da",
+    "ReturnData":[],
+    "State":"NotStarted",
+    "Username":"admin",
+    "authors":["wiest.daessle@gmail.com"],
+    "shallDisplay":true
+  }

@@ -1,0 +1,1240 @@
+#ifndef REGISTRABLEIMAGETYPE_H
+#define REGISTRABLEIMAGETYPE_H
+
+//TODO: Add VTK images
+//TODO: Add ITK images
+
+#include <QColor>
+
+typedef QMap<int, QColor> Colormap;
+
+class RegistrableImageParent: public RegistrableParent
+{
+    typedef RegistrableImageParent Self;
+
+public:
+    RegistrableImageParent(): _vectorImage(false), _withMeta(false), _autoload(true)
+    {
+    }
+
+    Self& channelsAsVector()
+    {
+        _vectorImage = true;
+        return *this;
+    }
+
+    virtual void read(const QJsonObject &json)
+    {
+        RegistrableParent::read(json);
+        if (json.contains("Properties"))
+        {
+            //            json["Properties"].toArray().toString
+        }
+
+        if (json.contains("Colormap"))
+        {
+            QJsonObject ob = json["Colormap"].toObject();
+            for (auto it = ob.begin(); it != ob.end(); ++it)
+            {
+                QColor col;
+                col.setNamedColor(it.value().toString());
+                _colormap[it.key().toInt()] = col;
+            }
+        }
+
+    }
+
+    virtual void write(QJsonObject &json) const
+    {
+        RegistrableParent::write(json);
+        json["isImage"] = true;
+        json["asVectorImage"] = _vectorImage;
+        if (_withMeta)
+            json["Properties"] =  QJsonArray::fromStringList(_meta);
+
+        if (_colormap.size() > 0)
+        {
+            QJsonObject ob;
+
+            for (auto it = _colormap.begin(); it != _colormap.end(); ++it)
+            {
+                ob[QString("%1").arg(it.key())]  = it.value().name();
+            }
+
+            json["Colormap"] = ob;
+        }
+
+
+    }
+
+    virtual QString toString() const
+    {
+        return QString("Image results");
+    }
+
+    virtual void loadImage(QJsonObject json) = 0;
+    virtual QString basePath(QJsonObject json) = 0;
+
+    virtual void freeImage() = 0;
+
+    Self& withProperties(QStringList d)
+    {
+        _withMeta = true;
+        _meta = d;
+        return *this;
+    }
+
+
+    virtual void storeJson(QJsonObject json)  = 0;
+
+    Self& noImageAutoLoading(bool state = false) { _autoload = state; return *this; }
+    bool imageAutoloading() { return _autoload; }
+
+    QString getMeta(QString me) { return _metaData[me]; }
+
+    virtual bool hasData(void* data) = 0;
+
+
+    void setColormap(Colormap color)
+    {
+        _colormap = color;
+    }
+
+protected:
+    Colormap _colormap;
+
+    bool        _vectorImage;
+    bool        _withMeta;
+    bool        _autoload;
+    QStringList _meta;
+    QMap<QString, QString> _metaData;
+};
+
+#include <QThread>
+
+
+template <>
+class Registrable<cv::Mat>: public RegistrableImageParent
+{
+public:
+    typedef Registrable<cv::Mat> Self;
+    typedef cv::Mat DataType;
+
+
+    Registrable(): RegistrableImageParent(), _value(0)
+    {
+    }
+
+
+    DataType& value()
+    {
+        return *_value;
+    }
+
+    void setValue(DataType t)
+    {
+        _wasSet = true;
+        *_value = t;
+    }
+
+    Self& setValuePointer(DataType *v)
+    {
+        _value = v;
+        return *this;
+
+    }
+    virtual void read(const QJsonObject &json)
+    {
+        RegistrableImageParent::read(json);
+        //    if (json.contains("asVectorImage"))
+        //      _vectorImage = json["asVectorImage"].toBool();
+    }
+
+    void write(QJsonObject &json) const
+    {
+        RegistrableImageParent::write(json);
+        json["ImageType"]  = QString("ImageContainer");
+
+        if (!_value || (_value->rows == 0 && _value->cols == 0))
+        { //qDebug() << "Empty image !!!!";
+            return; }
+        //      qDebug() << "Finishing Registered images" << _value->rows << _value->cols  << _value->channels();
+        //        _value.
+        if (this->_isProduct && this->_isFinished)
+        {
+            if (this->_isOptional && this->_optionalDefault != true)
+                return;
+
+            std::vector<cv::Mat> split;
+            if (_value->channels() == 1) split.push_back(*_value);
+            else       cv::split(*_value, split);
+
+            if (split.size() == 0)
+            {
+                qDebug() << "OpenCV Split returned empty image... leaving..";
+                return;
+            }
+            QJsonObject ob;
+
+            ob["DataTypeSize"] = (int)split[0].elemSize();
+            ob["cvType"]=split[0].type();
+            ob["Rows"] = split[0].rows;
+            ob["Cols"] = split[0].cols;
+            ob["DataHash"]=getHash();
+            //          qDebug() << ob;
+
+            unsigned long long len = split[0].elemSize()* split[0].rows * split[0].cols;
+
+            //          QJsonArray arr;
+            //                    qDebug() << "Writing image data to socket"
+            //                             << split[0].elemSize()
+            //                             << split[0].type()
+            //                             << split[0].rows
+            //                             << split[0].cols
+            //                             << len
+            //                             << split.size();
+            //          QByteArray r;
+
+            std::vector<unsigned char> r(split.size()*len);
+            auto iter = r.begin();
+            QJsonArray d;
+            for(int i = 0; i < split.size(); ++i)
+            {
+                unsigned char *p = split[i].ptr<  unsigned char>(0);
+                for (int i = 0; i < len; ++i, ++p, ++iter)
+                    *iter = *p;
+                d.append(QJsonValue((int)len));//a.size());
+            }
+            //          qDebug() << "Writing image data to done" ;
+            //          ob["Data"]=arr;
+            RegistrableParent::attachPayload(r);
+            //          CheckoutProcess::handler().attachPayload(getHash(), r);
+            ob["DataSizes"] = d;
+            //qDebug() << d;
+            auto ar = QJsonArray();
+            ar.push_back(ob);
+            json["Payload"] = ar;
+            //          qDebug() << json;
+
+        }
+
+    }
+
+    virtual void storeJson(QJsonObject json)
+    {
+    }
+
+
+    virtual void loadImage(QJsonObject json)
+    {
+        cocvMat::loadFromJSON(json, *_value);
+    }
+
+
+    virtual QString basePath(QJsonObject json)
+    {
+        QDir dir(json["Data"].toArray().first().toString());
+        return dir.dirName();
+    }
+
+    virtual void freeImage()
+    {
+        _value->deallocate();
+    }
+
+    virtual RegistrableParent* dup()
+    {
+        DataType* data = new DataType();
+        _value->copyTo(*data);
+
+        Self* s = new Self();
+        s->setValuePointer(data);
+
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+
+        return s;
+    }
+
+
+    virtual bool hasData(void *data) override
+    {
+        return _value == data;
+    }
+
+
+protected:
+
+    DataType* _value;
+
+};
+
+template <>
+class Registrable<ImageContainer>: public RegistrableImageParent
+{
+public:
+    typedef Registrable<ImageContainer> Self;
+    typedef ImageContainer DataType;
+
+
+    Registrable(): RegistrableImageParent(), _value(nullptr)
+    {
+        
+    }
+
+
+    DataType& value()
+    {
+        return *_value;
+    }
+
+    void setValue(DataType t)
+    {
+        _wasSet = true;
+        *_value = t;
+    }
+
+    Self& setValuePointer(DataType *v)
+    {
+        _value = v;
+        return *this;
+
+    }
+
+    virtual void read(const QJsonObject &json)
+    {
+        RegistrableImageParent::read(json);
+    }
+
+    virtual void write(QJsonObject &json) const
+    {
+        RegistrableImageParent::write(json);
+        json["ImageType"]  = QString("ImageContainer");
+
+        if (!_value || _value->count() == 0)
+        { //qDebug() << "Empty image !!!!";
+            return; }
+        //      qDebug() << "Finishing Registered images" << _value->rows << _value->cols  << _value->channels();
+        //        _value.
+        if (this->_isProduct && this->_isFinished)
+        {
+            if (this->_isOptional && this->_optionalDefault != true)
+                return;
+            auto ar = QJsonArray();
+
+            for (size_t item = 0; item < _value->count(); ++item)
+            {
+                std::vector<cv::Mat> split;
+                if ((*_value)(item).channels() == 1) split.push_back((*_value)(item));
+                else       cv::split((*_value)(item), split);
+
+
+                if (split.size() == 0)
+                {
+                    qDebug() << "OpenCV Split returned empty image... skipping..";
+                    continue;
+                }
+                if (split[0].rows == 0 && split[0].cols == 0)
+                    continue;
+
+                QJsonObject ob;
+
+                ob["DataTypeSize"] = (int)split[0].elemSize();
+                ob["cvType"]=split[0].type();
+                ob["Rows"] = split[0].rows;
+                ob["Cols"] = split[0].cols;
+                if (item != 0)
+                    ob["DataHash"]=getHash()+QString("%1").arg(item);
+                //          qDebug() << ob;
+
+                unsigned long long len = split[0].elemSize()* split[0].rows * split[0].cols;
+
+                //          QJsonArray arr;
+                //                    qDebug() << "Writing image data to socket"
+                //                             << split[0].elemSize()
+                //                             << split[0].type()
+                //                             << split[0].rows
+                //                             << split[0].cols
+                //                             << len
+                //                             << split.size();
+                //          QByteArray r;
+
+                std::vector<unsigned char> r(split.size()*len);
+                auto iter = r.begin();
+                QJsonArray d;
+                for(size_t i = 0; i < split.size(); ++i)
+                {
+                    unsigned char *p = split[i].ptr<  unsigned char>(0);
+                    for (int i = 0; i < len; ++i, ++p, ++iter)
+                        *iter = *p;
+                    d.append(QJsonValue((int)len));//a.size());
+                }
+                //          qDebug() << "Writing image data to done" ;
+                //          ob["Data"]=arr;
+                RegistrableParent::attachPayload(r, item);
+                //          CheckoutProcess::handler().attachPayload(getHash(), r);
+                ob["DataSizes"] = d;
+                //qDebug() << d;
+                ar.push_back(ob);
+            }
+
+            json["Payload"] = ar;
+            //          qDebug() << json;
+
+        }
+
+    }
+
+    virtual void loadImage(QJsonObject json)
+    {
+        _value->loadFromJSON(json);
+    }
+    virtual QString basePath(QJsonObject json)
+    {
+        return _value->basePath(json);
+    }
+
+    virtual void storeJson(QJsonObject json)
+    {
+
+        _value->storeJson(json);
+    }
+
+
+    virtual void freeImage()
+    {
+        _value->deallocate();
+    }
+
+    virtual RegistrableParent* dup()
+    {
+        DataType* data = new DataType();
+        *data = *_value;
+
+        Self* s = new Self();
+        s->setValuePointer(data);
+
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+
+        return s;
+    }
+
+    virtual bool hasData(void *data) override
+    {
+        return _value == data;
+    }
+
+protected:
+
+    DataType* _value;
+};
+
+
+
+template <>
+class Registrable<TimeImage>: public RegistrableImageParent
+{
+public:
+    typedef Registrable<TimeImage> Self;
+    typedef TimeImage DataType;
+
+
+    Registrable(): RegistrableImageParent(), _value(nullptr)
+    {
+    }
+
+
+    DataType& value()
+    {
+        return *_value;
+    }
+
+    void setValue(DataType t)
+    {
+        _wasSet = true;
+        *_value = t;
+    }
+
+    Self& setValuePointer(DataType *v)
+    {
+        _value = v;
+        return *this;
+
+    }
+
+    virtual void read(const QJsonObject &json)
+    {
+        RegistrableImageParent::read(json);
+        //    if (json.contains("asVectorImage"))
+        //      _vectorImage = json["asVectorImage"].toBool();
+    }
+
+    virtual void write(QJsonObject &json) const
+    {
+        RegistrableImageParent::write(json);
+        json["ImageType"]  = QString("TimeImage");
+
+        qDebug() << "Should store TimeImage" << _value->count();
+
+        if (!_value || _value->count() == 0 )
+        { //qDebug() << "Empty image !!!!";
+            return;
+        }
+        //      qDebug() << "Finishing Registered images" << _value->rows << _value->cols  << _value->channels();
+        //        _value.
+        if (this->_isProduct && this->_isFinished)
+        {
+            if (this->_isOptional && this->_optionalDefault != true)
+                return;
+            auto ar = QJsonArray();
+
+            for (size_t item = 0; item < _value->count(); ++item)
+            {
+                std::vector<cv::Mat> split;
+                if ((*_value)(item).channels() == 1) split.push_back((*_value)(item));
+                else       cv::split((*_value)(item), split);
+
+
+                if (split.size() == 0)
+                {
+                    qDebug() << "OpenCV Split returned empty image... skipping..";
+                    continue;
+                }
+                if (split[0].rows == 0 && split[0].cols == 0)
+                    continue;
+
+                QJsonObject ob;
+
+                ob["DataTypeSize"] = (int)split[0].elemSize();
+                ob["cvType"]=split[0].type();
+                ob["Rows"] = split[0].rows;
+                ob["Cols"] = split[0].cols;
+                ob["DataHash"]=getHash()+QString("%1").arg(item);
+                ob["Time"] = (int)item; // Outputs a time id, this is a time serie image output
+                //          qDebug() << ob;
+
+                unsigned long long len = split[0].elemSize()* split[0].rows * split[0].cols;
+
+                //          QJsonArray arr;
+                //                    qDebug() << "Writing image data to socket"
+                //                             << split[0].elemSize()
+                //                             << split[0].type()
+                //                             << split[0].rows
+                //                             << split[0].cols
+                //                             << len
+                //                             << split.size();
+                //          QByteArray r;
+
+                std::vector<unsigned char> r(split.size()*len);
+                auto iter = r.begin();
+                QJsonArray d;
+                for(int i = 0; i < split.size(); ++i)
+                {
+                    unsigned char *p = split[i].ptr<  unsigned char>(0);
+                    for (int i = 0; i < len; ++i, ++p, ++iter)
+                        *iter = *p;
+                    d.append(QJsonValue((int)len));//a.size());
+                }
+                //          qDebug() << "Writing image data to done" ;
+                //          ob["Data"]=arr;
+                RegistrableParent::attachPayload(r, item);
+                ob["DataSizes"] = d;
+                //qDebug() << d;
+                ar.push_back(ob);
+            }
+
+            json["Payload"] = ar;
+            qDebug() << json;
+
+        }
+
+
+    }
+
+    virtual void loadImage(QJsonObject json)
+    {
+        _value->loadFromJSON(json);
+    }
+
+    virtual QString basePath(QJsonObject json)
+    {
+        return _value->basePath(json);
+    }
+
+
+    virtual void storeJson(QJsonObject json)
+    {
+
+        _value->storeJson(json);
+    }
+
+
+
+    virtual void freeImage()
+    {
+        _value->deallocate();
+    }
+    virtual RegistrableParent* dup()
+    {
+        DataType* data = new DataType();
+        *data = *_value;
+
+        Self* s = new Self();
+        s->setValuePointer(data);
+
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+
+        return s;
+    }
+
+    virtual bool hasData(void *data) override
+    {
+        return _value == data;
+    }
+
+protected:
+
+    DataType* _value;
+};
+
+
+template <>
+class Registrable<StackedImage>: public RegistrableImageParent
+{
+public:
+    typedef Registrable<StackedImage> Self;
+    typedef StackedImage DataType;
+
+
+    Registrable(): RegistrableImageParent(), _value(nullptr)
+    {
+
+    }
+
+
+    DataType& value()
+    {
+        return *_value;
+    }
+
+    void setValue(DataType t)
+    {
+        _wasSet = true;
+        *_value = t;
+    }
+
+    Self& setValuePointer(DataType *v)
+    {
+        _value = v;
+        return *this;
+
+    }
+
+    virtual void read(const QJsonObject &json)
+    {
+        RegistrableImageParent::read(json);
+    }
+
+    virtual void write(QJsonObject &json) const
+    {
+        RegistrableImageParent::write(json);
+        json["ImageType"]  = QString("StackedImage");
+    }
+
+    virtual void loadImage(QJsonObject json)
+    {
+        _value->loadFromJSON(json);
+    }
+
+    virtual QString basePath(QJsonObject json)
+    {
+        return _value->basePath(json);
+    }
+
+    virtual void storeJson(QJsonObject json)
+    {
+
+        _value->storeJson(json);
+    }
+
+    virtual void freeImage()
+    {
+        _value->deallocate();
+    }
+
+    virtual RegistrableParent* dup()
+    {
+        DataType* data = new DataType();
+        *data = *_value;
+
+        Self* s = new Self();
+        s->setValuePointer(data);
+
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+
+        return s;
+    }
+
+    virtual bool hasData(void *data) override
+    {
+        return _value == data;
+    }
+
+protected:
+
+    DataType* _value;
+};
+
+template <>
+class Registrable<TimeStackedImage>: public RegistrableImageParent
+{
+public:
+    typedef Registrable<TimeStackedImage> Self;
+    typedef TimeStackedImage DataType;
+
+
+    Registrable(): RegistrableImageParent(), _value(nullptr)
+    {
+
+    }
+
+
+    DataType& value()
+    {
+        return *_value;
+    }
+
+    void setValue(DataType t)
+    {
+        _wasSet = true;
+        *_value = t;
+    }
+
+    Self& setValuePointer(DataType *v)
+    {
+        _value = v;
+        return *this;
+
+    }
+
+    virtual void read(const QJsonObject &json)
+    {
+        RegistrableImageParent::read(json);
+    }
+
+    virtual void write(QJsonObject &json) const
+    {
+        RegistrableImageParent::write(json);
+        json["ImageType"]  = QString("TimeStackedImage");
+    }
+
+    virtual void loadImage(QJsonObject json)
+    {
+        _value->loadFromJSON(json);
+    }
+
+
+    virtual QString basePath(QJsonObject json)
+    {
+        return _value->basePath(json);
+    }
+
+
+
+    virtual void storeJson(QJsonObject json)
+    {
+
+        _value->storeJson(json);
+    }
+
+
+    virtual void freeImage()
+    {
+        _value->deallocate();
+    }
+
+
+    virtual RegistrableParent* dup()
+    {
+        DataType* data = new DataType();
+        *data = *_value;
+
+        Self* s = new Self();
+        s->setValuePointer(data);
+
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+
+        return s;
+    }
+
+    virtual bool hasData(void *data) override
+    {
+        return _value == data;
+    }
+
+protected:
+
+    DataType* _value;
+};
+
+template <>
+class Registrable<ImageXP>: public RegistrableImageParent
+{
+public:
+    typedef Registrable<ImageXP> Self;
+    typedef ImageXP DataType;
+
+
+    Registrable(): RegistrableImageParent(), _value(nullptr)
+    {
+
+    }
+
+
+    DataType& value()
+    {
+        return *_value;
+    }
+
+    void setValue(DataType t)
+    {
+        _wasSet = true;
+        *_value = t;
+    }
+
+    Self& setValuePointer(DataType *v)
+    {
+        _value = v;
+        return *this;
+
+    }
+
+    virtual void read(const QJsonObject &json)
+    {
+        RegistrableImageParent::read(json);
+    }
+
+    virtual void write(QJsonObject &json) const
+    {
+        RegistrableImageParent::write(json);
+        json["ImageType"]  = QString("ImageXP");
+    }
+
+    virtual void loadImage(QJsonObject json)
+    {
+        _value->loadFromJSON(json);
+    }
+    virtual QString basePath(QJsonObject json)
+    {
+        return _value->basePath(json);
+    }
+
+    virtual void storeJson(QJsonObject json)
+    {
+
+        _value->storeJson(json);
+    }
+
+
+    virtual void freeImage()
+    {
+        _value->deallocate();
+    }
+
+    virtual RegistrableParent* dup()
+    {
+        DataType* data = new DataType();
+        *data = *_value;
+
+        Self* s = new Self();
+        s->setValuePointer(data);
+
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+
+        return s;
+    }
+
+    virtual bool hasData(void *data) override
+    {
+        return _value == data;
+    }
+
+protected:
+
+    DataType* _value;
+};
+
+template <>
+class Registrable<TimeImageXP>: public RegistrableImageParent
+{
+public:
+    typedef Registrable<TimeImageXP> Self;
+    typedef TimeImageXP DataType;
+
+
+    Registrable(): RegistrableImageParent(), _value(nullptr)
+    {
+
+    }
+
+
+    DataType& value()
+    {
+        return *_value;
+    }
+
+    void setValue(DataType t)
+    {
+        _wasSet = true;
+        *_value = t;
+    }
+
+    Self& setValuePointer(DataType *v)
+    {
+        _value = v;
+        return *this;
+
+    }
+
+    virtual void read(const QJsonObject &json)
+    {
+        RegistrableImageParent::read(json);
+    }
+
+    virtual void write(QJsonObject &json) const
+    {
+        RegistrableImageParent::write(json);
+        json["ImageType"]  = QString("TimeImageXP");
+    }
+
+    virtual void loadImage(QJsonObject json)
+    {
+        _value->loadFromJSON(json);
+    }
+
+    virtual QString basePath(QJsonObject json)
+    {
+        return _value->basePath(json);
+    }
+
+    virtual void storeJson(QJsonObject json)
+    {
+
+        _value->storeJson(json);
+    }
+
+
+    virtual void freeImage()
+    {
+        _value->deallocate();
+    }
+
+    virtual RegistrableParent* dup()
+    {
+        DataType* data = new DataType();
+        *data = *_value;
+
+        Self* s = new Self();
+        s->setValuePointer(data);
+
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+
+        return s;
+    }
+
+    virtual bool hasData(void *data) override
+    {
+        return _value == data;
+    }
+
+protected:
+
+    DataType* _value;
+};
+
+template <>
+class Registrable<StackedImageXP>: public RegistrableImageParent
+{
+public:
+    typedef Registrable<StackedImageXP> Self;
+    typedef StackedImageXP DataType;
+
+
+    Registrable(): RegistrableImageParent(), _value(nullptr)
+    {
+
+    }
+
+
+    DataType& value()
+    {
+        return *_value;
+    }
+
+    void setValue(DataType t)
+    {
+        _wasSet = true;
+        *_value = t;
+    }
+
+    Self& setValuePointer(DataType *v)
+    {
+        _value = v;
+        return *this;
+
+    }
+
+    virtual void read(const QJsonObject &json)
+    {
+        RegistrableImageParent::read(json);
+    }
+
+    virtual void write(QJsonObject &json) const
+    {
+        RegistrableImageParent::write(json);
+        json["ImageType"]  = QString("StackedImageXP");
+    }
+
+    virtual void loadImage(QJsonObject json)
+    {
+        _value->loadFromJSON(json);
+    }
+
+    virtual QString basePath(QJsonObject json)
+    {
+        return _value->basePath(json);
+    }
+
+    virtual void storeJson(QJsonObject json)
+    {
+
+        _value->storeJson(json);
+    }
+
+
+    virtual void freeImage()
+    {
+        _value->deallocate();
+    }
+
+    virtual RegistrableParent* dup()
+    {
+        DataType* data = new DataType();
+        *data = *_value;
+
+        Self* s = new Self();
+        s->setValuePointer(data);
+
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+
+        return s;
+    }
+
+    virtual bool hasData(void *data) override
+    {
+        return _value == data;
+    }
+
+protected:
+
+    DataType* _value;
+};
+
+template <>
+class Registrable<TimeStackedImageXP>: public RegistrableImageParent
+{
+public:
+    typedef Registrable<TimeStackedImageXP> Self;
+    typedef TimeStackedImageXP DataType;
+
+
+    Registrable(): RegistrableImageParent(), _value(nullptr)
+    {
+
+    }
+
+
+    DataType& value()
+    {
+        return *_value;
+    }
+
+    void setValue(DataType t)
+    {
+        _wasSet = true;
+        *_value = t;
+    }
+
+    Self& setValuePointer(DataType *v)
+    {
+        _value = v;
+        return *this;
+
+    }
+
+    virtual void read(const QJsonObject &json)
+    {
+        RegistrableImageParent::read(json);
+    }
+
+    virtual void write(QJsonObject &json) const
+    {
+        RegistrableImageParent::write(json);
+        json["ImageType"]  = QString("TimeStackedImageXP");
+    }
+
+    virtual void loadImage(QJsonObject json)
+    {
+        _value->loadFromJSON(json);
+    }
+    virtual QString basePath(QJsonObject json)
+    {
+        return _value->basePath(json);
+    }
+
+    virtual void storeJson(QJsonObject json)
+    {
+
+        _value->storeJson(json);
+    }
+
+
+    virtual void freeImage()
+    {
+        _value->deallocate();
+    }
+
+    virtual RegistrableParent* dup()
+    {
+        DataType* data = new DataType();
+        *data = *_value;
+
+        Self* s = new Self();
+        s->setValuePointer(data);
+
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+
+        return s;
+    }
+
+    virtual bool hasData(void *data) override
+    {
+        return _value == data;
+    }
+
+protected:
+
+    DataType* _value;
+};
+
+
+template <>
+class Registrable<WellPlate>: public RegistrableImageParent
+{
+public:
+    typedef Registrable<WellPlate> Self;
+    typedef WellPlate DataType;
+
+
+    Registrable(): RegistrableImageParent(), _value(nullptr)
+    {
+
+    }
+
+
+    DataType& value()
+    {
+        return *_value;
+    }
+
+    void setValue(DataType t)
+    {
+        _wasSet = true;
+        *_value = t;
+    }
+
+    Self& setValuePointer(DataType *v)
+    {
+        _value = v;
+        return *this;
+
+    }
+
+    virtual void read(const QJsonObject &json)
+    {
+        RegistrableImageParent::read(json);
+    }
+
+    virtual void write(QJsonObject &json) const
+    {
+        RegistrableImageParent::write(json);
+        json["ImageType"]  = QString("WellPlate");
+    }
+
+    virtual void loadImage(QJsonObject json)
+    {
+        _value->loadFromJSON(json);
+    }
+
+    virtual QString basePath(QJsonObject json)
+    {
+        return _value->basePath(json);
+    }
+
+    virtual void storeJson(QJsonObject json)
+    {
+
+
+    }
+
+
+    virtual void freeImage()
+    {
+        _value->deallocate();
+    }
+
+    virtual RegistrableParent* dup()
+    {
+        DataType* data = new DataType();
+        *data = *_value;
+
+        Self* s = new Self();
+        s->setValuePointer(data);
+
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+
+        return s;
+    }
+
+    virtual bool hasData(void *data) override
+    {
+        return _value == data;
+    }
+
+protected:
+
+    DataType* _value;
+};
+
+
+
+#endif // REGISTRABLEIMAGETYPE_H

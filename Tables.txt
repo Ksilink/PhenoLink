@@ -1,0 +1,60 @@
+
+
+OpennedScreens // Contains the once openned screens
+    ScreenDirectory text,
+    hash            text,
+    lastload        datetime,
+
+
+
+
+WellMeasurements_${hash} // replace ${hash} by the hash value of the current screen
+    id          text, // A1... Z100 (col/row index)
+    // This value shall be hidden by default and user displayable on demand
+    timePointCount integer,
+    fieldCount integer,
+    sliceCount integer,
+    channels integer,
+
+    // Aggregation types: Sum (0), Mean(1), Median(2), Min(3), Max(4)
+    // Aggregation types shall be skipped for viewing
+
+    measure_${path}_time_aggregation integer,
+    measure_${path}_field_aggregation integer,
+    measure_${path}_slice_aggregation integer,
+    measure_${path}_channel_aggregation integer,
+
+    measure_${path} real,
+
+WellParameters_${hash}
+    id          text,
+
+    timepoint   integer,
+    fieldId     integer,
+    sliceId     integer,
+    channel     integer,
+
+    Imagehash        text, // Hash of the image data
+
+    MinIntensity    real,
+    MaxIntensity    real,
+    DispMinIntensity real,
+    DispMaxIntensity real
+
+
+
+WellMeasurement_details_${hash}
+    id          text, // A1... Z100 (col/row index)
+
+    timepoint   integer, // -1 == All at once
+    fieldId     integer, // -1 == All at once
+    sliceId     integer, // -1 == 3D
+    channel     integer, // -1 == All at once
+
+    measure_${path} real,
+    last_call_measure_${path} datetime, // tell when the last call was performed
+    time_measure_${path} integer; // ms
+
+
+
+

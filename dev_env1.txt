@@ -1,0 +1,21 @@
+
+
+# CMake Path
+PCMAKE="/c/Program Files (x86)/CMake/bin"
+
+
+# Maven Path
+PMVN="/c/_COMMUN/_Nicolas/Auto Entrepreneur/Softs/apache-maven-3.2.3/bin"
+
+# Java Path
+PJAVA="/c/Program Files/Java/jdk1.8.0_25/bin":"/c/Program Files/Java/jdk1.8.0_25/jre/bin"
+
+# Qt
+PQT="/c/Qt/Qt5.3.2/5.3/msvc2013_64_opengl/bin/"
+
+# Visual Studio 2013  PATH
+PVS=/c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio\ 12.0/VC/bin/
+
+
+export PATH=$PATH:$PCMAKE:$PJAVA:$PMVN:$PVS:$PQT
+
