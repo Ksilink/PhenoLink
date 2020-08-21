@@ -41,7 +41,7 @@ option(PLUGIN_IN_CORE "Shall Core call plugins" OFF)
 option(PLUGIN_NWD_ONLY "Build only WD plugins" OFF)
 
 
-set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../CheckoutPlugin")
+set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../CheckoutPlugins")
 
 
 set(CMAKE_AUTOMOC ON)

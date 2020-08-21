@@ -230,7 +230,7 @@ void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
 //        qDebug() << "Starting" << h->address << h->port << ar.size();
         if (ar.size())
         {
-            static const int subs = 4;
+            static const int subs = 10;
             for (int i = 0; i < ar.size(); i += subs)
             {
                 QJsonArray sub;
@@ -274,7 +274,7 @@ void NetworkProcessHandler::startProcess(CheckoutHost *h, QString process, QJson
         soc->waitForBytesWritten();
     }
 
-    bool ready = soc->waitForReadyRead(800);
+    bool ready = soc->waitForReadyRead(2000);
 
     // If false this may be due to timeout, need to check
     if (ready && soc->bytesAvailable())
@@ -282,6 +282,7 @@ void NetworkProcessHandler::startProcess(CheckoutHost *h, QString process, QJson
     else // Need to modify signature of caller to handle return informations
     {
         qDebug() << "Error Starting process, no return from server request => " << h->address << h->port;
+
         _error_list << qMakePair(h, qMakePair(process, ob));
     }
 }
@@ -382,7 +383,7 @@ QJsonArray ProcessMessageStatusFunctor(CheckoutHost* h, QList<QString > hash, Ne
 void NetworkProcessHandler::getProcessMessageStatus(QString process, QList<QString > hash)
 {
     QSettings set;
-    int Server_query_max_hash = set.value("maxRefreshQuery", 100).toInt();
+    int Server_query_max_hash = set.value("maxRefreshQuery", 2000).toInt();
 //    qDebug() << "Get States from server" << hash.size();
 
     if (_waiting_Update) {  /*qDebug() << "Waiting for last reply...";*/ return; }
@@ -465,6 +466,7 @@ void NetworkProcessHandler::queryPayload(QString ohash)
     else
     {
         runningProcs.remove(hash);
+        qDebug() << "Network Stack remaining hash" << runningProcs.size();
     }
 
     qDebug() << "Query Payload";
@@ -502,6 +504,8 @@ void NetworkProcessHandler::deletePayload(QString hash)
     {
       //  qDebug() << "deletePayload: sending delete command for" << hash;
         runningProcs.remove(hash);
+        qDebug() << "Network Stack remaining hash" << runningProcs.size();
+
     }
 
     //  qDebug() << "Query Payload";
@@ -529,6 +533,8 @@ void NetworkProcessHandler::deletePayload(QString hash)
 void NetworkProcessHandler::processFinished(QString hash)
 {
     runningProcs.remove(hash);
+    qDebug() << "Network Stack remaining hash" << runningProcs.size();
+
 
 //    qDebug() << "Query clear mem" << hash;
 //    CheckoutProcess::handler().deletePayload(hash);

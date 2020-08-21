@@ -110,6 +110,7 @@ signals:
    QMap<QString, CheckoutProcessPluginInterface*> _stored;
    
    int* _counter;
+   QMutex mutex_dataupdate;
 
 };
 

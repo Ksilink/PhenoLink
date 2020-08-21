@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.12.4, 2020-08-21T09:51:05. -->
+<!-- Written by QtCreator 4.12.4, 2020-08-21T13:49:45. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -392,7 +392,7 @@
     <value type="bool" key="RunConfiguration.UseLibrarySearchPath">true</value>
     <value type="bool" key="RunConfiguration.UseMultiProcess">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
-    <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
+    <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">false</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
     <value type="QString" key="RunConfiguration.WorkingDirectory.default">C:/Work/GitHub/CheckoutApp-build/bin</value>
    </valuemap>
@@ -791,7 +791,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default"></value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">C:/Work/GitHub/Checkout-build/bin/Debug</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.1">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -866,7 +866,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default"></value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">C:/Work/GitHub/Checkout-build/bin/Debug</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.2">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -1168,11 +1168,11 @@
     <value type="QString" key="RunConfiguration.Arguments"></value>
     <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>
-    <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
-    <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
+    <value type="bool" key="RunConfiguration.UseCppDebugger">true</value>
+    <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">false</value>
     <value type="bool" key="RunConfiguration.UseMultiProcess">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
-    <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
+    <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">false</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
     <value type="QString" key="RunConfiguration.WorkingDirectory.default"></value>
    </valuemap>

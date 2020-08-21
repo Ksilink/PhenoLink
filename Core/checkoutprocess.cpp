@@ -572,7 +572,9 @@ void CheckoutProcess::addToComputedDataModel(QJsonObject ob)
     foreach (ExperimentFileModel* mdl, screens)
         if (hashData.startsWith(mdl->hash()))
         {
+            mutex_dataupdate.lock();
             datamdl = mdl->computedDataModel();
+            mutex_dataupdate.unlock();
         }
 
     if (!datamdl) {
@@ -583,8 +585,11 @@ void CheckoutProcess::addToComputedDataModel(QJsonObject ob)
     if (!ob.contains("CommitName"))
         qDebug() << "No commmit name....";
     else
+    {
+        mutex_dataupdate.lock();
         datamdl->setCommitName(ob["CommitName"].toString());
-
+        mutex_dataupdate.unlock();
+    }
     QString alg = ob["Path"].toString().replace("/", "_").replace("-", "_").replace(" ", "_");
     QJsonArray data = ob["Data"].toArray();
 
@@ -595,8 +600,10 @@ void CheckoutProcess::addToComputedDataModel(QJsonObject ob)
         if (d["isImage"].toBool()) continue;
 
         QString tag = d["Tag"].toString().replace(" ", "_").replace("-", "_").replace(" ", "_");
+        mutex_dataupdate.lock();
         datamdl->setAggregationMethod(/*alg+"_"+*/tag, d["Aggregation"].toString() );
         datamdl->addData(/*alg+"_"+*/tag, fieldId, sliceId, timepoint, channel, id,d["Data"].toString().toDouble());
+        mutex_dataupdate.unlock();
     }
 
 }
