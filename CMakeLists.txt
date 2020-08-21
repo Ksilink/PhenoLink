@@ -9,7 +9,7 @@
 
 
 
-cmake_minimum_required(VERSION 3.14.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12.0 FATAL_ERROR)
 
 project(Checkout)
 
@@ -39,6 +39,10 @@ option(BUILD_RAW_PROCESSOR "Build the Raw data processor (very advanced users - 
 option(PLUGIN_IN_CORE "Shall Core call plugins" OFF)
 
 option(PLUGIN_NWD_ONLY "Build only WD plugins" OFF)
+
+
+set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../CheckoutPlugin")
+
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
