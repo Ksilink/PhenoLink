@@ -277,8 +277,7 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
         params["StartTime"] = QDateTime::currentDateTime().toMSecsSinceEpoch();
         array.replace(i, params);
 
-        QString hash = params["Process_hash"].toString();
-        //        qDebug() << "Starting" << hash;
+
     }
 
 #ifdef CheckoutPluginInCore
@@ -636,6 +635,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
                 if (tc == 0)
                 {
                     qDebug() << "Hash finished" << hash;
+                    NetworkProcessHandler::handler().processFinished(hash);
                     // Last object of the running process, check for the field CommitName in ob & commit to the database if not empty
 
                     _hash_to_save.remove(hash);
@@ -651,7 +651,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
             }
             //            else
             //          {
-            //                NetworkProcessHandler::handler().processFinished(ob["Hash"].toString());
+            NetworkProcessHandler::handler().processFinished(ob["Hash"].toString());
             emit processFinished(ob);
             //        }
 

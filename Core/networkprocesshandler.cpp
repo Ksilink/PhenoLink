@@ -7,7 +7,11 @@
 #include <Core/checkoutprocess.h>
 #include <Core/config.h>
 
-inline QDataStream& operator<< (QDataStream& out, const std::vector<unsigned char>& args)
+
+
+ static QTextStream *hash_logfile = nullptr;
+
+ inline QDataStream& operator<< (QDataStream& out, const std::vector<unsigned char>& args)
 {
     out << (quint64)args.size();
     for (const auto& val : args )
@@ -38,6 +42,17 @@ NetworkProcessHandler::NetworkProcessHandler():
     _waiting_Update(false),
     last_serv_pos(0)
 {
+
+    data = new QFile( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/HashLogs.txt");
+    if (data->open(QFile::WriteOnly | QFile::Truncate)) {
+        hash_logfile= new QTextStream(data);
+    }
+}
+
+NetworkProcessHandler::~NetworkProcessHandler()
+{
+    delete data;
+    delete hash_logfile;
 }
 
 NetworkProcessHandler &NetworkProcessHandler::handler()
@@ -225,6 +240,7 @@ void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
             ar.append(ob.at(lastItem));
             QJsonObject t = ar.at(i).toObject();
             //            qDebug() << t["CoreProcess_hash"].toString();
+            (*hash_logfile) << "Started Core "<< t["CoreProcess_hash"].toString() << Qt::endl;
             runningProcs[t["CoreProcess_hash"].toString()] = h;
         }
 //        qDebug() << "Starting" << h->address << h->port << ar.size();
@@ -534,7 +550,7 @@ void NetworkProcessHandler::processFinished(QString hash)
 {
     runningProcs.remove(hash);
     qDebug() << "Network Stack remaining hash" << runningProcs.size();
-
+    (*hash_logfile) << "Finished " << hash << Qt::endl;
 
 //    qDebug() << "Query clear mem" << hash;
 //    CheckoutProcess::handler().deletePayload(hash);
@@ -689,7 +705,7 @@ void NetworkProcessHandler::handleMessageProcessStart(QString& keyword, QDataStr
             runningProcs.remove(coreHash);
             runningProcs[hash] = h;
 
-
+            (*hash_logfile) << coreHash << "->" << hash << Qt::endl;
             emit processStarted(coreHash, hash);
         }
     }

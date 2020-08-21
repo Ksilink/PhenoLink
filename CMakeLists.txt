@@ -38,7 +38,9 @@ option(BUILD_WITH_VTK "Build the VTK optional stuff" OFF)
 option(BUILD_RAW_PROCESSOR "Build the Raw data processor (very advanced users - developper feature)" OFF)
 option(PLUGIN_IN_CORE "Shall Core call plugins" OFF)
 
-option(PLUGIN_NWD_ONLY "Build only WD plugins" OFF)
+#option(PLUGIN_NWD_ONLY "Build only WD plugins" OFF)
+
+set(PLUGIN_NWD_OLY OFF)
 
 
 set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../CheckoutPlugins")

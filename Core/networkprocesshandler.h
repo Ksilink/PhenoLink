@@ -7,6 +7,10 @@
 
 #include "Dll.h"
 
+
+
+extern QTextStream *hash_logfile;
+
 struct CheckoutHost
 {
     QHostAddress address;
@@ -18,6 +22,7 @@ class DllCoreExport NetworkProcessHandler: public QObject
     Q_OBJECT
 public:
     NetworkProcessHandler();
+    ~NetworkProcessHandler();
 
     static NetworkProcessHandler& handler();
     void establishNetworkAvailability();
@@ -86,7 +91,7 @@ protected:
 
 
     int last_serv_pos;
-
+    QFile* data;
 };
 
 #endif // NETWORKPROCESSHANDLER_H
