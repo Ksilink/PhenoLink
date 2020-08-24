@@ -14,7 +14,7 @@
 #include <Core/sequenceinteractor.h>
 
 namespace Ui {
-  class ImageForm;
+class ImageForm;
 }
 
 class GraphicsPixmapItem;
@@ -25,115 +25,117 @@ class SequenceInteractor;
 // to a basic QWidget with proper scale & handling of the viewed data
 class ImageForm : public QWidget, public CoreImage
 {
-  Q_OBJECT
+    Q_OBJECT
 
+    enum VideoPlay {VideoStop, VideoForward, VideoBackward } video_status;
 public:
-  explicit ImageForm(QWidget *parent = 0);
-  ~ImageForm();
+    explicit ImageForm(QWidget *parent = 0);
+    ~ImageForm();
 
-  void setPixmap(QPixmap pix);
+    void setPixmap(QPixmap pix);
 
-  void setModelView(SequenceFileModel* view, SequenceInteractor *interactor = 0);
+    void setModelView(SequenceFileModel* view, SequenceInteractor *interactor = 0);
 
-  SequenceFileModel* modelView();
+    SequenceFileModel* modelView();
 
-  virtual QSize	sizeHint() const;
-//  ImageForm* getCurrent();
+    virtual QSize	sizeHint() const;
+    //  ImageForm* getCurrent();
 
 
-  void connectInteractor();
-  QString contentPos();
-  void updateImage();
-   virtual void modifiedImage();
-  void setScrollZone(ScrollZone* z);
-  void setSelectState(bool val);
-  void updateButtonVisibility();
+    void connectInteractor();
+    QString contentPos();
+    void updateImage();
+    virtual void modifiedImage();
+    void setScrollZone(ScrollZone* z);
+    void setSelectState(bool val);
+    void updateButtonVisibility();
 
 protected:
-  virtual void resizeEvent(QResizeEvent * event) ;
-  virtual void mousePressEvent(QMouseEvent *event);
-  virtual void mouseDoubleClickEvent(QMouseEvent * event);
-  virtual void paintEvent(QPaintEvent *event);
+    virtual void resizeEvent(QResizeEvent * event) ;
+    virtual void mousePressEvent(QMouseEvent *event);
+    virtual void mouseDoubleClickEvent(QMouseEvent * event);
+    virtual void paintEvent(QPaintEvent *event);
 
 signals:
     void interactorModified();
 
 protected slots:
 
-  void minusClicked();
-  void plusClicked();
-  void prevImClicked();
-  void nextImClicked();
+    void minusClicked();
+    void plusClicked();
+    void prevImClicked();
+    void nextImClicked();
 
-  void sliceUpClicked();
-  void sliceDownClicked();
+    void sliceUpClicked();
+    void sliceDownClicked();
 
-  void nextFrameClicked();
-  void prevFrameClicked();
-  void FwdPlayClicked();
-  void BwdPlayClicked();
+    void nextFrameClicked();
+    void prevFrameClicked();
+    void FwdPlayClicked();
+    void BwdPlayClicked();
 
 #ifdef Checkout_With_VTK
-  void display3DRendering();
+    void display3DRendering();
 #endif
 
-  void imageClick(QPointF pos);
-  void mouseOverImage(QPointF pos);
-  void watcherPixmap();
+    void imageClick(QPointF pos);
+    void mouseOverImage(QPointF pos);
+    void watcherPixmap();
 protected:
 
 
-  qreal gsiWidth(GraphicsSignItem::Signs sign);
-  qreal gsiHeight(GraphicsSignItem::Signs sign);
+    qreal gsiWidth(GraphicsSignItem::Signs sign);
+    qreal gsiHeight(GraphicsSignItem::Signs sign);
 
-  virtual void closeEvent(QCloseEvent* event);
-  virtual void keyPressEvent(QKeyEvent * event);
-
+    virtual void closeEvent(QCloseEvent* event);
+    virtual void keyPressEvent(QKeyEvent * event);
+    virtual void timerEvent(QTimerEvent *event);
 
 private slots:
 
-  void on_ImageForm_customContextMenuRequested(const QPoint &pos);
-  void copyToClipboard();
-  void popImage();
-  void removeFromView();
+    void on_ImageForm_customContextMenuRequested(const QPoint &pos);
+    void copyToClipboard();
+    void popImage();
+    void removeFromView();
 
 
 public slots:
 
-  void changeCurrentSelection();
-  void redrawPixmap();
-  void scale(int delta);
+    void changeCurrentSelection();
+    void redrawPixmap();
+    void scale(int delta);
 
 
-  void redrawPixmap(QPixmap img);
+    void redrawPixmap(QPixmap img);
 private:
-  ScrollZone* sz;
+    ScrollZone* sz;
 
-  Ui::ImageForm *ui;
+    Ui::ImageForm *ui;
 
-  SequenceFileModel* _view;
-  SequenceInteractor* _interactor;
+    SequenceFileModel* _view;
+    SequenceInteractor* _interactor;
 
-  QPixmap _pix;
-  GraphicsPixmapItem *pixItem;
-  QString imageInfos;
-  QString imagePosInfo;
+    QPixmap _pix;
+    GraphicsPixmapItem *pixItem;
+    QString imageInfos;
+    QString imagePosInfo;
 
-  GraphicsSignItem* gsi[GraphicsSignItem::Count];
-  QGraphicsTextItem* textItem;
-  QGraphicsTextItem* textItem2;
+    GraphicsSignItem* gsi[GraphicsSignItem::Count];
+    QGraphicsTextItem* textItem;
+    QGraphicsTextItem* textItem2;
 
-  QPointF _pos;
+    QPointF _pos;
 
-  int playTimerId;
+    int playTimerId;
 
-  // User Settings
-  double scaleFactor, aspectRatio, currentScale;
+    // User Settings
+    double scaleFactor, aspectRatio, currentScale;
 
-//  static ImageForm* _selectedForm;
-  bool isRunning, fromButton;
-//  static SequenceInteractor* _current_interactor;
-  Q_DISABLE_COPY(ImageForm);
+    //  static ImageForm* _selectedForm;
+    bool isRunning, fromButton;
+    int timer_id;
+    //  static SequenceInteractor* _current_interactor;
+    Q_DISABLE_COPY(ImageForm);
 };
 
 #endif // IMAGEFORM_H

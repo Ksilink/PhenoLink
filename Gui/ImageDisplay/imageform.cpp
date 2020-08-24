@@ -33,6 +33,7 @@
 // Force min size to be 320x270
 ImageForm::ImageForm(QWidget *parent) :
     QWidget(parent),
+    video_status(VideoStop),
    sz(0),
    ui(new Ui::ImageForm), aspectRatio(0.0), currentScale(1.0f),  isRunning(false)
 {
@@ -519,45 +520,30 @@ void ImageForm::prevFrameClicked()
 
 void ImageForm::FwdPlayClicked()
 {
-    _interactor->setTimePoint(1);
-    setPixmap(_interactor->getPixmap());
+    if (video_status != ImageForm::VideoStop) {
+        video_status = ImageForm::VideoStop;
+        killTimer(timer_id);
+        return;
+    }
+    video_status = ImageForm::VideoForward;
 
-    changeCurrentSelection();
-
-    //while (_interactor->getTimePoint() < _interactor->getTimePointCount())
-	{
-		_interactor->setTimePoint(_interactor->getTimePoint() + 1);
-		setPixmap(_interactor->getPixmap());
-		
-		changeCurrentSelection();
-		//std::this_thread::sleep_for(std::chrono::seconds(3));
-		
-		qDebug() << "Fwd Play"<< _interactor->getTimePoint()<<"total"<< _interactor->getTimePointCount();
-        // Let the event cue play
-
-	}
+    qDebug() << "Fwd Play"<< _interactor->getTimePoint()<<"total"<< _interactor->getTimePointCount();
    
-  
+    timer_id = startTimer(45);
 }
 
 void ImageForm::BwdPlayClicked()
 {
-
-    // Skip to the end...
-    _interactor->setTimePoint(_interactor->getTimePointCount());
-    changeCurrentSelection();
-    setPixmap(_interactor->getPixmap());
-
-    //while (_interactor->getTimePoint() > 1)
-    {
-        _interactor->setTimePoint(_interactor->getTimePoint() - 1);
-        setPixmap(_interactor->getPixmap());
-
-        changeCurrentSelection();
-        //std::this_thread::sleep_for(std::chrono::seconds(3));
-
-        qDebug() << "Bwd Play"<< _interactor->getTimePoint()<<"total"<< _interactor->getTimePointCount();
+    if (video_status != ImageForm::VideoStop) {
+        video_status = ImageForm::VideoStop;
+        killTimer(timer_id);
+        return;
     }
+
+    video_status = ImageForm::VideoBackward;
+    qDebug() << "Bwd Play"<< _interactor->getTimePoint()<<"total"<< _interactor->getTimePointCount();
+
+    timer_id = startTimer(45);
 }
 
 
@@ -835,6 +821,33 @@ void ImageForm::keyPressEvent(QKeyEvent *event)
             p->removeFromView();
         //      removeFromView(); // Modify for selection suppression
     }
+}
+
+void ImageForm::timerEvent(QTimerEvent *event)
+{
+    // Use this to play videos....
+
+        if (video_status == ImageForm::VideoStop)
+        {
+            return;
+        }
+        else if (video_status == ImageForm::VideoForward)
+        {
+            if (_interactor->getTimePoint() < _interactor->getTimePointCount())
+                _interactor->setTimePoint(_interactor->getTimePoint() + 1);
+            else
+                _interactor->setTimePoint(1);
+        }
+        else
+        {
+            if (_interactor->getTimePoint() > 1)
+                _interactor->setTimePoint(_interactor->getTimePoint() - 1);
+            else
+                _interactor->setTimePoint(_interactor->getTimePoint());
+        }
+
+        setPixmap(_interactor->getPixmap());
+        changeCurrentSelection();
 }
 
 
