@@ -15,7 +15,7 @@ project(Checkout)
 
 
 set(Checkout_VERSION_MAJOR 1)
-set(Checkout_VERSION_MINOR 2)
+set(Checkout_VERSION_MINOR 3)
 
 #Evolutions du logiciel checkout v1.1 en v1.2 :
 
@@ -30,7 +30,7 @@ set(Checkout_VERSION_MINOR 2)
 
 set(Checkout_VERSION_COMPLEMENT R)
 
-set(Checkout_VERSION_RELEASE 2)
+set(Checkout_VERSION_RELEASE 0)
 
 option(BUILD_PLUGINS "Build plugins" ON)
 option(BUILD_PYTHON_SCRIPTING "Build with Core side Python Scripting" OFF)
