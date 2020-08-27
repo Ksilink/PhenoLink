@@ -125,6 +125,11 @@ cv::Mat &ImageInfos::image()
     return _image;
 }
 
+bool ImageInfos::isTime() const
+{
+     return _parent->getTimePointCount() != 1;
+}
+
 void ImageInfos::setColor(unsigned char r, unsigned char g, unsigned char b)
 {
     _modified = true;

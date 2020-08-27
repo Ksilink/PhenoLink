@@ -242,7 +242,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-
+    // Find everything that needs to be stopped :)
 
     delete ui;
 }
@@ -464,8 +464,13 @@ void MainWindow::updateCurrentSelection()
             lay->addWidget(setupMinMaxRanges(new QDoubleSpinBox(wid), fo, QString("vMax%1").arg(i), false));
             lay->addWidget(colorWidgetSetup(new ctkColorPickerButton(wid), fo, i));
         }
-        bvl->addWidget(wid);
 
+
+        // Add FrameRate control if it makes sense
+        if (fo->isTime()) {
+          //lay->addWidget(new QDoubleSpinBox(wid));
+        }
+        bvl->addWidget(wid);
         _imageControls[inter->getExperimentName()] = wwid;
     }
     ui->imageControl->layout()->addWidget(wwid);

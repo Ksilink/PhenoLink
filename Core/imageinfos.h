@@ -50,6 +50,7 @@ public:
 
     inline bool active() const { return _platename_to_colorCode[_plate]._active; }
 
+    inline bool isTime() const ;
 
     inline float getMin() const {return _platename_to_colorCode[_plate].min; }
     inline float getMax() const { return _platename_to_colorCode[_plate].max; }

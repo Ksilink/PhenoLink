@@ -847,7 +847,14 @@ void ImageForm::timerEvent(QTimerEvent *event)
         }
 
         setPixmap(_interactor->getPixmap());
-        changeCurrentSelection();
+//        changeCurrentSelection();
+        imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
+                .arg(_interactor->getSequenceFileModel()->Pos())
+                .arg(_interactor->getZ())
+                .arg(_interactor->getTimePoint())
+                .arg(_interactor->getField());
+        textItem->setPlainText(imageInfos);
+        this->repaint();
 }
 
 
