@@ -27,6 +27,10 @@
 
 #include "ImageDisplay/scrollzone.h"
 
+#include <QFileDialog>
+#include <QProgressDialog>
+
+#include <opencv2/opencv.hpp>
 //ImageForm* ImageForm::_selectedForm = 0;
 
 
@@ -34,8 +38,8 @@
 ImageForm::ImageForm(QWidget *parent) :
     QWidget(parent),
     video_status(VideoStop),
-   sz(0),
-   ui(new Ui::ImageForm), aspectRatio(0.0), currentScale(1.0f),  isRunning(false)
+    sz(0),
+    ui(new Ui::ImageForm), aspectRatio(0.0), currentScale(1.0f),  isRunning(false)
 {
     ui->setupUi(this);
     // Set scrollbar to disabled to avoid the interpretation of wheel events
@@ -174,7 +178,7 @@ void ImageForm::redrawPixmap()
         wa->setFuture(future);
         //      future.waitForFinished();
     }
-  //  scale(0);
+    //  scale(0);
 
     //qDebug() << "Redraw Pixmap";
     //    redrawPixmap(QPixmap::fromImage(_interactor->getImage()));
@@ -190,6 +194,15 @@ void ImageForm::updateImage()
 void ImageForm::modifiedImage()
 {
     redrawPixmap();
+}
+
+void ImageForm::changeFps(double fps)
+{
+    if (video_status!=VideoStop)
+    {
+        killTimer(timer_id);
+        timer_id=startTimer(ceil(1000/fps));
+    }
 }
 
 void ImageForm::setScrollZone(ScrollZone *z)
@@ -528,8 +541,8 @@ void ImageForm::FwdPlayClicked()
     video_status = ImageForm::VideoForward;
 
     qDebug() << "Fwd Play"<< _interactor->getTimePoint()<<"total"<< _interactor->getTimePointCount();
-   
-    timer_id = startTimer(45);
+
+    timer_id = startTimer(1000/_interactor->getFps());
 }
 
 void ImageForm::BwdPlayClicked()
@@ -543,7 +556,7 @@ void ImageForm::BwdPlayClicked()
     video_status = ImageForm::VideoBackward;
     qDebug() << "Bwd Play"<< _interactor->getTimePoint()<<"total"<< _interactor->getTimePointCount();
 
-    timer_id = startTimer(45);
+    timer_id = startTimer(1000/_interactor->getFps());
 }
 
 
@@ -642,7 +655,7 @@ void ImageForm::display3DRendering()
             for (int y = 0; y < dims[1]; y++)
             {
                 unsigned short *p = im.ptr<unsigned short>(y);
-             //   const unsigned short v = *p;
+                //   const unsigned short v = *p;
                 const float mi = ifo->getDispMin(),
                         ma = ifo->getDispMax();
                 const int R = ifo->Red();
@@ -724,6 +737,7 @@ void ImageForm::display3DRendering()
 
 void ImageForm::imageClick(QPointF pos)
 {
+    Q_UNUSED(pos);
     //  qDebug() << pos;
 }
 
@@ -776,10 +790,10 @@ void ImageForm::changeCurrentSelection()
                     sz->selectRange(this);
             }
 
-        foreach (ImageForm* p, l)
-            p->repaint();
-        foreach (ImageForm* p, sz->currentSelection())
-            p->repaint();
+            foreach (ImageForm* p, l)
+                p->repaint();
+            foreach (ImageForm* p, sz->currentSelection())
+                p->repaint();
         }
 
         _interactor->setCurrent(_interactor);
@@ -825,36 +839,37 @@ void ImageForm::keyPressEvent(QKeyEvent *event)
 
 void ImageForm::timerEvent(QTimerEvent *event)
 {
+    Q_UNUSED(event);
     // Use this to play videos....
 
-        if (video_status == ImageForm::VideoStop)
-        {
-            return;
-        }
-        else if (video_status == ImageForm::VideoForward)
-        {
-            if (_interactor->getTimePoint() < _interactor->getTimePointCount())
-                _interactor->setTimePoint(_interactor->getTimePoint() + 1);
-            else
-                _interactor->setTimePoint(1);
-        }
+    if (video_status == ImageForm::VideoStop)
+    {
+        return;
+    }
+    else if (video_status == ImageForm::VideoForward)
+    {
+        if (_interactor->getTimePoint() < _interactor->getTimePointCount())
+            _interactor->setTimePoint(_interactor->getTimePoint() + 1);
         else
-        {
-            if (_interactor->getTimePoint() > 1)
-                _interactor->setTimePoint(_interactor->getTimePoint() - 1);
-            else
-                _interactor->setTimePoint(_interactor->getTimePoint());
-        }
+            _interactor->setTimePoint(1);
+    }
+    else
+    {
+        if (_interactor->getTimePoint() > 1)
+            _interactor->setTimePoint(_interactor->getTimePoint() - 1);
+        else
+            _interactor->setTimePoint(_interactor->getTimePoint());
+    }
 
-        setPixmap(_interactor->getPixmap());
-//        changeCurrentSelection();
-        imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
-                .arg(_interactor->getSequenceFileModel()->Pos())
-                .arg(_interactor->getZ())
-                .arg(_interactor->getTimePoint())
-                .arg(_interactor->getField());
-        textItem->setPlainText(imageInfos);
-        this->repaint();
+    setPixmap(_interactor->getPixmap());
+    //        changeCurrentSelection();
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
+            .arg(_interactor->getSequenceFileModel()->Pos())
+            .arg(_interactor->getZ())
+            .arg(_interactor->getTimePoint())
+            .arg(_interactor->getField());
+    textItem->setPlainText(imageInfos);
+    this->repaint();
 }
 
 
@@ -867,13 +882,27 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
     QAction *copy = menu.addAction("Copy Image to clipboard", this, SLOT(copyToClipboard()));
     copy->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
     //    copy->setDisabled(true);
+    if (this->_interactor->getTimePointCount() > 1)
+    {
+        QMenu* cp = menu.addMenu("Copy path");
+        cp->addAction("Current Image", this, SLOT(copyCurrentImagePath()));
+        cp->addAction("Image Sequence", this, SLOT(copyCurrentSequencePath()));
+//        menu.addSeparator();
+//        // add menu video & save video with progress bar
+//        menu.addAction("Save as a Video", this, SLOT(saveVideo()));
+    }
+    else
+    {
+        menu.addAction("Copy Image Path", this, SLOT(copyCurrentImagePath()));
+    }
     menu.addSeparator();
-    QAction *remSeq = menu.addAction("Remove Sequence", this, SLOT(removeFromView()));
+
+    menu.addAction("Remove Sequence", this, SLOT(removeFromView()));
     menu.addSeparator();
 
     // FIXME: Add the proper action to pop images
 
-    QAction *popDiag = menu.addAction(parent() ? "Popup Image" : "Insert Image", this, SLOT(popImage()));
+    menu.addAction(parent() ? "Popup Image" : "Insert Image", this, SLOT(popImage()));
 
     if (_interactor->getZCount() > 1)
     {
@@ -887,12 +916,129 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
 #endif
     }
 
+
+
+
     menu.exec(mapToGlobal(pos));
 }
 
 void ImageForm::copyToClipboard()
 {
     QApplication::clipboard()->setPixmap(_interactor->getPixmap());
+}
+
+void ImageForm::copyCurrentImagePath()
+{
+    QStringList chans = _interactor->getAllChannel();
+    for (int i = 0; i < chans.size(); i++)
+        chans[i] = QString("\"%1\"").arg(chans[i]);
+    QApplication::clipboard()->setText(QString("[%1]").arg(chans.join(",")));
+}
+
+void ImageForm::copyCurrentSequencePath()
+{
+
+    SequenceFileModel* mdl = _interactor->getSequenceFileModel();
+    QStringList data;
+    for (unsigned t = 0; t < mdl->getTimePointCount(); ++t)
+    {
+        QStringList l;
+        for (unsigned c = 0; c < _interactor->getChannels(); ++c)
+            l << QString("\"%1\"").arg(mdl->getFile(t, _interactor->getField(), _interactor->getZ(), c));
+        data << QString("[%1]").arg(l.join(","));
+    }
+    QApplication::clipboard()->setText(QString("[%1]").arg(data.join(",")));
+}
+
+cv::Mat QImageToMat(QImage image)
+{
+    cv::Mat mat;
+    switch (image.format())
+    {
+    case QImage::Format_ARGB32:
+    case QImage::Format_RGB32:
+    case QImage::Format_ARGB32_Premultiplied:
+        mat = cv::Mat(image.height(), image.width(), CV_8UC4, (void*)image.constBits(), image.bytesPerLine());
+        cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+        break;
+    case QImage::Format_RGB888:
+        mat = cv::Mat(image.height(), image.width(), CV_8UC3, (void*)image.constBits(), image.bytesPerLine());
+          cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+        break;
+    case QImage::Format_Grayscale8:
+        mat = cv::Mat(image.height(), image.width(), CV_8UC1, (void*)image.constBits(), image.bytesPerLine());
+        cv::cvtColor(mat, mat, cv::COLOR_GRAY2BGR);
+        break;
+    default:
+        qDebug() << "Image conversion errors!";
+    }
+
+    return mat;
+}
+
+void ImageForm::saveVideo()
+{
+    QString filename = QFileDialog::getSaveFileName(this, "Path to Video",
+                                                    QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation).front(), "Video file (*.avi);;All Files (*)");
+
+    if (filename.isEmpty()) return;
+
+    if (QFile::exists(filename)) QFile::remove(filename);
+
+    QProgressDialog progress(QString("Creating video @ %1 fps").arg(_interactor->getFps()), "Stop Creation", 1, _interactor->getTimePointCount(), this);
+    progress.setWindowModality(Qt::WindowModal);
+
+    int currentTime = _interactor->getTimePoint();
+
+
+    int w = ceil(this->width()/8.)*8;
+    int h = ceil(this->height()/8.)*8;
+
+    cv::Mat im(h,w, CV_8UC3);
+    cv::Size s(h,w);
+    cv::Rect2i r(0,0, this->width(), this->height());
+
+
+    cv::VideoWriter writer;
+    int fourcc = cv::VideoWriter::fourcc('H','2','6','4');
+    writer.open(filename.toStdString(),  fourcc, (int)_interactor->getFps(), s);
+
+    for (unsigned i = 1; i <= _interactor->getTimePointCount(); i++) {
+        progress.setValue(i);
+        _interactor->setTimePoint(i);
+
+        setPixmap(_interactor->getPixmap());
+        //        changeCurrentSelection();
+        imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
+                .arg(_interactor->getSequenceFileModel()->Pos())
+                .arg(_interactor->getZ())
+                .arg(_interactor->getTimePoint())
+                .arg(_interactor->getField());
+        textItem->setPlainText(imageInfos);
+        repaint();
+
+        QImage img = grab().toImage();
+        // Now opencv stuff
+        im(r) = QImageToMat(img);
+        writer.write(im);
+
+
+        if (progress.wasCanceled())
+            break;
+    }
+
+    writer.release();
+    progress.setValue( _interactor->getTimePointCount());
+
+    _interactor->setTimePoint(currentTime);
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
+            .arg(_interactor->getSequenceFileModel()->Pos())
+            .arg(_interactor->getZ())
+            .arg(_interactor->getTimePoint())
+            .arg(_interactor->getField());
+    textItem->setPlainText(imageInfos);
+    repaint();
+
 }
 
 void ImageForm::popImage()

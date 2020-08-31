@@ -220,8 +220,7 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
     {
         QJsonObject params = array.at(i).toObject();
         _process_to_start[params["CoreProcess_hash"].toString()] = params;
-        if (i < 4)
-            _display[params["CoreProcess_hash"].toString()] = true;
+        _display[params["CoreProcess_hash"].toString()] = true;
 
       //  QSqlQuery q;
         QJsonObject pp(params);

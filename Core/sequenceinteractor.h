@@ -30,6 +30,8 @@ public:
   unsigned getChannel();
 
 
+  double getFps();
+
   QString getFileName();
 
 
@@ -72,12 +74,14 @@ public slots:
   void setField(unsigned t);
   void setZ(unsigned z);
   void setChannel(unsigned c);
+  void setFps(double fps);
 
 
 protected:
 
   SequenceFileModel* _mdl;
   unsigned _timepoint, _field, _zpos, _channel;
+  double _fps;
 
   QMap<QString, ImageInfos*> _infos;
 

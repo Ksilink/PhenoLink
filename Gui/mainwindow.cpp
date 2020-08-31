@@ -290,6 +290,26 @@ QCheckBox* MainWindow::setupActiveBox(QCheckBox* box, ImageInfos* fo, int channe
     return box;
 }
 
+QDoubleSpinBox *MainWindow::setupVideoFrameRate(QDoubleSpinBox *extr, QString text)
+{
+   // qDebug() << _sinteractor.current()->getFps();
+
+    extr->setObjectName(text);
+    extr->setMinimum(0);
+    extr->setMaximum(500);
+    extr->setDecimals(1);
+    extr->setValue(_sinteractor.current()->getFps());
+
+    extr->setToolTip(text);
+
+    extr->disconnect();
+
+        //      connect(extr, SIGNAL(valueChanged(double)), fo, SLOT(forceMaxValue(double)),  Qt::UniqueConnection);
+    connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeFpsValue(double)), Qt::UniqueConnection);
+
+    return extr;
+}
+
 
 void MainWindow::active_Channel(bool c)
 {
@@ -466,13 +486,16 @@ void MainWindow::updateCurrentSelection()
         }
 
 
-        // Add FrameRate control if it makes sense
-        if (fo->isTime()) {
-          //lay->addWidget(new QDoubleSpinBox(wid));
-        }
+
         bvl->addWidget(wid);
         _imageControls[inter->getExperimentName()] = wwid;
     }
+
+    // Add FrameRate control if it makes sense
+    if (inter->getTimePointCount() > 1) {
+      bvl->addWidget(setupVideoFrameRate(new QDoubleSpinBox(wwid), QString("Video Frame Rate")));
+    }
+
     ui->imageControl->layout()->addWidget(wwid);
 
     // Cosmetics... Set the width of spinbox to a fixed largest value, to fit the screen evenly for all channels
@@ -1540,6 +1563,12 @@ void MainWindow::changeRangeValueMin(double val)
 
     ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
     fo->forceMinValue(val);
+}
+
+void MainWindow::changeFpsValue(double val)
+{
+    SequenceInteractor* inter = _sinteractor.current();
+    inter->setFps(val);
 }
 
 

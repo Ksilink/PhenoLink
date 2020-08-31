@@ -97,6 +97,7 @@ protected:
     ctkColorPickerButton * colorWidgetSetup(ctkColorPickerButton *w, ImageInfos *fo, int channel, bool reconnect = false);
     QDoubleSpinBox *setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* fo, QString text, bool isMin, bool reconnect = false);
     QCheckBox *setupActiveBox(QCheckBox *box, ImageInfos *fo, int channel, bool reconnect = false);
+    QDoubleSpinBox *setupVideoFrameRate(QDoubleSpinBox* extr, QString text);
     QWidget *widgetFromJSON(QJsonObject &par);
 
 
@@ -177,6 +178,7 @@ public slots:
     void rangeChange(double mi, double ma);
     void changeRangeValueMax(double val);
     void changeRangeValueMin(double val);
+    void changeFpsValue(double val);
 
     void commitTableToDatabase();
     void clearTable();

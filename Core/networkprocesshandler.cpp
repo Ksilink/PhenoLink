@@ -482,7 +482,7 @@ void NetworkProcessHandler::queryPayload(QString ohash)
     else
     {
         runningProcs.remove(hash);
-        qDebug() << "Network Stack remaining hash" << runningProcs.size();
+        qDebug() << "query Payload: Network Stack remaining hash" << runningProcs.size();
     }
 
     qDebug() << "Query Payload";
@@ -520,7 +520,7 @@ void NetworkProcessHandler::deletePayload(QString hash)
     {
       //  qDebug() << "deletePayload: sending delete command for" << hash;
         runningProcs.remove(hash);
-        qDebug() << "Network Stack remaining hash" << runningProcs.size();
+        qDebug() << "Delete payload: Network Stack remaining hash" << runningProcs.size();
 
     }
 
@@ -548,13 +548,18 @@ void NetworkProcessHandler::deletePayload(QString hash)
 
 void NetworkProcessHandler::processFinished(QString hash)
 {
-    runningProcs.remove(hash);
-    qDebug() << "Network Stack remaining hash" << runningProcs.size();
+//    runningProcs.remove(hash);
+    qDebug() << "Process finished : Network Stack remaining hash" << runningProcs.size();
     (*hash_logfile) << "Finished " << hash << Qt::endl;
 
 //    qDebug() << "Query clear mem" << hash;
 //    CheckoutProcess::handler().deletePayload(hash);
 
+}
+
+void NetworkProcessHandler::removeHash(QString hash)
+{
+    runningProcs.remove(hash);
 }
 
 

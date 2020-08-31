@@ -36,3 +36,4 @@
 CMakeSettings.json
 CMakeLists.txt.user
 CMakeLists.txt.user
+*.pyc

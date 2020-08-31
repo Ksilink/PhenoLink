@@ -127,7 +127,12 @@ cv::Mat &ImageInfos::image()
 
 bool ImageInfos::isTime() const
 {
-     return _parent->getTimePointCount() != 1;
+    return _parent->getTimePointCount() != 1;
+}
+
+double ImageInfos::getFps() const
+{
+    return _parent->getFps();
 }
 
 void ImageInfos::setColor(unsigned char r, unsigned char g, unsigned char b)
@@ -255,6 +260,18 @@ void ImageInfos::forceMaxValue(double val)
     // s qDebug() << "Image max " << _platename_to_colorCode[_plate].min << _platename_to_colorCode[_plate].max << val;
     _platename_to_colorCode[_plate].max = val;
     //  _platename_to_colorCode[_plate]._dispMax = val;
+    foreach (ImageInfos* ifo, _platename_to_infos[_plate])
+    {
+        ifo->_parent->modifiedImage();
+
+    }
+}
+
+void ImageInfos::changeFps(double fps)
+{
+    _modified = true;
+    _parent->setFps(fps);
+
     foreach (ImageInfos* ifo, _platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();

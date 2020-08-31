@@ -38,6 +38,7 @@ public:
 
     void deletePayload(QString hash);
     void processFinished(QString);
+    void removeHash(QString hash);
 
     void exitServer();
 

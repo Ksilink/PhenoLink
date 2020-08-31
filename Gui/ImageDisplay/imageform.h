@@ -46,6 +46,8 @@ public:
     QString contentPos();
     void updateImage();
     virtual void modifiedImage();
+    virtual void changeFps(double fps);
+
     void setScrollZone(ScrollZone* z);
     void setSelectState(bool val);
     void updateButtonVisibility();
@@ -95,6 +97,9 @@ private slots:
 
     void on_ImageForm_customContextMenuRequested(const QPoint &pos);
     void copyToClipboard();
+    void copyCurrentImagePath();
+    void copyCurrentSequencePath();
+    void saveVideo();
     void popImage();
     void removeFromView();
 

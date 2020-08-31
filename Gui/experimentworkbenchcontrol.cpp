@@ -37,11 +37,10 @@
 
 ExperimentWorkbenchControl::ExperimentWorkbenchControl(ExperimentFileModel *mdl, GraphicsScreensItem* _gfx, QWidget *parent):
     QWidget(parent),
-    _xpTree(0),
-    _mdl(mdl), gfx(_gfx),
+    _mdl(mdl),gfx(_gfx),
     _choice_container(0),
     _tags_container(0),
-    _coloriz(0), _colorButton(0), _colorButton2(0)
+    _coloriz(0),  _xpTree(0), _colorButton(0), _colorButton2(0)
 {
     if (mdl->getValidSequenceFiles().size() == 0) return;
 
@@ -370,7 +369,7 @@ void ExperimentWorkbenchControl::perform_lda(MatrixDataModel *mdm)
 {
     // Let use OpenCV LDA dataset
     //    cv::Mat
-   // qDebug() << "LDA";
+    // qDebug() << "LDA";
 
     QModelIndexList idx = _selected_tags->checkedIndexes();
 
@@ -466,7 +465,7 @@ void ExperimentWorkbenchControl::perform_lda(MatrixDataModel *mdm)
         res.push_back(bestId);
     }
 
- //   qDebug() << "Ending";
+    //   qDebug() << "Ending";
 
     rws2 = 0;
     for (int r = 0; r < mdm->rowCount(); ++r)

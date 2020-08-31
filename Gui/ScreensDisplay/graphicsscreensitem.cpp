@@ -98,6 +98,12 @@
     }
 
 
+    QString posToString(int x, int y)
+    {
+        unsigned char key[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        return QString("%1%2").arg(QChar(key[x])).arg(y+1, 2, 10, QLatin1Char('0'));
+    }
+
     QRectF GraphicsScreensItem::constructWellRepresentation(ExperimentFileModel* mdl,  ScreensGraphicsView* view)
     {
         QGraphicsScene *scene = view->scene();
@@ -175,6 +181,8 @@
                 WellRepresentationItem* rc = new WellRepresentationItem(pos+2, posy+2, w-4, h-4, this);
                 connect(rc, SIGNAL(selectionChanged()), this, SLOT(innerSelectionChanged()));
 
+
+
                 rc->setWellPosition(QPoint(r, col));
                 rc->setGraphicsScreensItem(this);
 
@@ -183,6 +191,7 @@
                     rc->setBrush(QBrush(Qt::green));
                     rc->setFlags(QGraphicsItem::ItemIsSelectable);
                     _items << rc;
+                    rc->setToolTip(posToString(r,col));
                 }
                 else
                   {

@@ -35,6 +35,7 @@ class CoreImage
 {
 public:
     virtual void modifiedImage() = 0;
+    virtual void changeFps(double fps) = 0;
 };
 
 
@@ -50,7 +51,8 @@ public:
 
     inline bool active() const { return _platename_to_colorCode[_plate]._active; }
 
-    inline bool isTime() const ;
+    bool isTime() const ;
+    double getFps() const;
 
     inline float getMin() const {return _platename_to_colorCode[_plate].min; }
     inline float getMax() const { return _platename_to_colorCode[_plate].max; }
@@ -95,6 +97,7 @@ public slots:
     void  forceMinValue(double val);
     void  forceMaxValue(double val);
 
+    void changeFps(double fps);
 
     void rangeMinValueChanged(double mi) ;
     void rangeMaxValueChanged(double ma) ;
@@ -118,6 +121,7 @@ protected:
 
     cv::Mat _image;
     QMutex _lockImage;
+    double _fps;
 
 };
 
