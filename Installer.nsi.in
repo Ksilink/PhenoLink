@@ -65,8 +65,8 @@ File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"
 SetOutPath $INSTDIR\bin\imageformats
 File "@CMAKE_BINARY_DIR@\bin\imageformats\*.dll"
 
-SetOutPath $INSTDIR\bin\sqldrivers
-File "@CMAKE_BINARY_DIR@\bin\sqldrivers\*.dll"
+#SetOutPath $INSTDIR\bin\sqldrivers
+#File "@CMAKE_BINARY_DIR@\bin\sqldrivers\*.dll"
 
 
 
