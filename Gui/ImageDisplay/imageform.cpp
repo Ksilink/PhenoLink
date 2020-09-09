@@ -38,6 +38,7 @@
 ImageForm::ImageForm(QWidget *parent) :
     QWidget(parent),
     video_status(VideoStop),
+    packed(true),
     sz(0),
     ui(new Ui::ImageForm), aspectRatio(0.0), currentScale(1.0f),  isRunning(false)
 {
@@ -123,8 +124,8 @@ ImageForm::~ImageForm()
 void ImageForm::setPixmap(QPixmap pix)
 {
 
-    _pix = pix;
-    pixItem->setPixmap(_pix);
+    //_pix = pix;
+    pixItem->setPixmap(pix);
     ui->graphicsView->setSceneRect(pixItem->boundingRect());
 
     // pixItem->setPos(0,0);
@@ -153,30 +154,49 @@ void ImageForm::redrawPixmap(QPixmap img)
 {
     //    qDebug() << "redrawPixmap";
     setPixmap(img);
+    ui->graphicsView->scene()->setSceneRect(pixItem->boundingRect());
     pixItem->update();
 }
 
 
-QPixmap runnerInteractorGetPixmap( SequenceInteractor* _interactor)
+QPixmap runnerInteractorGetPixmapUnpacked( SequenceInteractor* _interactor)
 {
-    //    qDebug() << "Start pixmap";
-    QPixmap r = _interactor->getPixmap();
+      qDebug() << "Redraw Pixmap Unpacked";
+    QPixmap r = _interactor->getPixmap(false);
     //qDebug() << "Finished pixmap";
 
     return r;
 }
 
+QPixmap runnerInteractorGetPixmapPacked( SequenceInteractor* _interactor)
+{
+    //    qDebug() << "Start pixmap";
+    QPixmap r = _interactor->getPixmap(true);
+    //qDebug() << "Finished pixmap";
+
+    return r;
+}
+
+
 void ImageForm::redrawPixmap()
 {
     if (!isRunning)
     {
+
         isRunning = true;
         QFutureWatcher<QPixmap>* wa = new QFutureWatcher<QPixmap>();
         connect(wa, SIGNAL(finished()), this, SLOT(watcherPixmap()));
+        if (packed)
+        {
+            QFuture<QPixmap>  future = QtConcurrent::run(runnerInteractorGetPixmapPacked, _interactor);
+            wa->setFuture(future);
+        }
+        else
+        {
 
-        QFuture<QPixmap>  future = QtConcurrent::run(runnerInteractorGetPixmap, _interactor);
-        wa->setFuture(future);
-        //      future.waitForFinished();
+            QFuture<QPixmap>  future = QtConcurrent::run(runnerInteractorGetPixmapUnpacked, _interactor);
+            wa->setFuture(future);
+        }           //      future.waitForFinished();
     }
     //  scale(0);
 
@@ -187,7 +207,7 @@ void ImageForm::redrawPixmap()
 
 void ImageForm::updateImage()
 {
-    setPixmap(_interactor->getPixmap());
+    setPixmap(_interactor->getPixmap(packed));
     scale(0);
 }
 
@@ -476,7 +496,7 @@ void ImageForm::prevImClicked()
     if (_interactor->getField() > 1)
     {
         _interactor->setField(_interactor->getField() - 1);
-        setPixmap(_interactor->getPixmap());
+        setPixmap(_interactor->getPixmap(packed));
     }
     changeCurrentSelection();
 }
@@ -486,7 +506,7 @@ void ImageForm::nextImClicked()
     if (_interactor->getField() <= _interactor->getFieldCount())
     {
         _interactor->setField(_interactor->getField() + 1);
-        setPixmap(_interactor->getPixmap());
+        setPixmap(_interactor->getPixmap(packed));
     }
     changeCurrentSelection();
 }
@@ -496,7 +516,7 @@ void ImageForm::sliceUpClicked()
     if (_interactor->getZ() <= _interactor->getZCount())
     {
         _interactor->setZ(_interactor->getZ()+1);
-        setPixmap(_interactor->getPixmap());
+        setPixmap(_interactor->getPixmap(packed));
     }
     changeCurrentSelection();
 }
@@ -506,7 +526,7 @@ void ImageForm::sliceDownClicked()
     if (_interactor->getZ() > 1)
     {
         _interactor->setZ(_interactor->getZ() - 1);
-        setPixmap(_interactor->getPixmap());
+        setPixmap(_interactor->getPixmap(packed));
     }
     changeCurrentSelection();
 }
@@ -516,7 +536,7 @@ void ImageForm::nextFrameClicked()
     if (_interactor->getTimePoint() <= _interactor->getTimePointCount())
     {
         _interactor->setTimePoint(_interactor->getTimePoint()+1);
-        setPixmap(_interactor->getPixmap());
+        setPixmap(_interactor->getPixmap(packed));
     }
     changeCurrentSelection();
 }
@@ -526,7 +546,7 @@ void ImageForm::prevFrameClicked()
     if (_interactor->getTimePoint() > 1)
     {
         _interactor->setTimePoint(_interactor->getTimePoint() - 1);
-        setPixmap(_interactor->getPixmap());
+        setPixmap(_interactor->getPixmap(packed));
     }
     changeCurrentSelection();
 }
@@ -861,7 +881,7 @@ void ImageForm::timerEvent(QTimerEvent *event)
             _interactor->setTimePoint(_interactor->getTimePoint());
     }
 
-    setPixmap(_interactor->getPixmap());
+    setPixmap(_interactor->getPixmap(packed));
     //        changeCurrentSelection();
     imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
             .arg(_interactor->getSequenceFileModel()->Pos())
@@ -872,6 +892,11 @@ void ImageForm::timerEvent(QTimerEvent *event)
     this->repaint();
 }
 
+void ImageForm::changePacking()
+{
+    packed = !packed;
+    redrawPixmap();
+}
 
 
 void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
@@ -897,6 +922,13 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
     }
     menu.addSeparator();
 
+
+    if (_interactor->getFieldCount() > 1)
+    {
+        menu.addAction("Unpack/repack Fields", this, SLOT(changePacking()));
+        menu.addSeparator();
+    }
+
     menu.addAction("Remove Sequence", this, SLOT(removeFromView()));
     menu.addSeparator();
 
@@ -916,15 +948,12 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
 #endif
     }
 
-
-
-
     menu.exec(mapToGlobal(pos));
 }
 
 void ImageForm::copyToClipboard()
 {
-    QApplication::clipboard()->setPixmap(_interactor->getPixmap());
+    QApplication::clipboard()->setPixmap(_interactor->getPixmap(packed));
 }
 
 void ImageForm::copyCurrentImagePath()

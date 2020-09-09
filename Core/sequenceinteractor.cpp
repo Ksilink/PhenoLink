@@ -6,7 +6,7 @@
 
 #include <QtConcurrent/QtConcurrent>
 #include <QMutex>
-
+#include <QPainter>
 #include <QElapsedTimer>
 
 
@@ -49,8 +49,8 @@ void SequenceInteractor::setFps(double fps)
 {
     _fps = fps;
 
-//    foreach (ImageInfos* im, _infos.values())
-//        im->changeFps(fps);
+    //    foreach (ImageInfos* im, _infos.values())
+    //        im->changeFps(fps);
 
     foreach (CoreImage* im, _ImageList)
         im->changeFps(fps);
@@ -123,7 +123,7 @@ QStringList SequenceInteractor::getAllChannel(int field)
 {
     QStringList l;
 
-    if (field < 0) field = _field;
+    if (field <= 0) field = _field;
     SequenceFileModel::Channel& chans = _mdl->getChannelsFiles(_timepoint, field, _zpos);
 
     for (SequenceFileModel::Channel::const_iterator it = chans.cbegin(), e = chans.cend();
@@ -138,7 +138,10 @@ int SequenceInteractor::getChannelsFromFileName(QString file)
     SequenceFileModel::Channel& chans = _mdl->getChannelsFiles(_timepoint, _field, _zpos);
 
     for (SequenceFileModel::Channel::iterator it = chans.begin(), e = chans.end(); it != e; ++it)
+    {
+        qDebug() << it.value() << file;
         if (it.value() == file) return it.key();
+    }
     return -1;
 }
 
@@ -247,15 +250,13 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel)
     {
         QString exp = getExperimentName();
         int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
-
+//        qDebug() << "Building Image info" << file << exp << ii;
         info = new ImageInfos(this, file, exp+QString("%1").arg(ii));
         if (_mdl->getOwner()->hasProperty("ChannelsColor"+QString("%1").arg(ii)))
         {
             QColor col;
             QString cname  = _mdl->getOwner()->property("ChannelsColor"+QString("%1").arg(ii));
             col.setNamedColor(cname);
-            //          qDebug() <<cname << col;
-            //          qDebug() << "Creating" <<  _mdl->getOwner()->name() <<  cname << col;
             info->setColor(col);
         }
         else
@@ -281,31 +282,134 @@ void SequenceInteractor::preloadImage()
 }
 
 
+QPoint getMatrixSize(SequenceFileModel* seq, unsigned fieldc,  int z, int t, int c)
+{
+
+    QSet<double> x,y;
+
+    for (unsigned field = 1; field < fieldc; ++ field)
+    {
+        QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
+        x.insert(seq->property(k).toDouble());
+        k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
+        y.insert(seq->property(k).toDouble());
+
+    }
+
+    return QPoint(x.size(), y.size());
+}
+
+
+QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned fieldc,  int z, int t, int c)
+{
+
+    QSet<double> x,y;
+
+    for (unsigned field = 1; field < fieldc; ++ field)
+    {
+        QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
+        x.insert(seq->property(k).toDouble());
+        k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
+        y.insert(seq->property(k).toDouble());
+
+    }
+    QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
+    std::sort(xl.begin(), xl.end());
+    std::sort(yl.begin(), yl.end());
+    //    qDebug() <<  xl << yl;
+    //    xl.indexOf(), yl.indexOf()
+    return qMakePair(xl,yl);
+}
+
+QPointF getFieldPos(SequenceFileModel* seq, int field, int z, int t, int c)
+{
+    QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
+    double x = seq->property(k).toDouble();
+    k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
+    double y = seq->property(k).toDouble();
+
+    return QPointF(x,y);
+}
+
+
+
+struct StitchStruct
+{
+    StitchStruct(SequenceInteractor* seq): seq(seq)
+    {}
+
+    typedef QPair<int, QImage> result_type;
+
+    QPair<int, QImage> operator()(int field)
+    {
+        return  qMakePair(field, seq->getPixmapChannels(field));
+    }
+
+
+    SequenceInteractor* seq;
+};
+
 // Warning: Critical function for speed
 // ENHANCE: Modify the handling of scale information
 
-QPixmap SequenceInteractor::getPixmap(int field, float scale)
+QPixmap SequenceInteractor::getPixmap(bool packed, float scale)
 {
+//    qDebug() << "getPixmap" << packed;
     Q_UNUSED(scale);
+    if (packed)
+    {
+        QImage toPix = getPixmapChannels(_field);
+        _cachePixmap = QPixmap::fromImage(toPix);
+        return _cachePixmap;
+    }
+    else // Unpack the data !!
+    {
 
-    //  _mdl->displayData();
-    //  QElapsedTimer t;
-    //  QElapsedTimer t2;
-    //  qDebug() << "SequenceInteractor getImage" << getFileName();
-    //  t.start();
+        QPair<QList<double>, QList<double> > li =
+                getWellPos(_mdl, _mdl->getFieldCount(), _zpos, _timepoint, _channel);
+
+        QList<int> perf; for (unsigned i = 0; i < _mdl->getFieldCount(); ++i) perf.append( i+1);
+        QList<QPair<int, QImage> > toStitch = QtConcurrent::blockingMapped(perf, StitchStruct(this));
+
+
+        const int rows = li.first.size() * toStitch[0].second.width();
+        const int cols = li.second.size() * toStitch[0].second.height();
+        QImage toPix(cols, rows, QImage::Format_RGBA8888);
+
+        toPix.fill(Qt::black);
+        for (unsigned i = 0; i < _mdl->getFieldCount(); ++i)
+        {
+
+            QPointF p = getFieldPos(_mdl, toStitch[i].first, _zpos, _timepoint, _channel);
+
+            int x = li.first.indexOf(p.x());
+            int y = li.second.size() - li.second.indexOf(p.y()) - 1;
+            QPainter pa(&toPix);
+            QPoint offset = QPoint(x*toStitch[0].second.width(), y * toStitch[0].second.height());
+            qDebug() << p.x() << p.y() << li.first << li.second;
+            qDebug() << x << y << offset << toStitch[0].second.width() <<  toStitch[0].second.height();
+
+            pa.drawImage(offset, toStitch[i].second);
+        }
+
+        _cachePixmap = QPixmap::fromImage(toPix);
+        return _cachePixmap;
+    }
+}
+
+QImage SequenceInteractor::getPixmapChannels(int field, float scale)
+{
     QStringList list = getAllChannel(field);
-    //  qDebug() << "Image Channels" << list;
-
-    //    qDebug() << "SequenceInteractor getImage" << exp;
 
     std::vector<ImageInfos*> img(list.size());
     std::vector<cv::Mat*> images(list.size());
     int ii = 0;
     for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it,++ii)
     {
-        img[ii] = imageInfos(*it);
+        img[ii] = imageInfos(*it,ii+1);
         // qDebug() << img[ii];
     }
+
 
     for (size_t i = 0; i < images.size(); ++i)
         images[i] = &img[i]->image();
@@ -337,7 +441,7 @@ QPixmap SequenceInteractor::getPixmap(int field, float scale)
             QVector<QColor> pa = img[c]->getPalette();
             QVector<int> state = img[c]->getState();
             if (state.size() < 16) state.resize(16);
-//            QRgb black = QColor(0,0,0).rgb();
+            //            QRgb black = QColor(0,0,0).rgb();
             for (int i = 0; i < rows; ++i)
             {
                 unsigned short *p = images[c]->ptr<unsigned short>(i);
@@ -383,12 +487,7 @@ QPixmap SequenceInteractor::getPixmap(int field, float scale)
             }
         }
     }
-
-
-
-
-    _cachePixmap = QPixmap::fromImage(toPix);
-    return _cachePixmap;
+    return toPix;
 }
 
 

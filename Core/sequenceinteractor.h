@@ -38,7 +38,8 @@ public:
   // Returns file for current selection
   QString getFile();
   void preloadImage();
-  QPixmap getPixmap(int field = -1, float scale = 1.);
+  QPixmap getPixmap(bool packed = true, float scale = 1.);
+  QImage getPixmapChannels(int field, float scale = 1.);
   QList<unsigned> getData(QPointF d);
 
 

@@ -11,6 +11,8 @@ GraphicsPixmapItem::GraphicsPixmapItem(QGraphicsItem *parent) :
   setFlags(QGraphicsItem::ItemIsMovable
            | QGraphicsItem::ItemSendsScenePositionChanges);
   setAcceptHoverEvents(true);
+  setPos(0, 0);
+
 }
 
 

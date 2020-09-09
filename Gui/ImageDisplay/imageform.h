@@ -100,6 +100,7 @@ private slots:
     void copyCurrentImagePath();
     void copyCurrentSequencePath();
     void saveVideo();
+    void changePacking();
     void popImage();
     void removeFromView();
 
@@ -113,6 +114,8 @@ public slots:
 
     void redrawPixmap(QPixmap img);
 private:
+    bool packed;
+
     ScrollZone* sz;
 
     Ui::ImageForm *ui;
