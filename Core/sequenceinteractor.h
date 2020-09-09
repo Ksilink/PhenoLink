@@ -38,13 +38,12 @@ public:
   // Returns file for current selection
   QString getFile();
   void preloadImage();
-  QPixmap getPixmap(float scale = 1.);
-
+  QPixmap getPixmap(int field = -1, float scale = 1.);
   QList<unsigned> getData(QPointF d);
 
 
   // Return all channels file for current selection
-  QStringList getAllChannel();
+  QStringList getAllChannel(int field = -1);
   int getChannelsFromFileName(QString file);
 
   QImage getAllChannelsImage();
@@ -64,7 +63,7 @@ public:
   void clearMemory();
 //signals:
   void modifiedImage();
-
+  QPointF getFieldPosition(int field = -1);
 //protected:
   ImageInfos *imageInfos(QString file, int channel = -1);
 

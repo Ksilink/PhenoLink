@@ -20,7 +20,7 @@ Section -Prerequisites
   SetOutPath $INSTDIR\Prerequisites
 
   MessageBox MB_YESNO "Install the Microsoft Visual C++ 2015 Redistribual (x64) - 14 ?" /SD IDYES IDNO endNetCF
-    File "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\1033\vcredist_x64.exe"
+    File "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Redist\MSVC\14.16.27012\vcredist_x64.exe"
     ExecWait "$INSTDIR\vcredist_x64.exe"
   endNetCF:
 
@@ -33,13 +33,13 @@ Section "Main Installer Section"
 SetOutPath $INSTDIR\bin
 
 # specify file to go in output path
-File "@CMAKE_BINARY_DIR@\bin\Release\Checkout.exe"
-File "@CMAKE_BINARY_DIR@\bin\Release\CheckoutProcessServer.exe"
+File "@CMAKE_BINARY_DIR@\bin\Checkout.exe"
+File "@CMAKE_BINARY_DIR@\bin\CheckoutProcessServer.exe"
 
 CreateDirectory $INSTDIR\bin\Cache
 
-File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
-;File "@CMAKE_BINARY_DIR@\bin\Release\*.manifest"
+File "@CMAKE_BINARY_DIR@\bin\*.dll"
+;File "@CMAKE_BINARY_DIR@\bin\*.manifest"
 
 # define uninstaller name
 WriteUninstaller $INSTDIR\uninstaller.exe
@@ -51,22 +51,22 @@ Section "Plugin Installer Section"
 
 # define output path
 SetOutPath $INSTDIR\bin\plugins
-File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\plugins\*.dll"
 
 ;SetOutPath $INSTDIR\bin\Release\accessible
-;File "@CMAKE_BINARY_DIR@\bin\Release\accessible\*.dll"
+;File "@CMAKE_BINARY_DIR@\bin\accessible\*.dll"
 
 SetOutPath $INSTDIR\bin\platforms
-File "@CMAKE_BINARY_DIR@\bin\Release\platforms\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\platforms\*.dll"
 
 SetOutPath $INSTDIR\bin\iconengines
-File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"
 
 SetOutPath $INSTDIR\bin\imageformats
-File "@CMAKE_BINARY_DIR@\bin\Release\imageformats\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\imageformats\*.dll"
 
 #SetOutPath $INSTDIR\bin\sqldrivers
-#File "@CMAKE_BINARY_DIR@\bin\Release\sqldrivers\*.dll"
+#File "@CMAKE_BINARY_DIR@\bin\sqldrivers\*.dll"
 
 
 

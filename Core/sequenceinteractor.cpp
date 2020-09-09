@@ -119,11 +119,12 @@ QString SequenceInteractor::getFile()
 }
 
 
-QStringList SequenceInteractor::getAllChannel()
+QStringList SequenceInteractor::getAllChannel(int field)
 {
     QStringList l;
 
-    SequenceFileModel::Channel& chans = _mdl->getChannelsFiles(_timepoint, _field, _zpos);
+    if (field < 0) field = _field;
+    SequenceFileModel::Channel& chans = _mdl->getChannelsFiles(_timepoint, field, _zpos);
 
     for (SequenceFileModel::Channel::const_iterator it = chans.cbegin(), e = chans.cend();
          it != e; ++it)
@@ -176,6 +177,15 @@ void SequenceInteractor::modifiedImage()
     {
         ci->modifiedImage();
     }
+}
+
+QPointF SequenceInteractor::getFieldPosition(int field)
+{
+    if (field < 0) field = _field;
+    QString x = QString("f%1s%2t%3c%4%5").arg(field).arg(_zpos).arg(_timepoint).arg(1).arg("X");
+    QString y = QString("f%1s%2t%3c%4%5").arg(field).arg(_zpos).arg(_timepoint).arg(1).arg("Y");
+
+    return QPoint(_mdl->property(x).toDouble(), _mdl->property(y).toDouble());
 }
 
 ImageInfos *SequenceInteractor::getChannelImageInfos(unsigned channel)
@@ -274,7 +284,7 @@ void SequenceInteractor::preloadImage()
 // Warning: Critical function for speed
 // ENHANCE: Modify the handling of scale information
 
-QPixmap SequenceInteractor::getPixmap(float scale)
+QPixmap SequenceInteractor::getPixmap(int field, float scale)
 {
     Q_UNUSED(scale);
 
@@ -283,7 +293,7 @@ QPixmap SequenceInteractor::getPixmap(float scale)
     //  QElapsedTimer t2;
     //  qDebug() << "SequenceInteractor getImage" << getFileName();
     //  t.start();
-    QStringList list = getAllChannel();
+    QStringList list = getAllChannel(field);
     //  qDebug() << "Image Channels" << list;
 
     //    qDebug() << "SequenceInteractor getImage" << exp;
@@ -380,6 +390,7 @@ QPixmap SequenceInteractor::getPixmap(float scale)
     _cachePixmap = QPixmap::fromImage(toPix);
     return _cachePixmap;
 }
+
 
 QList<unsigned> SequenceInteractor::getData(QPointF d)
 {
