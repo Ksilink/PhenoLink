@@ -148,7 +148,10 @@ int FlowLayout::doLayout(const QRect &rect, bool testOnly) const
           lineHeight = 0;
         }
 
-      float ratio =  (effectiveRect.width() / (float)ncols)  / item->sizeHint().width();
+      float ratio =  std::min((effectiveRect.width() / (float)ncols)  / item->sizeHint().width(),
+                              ((float)effectiveRect.height())  / item->sizeHint().height()
+                                                          );
+
 
       if (!testOnly)
         {

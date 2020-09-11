@@ -38,7 +38,7 @@
 ImageForm::ImageForm(QWidget *parent) :
     QWidget(parent),
     video_status(VideoStop),
-    packed(true),
+    packed(true),wasPacked(true),
     sz(0),
     ui(new Ui::ImageForm), aspectRatio(0.0), currentScale(1.0f),  isRunning(false)
 {
@@ -127,7 +127,37 @@ void ImageForm::setPixmap(QPixmap pix)
     //_pix = pix;
     pixItem->setPixmap(pix);
     ui->graphicsView->setSceneRect(pixItem->boundingRect());
+    if (packed != wasPacked)
+    {   // Fit all !!
+        //  scale(0);
 
+
+        gsi[GraphicsSignItem::NextIm]->setVisible(packed);
+        gsi[GraphicsSignItem::PrevIm]->setVisible(packed);
+
+
+        QSize r = pixItem->pixmap().size();//boundingRect();
+
+        aspectRatio = std::max(ui->graphicsView->size().width()/ (float)r.width(),
+                               ui->graphicsView->size().height()/(float)r.height());
+
+        QPointF center = pixItem->mapFromScene(QPointF(r.width()/2, r.height()/2));
+
+        // Recenter prior to scale to properly position afterwards
+        pixItem->setPos(0,0);
+        // Apply scaling
+        pixItem->setScale(aspectRatio);
+        currentScale = 1;
+        // Correct position with mapping of the previous center to the edge
+        pixItem->setPos(  - pixItem->mapToScene(center)
+                          // Correct with respect to the mouse pos...
+                          + (QPointF(ui->graphicsView->size().width(), ui->graphicsView->size().height())
+                             - ui->graphicsView->mapFromGlobal(QCursor::pos()))
+                          )
+                ;
+
+        wasPacked = packed;
+    }
     // pixItem->setPos(0,0);
     //pixItem->setPos(_pix.width()/2, _pix.height()/2);
 }
@@ -141,8 +171,12 @@ void ImageForm::watcherPixmap()
         qDebug() << "Error retreiving watchers finished state";
         return;
     }
+    QPixmap res = wa->future().result();
 
-    redrawPixmap(wa->future().result());
+    currentScale =  pixItem->pixmap().width()/res.width();
+
+
+    redrawPixmap(res);
     isRunning = false;
     //  wa->deleteLater();
     //  _waiting_Update = false;
@@ -154,7 +188,6 @@ void ImageForm::redrawPixmap(QPixmap img)
 {
     //    qDebug() << "redrawPixmap";
     setPixmap(img);
-    ui->graphicsView->scene()->setSceneRect(pixItem->boundingRect());
     pixItem->update();
 }
 
@@ -186,6 +219,7 @@ void ImageForm::redrawPixmap()
         isRunning = true;
         QFutureWatcher<QPixmap>* wa = new QFutureWatcher<QPixmap>();
         connect(wa, SIGNAL(finished()), this, SLOT(watcherPixmap()));
+        qDebug() << "Redraw" << packed;
         if (packed)
         {
             QFuture<QPixmap>  future = QtConcurrent::run(runnerInteractorGetPixmapPacked, _interactor);
@@ -356,7 +390,7 @@ SequenceFileModel *ImageForm::modelView()
 
 QSize ImageForm::sizeHint() const
 {
-    if (!_pix.isNull())   return _pix.size();
+    if (!pixItem->pixmap().isNull())   return pixItem->pixmap().size();
 
     return QSize(256,216);
 }
