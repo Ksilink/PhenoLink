@@ -46,7 +46,7 @@ protected:
     QSpinBox* refreshRate;
     QSpinBox* maxRefreshQuery;
     QSpinBox* minServerProcs;
-
+    QDoubleSpinBox* unpackScaling;
 
     QSpinBox* serverPort;
     ctkPathListWidget* screensPath;

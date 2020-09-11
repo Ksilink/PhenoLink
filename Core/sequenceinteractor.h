@@ -88,6 +88,7 @@ protected:
   QList<CoreImage*> _ImageList;
   QPixmap           _cachePixmap; // Cache temporary image, pixmap are implicitly shared
   static SequenceInteractor* _current;
+  float last_scale;
 };
 
 

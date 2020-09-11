@@ -12,11 +12,11 @@
 
 QMutex sequence_interactorMutex;
 
-SequenceInteractor::SequenceInteractor(): _mdl(0), _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.)
+SequenceInteractor::SequenceInteractor(): _mdl(0), _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),last_scale(-1.)
 {
 }
 
-SequenceInteractor::SequenceInteractor(SequenceFileModel *mdl): _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),_fps(25.)
+SequenceInteractor::SequenceInteractor(SequenceFileModel *mdl): _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),_fps(25.), last_scale(-1.)
 {
 }
 
@@ -139,7 +139,7 @@ int SequenceInteractor::getChannelsFromFileName(QString file)
 
     for (SequenceFileModel::Channel::iterator it = chans.begin(), e = chans.end(); it != e; ++it)
     {
-        qDebug() << it.value() << file;
+        //qDebug() << it.value() << file;
         if (it.value() == file) return it.key();
     }
     return -1;
@@ -242,16 +242,20 @@ void callImage(ImageInfos* img)
 }
 
 
+QMutex lock_infos;
+
 ImageInfos* SequenceInteractor::imageInfos(QString file, int channel)
 {
+    lock_infos.lock();
     ImageInfos* info = _infos[file];
+    lock_infos.unlock();
 
     if (!info)
     {
         QString exp = getExperimentName();
         int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
 //        qDebug() << "Building Image info" << file << exp << ii;
-        info = new ImageInfos(this, file, exp+QString("%1").arg(ii));
+        info = ImageInfos::getInstance(this, file, exp+QString("%1").arg(ii));
         if (_mdl->getOwner()->hasProperty("ChannelsColor"+QString("%1").arg(ii)))
         {
             QColor col;
@@ -261,7 +265,9 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel)
         }
         else
             info->setDefaultColor(ii);
+        lock_infos.lock();
         _infos[file] = info;
+        lock_infos.unlock();
     }
 
     return info;
@@ -335,17 +341,17 @@ QPointF getFieldPos(SequenceFileModel* seq, int field, int z, int t, int c)
 
 struct StitchStruct
 {
-    StitchStruct(SequenceInteractor* seq): seq(seq)
+    StitchStruct(SequenceInteractor* seq, float scale): _sc(scale), seq(seq)
     {}
 
     typedef QPair<int, QImage> result_type;
 
     QPair<int, QImage> operator()(int field)
     {
-        return  qMakePair(field, seq->getPixmapChannels(field));
+        return  qMakePair(field, seq->getPixmapChannels(field, _sc));
     }
 
-
+    float _sc;
     SequenceInteractor* seq;
 };
 
@@ -364,17 +370,20 @@ QPixmap SequenceInteractor::getPixmap(bool packed, float scale)
     }
     else // Unpack the data !!
     {
+        QSettings set;
+        float scale = set.value("unpackScaling", 1.0).toDouble();
+
 
         QPair<QList<double>, QList<double> > li =
                 getWellPos(_mdl, _mdl->getFieldCount(), _zpos, _timepoint, _channel);
 
         QList<int> perf; for (unsigned i = 0; i < _mdl->getFieldCount(); ++i) perf.append( i+1);
-        QList<QPair<int, QImage> > toStitch = QtConcurrent::blockingMapped(perf, StitchStruct(this));
+        QList<QPair<int, QImage> > toStitch = QtConcurrent::blockingMapped(perf, StitchStruct(this, scale));
 
 
         const int rows = li.first.size() * toStitch[0].second.width();
         const int cols = li.second.size() * toStitch[0].second.height();
-        QImage toPix(cols, rows, QImage::Format_RGBA8888);
+        QImage toPix(rows, cols, QImage::Format_RGBA8888);
 
         toPix.fill(Qt::black);
         for (unsigned i = 0; i < _mdl->getFieldCount(); ++i)
@@ -386,9 +395,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, float scale)
             int y = li.second.size() - li.second.indexOf(p.y()) - 1;
             QPainter pa(&toPix);
             QPoint offset = QPoint(x*toStitch[0].second.width(), y * toStitch[0].second.height());
-            qDebug() << p.x() << p.y() << li.first << li.second;
-            qDebug() << x << y << offset << toStitch[0].second.width() <<  toStitch[0].second.height();
-
+          
             pa.drawImage(offset, toStitch[i].second);
         }
 
@@ -397,23 +404,42 @@ QPixmap SequenceInteractor::getPixmap(bool packed, float scale)
     }
 }
 
+struct Loader
+{
+    Loader(float scale, bool changed_scale): _scale(scale), ch_sc(changed_scale)
+    {}
+    float _scale;
+    bool ch_sc;
+    typedef cv::Mat* result_type;
+
+    cv::Mat* operator()(ImageInfos* img)
+    {
+        return &img->image(_scale, ch_sc);
+    }
+};
+
 QImage SequenceInteractor::getPixmapChannels(int field, float scale)
 {
     QStringList list = getAllChannel(field);
 
-    std::vector<ImageInfos*> img(list.size());
-    std::vector<cv::Mat*> images(list.size());
+    QList<ImageInfos*> img;
+    QList<cv::Mat*> images;//(list.size());
     int ii = 0;
     for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it,++ii)
     {
-        img[ii] = imageInfos(*it,ii+1);
-        // qDebug() << img[ii];
+        img.append(imageInfos(*it,ii+1));
     }
 
+    if (img.size() > 1)
+    {
+       images = QtConcurrent::blockingMapped(img, Loader(scale, last_scale == scale));
+        //for (int i = 0; i < img.size() ; ++i)
+        //    images.append(&img[i]->image(scale));
+    }
+    else
+        images.append(&img[0]->image(scale, last_scale == scale));
 
-    for (size_t i = 0; i < images.size(); ++i)
-        images[i] = &img[i]->image();
-
+    last_scale = scale;
 
 
     //  qDebug() << t.elapsed() << "ms";

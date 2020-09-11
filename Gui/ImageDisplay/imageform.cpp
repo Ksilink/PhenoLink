@@ -35,10 +35,10 @@
 
 
 // Force min size to be 320x270
-ImageForm::ImageForm(QWidget *parent) :
+ImageForm::ImageForm(QWidget *parent, bool packed) :
     QWidget(parent),
     video_status(VideoStop),
-    packed(true),wasPacked(true),
+    packed(packed),wasPacked(true),
     sz(0),
     ui(new Ui::ImageForm), aspectRatio(0.0), currentScale(1.0f),  isRunning(false)
 {
@@ -219,7 +219,7 @@ void ImageForm::redrawPixmap()
         isRunning = true;
         QFutureWatcher<QPixmap>* wa = new QFutureWatcher<QPixmap>();
         connect(wa, SIGNAL(finished()), this, SLOT(watcherPixmap()));
-        qDebug() << "Redraw" << packed;
+        //qDebug() << "Redraw" << packed;
         if (packed)
         {
             QFuture<QPixmap>  future = QtConcurrent::run(runnerInteractorGetPixmapPacked, _interactor);

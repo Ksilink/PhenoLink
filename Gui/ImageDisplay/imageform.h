@@ -29,7 +29,7 @@ class ImageForm : public QWidget, public CoreImage
 
     enum VideoPlay {VideoStop, VideoForward, VideoBackward } video_status;
 public:
-    explicit ImageForm(QWidget *parent = 0);
+    explicit ImageForm(QWidget *parent = 0, bool packed = true);
     ~ImageForm();
 
     void setPixmap(QPixmap pix);
@@ -114,7 +114,7 @@ public slots:
 
     void redrawPixmap(QPixmap img);
 private:
-    bool packed;
+    bool packed,wasPacked;
 
     ScrollZone* sz;
 

@@ -366,6 +366,16 @@ QWidget *GlobalOptions::features()
     mainLayout->addRow("Maximum states query", maxRefreshQuery);
 
 
+    unpackScaling = new QDoubleSpinBox();
+    unpackScaling->setMinimum(0.0001);
+    unpackScaling->setMaximum(1);
+    unpackScaling->setValue(set.value("unpackScaling", 1).toDouble());
+    unpackScaling->setToolTip("Default: 1");
+    connect(unpackScaling, SIGNAL(valueChanged(double)), this, SLOT(updatePaths()));
+
+    mainLayout->addRow("Unpack Scaling factor", unpackScaling);
+
+
 
     ppython->setLayout(mainLayout);
 
@@ -543,6 +553,7 @@ void GlobalOptions::updatePaths()
     set.setValue("MinProcs", minServerProcs->value());
     set.setValue("RefreshRate", refreshRate->value());
     set.setValue("maxRefreshQuery", maxRefreshQuery->value());
+    set.setValue("unpackScaling", unpackScaling->value());
 
     this->parentWidget()->startTimer(refreshRate->value());
 

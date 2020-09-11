@@ -38,32 +38,48 @@ public:
     virtual void changeFps(double fps) = 0;
 };
 
+class ImageInfos;
+
+struct ImageInfosShared
+{
+     QMap<QString, CommonColorCode> _platename_to_colorCode;
+     QMap<QString, QList<ImageInfos*> > _platename_to_infos;
+
+     QMap<QString, QVector<QColor> > _platename_palette_color;
+     QMap<QString, QVector<int> > _platename_palette_state;
+     QMap<QString, int> _per_plateid;
+};
+
 
 class DllCoreExport ImageInfos: public QObject
 {
     Q_OBJECT
 public:
-    ImageInfos(SequenceInteractor* par, QString fname, QString platename);
+        
+    ImageInfos(ImageInfosShared& ifo, SequenceInteractor* par, QString fname, QString platename);
     ~ImageInfos();
 
-    cv::Mat& image();
+
+    static ImageInfos* getInstance(SequenceInteractor* par, QString fname, QString platename);
+
+    cv::Mat& image(float scale = 1., bool reload = false);
 
 
-    inline bool active() const { return _platename_to_colorCode[_plate]._active; }
+    inline bool active() const { return _ifo._platename_to_colorCode[_plate]._active; }
 
     bool isTime() const ;
     double getFps() const;
 
-    inline float getMin() const {return _platename_to_colorCode[_plate].min; }
-    inline float getMax() const { return _platename_to_colorCode[_plate].max; }
+    inline float getMin() const {return _ifo._platename_to_colorCode[_plate].min; }
+    inline float getMax() const { return _ifo._platename_to_colorCode[_plate].max; }
 
-    inline float getDispMin() const {return _platename_to_colorCode[_plate]._dispMin; }
-    inline float getDispMax() const { return _platename_to_colorCode[_plate]._dispMax; }
+    inline float getDispMin() const {return _ifo._platename_to_colorCode[_plate]._dispMin; }
+    inline float getDispMax() const { return _ifo._platename_to_colorCode[_plate]._dispMax; }
     int nbColors() { return _nbcolors; }
 
-    inline unsigned char Red() const{ return _platename_to_colorCode[_plate]._r; }
-    inline unsigned char Green() const { return _platename_to_colorCode[_plate]._g; }
-    inline unsigned char Blue() const { return _platename_to_colorCode[_plate]._b; }
+    inline unsigned char Red() const{ return _ifo._platename_to_colorCode[_plate]._r; }
+    inline unsigned char Green() const { return _ifo._platename_to_colorCode[_plate]._g; }
+    inline unsigned char Blue() const { return _ifo._platename_to_colorCode[_plate]._b; }
 
     void setColor(unsigned char r, unsigned char g, unsigned char b);
 
@@ -73,9 +89,9 @@ public:
 
     QColor getColor();
 
-    void setRed(unsigned char r) {_modified = true; _platename_to_colorCode[_plate]._r = r; }
-    void setGreen(unsigned char r) { _modified = true; _platename_to_colorCode[_plate]._g = r; }
-    void setBlue(unsigned char r) {_modified = true; _platename_to_colorCode[_plate]._b = r; }
+    void setRed(unsigned char r) {_modified = true; _ifo._platename_to_colorCode[_plate]._r = r; }
+    void setGreen(unsigned char r) { _modified = true; _ifo._platename_to_colorCode[_plate]._g = r; }
+    void setBlue(unsigned char r) {_modified = true; _ifo._platename_to_colorCode[_plate]._b = r; }
     void setDefaultColor(int chan);
 
 
@@ -108,17 +124,12 @@ public slots:
 
 protected:
 
+    ImageInfosShared& _ifo;
     SequenceInteractor* _parent;
     bool _modified;
     int _nbcolors;
     QString _name, _plate;
-    static QMap<QString, CommonColorCode> _platename_to_colorCode;
-    static QMap<QString, QList<ImageInfos*> > _platename_to_infos;
-
-    static QMap<QString, QVector<QColor> > _platename_palette_color;
-    static QMap<QString, QVector<int> > _platename_palette_state;
-    static QMap<QString, int> _per_plateid;
-
+ 
     cv::Mat _image;
     QMutex _lockImage;
     double _fps;

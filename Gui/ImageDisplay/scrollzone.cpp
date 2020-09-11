@@ -171,7 +171,7 @@ void ScrollZone::insertImage(SequenceFileModel* sfm)
 {
   SequenceViewContainer::getHandler().addSequence(sfm);
 
-  ImageForm* f = new ImageForm();
+  ImageForm* f = new ImageForm(nullptr, !sfm->hasProperty("unpack"));
   _seq_toImg[sfm] = f;
 
   //  QFutureWatcher<ImageForm*> * watcher = new QFutureWatcher<ImageForm*>();

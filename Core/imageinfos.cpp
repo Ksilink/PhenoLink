@@ -1,39 +1,66 @@
 #include "imageinfos.h"
 #include "sequenceinteractor.h"
 #include <algorithm>
+#include <opencv2/imgproc.hpp>
 
-QMap<QString, CommonColorCode>      ImageInfos::_platename_to_colorCode;
-QMap<QString, QList<ImageInfos*> >  ImageInfos::_platename_to_infos;
-QMap<QString, QVector<QColor> >     ImageInfos::_platename_palette_color;
-QMap<QString, QVector<int> >        ImageInfos::_platename_palette_state;
-QMap<QString, int>                  ImageInfos::_per_plateid;
+//QMap<QString, CommonColorCode>      ImageInfos::_platename_to_colorCode;
+//QMap<QString, QList<ImageInfos*> >  ImageInfos::_platename_to_infos;
+//QMap<QString, QVector<QColor> >     ImageInfos::_platename_palette_color;
+//QMap<QString, QVector<int> >        ImageInfos::_platename_palette_state;
+//QMap<QString, int>                  ImageInfos::_per_plateid;
 
 //QMutex platenameProtect;
 
-ImageInfos::ImageInfos(SequenceInteractor *par, QString fname, QString platename):
+ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString fname, QString platename):
+    _ifo(ifo),
     _parent(par),
     _modified(true),
     _name(fname),
     _plate(platename)
 {
-    _platename_to_infos[platename] << this;
+    QMutexLocker lock(&_lockImage);
+    //qDebug() << "Imageinfos" << this << fname << platename << par;
+    _ifo._platename_to_infos[_plate].append(this);
 
-    //    qDebug() << "Imageinfos" << this << fname << platename << par;
-
+    
 }
 
 ImageInfos::~ImageInfos()
 {
-    _platename_to_infos[_plate].removeAll(this);
+    _ifo._platename_to_infos[_plate].removeAll(this);
+}
+
+QMutex protect_iminfos;
+
+ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QString platename)
+{
+
+    static ImageInfosShared* data = nullptr;
+    static QMap<QString, ImageInfos*> stored;
+    QMutexLocker lock(&protect_iminfos); // Just in case 2 instances try to create the ImageInfosShared struct
+    if (data == nullptr)
+    {
+        data = new ImageInfosShared;
+    }
+
+    ImageInfos* ifo = nullptr;
+    
+    ifo = stored[fname];
+    if (!ifo)
+        ifo = new ImageInfos(*data, par, fname, platename);
+    //qDebug() << "New Image Info instance" << fname << platename;
+    return ifo;
 }
 
 
-
-
-cv::Mat &ImageInfos::image()
+cv::Mat &ImageInfos::image(float scale, bool reload)
 {
     QMap<unsigned, QColor> ext_cmap;
     QMutexLocker lock(&_lockImage);
+
+
+    if (reload)
+        _image = cv::Mat();
 
     if (_image.empty())
     {
@@ -61,8 +88,8 @@ cv::Mat &ImageInfos::image()
             _image = t;
         }
 
-        float min  = _platename_to_colorCode[_plate].min;
-        float max = _platename_to_colorCode[_plate].max;
+        float min  = _ifo._platename_to_colorCode[_plate].min;
+        float max = _ifo._platename_to_colorCode[_plate].max;
         for (int i = 0; i < _image.rows; ++i)
             for (int j = 0; j < _image.cols; ++j)
             {
@@ -71,13 +98,13 @@ cv::Mat &ImageInfos::image()
                 else if ( v > max) max = v;
             }
 
-        _platename_to_colorCode[_plate].min = std::min(min, _platename_to_colorCode[_plate].min);
-        _platename_to_colorCode[_plate].max = std::max(max, _platename_to_colorCode[_plate].max );
+        _ifo._platename_to_colorCode[_plate].min = std::min(min, _ifo._platename_to_colorCode[_plate].min);
+        _ifo._platename_to_colorCode[_plate].max = std::max(max, _ifo._platename_to_colorCode[_plate].max);
 
-        if (_platename_to_colorCode[_plate]._dispMax == -std::numeric_limits<float>::infinity())
-            _platename_to_colorCode[_plate]._dispMax = _platename_to_colorCode[_plate].max;
-        if (_platename_to_colorCode[_plate]._dispMin == std::numeric_limits<float>::infinity())
-            _platename_to_colorCode[_plate]._dispMin = _platename_to_colorCode[_plate].min;
+        if (_ifo._platename_to_colorCode[_plate]._dispMax == -std::numeric_limits<float>::infinity())
+            _ifo._platename_to_colorCode[_plate]._dispMax = _ifo._platename_to_colorCode[_plate].max;
+        if (_ifo._platename_to_colorCode[_plate]._dispMin == std::numeric_limits<float>::infinity())
+            _ifo._platename_to_colorCode[_plate]._dispMin = _ifo._platename_to_colorCode[_plate].min;
 
         _nbcolors = max-min;
         if (max >= 16) _nbcolors+=1;
@@ -85,10 +112,10 @@ cv::Mat &ImageInfos::image()
         {
 // if ext_cmap
             int si = max-min+1;
-            int start = _per_plateid[_plate];
+            int start = _ifo._per_plateid[_plate];
 
-            _platename_palette_color[_plate].resize(16);
-            _platename_palette_state[_plate].fill(1, si);
+            _ifo._platename_palette_color[_plate].resize(16);
+            _ifo._platename_palette_state[_plate].fill(1, si);
 
             QVector<QColor> thecols(16);
 
@@ -111,16 +138,17 @@ cv::Mat &ImageInfos::image()
 
             for (int i = 0; i < 16; ++i)
 
-                _platename_palette_color[_plate][i] = thecols[(start+i)%16];
+                _ifo._platename_palette_color[_plate][i] = thecols[(start+i)%16];
 
             for (auto it = ext_cmap.begin(); it != ext_cmap.end(); ++it)
-                _platename_palette_color[_plate][it.key()] = it.value();
+                _ifo._platename_palette_color[_plate][it.key()] = it.value();
 
-            _per_plateid[_plate] = (start+si)%16;
+            _ifo._per_plateid[_plate] = (start+si)%16;
         }
 
     }
-
+    if (scale < 1.0)
+        cv::resize(_image, _image, cv::Size(), scale, scale, cv::INTER_AREA);
     //  _modified = false;
     return _image;
 }
@@ -138,9 +166,9 @@ double ImageInfos::getFps() const
 void ImageInfos::setColor(unsigned char r, unsigned char g, unsigned char b)
 {
     _modified = true;
-    _platename_to_colorCode[_plate]._r = r;
-    _platename_to_colorCode[_plate]._g = g;
-    _platename_to_colorCode[_plate]._b = b;
+    _ifo._platename_to_colorCode[_plate]._r = r;
+    _ifo._platename_to_colorCode[_plate]._g = g;
+    _ifo._platename_to_colorCode[_plate]._b = b;
 }
 
 void ImageInfos::setColor(int code, unsigned char r, unsigned char g, unsigned char b)
@@ -150,9 +178,9 @@ void ImageInfos::setColor(int code, unsigned char r, unsigned char g, unsigned c
     //        _platename_to_colorCode[_plate]._g = g;
     //        _platename_to_colorCode[_plate]._b = b;
 
-    if ( _platename_palette_color[_plate].size() < code)
-        _platename_palette_color[_plate].resize(code);
-    _platename_palette_color[_plate][code].setRgb(r,g,b);
+    if (_ifo._platename_palette_color[_plate].size() < code)
+        _ifo._platename_palette_color[_plate].resize(code);
+    _ifo._platename_palette_color[_plate][code].setRgb(r,g,b);
 
 
 }
@@ -160,12 +188,12 @@ void ImageInfos::setColor(int code, unsigned char r, unsigned char g, unsigned c
 
 QColor ImageInfos::getColor(int v)
 {
-    return _platename_palette_color[_plate][v];
+    return _ifo._platename_palette_color[_plate][v];
 }
 
 QVector<QColor> ImageInfos::getPalette()
 {
-    return _platename_palette_color[_plate];
+    return _ifo._platename_palette_color[_plate];
 }
 
 void ImageInfos::setPalette(QMap<unsigned, QColor> pal)
@@ -177,12 +205,12 @@ void ImageInfos::setPalette(QMap<unsigned, QColor> pal)
         max = std::max(it.key(), max);
     }
 
-    _platename_palette_color[_plate].resize(max);
+    _ifo._platename_palette_color[_plate].resize(max);
 
     for (unsigned i = 0; i < max; ++i)
     {
         if (pal.contains(i))
-            _platename_palette_color[_plate][i] = pal[i];
+            _ifo._platename_palette_color[_plate][i] = pal[i];
     }
 
 }
@@ -191,12 +219,12 @@ void ImageInfos::setPalette(QMap<unsigned, QColor> pal)
 
 QVector<int> ImageInfos::getState()
 {
-    return _platename_palette_state[_plate];
+    return _ifo._platename_palette_state[_plate];
 }
 
 QColor ImageInfos::getColor()
 {
-    return QColor::fromRgb(_platename_to_colorCode[_plate]._r,_platename_to_colorCode[_plate]._g,_platename_to_colorCode[_plate]._b);
+    return QColor::fromRgb(_ifo._platename_to_colorCode[_plate]._r, _ifo._platename_to_colorCode[_plate]._g, _ifo._platename_to_colorCode[_plate]._b);
 }
 
 void ImageInfos::setDefaultColor(int channel)
@@ -216,10 +244,10 @@ void ImageInfos::setDefaultColor(int channel)
 
 void ImageInfos::changeColorState(int chan)
 {
-    if ( _platename_palette_color[_plate].size() < chan)
-        _platename_palette_state[_plate].resize(chan);
-    _platename_palette_state[_plate][chan] = !_platename_palette_state[_plate][chan];
-    foreach (ImageInfos* ifo, _platename_to_infos[_plate])
+    if (_ifo._platename_palette_color[_plate].size() < chan)
+        _ifo._platename_palette_state[_plate].resize(chan);
+    _ifo._platename_palette_state[_plate][chan] = !_ifo._platename_palette_state[_plate][chan];
+    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
 
@@ -230,10 +258,10 @@ void ImageInfos::rangeChanged(double mi, double ma)
 {
     _modified = true;
 
-    _platename_to_colorCode[_plate]._dispMin = mi;
-    _platename_to_colorCode[_plate]._dispMax = ma;
+    _ifo._platename_to_colorCode[_plate]._dispMin = mi;
+    _ifo._platename_to_colorCode[_plate]._dispMax = ma;
 
-    foreach (ImageInfos* ifo, _platename_to_infos[_plate])
+    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
 
@@ -244,10 +272,10 @@ void ImageInfos::forceMinValue(double val)
 {
     _modified = true;
     //  qDebug() << "Image min " << _platename_to_colorCode[_plate].min << _platename_to_colorCode[_plate].max << val;
-    _platename_to_colorCode[_plate].min = val;
+    _ifo._platename_to_colorCode[_plate].min = val;
     //  _platename_to_colorCode[_plate]._dispMin = val;
 
-    foreach (ImageInfos* ifo, _platename_to_infos[_plate])
+    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
 
@@ -258,9 +286,9 @@ void ImageInfos::forceMaxValue(double val)
 {
     _modified = true;
     // s qDebug() << "Image max " << _platename_to_colorCode[_plate].min << _platename_to_colorCode[_plate].max << val;
-    _platename_to_colorCode[_plate].max = val;
+    _ifo._platename_to_colorCode[_plate].max = val;
     //  _platename_to_colorCode[_plate]._dispMax = val;
-    foreach (ImageInfos* ifo, _platename_to_infos[_plate])
+    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
 
@@ -272,7 +300,7 @@ void ImageInfos::changeFps(double fps)
     _modified = true;
     _parent->setFps(fps);
 
-    foreach (ImageInfos* ifo, _platename_to_infos[_plate])
+    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
 
@@ -283,9 +311,9 @@ void ImageInfos::rangeMinValueChanged(double mi)
 {
     _modified = true;
     //  qDebug() << "Image infos " << mi << ma;
-    _platename_to_colorCode[_plate]._dispMin = mi;
+    _ifo._platename_to_colorCode[_plate]._dispMin = mi;
 
-    foreach (ImageInfos* ifo, _platename_to_infos[_plate])
+    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
 
@@ -296,9 +324,9 @@ void ImageInfos::rangeMaxValueChanged(double ma)
 {
     _modified = true;
     //  qDebug() << "Image infos " << mi << ma;
-    _platename_to_colorCode[_plate]._dispMax = ma;
+    _ifo._platename_to_colorCode[_plate]._dispMax = ma;
 
-    foreach (ImageInfos* ifo, _platename_to_infos[_plate])
+    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
     }
@@ -308,8 +336,8 @@ void ImageInfos::rangeMaxValueChanged(double ma)
 void ImageInfos::setActive(bool value)
 {
     _modified = true;
-    _platename_to_colorCode[_plate]._active = value;
-    foreach (ImageInfos* ifo, _platename_to_infos[_plate])
+    _ifo._platename_to_colorCode[_plate]._active = value;
+    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
         ifo->_parent->modifiedImage();
 }
 
@@ -319,10 +347,10 @@ void ImageInfos::setColor(QColor c)
     //  qDebug() << "Setting color" <<  c;
     c.setHsv(c.hsvHue(), c.hsvSaturation(), 255);
 
-    _platename_to_colorCode[_plate]._r = c.red();
-    _platename_to_colorCode[_plate]._g = c.green();
-    _platename_to_colorCode[_plate]._b = c.blue();
+    _ifo._platename_to_colorCode[_plate]._r = c.red();
+    _ifo._platename_to_colorCode[_plate]._g = c.green();
+    _ifo._platename_to_colorCode[_plate]._b = c.blue();
 
-    foreach (ImageInfos* ifo, _platename_to_infos[_plate])
+    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
         ifo->_parent->modifiedImage();
 }

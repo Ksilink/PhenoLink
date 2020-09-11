@@ -102,10 +102,14 @@ void MainWindow::loadSelection(QStringList checked)
 
     if (data.size() < 1) return;
 
+    bool multifield = false;
+
     int loadCount = 0;
     ExperimentFileModel* lastOk = 0;
     foreach (ExperimentFileModel* mdl, data)
     {
+        multifield |= (mdl->getAllSequenceFiles().front()->getFieldCount() > 1);
+
         if (mdl)
         {
             //mdl->addToDatabase();
@@ -145,6 +149,21 @@ void MainWindow::loadSelection(QStringList checked)
     // Force the display to modify it's information accordingly
     ScreensGraphicsView* view = (ScreensGraphicsView*)ui->wellPlateViewTab->currentWidget();
     view->update();
+
+    if (multifield)
+        multifield = (QMessageBox::question(this, "Multi Field Detected", "Do you want to automatically unpack wells on display ?") == QMessageBox::Yes);
+
+
+    if (multifield)
+    {
+        foreach (ExperimentFileModel* mdl, data)
+        {
+            QList<SequenceFileModel *>  l  = mdl->getAllSequenceFiles();
+            foreach(SequenceFileModel* mm, l)
+                mm->setProperties("unpack", "yes");
+        }
+    }
+
 }
 
 
