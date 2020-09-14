@@ -171,7 +171,15 @@ void ImageForm::watcherPixmap()
         qDebug() << "Error retreiving watchers finished state";
         return;
     }
+
     QPixmap res = wa->future().result();
+
+    if (res.isNull())
+    {
+        delete wa;
+        return;
+    }
+
 
     currentScale =  pixItem->pixmap().width()/res.width();
 
