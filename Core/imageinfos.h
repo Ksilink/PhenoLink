@@ -44,6 +44,7 @@ struct ImageInfosShared
 {
      QMap<QString, CommonColorCode> _platename_to_colorCode;
      QMap<QString, QList<ImageInfos*> > _platename_to_infos;
+     QMap<ImageInfos*, QList<CoreImage* > > _infos_to_coreimage;
 
      QMap<QString, QVector<QColor> > _platename_palette_color;
      QMap<QString, QVector<int> > _platename_palette_state;
@@ -60,12 +61,16 @@ public:
     ~ImageInfos();
 
 
-    static ImageInfos* getInstance(SequenceInteractor* par, QString fname, QString platename);
+    static QString key(QString k = QString());
+
+    static ImageInfos* getInstance(SequenceInteractor* par, QString fname, QString platename, bool& exists, QString key = QString());
 
     cv::Mat image(float scale = 1., bool reload = false);
 
-
+    void addCoreImage(CoreImage *ifo);
     inline bool active() const { return _ifo._platename_to_colorCode[_plate]._active; }
+
+    QList<CoreImage*> getCoreImages();
 
     bool isTime() const ;
     double getFps() const;
@@ -92,7 +97,7 @@ public:
     void setRed(unsigned char r) {_modified = true; _ifo._platename_to_colorCode[_plate]._r = r; }
     void setGreen(unsigned char r) { _modified = true; _ifo._platename_to_colorCode[_plate]._g = r; }
     void setBlue(unsigned char r) {_modified = true; _ifo._platename_to_colorCode[_plate]._b = r; }
-    void setDefaultColor(int chan);
+    void setDefaultColor(int chan, bool refresh=true);
 
 
 
@@ -120,9 +125,12 @@ public slots:
 
     void setActive(bool value);
 
-    void setColor(QColor c);
+    void setColor(QColor c, bool refresh=true);
 
 protected:
+
+
+    QString loadedWithkey;
 
     ImageInfosShared& _ifo;
     SequenceInteractor* _parent;

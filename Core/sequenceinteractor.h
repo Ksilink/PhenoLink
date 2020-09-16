@@ -12,12 +12,14 @@
 #include <QPixmap>
 #include "imageinfos.h"
 
+class ImageForm;
+
 class DllCoreExport SequenceInteractor: public QObject
 {
   Q_OBJECT
 public:
     SequenceInteractor();
-  SequenceInteractor(SequenceFileModel* mdl);
+    SequenceInteractor(SequenceFileModel* mdl, QString key);
 
   unsigned getTimePointCount();
   unsigned getFieldCount();
@@ -66,7 +68,7 @@ public:
   void modifiedImage();
   QPointF getFieldPosition(int field = -1);
 //protected:
-  ImageInfos *imageInfos(QString file, int channel = -1);
+  ImageInfos *imageInfos(QString file, int channel = -1, QString key = QString());
 
 public slots:
 
@@ -83,7 +85,10 @@ protected:
   unsigned _timepoint, _field, _zpos, _channel;
   double _fps;
 
-  QMap<QString, ImageInfos*> _infos;
+  QString loadkey;
+
+  //QList<ImageForm*> linked_images;
+  //QMap<QString, ImageInfos*> _infos;
 
   QList<CoreImage*> _ImageList;
   QPixmap           _cachePixmap; // Cache temporary image, pixmap are implicitly shared

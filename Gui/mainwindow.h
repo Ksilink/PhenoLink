@@ -52,6 +52,9 @@ public:
                                  bool started, QMap<QString, QSet<QString> > tags_map);
     void on_actionRe_load_servers_triggered();
 
+
+    QString workbenchKey();
+
 protected:
     template <typename WType>
     int getWidgetWidth(QString name)

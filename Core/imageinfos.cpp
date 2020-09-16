@@ -3,13 +3,6 @@
 #include <algorithm>
 #include <opencv2/imgproc.hpp>
 
-//QMap<QString, CommonColorCode>      ImageInfos::_platename_to_colorCode;
-//QMap<QString, QList<ImageInfos*> >  ImageInfos::_platename_to_infos;
-//QMap<QString, QVector<QColor> >     ImageInfos::_platename_palette_color;
-//QMap<QString, QVector<int> >        ImageInfos::_platename_palette_state;
-//QMap<QString, int>                  ImageInfos::_per_plateid;
-
-//QMutex platenameProtect;
 
 ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString fname, QString platename):
     _ifo(ifo),
@@ -19,10 +12,9 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     _plate(platename)
 {
     QMutexLocker lock(&_lockImage);
+    loadedWithkey = key();
     //qDebug() << "Imageinfos" << this << fname << platename << par;
     _ifo._platename_to_infos[_plate].append(this);
-
-    
 }
 
 ImageInfos::~ImageInfos()
@@ -30,27 +22,48 @@ ImageInfos::~ImageInfos()
     _ifo._platename_to_infos[_plate].removeAll(this);
 }
 
+QString ImageInfos::key(QString k)
+{
+    static QString str;
+
+    if (!k.isEmpty())
+        str = k;
+
+    return str;
+}
+
 QMutex protect_iminfos;
 
-ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QString platename)
+ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QString platename,
+                                    bool & exists, QString key)
 {
 
     static ImageInfosShared* data = nullptr;
-    static QMap<QString, ImageInfos*> stored;
+    static QMap<QString, ImageInfos*> stored ;
+    
     QMutexLocker lock(&protect_iminfos); // Just in case 2 instances try to create the ImageInfosShared struct
+    
     if (data == nullptr)
     {
         data = new ImageInfosShared;
     }
-
+   
     ImageInfos* ifo = nullptr;
-    
-    ifo = stored[fname];
+
+    // FIXME: Change stored image infos key : use XP / Workbench / deposit group
+    QString k = key.isEmpty() ? ImageInfos::key() : key;
+
+
+    ifo = stored[fname+k];
     if (!ifo)
     {
-        ifo = new ImageInfos(*data, par, fname, platename);
-        qDebug() << "New Image Info instance" << fname << platename;
+        ifo = new ImageInfos(*data, par, fname, platename+k);
+        stored[fname+k] = ifo;
+        exists = false;
+        qDebug() << "New Image Info instance" << ifo << fname << ImageInfos::key() << k << platename << par->getSequenceFileModel()->getOwner()->name();
     }
+    else
+        exists = true;
     return ifo;
 }
 
@@ -61,7 +74,7 @@ cv::Mat ImageInfos::image(float scale, bool reload)
     QMutexLocker lock(&_lockImage);
 
 
-    if (reload)
+    if (reload && !_name.startsWith(":/mem/"))
         _image = cv::Mat();
 
     if (_image.empty())
@@ -155,6 +168,18 @@ cv::Mat ImageInfos::image(float scale, bool reload)
     return _image.clone();
 }
 
+void ImageInfos::addCoreImage(CoreImage *ifo)
+{
+  if (!_ifo._infos_to_coreimage[this].contains(ifo))
+      _ifo._infos_to_coreimage[this].append(ifo);
+}
+
+
+QList<CoreImage*> ImageInfos::getCoreImages()
+{
+    return _ifo._infos_to_coreimage[this];
+}
+
 bool ImageInfos::isTime() const
 {
     return _parent->getTimePointCount() != 1;
@@ -165,20 +190,35 @@ double ImageInfos::getFps() const
     return _parent->getFps();
 }
 
-void ImageInfos::setColor(unsigned char r, unsigned char g, unsigned char b)
+
+void ImageInfos::setColor(QColor c, bool refresh)
 {
     _modified = true;
-    _ifo._platename_to_colorCode[_plate]._r = r;
-    _ifo._platename_to_colorCode[_plate]._g = g;
-    _ifo._platename_to_colorCode[_plate]._b = b;
+    c.setHsv(c.hsvHue(), c.hsvSaturation(), 255);
+
+    qDebug() << "Setting color" << this << c;
+
+    _ifo._platename_to_colorCode[_plate]._r = c.red();
+    _ifo._platename_to_colorCode[_plate]._g = c.green();
+    _ifo._platename_to_colorCode[_plate]._b = c.blue();
+
+    if (refresh)
+    {
+        _parent->modifiedImage();
+        foreach(ImageInfos * ifo, _ifo._platename_to_infos[_plate])
+            ifo->_parent->modifiedImage();
+    }
+}
+
+
+void ImageInfos::setColor(unsigned char r, unsigned char g, unsigned char b)
+{
+    setColor(QColor(r, g, b));
 }
 
 void ImageInfos::setColor(int code, unsigned char r, unsigned char g, unsigned char b)
 {
     _modified = true;
-    //        _platename_to_colorCode[_plate]._r = r;
-    //        _platename_to_colorCode[_plate]._g = g;
-    //        _platename_to_colorCode[_plate]._b = b;
 
     if (_ifo._platename_palette_color[_plate].size() < code)
         _ifo._platename_palette_color[_plate].resize(code);
@@ -229,7 +269,7 @@ QColor ImageInfos::getColor()
     return QColor::fromRgb(_ifo._platename_to_colorCode[_plate]._r, _ifo._platename_to_colorCode[_plate]._g, _ifo._platename_to_colorCode[_plate]._b);
 }
 
-void ImageInfos::setDefaultColor(int channel)
+void ImageInfos::setDefaultColor(int channel, bool refresh)
 {
     channel --;
     _modified = true;
@@ -253,8 +293,8 @@ void ImageInfos::changeColorState(int chan)
     foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
-
     }
+    _parent->modifiedImage();
 }
 
 void ImageInfos::rangeChanged(double mi, double ma)
@@ -264,6 +304,7 @@ void ImageInfos::rangeChanged(double mi, double ma)
     _ifo._platename_to_colorCode[_plate]._dispMin = mi;
     _ifo._platename_to_colorCode[_plate]._dispMax = ma;
 
+    _parent->modifiedImage();
     foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
@@ -278,6 +319,7 @@ void ImageInfos::forceMinValue(double val)
     _ifo._platename_to_colorCode[_plate].min = val;
     //  _platename_to_colorCode[_plate]._dispMin = val;
 
+    _parent->modifiedImage();
     foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
@@ -291,6 +333,8 @@ void ImageInfos::forceMaxValue(double val)
     // s qDebug() << "Image max " << _platename_to_colorCode[_plate].min << _platename_to_colorCode[_plate].max << val;
     _ifo._platename_to_colorCode[_plate].max = val;
     //  _platename_to_colorCode[_plate]._dispMax = val;
+
+    _parent->modifiedImage();
     foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
@@ -303,6 +347,7 @@ void ImageInfos::changeFps(double fps)
     _modified = true;
     _parent->setFps(fps);
 
+    _parent->modifiedImage();
     foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
@@ -313,9 +358,10 @@ void ImageInfos::changeFps(double fps)
 void ImageInfos::rangeMinValueChanged(double mi)
 {
     _modified = true;
-    //  qDebug() << "Image infos " << mi << ma;
+      qDebug() << "Image infos range min" << this << mi ;
     _ifo._platename_to_colorCode[_plate]._dispMin = mi;
 
+    _parent->modifiedImage();
     foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
@@ -326,9 +372,10 @@ void ImageInfos::rangeMinValueChanged(double mi)
 void ImageInfos::rangeMaxValueChanged(double ma)
 {
     _modified = true;
-    //  qDebug() << "Image infos " << mi << ma;
+    qDebug() << "Image infos Range max" << this << ma;
     _ifo._platename_to_colorCode[_plate]._dispMax = ma;
 
+    _parent->modifiedImage();
     foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();
@@ -340,20 +387,8 @@ void ImageInfos::setActive(bool value)
 {
     _modified = true;
     _ifo._platename_to_colorCode[_plate]._active = value;
-    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
-        ifo->_parent->modifiedImage();
-}
 
-void ImageInfos::setColor(QColor c)
-{
-    _modified = true;
-    //  qDebug() << "Setting color" <<  c;
-    c.setHsv(c.hsvHue(), c.hsvSaturation(), 255);
-
-    _ifo._platename_to_colorCode[_plate]._r = c.red();
-    _ifo._platename_to_colorCode[_plate]._g = c.green();
-    _ifo._platename_to_colorCode[_plate]._b = c.blue();
-
+    _parent->modifiedImage();
     foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
         ifo->_parent->modifiedImage();
 }

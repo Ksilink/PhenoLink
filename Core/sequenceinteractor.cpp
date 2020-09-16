@@ -16,7 +16,9 @@ SequenceInteractor::SequenceInteractor(): _mdl(0), _timepoint(1), _field(1), _zp
 {
 }
 
-SequenceInteractor::SequenceInteractor(SequenceFileModel *mdl): _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),_fps(25.), last_scale(-1.)
+SequenceInteractor::SequenceInteractor(SequenceFileModel *mdl, QString key):
+    _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),
+    _fps(25.), loadkey(key), last_scale(-1.)
 {
 }
 
@@ -163,13 +165,24 @@ QString SequenceInteractor::getExperimentName()
 void SequenceInteractor::addImage(CoreImage *ci)
 {
     this->_ImageList << ci;
+    //
+    QString nm = _mdl->getFile(_timepoint, _field, _zpos, _channel);
+
+    //  qDebug() << "Channel Image infos" << nm;
+    //if (!_infos.contains(nm))
+    //    _infos[nm] =
+
+    ImageInfos *ifo = imageInfos(nm, _channel);
+
+    ifo->addCoreImage(ci);
 }
 
 void SequenceInteractor::clearMemory()
 {
-    foreach (ImageInfos* im, _infos.values())
+    /*  foreach (ImageInfos* im, _infos.values())
         delete im;
-    _infos.clear();
+    _infos.clear();*/
+    qDebug() << "FIXME: Clear Memory called for SequenceInteractor, but may not be honored";
 }
 
 
@@ -177,6 +190,13 @@ void SequenceInteractor::modifiedImage()
 {
     //    qDebug() << "Interactor Modified Image";
     foreach (CoreImage* ci, _ImageList)
+    {
+        ci->modifiedImage();
+    }
+
+    QString nm = _mdl->getFile(_timepoint, _field, _zpos, _channel);
+    ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
+    foreach(CoreImage* ci, ifo->getCoreImages())
     {
         ci->modifiedImage();
     }
@@ -199,10 +219,12 @@ ImageInfos *SequenceInteractor::getChannelImageInfos(unsigned channel)
     QString nm = _mdl->getFile(_timepoint, _field, _zpos, channel);
 
     //  qDebug() << "Channel Image infos" << nm;
-    if (!_infos.contains(nm))
-        _infos[nm] = imageInfos(nm, channel);
+    //if (!_infos.contains(nm))
+    //    _infos[nm] =
 
-    return _infos[nm];
+    return imageInfos(nm, channel, loadkey);
+
+    //return _infos[nm];
 }
 
 
@@ -244,33 +266,42 @@ void callImage(ImageInfos* img)
 
 QMutex lock_infos;
 
-ImageInfos* SequenceInteractor::imageInfos(QString file, int channel)
+ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString key)
 {
-    lock_infos.lock();
+    // FIXME: Change image infos key : use XP / Workbench / deposit group
+
+    // qDebug() << "Get interactor for file object: " << file << channel << getExperimentName();
+    /* lock_infos.lock();
     ImageInfos* info = _infos[file];
     lock_infos.unlock();
 
-    if (!info)
-    { // Change behavior: Linking data at the XP + Well Level , previously was XP level
-        QString exp = getExperimentName() + _mdl->Pos();
-        int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
+    if (!info)*/
+    //{ // Change behavior: Linking data at the XP level
+    // To be added workbench Id + selectionModifier
+    QString exp = getExperimentName();// +_mdl->Pos();
+    int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
+    
+    // getWellPos();
+    //        qDebug() << "Building Image info" << file << exp << ii;
+    bool exists = false;
+    ImageInfos* info = ImageInfos::getInstance(this, file, exp + QString("%1").arg(ii), exists, key);
+    if (!exists)
+    {
 
-      // getWellPos();
-//        qDebug() << "Building Image info" << file << exp << ii;
-        info = ImageInfos::getInstance(this, file, exp+QString("%1").arg(ii));
-        if (_mdl->getOwner()->hasProperty("ChannelsColor"+QString("%1").arg(ii)))
+        if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
         {
             QColor col;
-            QString cname  = _mdl->getOwner()->property("ChannelsColor"+QString("%1").arg(ii));
+            QString cname = _mdl->getOwner()->property("ChannelsColor" + QString("%1").arg(ii));
             col.setNamedColor(cname);
-            info->setColor(col);
+            info->setColor(col, false);
         }
         else
             info->setDefaultColor(ii);
-        lock_infos.lock();
-        _infos[file] = info;
-        lock_infos.unlock();
     }
+    /*    lock_infos.lock();ta
+        _infos[file] = info;
+        lock_infos.unlock();*/
+    //}
 
     return info;
 }
@@ -284,7 +315,7 @@ void SequenceInteractor::preloadImage()
     QStringList list = getAllChannel();
     for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it)
     {
-        imageInfos(*it)->image();
+        imageInfos(*it, -1, loadkey)->image();
     }
 
 }
@@ -362,7 +393,7 @@ struct StitchStruct
 
 QPixmap SequenceInteractor::getPixmap(bool packed, float scale)
 {
-//    qDebug() << "getPixmap" << packed;
+    qDebug() << "getPixmap" << packed;
     Q_UNUSED(scale);
     if (packed)
     {
@@ -397,7 +428,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, float scale)
             int y = li.second.size() - li.second.indexOf(p.y()) - 1;
             QPainter pa(&toPix);
             QPoint offset = QPoint(x*toStitch[0].second.width(), y * toStitch[0].second.height());
-          
+
             pa.drawImage(offset, toStitch[i].second);
         }
 
@@ -429,12 +460,12 @@ QImage SequenceInteractor::getPixmapChannels(int field, float scale)
     int ii = 0;
     for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it,++ii)
     {
-        img.append(imageInfos(*it,ii+1));
+        img.append(imageInfos(*it,ii+1, loadkey));
     }
 
-   
-     images = QtConcurrent::blockingMapped(img, Loader(scale, last_scale == scale));
-      
+
+    images = QtConcurrent::blockingMapped(img, Loader(scale, last_scale == scale));
+
 
     last_scale = scale;
 
@@ -455,7 +486,7 @@ QImage SequenceInteractor::getPixmapChannels(int field, float scale)
     for (int c = 0; c < list.size(); ++c)
     {
         if (images[c].empty()) continue;
-  
+
         int ncolors = img[c]->nbColors() ;
 
         if (!img[c]->active()) { if (ncolors < 16) lastPal += ncolors; continue; }
@@ -505,8 +536,8 @@ QImage SequenceInteractor::getPixmapChannels(int field, float scale)
                         const float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
 
                         pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
-                            std::min(255.f, qGreen(pix[j]) + f * G),
-                            std::min(255.f, qBlue(pix[j]) + f * R));
+                                      std::min(255.f, qGreen(pix[j]) + f * G),
+                                      std::min(255.f, qBlue(pix[j]) + f * R));
                     }
                 }
             } catch(...)
@@ -528,7 +559,7 @@ QList<unsigned> SequenceInteractor::getData(QPointF d)
 
     for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
     {
-        cv::Mat m = imageInfos(*it)->image();
+        cv::Mat m = imageInfos(*it, -1, loadkey)->image();
         if (m.rows > d.y() && m.cols > d.x())
             res << m.at<unsigned short>((int)d.y(), (int)d.x());
     }

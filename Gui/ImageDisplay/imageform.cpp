@@ -176,6 +176,8 @@ void ImageForm::watcherPixmap()
 
     if (res.isNull())
     {
+        qDebug() << "Return image is empty";
+        isRunning = false;
         delete wa;
         return;
     }
@@ -221,9 +223,10 @@ QPixmap runnerInteractorGetPixmapPacked( SequenceInteractor* _interactor)
 
 void ImageForm::redrawPixmap()
 {
+    //qDebug() << "Redraw Pixmap started";
     if (!isRunning)
-    {
-
+    { 
+        //qDebug() << "Redraw Pixmap running";
         isRunning = true;
         QFutureWatcher<QPixmap>* wa = new QFutureWatcher<QPixmap>();
         connect(wa, SIGNAL(finished()), this, SLOT(watcherPixmap()));
@@ -242,7 +245,7 @@ void ImageForm::redrawPixmap()
     }
     //  scale(0);
 
-    //qDebug() << "Redraw Pixmap";
+  //  qDebug() << "Redraw Pixmap done";
     //    redrawPixmap(QPixmap::fromImage(_interactor->getImage()));
 }
 
