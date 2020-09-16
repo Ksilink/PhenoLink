@@ -9,7 +9,7 @@
 
 
 
- static QTextStream *hash_logfile = nullptr;
+QTextStream *hash_logfile = nullptr;
 
  inline QDataStream& operator<< (QDataStream& out, const std::vector<unsigned char>& args)
 {

@@ -180,8 +180,8 @@ void ImageForm::watcherPixmap()
         return;
     }
 
-
-    currentScale =  pixItem->pixmap().width()/res.width();
+    if (packed != wasPacked)
+     currentScale =  pixItem->pixmap().width()/res.width();
 
 
     redrawPixmap(res);
@@ -202,7 +202,7 @@ void ImageForm::redrawPixmap(QPixmap img)
 
 QPixmap runnerInteractorGetPixmapUnpacked( SequenceInteractor* _interactor)
 {
-      qDebug() << "Redraw Pixmap Unpacked";
+  //    qDebug() << "Redraw Pixmap Unpacked";
     QPixmap r = _interactor->getPixmap(false);
     //qDebug() << "Finished pixmap";
 

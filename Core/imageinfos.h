@@ -62,7 +62,7 @@ public:
 
     static ImageInfos* getInstance(SequenceInteractor* par, QString fname, QString platename);
 
-    cv::Mat& image(float scale = 1., bool reload = false);
+    cv::Mat image(float scale = 1., bool reload = false);
 
 
     inline bool active() const { return _ifo._platename_to_colorCode[_plate]._active; }

@@ -47,13 +47,15 @@ ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QStr
     
     ifo = stored[fname];
     if (!ifo)
+    {
         ifo = new ImageInfos(*data, par, fname, platename);
-    //qDebug() << "New Image Info instance" << fname << platename;
+        qDebug() << "New Image Info instance" << fname << platename;
+    }
     return ifo;
 }
 
 
-cv::Mat &ImageInfos::image(float scale, bool reload)
+cv::Mat ImageInfos::image(float scale, bool reload)
 {
     QMap<unsigned, QColor> ext_cmap;
     QMutexLocker lock(&_lockImage);
@@ -150,7 +152,7 @@ cv::Mat &ImageInfos::image(float scale, bool reload)
     if (scale < 1.0)
         cv::resize(_image, _image, cv::Size(), scale, scale, cv::INTER_AREA);
     //  _modified = false;
-    return _image;
+    return _image.clone();
 }
 
 bool ImageInfos::isTime() const
@@ -247,6 +249,7 @@ void ImageInfos::changeColorState(int chan)
     if (_ifo._platename_palette_color[_plate].size() < chan)
         _ifo._platename_palette_state[_plate].resize(chan);
     _ifo._platename_palette_state[_plate][chan] = !_ifo._platename_palette_state[_plate][chan];
+
     foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         ifo->_parent->modifiedImage();

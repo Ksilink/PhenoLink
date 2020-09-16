@@ -9,7 +9,7 @@
 
 
 
-extern QTextStream *hash_logfile;
+extern  QTextStream *hash_logfile;
 
 struct CheckoutHost
 {

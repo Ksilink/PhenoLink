@@ -251,9 +251,11 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel)
     lock_infos.unlock();
 
     if (!info)
-    {
-        QString exp = getExperimentName();
+    { // Change behavior: Linking data at the XP + Well Level , previously was XP level
+        QString exp = getExperimentName() + _mdl->Pos();
         int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
+
+      // getWellPos();
 //        qDebug() << "Building Image info" << file << exp << ii;
         info = ImageInfos::getInstance(this, file, exp+QString("%1").arg(ii));
         if (_mdl->getOwner()->hasProperty("ChannelsColor"+QString("%1").arg(ii)))
@@ -276,7 +278,7 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel)
 void SequenceInteractor::preloadImage()
 {
 
-    QString exp = getExperimentName();
+    //QString exp = getExperimentName();
 
     //  t.start();
     QStringList list = getAllChannel();
@@ -410,11 +412,11 @@ struct Loader
     {}
     float _scale;
     bool ch_sc;
-    typedef cv::Mat* result_type;
+    typedef cv::Mat result_type;
 
-    cv::Mat* operator()(ImageInfos* img)
+    cv::Mat operator()(ImageInfos* img)
     {
-        return &img->image(_scale, ch_sc);
+        return img->image(_scale, ch_sc);
     }
 };
 
@@ -423,29 +425,24 @@ QImage SequenceInteractor::getPixmapChannels(int field, float scale)
     QStringList list = getAllChannel(field);
 
     QList<ImageInfos*> img;
-    QList<cv::Mat*> images;//(list.size());
+    QList<cv::Mat> images;//(list.size());
     int ii = 0;
     for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it,++ii)
     {
         img.append(imageInfos(*it,ii+1));
     }
 
-    if (img.size() > 1)
-    {
-       images = QtConcurrent::blockingMapped(img, Loader(scale, last_scale == scale));
-        //for (int i = 0; i < img.size() ; ++i)
-        //    images.append(&img[i]->image(scale));
-    }
-    else
-        images.append(&img[0]->image(scale, last_scale == scale));
+   
+     images = QtConcurrent::blockingMapped(img, Loader(scale, last_scale == scale));
+      
 
     last_scale = scale;
 
 
     //  qDebug() << t.elapsed() << "ms";
     //  qDebug() << "Got image list";
-    const int rows = images[0]->rows;
-    const int cols = images[0]->cols;
+    const int rows = images[0].rows;
+    const int cols = images[0].cols;
     //  qDebug() << rows << cols ;
 
     QImage toPix(cols, rows, QImage::Format_RGBA8888);
@@ -457,7 +454,8 @@ QImage SequenceInteractor::getPixmapChannels(int field, float scale)
 
     for (int c = 0; c < list.size(); ++c)
     {
-        if (images[c]->empty()) continue;
+        if (images[c].empty()) continue;
+  
         int ncolors = img[c]->nbColors() ;
 
         if (!img[c]->active()) { if (ncolors < 16) lastPal += ncolors; continue; }
@@ -470,7 +468,7 @@ QImage SequenceInteractor::getPixmapChannels(int field, float scale)
             //            QRgb black = QColor(0,0,0).rgb();
             for (int i = 0; i < rows; ++i)
             {
-                unsigned short *p = images[c]->ptr<unsigned short>(i);
+                unsigned short *p = images[c].ptr<unsigned short>(i);
                 QRgb *pix = (QRgb*)toPix.scanLine(i);
                 for (int j = 0; j < cols; ++j, ++p)
                 {
@@ -495,21 +493,25 @@ QImage SequenceInteractor::getPixmapChannels(int field, float scale)
             const int B = img[c]->Blue();
 
             float mami = ma - mi;
-
-            for (int i = 0; i < rows; ++i)
-            {
-                unsigned short *p = images[c]->ptr<unsigned short>(i);
-                QRgb *pix = (QRgb*)toPix.scanLine(i);
-                for (int j = 0; j < cols; ++j, ++p)
+            try {
+                for (int i = 0; i < rows; ++i)
                 {
-                    const unsigned short v = *p;
+                    unsigned short* p = images[c].ptr<unsigned short>(i);
+                    QRgb* pix = (QRgb*)toPix.scanLine(i);
+                    for (int j = 0; j < cols; ++j, ++p)
+                    {
+                        const unsigned short v = *p;
 
-                    const float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+                        const float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
 
-                    pix[j] = qRgb(std::min(255.f, qRed  (pix[j]) + f * B),
-                                  std::min(255.f, qGreen (pix[j]) + f * G),
-                                  std::min(255.f, qBlue   (pix[j]) + f * R));
+                        pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
+                            std::min(255.f, qGreen(pix[j]) + f * G),
+                            std::min(255.f, qBlue(pix[j]) + f * R));
+                    }
                 }
+            } catch(...)
+            {
+                toPix.fill(Qt::black);
             }
         }
     }
@@ -526,7 +528,7 @@ QList<unsigned> SequenceInteractor::getData(QPointF d)
 
     for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
     {
-        cv::Mat& m = imageInfos(*it)->image();
+        cv::Mat m = imageInfos(*it)->image();
         if (m.rows > d.y() && m.cols > d.x())
             res << m.at<unsigned short>((int)d.y(), (int)d.x());
     }
