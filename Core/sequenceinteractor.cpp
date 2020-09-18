@@ -464,7 +464,7 @@ QImage SequenceInteractor::getPixmapChannels(int field, float scale)
     }
 
 
-    images = QtConcurrent::blockingMapped(img, Loader(scale, last_scale == scale));
+    images = QtConcurrent::blockingMapped(img, Loader(scale, last_scale != scale));
 
 
     last_scale = scale;

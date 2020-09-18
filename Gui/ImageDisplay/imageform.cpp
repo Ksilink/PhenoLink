@@ -957,9 +957,9 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
         QMenu* cp = menu.addMenu("Copy path");
         cp->addAction("Current Image", this, SLOT(copyCurrentImagePath()));
         cp->addAction("Image Sequence", this, SLOT(copyCurrentSequencePath()));
-//        menu.addSeparator();
-//        // add menu video & save video with progress bar
-//        menu.addAction("Save as a Video", this, SLOT(saveVideo()));
+        menu.addSeparator();
+        // add menu video & save video with progress bar
+        menu.addAction("Save as a Video", this, SLOT(saveVideo()));
     }
     else
     {
@@ -1033,7 +1033,7 @@ cv::Mat QImageToMat(QImage image)
     case QImage::Format_RGB32:
     case QImage::Format_ARGB32_Premultiplied:
         mat = cv::Mat(image.height(), image.width(), CV_8UC4, (void*)image.constBits(), image.bytesPerLine());
-        cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+        //cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
         break;
     case QImage::Format_RGB888:
         mat = cv::Mat(image.height(), image.width(), CV_8UC3, (void*)image.constBits(), image.bytesPerLine());
@@ -1070,13 +1070,14 @@ void ImageForm::saveVideo()
 
     cv::Mat im(h,w, CV_8UC3);
     cv::Size s(h,w);
-    cv::Rect2i r(0,0, this->width(), this->height());
-
+  
 
     cv::VideoWriter writer;
-    int fourcc = cv::VideoWriter::fourcc('H','2','6','4');
+    int fourcc =  cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
     writer.open(filename.toStdString(),  fourcc, (int)_interactor->getFps(), s);
 
+    QString pos = _interactor->getSequenceFileModel()->Pos();
+    int z = _interactor->getZ(), f = _interactor->getField();
     for (unsigned i = 1; i <= _interactor->getTimePointCount(); i++) {
         progress.setValue(i);
         _interactor->setTimePoint(i);
@@ -1084,17 +1085,21 @@ void ImageForm::saveVideo()
         setPixmap(_interactor->getPixmap());
         //        changeCurrentSelection();
         imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
-                .arg(_interactor->getSequenceFileModel()->Pos())
-                .arg(_interactor->getZ())
-                .arg(_interactor->getTimePoint())
-                .arg(_interactor->getField());
+                .arg(pos)
+                .arg(z)
+                .arg(i)
+                .arg(f);
         textItem->setPlainText(imageInfos);
-        repaint();
+       // repaint();
+        QPixmap pixmap(this->size());
+        this->render(&pixmap);
 
-        QImage img = grab().toImage();
-        // Now opencv stuff
-        im(r) = QImageToMat(img);
+        //QImage img = grab().toImage();
+        // Now opencv stuff*
+        //pixmap.save(QString("c:/tmp/im_raw%1.jpg").arg(i));
+        im = QImageToMat(pixmap.toImage());
         writer.write(im);
+        //cv::imwrite(QString("c:/tmp/im%1.jpg").arg(i).toStdString(), im);
 
 
         if (progress.wasCanceled())

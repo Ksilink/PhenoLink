@@ -30,7 +30,7 @@ set(Checkout_VERSION_MINOR 4)
 
 set(Checkout_VERSION_COMPLEMENT R)
 
-set(Checkout_VERSION_RELEASE 1)
+set(Checkout_VERSION_RELEASE 2)
 
 option(BUILD_PLUGINS "Build plugins" ON)
 option(BUILD_PYTHON_SCRIPTING "Build with Core side Python Scripting" OFF)

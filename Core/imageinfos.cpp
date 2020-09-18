@@ -53,6 +53,9 @@ ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QStr
     // FIXME: Change stored image infos key : use XP / Workbench / deposit group
     QString k = key.isEmpty() ? ImageInfos::key() : key;
 
+    if (data->_platename_palette_color.contains(platename + k)
+        || data->_platename_palette_color.contains(platename))
+        exists = true; // Avoid reupdating color on load...
 
     ifo = stored[fname+k];
     if (!ifo)
@@ -64,6 +67,8 @@ ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QStr
     }
     else
         exists = true;
+
+    
     return ifo;
 }
 
