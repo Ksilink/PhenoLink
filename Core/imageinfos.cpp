@@ -34,21 +34,32 @@ QString ImageInfos::key(QString k)
 
 QMutex protect_iminfos;
 
-ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QString platename,
-                                    bool & exists, QString key)
+
+QPair<ImageInfosShared* , QMap<QString, ImageInfos*> *>
+    instanceHolder()
 {
 
     static ImageInfosShared* data = nullptr;
-    static QMap<QString, ImageInfos*> stored ;
-    
-    QMutexLocker lock(&protect_iminfos); // Just in case 2 instances try to create the ImageInfosShared struct
-    
+    static QMap<QString, ImageInfos*> stored;
     if (data == nullptr)
     {
         data = new ImageInfosShared;
     }
-   
-    ImageInfos* ifo = nullptr;
+
+    return qMakePair(data, &stored);
+}
+
+
+ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QString platename,
+                                    bool & exists, QString key)
+{
+	QPair<ImageInfosShared*, QMap<QString, ImageInfos*>*> t = instanceHolder();
+	ImageInfosShared* data = t.first;
+	QMap<QString, ImageInfos*>& stored = *t.second;
+
+	QMutexLocker lock(&protect_iminfos); // Just in case 2 instances try to create   the ImageInfosShared struct
+
+	ImageInfos* ifo = nullptr;
 
     // FIXME: Change stored image infos key : use XP / Workbench / deposit group
     QString k = key.isEmpty() ? ImageInfos::key() : key;
@@ -70,6 +81,27 @@ ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QStr
 
     
     return ifo;
+}
+
+void ImageInfos::deleteInstance()
+{
+
+    _ifo._infos_to_coreimage[this].clear();
+    _ifo._infos_to_coreimage.remove(this);
+
+    _ifo._platename_to_infos[_plate].removeAll(this);
+
+    QPair<ImageInfosShared*, QMap<QString, ImageInfos*>*> t = instanceHolder();
+    QMap<QString, ImageInfos*>& stored = *t.second;
+
+    QString key;
+    for (QMap<QString, ImageInfos*>::iterator it = stored.begin(); it != stored.end(); ++it)
+    {
+        if (it.value() == this)
+            key = it.key();
+    }
+    _image.release();
+    stored.remove(key);
 }
 
 
@@ -180,6 +212,17 @@ void ImageInfos::addCoreImage(CoreImage *ifo)
 }
 
 
+
+SequenceInteractor *ImageInfos::getInteractor()
+{
+    return _parent;
+}
+
+QList<ImageInfos *> ImageInfos::getLinkedImagesInfos()
+{
+    return  _ifo._platename_to_infos[_plate];
+}
+
 QList<CoreImage*> ImageInfos::getCoreImages()
 {
     return _ifo._infos_to_coreimage[this];
@@ -201,7 +244,7 @@ void ImageInfos::setColor(QColor c, bool refresh)
     _modified = true;
     c.setHsv(c.hsvHue(), c.hsvSaturation(), 255);
 
-    qDebug() << "Setting color" << this << c;
+//    qDebug() << "Setting color" << this << c;
 
     _ifo._platename_to_colorCode[_plate]._r = c.red();
     _ifo._platename_to_colorCode[_plate]._g = c.green();

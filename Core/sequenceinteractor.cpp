@@ -33,12 +33,46 @@ void SequenceInteractor::setField(unsigned t)
 {
     if (_mdl->getFieldCount() >= t)
         _field = t;
+
+    QString nm = _mdl->getFile(_timepoint, _field, _zpos, _channel);
+    ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
+    if (ifo)
+    {
+       QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
+       foreach(ImageInfos* info, list)
+       {
+           SequenceInteractor* inter = info->getInteractor();
+           if (inter)
+           {
+               inter->setField(t);
+               inter->modifiedImage();
+           }
+       }
+    }
+
+
 }
 
 void SequenceInteractor::setZ(unsigned z)
 {
     if (_mdl->getZCount() >= z)
         _zpos = z;
+
+    QString nm = _mdl->getFile(_timepoint, _field, _zpos, _channel);
+    ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
+    if (ifo)
+    {
+       QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
+       foreach(ImageInfos* info, list)
+       {
+           SequenceInteractor* inter = info->getInteractor();
+           if (inter)
+           {
+               inter->setZ(z);
+               inter->modifiedImage();
+           }
+       }
+    }
 }
 
 void SequenceInteractor::setChannel(unsigned c)
@@ -181,8 +215,22 @@ void SequenceInteractor::clearMemory()
 {
     /*  foreach (ImageInfos* im, _infos.values())
         delete im;
-    _infos.clear();*/
-    qDebug() << "FIXME: Clear Memory called for SequenceInteractor, but may not be honored";
+    _infos.clear();//
+
+
+*/
+    QString exp = getExperimentName();// +_mdl->Pos();
+
+    for (unsigned ii = 1; ii <= _mdl->getChannels(); ++ii)
+    {
+        QString nm = _mdl->getFile(_timepoint, _field, _zpos, ii);
+  
+        bool exists = false;
+        ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), exists, loadkey);
+        info->deleteInstance();
+        delete info;
+    }
+//    qDebug() << "FIXME: Clear Memory called for SequenceInteractor, but may not be honored";
 }
 
 
@@ -393,7 +441,7 @@ struct StitchStruct
 
 QPixmap SequenceInteractor::getPixmap(bool packed, float scale)
 {
-    qDebug() << "getPixmap" << packed;
+//    qDebug() << "getPixmap" << packed;
     Q_UNUSED(scale);
     if (packed)
     {

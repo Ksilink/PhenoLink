@@ -133,8 +133,26 @@ void ScrollZone::addSelectedWells()
     //  _progDiag->setLabelText("Loading Wells");
     //  _progDiag->setMaximum(count);
 
-    foreach (SequenceFileModel* m, sfm_list)
-        insertImage(m);
+    struct InsertFctor {
+        InsertFctor(ScrollZone* s) : sz(s)
+        {
+
+       }
+        ScrollZone* sz;
+
+        typedef SequenceInteractor* result_type;
+
+        SequenceInteractor* operator()(SequenceFileModel* sfm) {
+            SequenceInteractor* intr = new SequenceInteractor(sfm, ImageInfos::key());
+            intr->preloadImage();
+            return intr;
+        }
+    };
+
+    QList< SequenceInteractor*> all =  QtConcurrent::blockingMapped(sfm_list, InsertFctor(this));
+
+	foreach(SequenceInteractor* m, all)
+        insertImage(m->getSequenceFileModel(), m);
 
     //  _progDiag->close();
     //  delete _progDiag;
@@ -160,59 +178,27 @@ void ScrollZone::setupImageFormInteractor(ImageForm* f)
 
 }
 
-void ScrollZone::imageInsertionWatcher()
-{
-
-    QFutureWatcher<ImageForm*>* watcher = dynamic_cast<QFutureWatcher<ImageForm*>* >(sender());
-
-    if (!watcher) {
-        qDebug() << "Error retreiving watchers finished state";
-        return;
-    }
-
-    setupImageFormInteractor(watcher->future().result());
-}
-
-ImageForm* insertImageThreaded(SequenceFileModel* sfm, ImageForm* f)
-{
-    SequenceInteractor* intr =  new SequenceInteractor(sfm, ImageInfos::key());
-    intr->preloadImage();
-    f->setModelView(sfm, intr);
-
-    return f;
-}
-
-
-void ScrollZone::insertImage(SequenceFileModel* sfm)
+void ScrollZone::insertImage(SequenceFileModel* sfm, SequenceInteractor* iactor)
 {
     SequenceViewContainer::getHandler().addSequence(sfm);
 
     ImageForm* f = new ImageForm(nullptr, !sfm->hasProperty("unpack"));
     _seq_toImg[sfm] = f;
 
-    //  QFutureWatcher<ImageForm*> * watcher = new QFutureWatcher<ImageForm*>();
-    //  connect(watcher, SIGNAL(finished()), this, SLOT(imageInsertionWatcher()));
 
-    //  QFuture<ImageForm*> future = QtConcurrent::run(insertImageThreaded, sfm, f);
-    //  watcher->setFuture(future);
+    SequenceInteractor* intr =  iactor ? iactor : new SequenceInteractor(sfm, ImageInfos::key());
 
-
-    SequenceInteractor* intr =  new SequenceInteractor(sfm, ImageInfos::key());
-    //  intr->preloadImage();
     f->setModelView(sfm, intr);
 
     setupImageFormInteractor(f);
     f->scale(0);
 
-
     qApp->processEvents();
-
-    // _wid->resize(_wid->layout()->minimumSize());
 }
 
 void ScrollZone::refresh(SequenceFileModel *sfm)
 {
-    //  _seq_toImg[sfm]->setModelView(sfm);
+
     _seq_toImg[sfm]->updateButtonVisibility();
 
     _seq_toImg[sfm]->redrawPixmap();

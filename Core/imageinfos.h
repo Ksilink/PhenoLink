@@ -65,12 +65,20 @@ public:
 
     static ImageInfos* getInstance(SequenceInteractor* par, QString fname, QString platename, bool& exists, QString key = QString());
 
+    void deleteInstance();
+
+
     cv::Mat image(float scale = 1., bool reload = false);
 
     void addCoreImage(CoreImage *ifo);
     inline bool active() const { return _ifo._platename_to_colorCode[_plate]._active; }
 
     QList<CoreImage*> getCoreImages();
+
+    SequenceInteractor* getInteractor();
+    QList<ImageInfos*> getLinkedImagesInfos();
+
+
 
     bool isTime() const ;
     double getFps() const;

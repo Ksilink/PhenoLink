@@ -21,7 +21,7 @@ public:
 
     void removeSequences(QList<SequenceFileModel*>& lsfm);
 
-    void insertImage(SequenceFileModel *sfm);
+    void insertImage(SequenceFileModel *sfm, SequenceInteractor* iactor = nullptr);
     void refresh(SequenceFileModel *sfm);
 
     void select(ImageForm* f);
@@ -50,8 +50,6 @@ protected:
 
 
     void setupImageFormInteractor(ImageForm *f);
-protected slots:
-    void imageInsertionWatcher();
 };
 
 #endif // SCROLLZONE_H

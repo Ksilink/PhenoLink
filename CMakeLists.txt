@@ -16,21 +16,8 @@ project(Checkout)
 
 set(Checkout_VERSION_MAJOR 1)
 set(Checkout_VERSION_MINOR 4)
-
-#Evolutions du logiciel checkout v1.1 en v1.2 :
-
-#OK	Modification du serveur pour lancer plusieurs instances (option ligne de commande), pour la
-# gestion des systèmes Windows à plus de 64 processeurs logiques (clusters) ;
-
-#OK	Modification du client pour configurer les espaces de stockage (modifications internes et IHM) ;
-#OK	Ajout d’une capacité d’ouverture d’images qui ne sont pas spécifiquement issues d’un microscope Yokogawa.
-
-#OK Multi Selection directories in Add-data Directory
-#OK Database location
-
 set(Checkout_VERSION_COMPLEMENT R)
-
-set(Checkout_VERSION_RELEASE 2)
+set(Checkout_VERSION_RELEASE 3)
 
 option(BUILD_PLUGINS "Build plugins" ON)
 option(BUILD_PYTHON_SCRIPTING "Build with Core side Python Scripting" OFF)

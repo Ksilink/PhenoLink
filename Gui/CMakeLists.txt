@@ -72,6 +72,9 @@ add_library(CheckoutGui SHARED ${CheckoutGui_SRC} )
 QT5_WRAP_UI(mainwindow.ui ctkWidgets/ctkPathListButtonsWidget.ui)
 
 
+add_custom_command(TARGET CheckoutGui   PRE_BUILD
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
+    )
 
 target_include_directories(CheckoutGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

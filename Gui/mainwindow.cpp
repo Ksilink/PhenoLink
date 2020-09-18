@@ -321,7 +321,7 @@ void MainWindow::active_Channel(bool c)
     fo->setActive(c);
 
 
-    qDebug() << "Interactor: change active channel " << sender()->objectName()  << fo;
+//    qDebug() << "Interactor: change active channel " << sender()->objectName()  << fo;
 
 }
 
@@ -1539,7 +1539,7 @@ void MainWindow::changeRangeValueMax(double val)
     wwid = _imageControls[inter->getExperimentName()];
     QString name = sender()->objectName().replace("vMax", "");
     //  qDebug() << "Value Max!!!" << val << name;
-    qDebug() << "Interactor: changeRangeValue " << sender()->objectName();// << fo;
+//    qDebug() << "Interactor: changeRangeValue " << sender()->objectName();// << fo;
 
     if (!wwid) return;
     QList<ctkDoubleRangeSlider*> crs = wwid->findChildren<ctkDoubleRangeSlider*>(QString("Channel%1").arg(name));
@@ -1548,7 +1548,7 @@ void MainWindow::changeRangeValueMax(double val)
 
     ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
     fo->forceMaxValue(val);
-    qDebug() << "Interactor: changeRangeValue " << sender()->objectName() << fo;
+//    qDebug() << "Interactor: changeRangeValue " << sender()->objectName() << fo;
 
 }
 
@@ -1562,7 +1562,7 @@ void MainWindow::changeRangeValueMin(double val)
     //  qDebug() << "Value Min !!!" << val << name;
     
 
-    qDebug() << "Interactor: changeRangeValue " << sender()->objectName();// << fo;
+//    qDebug() << "Interactor: changeRangeValue " << sender()->objectName();// << fo;
 
 
     if (!wwid) return;
@@ -1572,7 +1572,7 @@ void MainWindow::changeRangeValueMin(double val)
 
     ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
     fo->forceMinValue(val);
-    qDebug() << "Interactor: changeRangeValue " << sender()->objectName() << fo;
+//    qDebug() << "Interactor: changeRangeValue " << sender()->objectName() << fo;
 
 }
 
@@ -1581,7 +1581,7 @@ void MainWindow::changeFpsValue(double val)
     SequenceInteractor* inter = _sinteractor.current();
     inter->setFps(val);
 
-    qDebug() << "Interactor: changeFps " << sender()->objectName();// << fo;
+//    qDebug() << "Interactor: changeFps " << sender()->objectName();// << fo;
 
 }
 
@@ -1625,7 +1625,7 @@ void MainWindow::changeColorState(QString link)
     ImageInfos* fo = inter->getChannelImageInfos(l.at(0).toInt() + 1);
     fo->changeColorState(l.at(1).toInt());
 
-    qDebug() << "Interactor: changeColorState " << sender()->objectName() << fo;
+//    qDebug() << "Interactor: changeColorState " << sender()->objectName() << fo;
 
 }
 
