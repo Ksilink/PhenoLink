@@ -38,7 +38,7 @@
 ImageForm::ImageForm(QWidget *parent, bool packed) :
     QWidget(parent),
     video_status(VideoStop),
-    packed(packed),wasPacked(true),
+    packed(packed),wasPacked(true), bias_correction(false),
     sz(0),
     ui(new Ui::ImageForm), aspectRatio(0.0), currentScale(1.0f),  isRunning(false)
 {
@@ -168,7 +168,8 @@ void ImageForm::watcherPixmap()
     QFutureWatcher<QPixmap>* wa = dynamic_cast<QFutureWatcher<QPixmap>* >(sender());
     //  qDebug() << "Redrzw";
     if (!wa) {
-        qDebug() << "Error retreiving watchers finished state";
+          isRunning = false;
+          qDebug() << "Error retreiving watchers finished state";
         return;
     }
 
@@ -177,14 +178,13 @@ void ImageForm::watcherPixmap()
     if (res.isNull())
     {
         qDebug() << "Return image is empty";
-        isRunning = false;
+
         delete wa;
         return;
     }
 
     if (packed != wasPacked)
      currentScale =  pixItem->pixmap().width()/res.width();
-
 
     redrawPixmap(res);
     isRunning = false;
@@ -202,24 +202,21 @@ void ImageForm::redrawPixmap(QPixmap img)
 }
 
 
-QPixmap runnerInteractorGetPixmapUnpacked( SequenceInteractor* _interactor)
+
+struct GetPixmap
 {
-  //    qDebug() << "Redraw Pixmap Unpacked";
-    QPixmap r = _interactor->getPixmap(false);
-    //qDebug() << "Finished pixmap";
+    GetPixmap(bool pa, bool bias_correct):packed(pa), bias(bias_correct)
+    {}
 
-    return r;
-}
+    bool packed, bias;
 
-QPixmap runnerInteractorGetPixmapPacked( SequenceInteractor* _interactor)
-{
-    //    qDebug() << "Start pixmap";
-    QPixmap r = _interactor->getPixmap(true);
-    //qDebug() << "Finished pixmap";
-
-    return r;
-}
-
+    typedef QPixmap result_type;
+    QPixmap operator()(SequenceInteractor* _interactor)
+    {
+        QPixmap r = _interactor->getPixmap(packed, bias);
+        return r;
+    }
+};
 
 void ImageForm::redrawPixmap()
 {
@@ -230,18 +227,11 @@ void ImageForm::redrawPixmap()
         isRunning = true;
         QFutureWatcher<QPixmap>* wa = new QFutureWatcher<QPixmap>();
         connect(wa, SIGNAL(finished()), this, SLOT(watcherPixmap()));
-        //qDebug() << "Redraw" << packed;
-        if (packed)
-        {
-            QFuture<QPixmap>  future = QtConcurrent::run(runnerInteractorGetPixmapPacked, _interactor);
-            wa->setFuture(future);
-        }
-        else
-        {
 
-            QFuture<QPixmap>  future = QtConcurrent::run(runnerInteractorGetPixmapUnpacked, _interactor);
-            wa->setFuture(future);
-        }           //      future.waitForFinished();
+        
+
+        QFuture<QPixmap>  future = QtConcurrent::run(GetPixmap(packed, bias_correction), _interactor);
+        wa->setFuture(future);
     }
     //  scale(0);
 
@@ -252,7 +242,7 @@ void ImageForm::redrawPixmap()
 
 void ImageForm::updateImage()
 {
-    setPixmap(_interactor->getPixmap(packed));
+    setPixmap(_interactor->getPixmap(packed, bias_correction));
     scale(0);
 }
 
@@ -382,11 +372,13 @@ void ImageForm::setModelView(SequenceFileModel *view, SequenceInteractor* intera
     this->_interactor->setCurrent(_interactor);
 
 
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)%5")
             .arg(_interactor->getSequenceFileModel()->Pos())
             .arg(_interactor->getZ())
             .arg(_interactor->getTimePoint())
-            .arg(_interactor->getField());
+            .arg(_interactor->getField())
+            .arg(QString("%1%2").arg(packed ? " ": " U")
+                                .arg(bias_correction ? "B" : ""));
 
 
     updateButtonVisibility();
@@ -541,7 +533,7 @@ void ImageForm::prevImClicked()
     if (_interactor->getField() > 1)
     {
         _interactor->setField(_interactor->getField() - 1);
-        setPixmap(_interactor->getPixmap(packed));
+        setPixmap(_interactor->getPixmap(packed, bias_correction));
     }
     changeCurrentSelection();
 }
@@ -551,7 +543,7 @@ void ImageForm::nextImClicked()
     if (_interactor->getField() <= _interactor->getFieldCount())
     {
         _interactor->setField(_interactor->getField() + 1);
-        setPixmap(_interactor->getPixmap(packed));
+        setPixmap(_interactor->getPixmap(packed, bias_correction));
     }
     changeCurrentSelection();
 }
@@ -561,7 +553,7 @@ void ImageForm::sliceUpClicked()
     if (_interactor->getZ() <= _interactor->getZCount())
     {
         _interactor->setZ(_interactor->getZ()+1);
-        setPixmap(_interactor->getPixmap(packed));
+        setPixmap(_interactor->getPixmap(packed, bias_correction));
     }
     changeCurrentSelection();
 }
@@ -571,7 +563,7 @@ void ImageForm::sliceDownClicked()
     if (_interactor->getZ() > 1)
     {
         _interactor->setZ(_interactor->getZ() - 1);
-        setPixmap(_interactor->getPixmap(packed));
+        setPixmap(_interactor->getPixmap(packed, bias_correction));
     }
     changeCurrentSelection();
 }
@@ -581,7 +573,7 @@ void ImageForm::nextFrameClicked()
     if (_interactor->getTimePoint() <= _interactor->getTimePointCount())
     {
         _interactor->setTimePoint(_interactor->getTimePoint()+1);
-        setPixmap(_interactor->getPixmap(packed));
+        setPixmap(_interactor->getPixmap(packed, bias_correction));
     }
     changeCurrentSelection();
 }
@@ -591,7 +583,7 @@ void ImageForm::prevFrameClicked()
     if (_interactor->getTimePoint() > 1)
     {
         _interactor->setTimePoint(_interactor->getTimePoint() - 1);
-        setPixmap(_interactor->getPixmap(packed));
+        setPixmap(_interactor->getPixmap(packed, bias_correction));
     }
     changeCurrentSelection();
 }
@@ -815,6 +807,9 @@ void ImageForm::mouseOverImage(QPointF pos)
     for (int i = 0; i < l.size(); ++i)
         str += QString("%1 ").arg(l.at(i));
     str += "])";
+
+    str += packed ? " " : " U";
+    str += bias_correction ? "B" : "";
     imagePosInfo = str;
 
     textItem2->setPlainText(imagePosInfo);
@@ -825,11 +820,13 @@ void ImageForm::mouseOverImage(QPointF pos)
 void ImageForm::changeCurrentSelection()
 {
     //  Well Name C1 (Z: z, t: t, F: f)
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)%5")
             .arg(_interactor->getSequenceFileModel()->Pos())
             .arg(_interactor->getZ())
             .arg(_interactor->getTimePoint())
-            .arg(_interactor->getField());
+            .arg(_interactor->getField())
+        .arg(QString("%1%2").arg(packed ? " " : " U")
+            .arg(bias_correction ? "B" : ""));;
     textItem->setPlainText(imageInfos);
     if (sz)
     {
@@ -926,13 +923,15 @@ void ImageForm::timerEvent(QTimerEvent *event)
             _interactor->setTimePoint(_interactor->getTimePoint());
     }
 
-    setPixmap(_interactor->getPixmap(packed));
+    setPixmap(_interactor->getPixmap(packed, bias_correction));
     //        changeCurrentSelection();
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)%5")
             .arg(_interactor->getSequenceFileModel()->Pos())
             .arg(_interactor->getZ())
             .arg(_interactor->getTimePoint())
-            .arg(_interactor->getField());
+            .arg(_interactor->getField())
+        .arg(QString("%1%2").arg(packed ? " " : " U")
+            .arg(bias_correction ? "B" : ""));;
     textItem->setPlainText(imageInfos);
     this->repaint();
 }
@@ -941,6 +940,13 @@ void ImageForm::changePacking()
 {
     packed = !packed;
     redrawPixmap();
+}
+
+void ImageForm::biasCorrection()
+{
+    bias_correction = !bias_correction;
+    redrawPixmap();
+//    _interactor->clearMemory();
 }
 
 
@@ -971,9 +977,10 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
     if (_interactor->getFieldCount() > 1)
     {
         menu.addAction("Unpack/repack Fields", this, SLOT(changePacking()));
-        menu.addSeparator();
-    }
 
+    }
+    menu.addAction("Correct bias field", this, SLOT(biasCorrection()));
+    menu.addSeparator();
     menu.addAction("Remove Sequence", this, SLOT(removeFromView()));
     menu.addSeparator();
 
@@ -998,7 +1005,7 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
 
 void ImageForm::copyToClipboard()
 {
-    QApplication::clipboard()->setPixmap(_interactor->getPixmap(packed));
+    QApplication::clipboard()->setPixmap(_interactor->getPixmap(packed, bias_correction));
 }
 
 void ImageForm::copyCurrentImagePath()
@@ -1082,13 +1089,14 @@ void ImageForm::saveVideo()
         progress.setValue(i);
         _interactor->setTimePoint(i);
 
-        setPixmap(_interactor->getPixmap());
+        setPixmap(_interactor->getPixmap(packed, bias_correction));
         //        changeCurrentSelection();
-        imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
+        imageInfos = QString("%1 (Z: %2, t: %3, F: %4)%5")
                 .arg(pos)
                 .arg(z)
                 .arg(i)
-                .arg(f);
+                .arg(f).arg(QString("%1%2").arg(packed ? " " : " U")
+                    .arg(bias_correction ? "B" : ""));;
         textItem->setPlainText(imageInfos);
        // repaint();
         QPixmap pixmap(this->size());
@@ -1110,11 +1118,13 @@ void ImageForm::saveVideo()
     progress.setValue( _interactor->getTimePointCount());
 
     _interactor->setTimePoint(currentTime);
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)%5")
             .arg(_interactor->getSequenceFileModel()->Pos())
             .arg(_interactor->getZ())
             .arg(_interactor->getTimePoint())
-            .arg(_interactor->getField());
+            .arg(_interactor->getField())
+        .arg(QString("%1%2").arg(packed ? " " : " U")
+            .arg(bias_correction ? "B" : ""));;
     textItem->setPlainText(imageInfos);
     repaint();
 

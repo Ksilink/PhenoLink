@@ -40,9 +40,9 @@ public:
   // Returns file for current selection
   QString getFile();
   void preloadImage();
-  QPixmap getPixmap(bool packed = true, float scale = 1.);
-  QImage getPixmapChannels(int field, float scale = 1.);
-  QList<unsigned> getData(QPointF d, bool packed = true);
+  QPixmap getPixmap(bool packed = true, bool bias_correction = false, float scale = 1.);
+  QImage getPixmapChannels(int field, bool bias_correction = false, float scale = 1.);
+  QList<unsigned> getData(QPointF d, bool packed = true, bool bias = false);
 
 
   // Return all channels file for current selection

@@ -422,30 +422,32 @@ QPointF getFieldPos(SequenceFileModel* seq, int field, int z, int t, int c)
 
 struct StitchStruct
 {
-    StitchStruct(SequenceInteractor* seq, float scale): _sc(scale), seq(seq)
+    StitchStruct(SequenceInteractor* seq, bool bias_cor, float scale): _sc(scale),  bias_correction(bias_cor), seq(seq)
     {}
 
     typedef QPair<int, QImage> result_type;
 
     QPair<int, QImage> operator()(int field)
     {
-        return  qMakePair(field, seq->getPixmapChannels(field, _sc));
+        return  qMakePair(field, seq->getPixmapChannels(field, bias_correction, _sc));
     }
 
     float _sc;
+     bool bias_correction;
     SequenceInteractor* seq;
+
 };
 
 // Warning: Critical function for speed
 // ENHANCE: Modify the handling of scale information
 
-QPixmap SequenceInteractor::getPixmap(bool packed, float scale)
+QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float scale)
 {
 //    qDebug() << "getPixmap" << packed;
     Q_UNUSED(scale);
     if (packed)
     {
-        QImage toPix = getPixmapChannels(_field);
+        QImage toPix = getPixmapChannels(_field, bias_correction);
         _cachePixmap = QPixmap::fromImage(toPix);
         return _cachePixmap;
     }
@@ -459,7 +461,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, float scale)
                 getWellPos(_mdl, _mdl->getFieldCount(), _zpos, _timepoint, _channel);
 
         QList<int> perf; for (unsigned i = 0; i < _mdl->getFieldCount(); ++i) perf.append( i+1);
-        QList<QPair<int, QImage> > toStitch = QtConcurrent::blockingMapped(perf, StitchStruct(this, scale));
+        QList<QPair<int, QImage> > toStitch = QtConcurrent::blockingMapped(perf, StitchStruct(this, bias_correction, scale));
 
 
         const int rows = li.first.size() * toStitch[0].second.width();
@@ -503,7 +505,7 @@ struct Loader
     }
 };
 
-QImage SequenceInteractor::getPixmapChannels(int field, float scale)
+QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, float scale)
 {
     QStringList list = getAllChannel(field);
 
@@ -576,7 +578,31 @@ QImage SequenceInteractor::getPixmapChannels(int field, float scale)
             const int B = img[c]->Blue();
 
             float mami = ma - mi;
-            try {
+            if (bias_correction)
+            {
+
+                cv::Mat bias = img[c]->bias(c+1);
+
+                for (int i = 0; i < rows; ++i)
+                {
+                    unsigned short* p = images[c].ptr<unsigned short>(i);
+                    unsigned short* b = bias.ptr<unsigned short>(i);
+
+                    QRgb* pix = (QRgb*)toPix.scanLine(i);
+                    for (int j = 0; j < cols; ++j, ++p,++b)
+                    {
+                        const unsigned short v = *p  / (*b/10000.);
+
+                        const float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+
+                        pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
+                                      std::min(255.f, qGreen(pix[j]) + f * G),
+                                      std::min(255.f, qBlue(pix[j]) + f * R));
+                    }
+                }
+            }
+            else
+            {
                 for (int i = 0; i < rows; ++i)
                 {
                     unsigned short* p = images[c].ptr<unsigned short>(i);
@@ -592,17 +618,15 @@ QImage SequenceInteractor::getPixmapChannels(int field, float scale)
                                       std::min(255.f, qBlue(pix[j]) + f * R));
                     }
                 }
-            } catch(...)
-            {
-                toPix.fill(Qt::black);
             }
+
         }
     }
     return toPix;
 }
 
 
-QList<unsigned> SequenceInteractor::getData(QPointF d, bool packed)
+QList<unsigned> SequenceInteractor::getData(QPointF d, bool packed, bool bias)
 {
     QList<unsigned> res;
     if (packed)

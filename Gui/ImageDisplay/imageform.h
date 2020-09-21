@@ -101,6 +101,7 @@ private slots:
     void copyCurrentSequencePath();
     void saveVideo();
     void changePacking();
+    void biasCorrection();
     void popImage();
     void removeFromView();
 
@@ -115,6 +116,7 @@ public slots:
     void redrawPixmap(QPixmap img);
 private:
     bool packed,wasPacked;
+    bool bias_correction;
 
     ScrollZone* sz;
 
