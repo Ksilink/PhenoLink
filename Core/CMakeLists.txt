@@ -29,8 +29,8 @@ target_include_directories(CheckoutCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(CheckoutCore  Qt5::Widgets Qt5::Core Qt5::Sql Qt5::Xml Qt5::XmlPatterns  Qt5::Concurrent ${OpenCV_LIBS} )
 
-add_custom_command(TARGET CheckoutCore   PRE_BUILD
-    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
-    )
+#add_custom_command(TARGET CheckoutCore   PRE_BUILD
+#    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
+#    )
 
 install(TARGETS CheckoutCore COMPONENT applications DESTINATION bin)
