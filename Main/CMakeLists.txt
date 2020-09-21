@@ -15,9 +15,9 @@ target_link_libraries(Checkout CheckoutGui  ${CheckoutLibs} Qt5::Widgets Qt5::Sq
 install(TARGETS Checkout COMPONENT applications DESTINATION bin)
 
 
-add_custom_command(TARGET Checkout  PRE_BUILD
-    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
-    )
+#add_custom_command(TARGET Checkout  PRE_BUILD
+#    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
+ #   )
 
 add_definitions(-DCheckoutServer)
 add_executable(CheckoutProcessServer ${GUI_TYPE} mainServer.cpp   ${SrvRCFILE} )
