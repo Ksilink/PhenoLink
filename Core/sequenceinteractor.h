@@ -42,7 +42,7 @@ public:
   void preloadImage();
   QPixmap getPixmap(bool packed = true, float scale = 1.);
   QImage getPixmapChannels(int field, float scale = 1.);
-  QList<unsigned> getData(QPointF d);
+  QList<unsigned> getData(QPointF d, bool packed = true);
 
 
   // Return all channels file for current selection
@@ -89,6 +89,9 @@ protected:
 
   //QList<ImageForm*> linked_images;
   //QMap<QString, ImageInfos*> _infos;
+
+  QMap<int, QMap<int, int> > toField;
+  QVector<QPoint> pixOffset;
 
   QList<CoreImage*> _ImageList;
   QPixmap           _cachePixmap; // Cache temporary image, pixmap are implicitly shared

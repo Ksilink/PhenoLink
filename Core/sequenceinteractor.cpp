@@ -474,8 +474,12 @@ QPixmap SequenceInteractor::getPixmap(bool packed, float scale)
 
             int x = li.first.indexOf(p.x());
             int y = li.second.size() - li.second.indexOf(p.y()) - 1;
+            toField[x][y] = i;
+
             QPainter pa(&toPix);
             QPoint offset = QPoint(x*toStitch[0].second.width(), y * toStitch[0].second.height());
+            if (pixOffset.size()  > 0)
+                offset += pixOffset[i];
 
             pa.drawImage(offset, toStitch[i].second);
         }
@@ -598,19 +602,47 @@ QImage SequenceInteractor::getPixmapChannels(int field, float scale)
 }
 
 
-QList<unsigned> SequenceInteractor::getData(QPointF d)
+QList<unsigned> SequenceInteractor::getData(QPointF d, bool packed)
 {
-    QStringList list = getAllChannel();
-
     QList<unsigned> res;
-    int ii = 0;
-
-    for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
+    if (packed)
     {
-        cv::Mat m = imageInfos(*it, -1, loadkey)->image();
-        if (m.rows > d.y() && m.cols > d.x())
-            res << m.at<unsigned short>((int)d.y(), (int)d.x());
-    }
 
+        QStringList list = getAllChannel();
+
+        int ii = 0;
+
+        for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
+        {
+            cv::Mat m = imageInfos(*it, -1, loadkey)->image();
+            if (m.rows > d.y() && m.cols > d.x())
+                res << m.at<unsigned short>((int)d.y(), (int)d.x());
+        }
+    }
+    else
+    {
+        // Find out in what cadran we are in
+
+        cv::Mat m = imageInfos( getFile(), -1, loadkey)->image();
+        int cx = floor(d.x() / m.cols);
+        int cy = floor(d.y() / m.rows);
+
+
+        d.setX(d.x() - cx * m.cols);
+        d.setY(d.y() - cy * m.rows);
+
+        int f = this->toField[cx][cy];
+
+        int ii = 0;
+        QStringList list = getAllChannel(f);
+
+        for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
+        {
+            cv::Mat m = imageInfos(*it, -1, loadkey)->image();
+            if (m.rows > d.y() && m.cols > d.x())
+                res << m.at<unsigned short>((int)d.y(), (int)d.x());
+        }
+
+    }
     return res;
 }

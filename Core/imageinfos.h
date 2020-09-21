@@ -45,6 +45,7 @@ struct ImageInfosShared
      QMap<QString, CommonColorCode> _platename_to_colorCode;
      QMap<QString, QList<ImageInfos*> > _platename_to_infos;
      QMap<ImageInfos*, QList<CoreImage* > > _infos_to_coreimage;
+     QMap<QString, QMap<int, cv::Mat> > bias_field; // Per plate bias field, channel
 
      QMap<QString, QVector<QColor> > _platename_palette_color;
      QMap<QString, QVector<int> > _platename_palette_state;
@@ -69,6 +70,7 @@ public:
 
 
     cv::Mat image(float scale = 1., bool reload = false);
+    cv::Mat bias(int channel, float scale = 1.);
 
     void addCoreImage(CoreImage *ifo);
     inline bool active() const { return _ifo._platename_to_colorCode[_plate]._active; }
@@ -78,6 +80,7 @@ public:
     SequenceInteractor* getInteractor();
     QList<ImageInfos*> getLinkedImagesInfos();
 
+    void toggleBiasCorrection();
 
 
     bool isTime() const ;
@@ -149,7 +152,7 @@ protected:
     cv::Mat _image;
     QMutex _lockImage;
     double _fps;
-
+    bool bias_correction;
 };
 
 

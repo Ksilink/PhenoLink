@@ -3,13 +3,16 @@
 #include <algorithm>
 #include <opencv2/imgproc.hpp>
 
+#include <Core/checkouterrorhandler.h>
+
 
 ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString fname, QString platename):
     _ifo(ifo),
     _parent(par),
     _modified(true),
     _name(fname),
-    _plate(platename)
+    _plate(platename),
+    bias_correction(false)
 {
     QMutexLocker lock(&_lockImage);
     loadedWithkey = key();
@@ -133,6 +136,12 @@ cv::Mat ImageInfos::image(float scale, bool reload)
         else
             _image = cv::imread(_name.toStdString(), 2);
 
+        if (_image.empty())
+        {
+            CheckoutErrorHandler::getInstance().addError(QString("Loading image went wrong %1").arg(_name));
+            return _image;
+        }
+
         if (_image.type() != CV_16U)
         {
             cv::Mat t;
@@ -202,7 +211,25 @@ cv::Mat ImageInfos::image(float scale, bool reload)
     if (scale < 1.0)
         cv::resize(_image, _image, cv::Size(), scale, scale, cv::INTER_AREA);
     //  _modified = false;
-    return _image.clone();
+    return _image;
+}
+
+cv::Mat ImageInfos::bias(int channel, float scale)
+{
+    if (_ifo.bias_field[_plate].contains(channel))
+        return _ifo.bias_field[_plate][channel];
+
+    cv::Mat bias;
+
+    SequenceFileModel* mdl = _parent->getSequenceFileModel();
+    QString bias_file = mdl->property(QString("ShadingCorrectionSource_ch%1").arg(channel));
+    QFileInfo path(mdl->getFile(1,1,1,channel));
+    bias_file = path.absolutePath() + "/" + bias_file;
+    qDebug() << "Loading bias file" << bias_file;
+
+    bias = cv::imread(bias_file.toStdString(), 2);
+    _ifo.bias_field[_plate][channel] = bias;
+    return bias;
 }
 
 void ImageInfos::addCoreImage(CoreImage *ifo)
@@ -221,6 +248,11 @@ SequenceInteractor *ImageInfos::getInteractor()
 QList<ImageInfos *> ImageInfos::getLinkedImagesInfos()
 {
     return  _ifo._platename_to_infos[_plate];
+}
+
+void ImageInfos::toggleBiasCorrection()
+{
+    this->bias_correction = !this->bias_correction;
 }
 
 QList<CoreImage*> ImageInfos::getCoreImages()

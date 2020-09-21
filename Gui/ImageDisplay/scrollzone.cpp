@@ -7,7 +7,7 @@
 
 #include "flowlayout.h"
 #include "imageform.h"
-
+#include <Core/checkouterrorhandler.h>
 #include "Core/wellplatemodel.h"
 
 #include <QElapsedTimer>
@@ -16,6 +16,8 @@
 #include <QPushButton>
 
 #include <QProgressDialog>
+#include <QMessageBox>
+
 
 ScrollZone::ScrollZone(QWidget *parent) :
     QScrollArea(parent)/*,
@@ -87,9 +89,12 @@ void ScrollZone::dropEvent(QDropEvent *event)
     ImageInfos::key(_mainwin->workbenchKey()); // Reset to workbench key
 
 
-    //  _wid->resize(_wid->layout()->minimumSize());
-
-
+    if (CheckoutErrorHandler::getInstance().hasErrors())
+    {
+        qDebug() << "Error while loading image occured !" << CheckoutErrorHandler::getInstance().getErrors();
+        QMessageBox::critical(this, "Drop file yielded errors", CheckoutErrorHandler::getInstance().getErrors());
+        CheckoutErrorHandler::getInstance().resetErrors();
+    }
 }
 
 void ScrollZone::addSelectedWells()

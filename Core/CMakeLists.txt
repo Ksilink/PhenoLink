@@ -19,7 +19,10 @@ add_library(CheckoutCore SHARED
             RegistrableIntegralType.h RegistrableStdContainerType.h
             RegistrableSecondOrderType.h
             ImageContainers.cpp ImageContainers.h
-            matrixdatamodel.cpp matrixdatamodel.h )
+            matrixdatamodel.cpp matrixdatamodel.h
+            checkouterrorhandler.cpp checkouterrorhandler.h
+
+            )
 
 
 target_include_directories(CheckoutCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
