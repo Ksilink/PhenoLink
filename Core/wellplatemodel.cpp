@@ -1289,7 +1289,15 @@ Screens ScreensHandler::loadScreens(QStringList list, bool allow_loaded)
 #if 1
 
 	auto func = std::bind(loadScreenFunc, std::placeholders::_1 , allow_loaded, _screens);
-    Screens res = QtConcurrent::blockingMapped(list, func);
+    Screens tmp = QtConcurrent::blockingMapped(list, func);
+
+    Screens res;
+
+    foreach(ExperimentFileModel * mdl, tmp)
+        if (mdl)
+            res << mdl;
+
+
 #else
 
     for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it)

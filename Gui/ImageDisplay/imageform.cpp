@@ -372,13 +372,12 @@ void ImageForm::setModelView(SequenceFileModel *view, SequenceInteractor* intera
     this->_interactor->setCurrent(_interactor);
 
 
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)%5")
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
             .arg(_interactor->getSequenceFileModel()->Pos())
             .arg(_interactor->getZ())
             .arg(_interactor->getTimePoint())
             .arg(_interactor->getField())
-            .arg(QString("%1%2").arg(packed ? " ": " U")
-                                .arg(bias_correction ? "B" : ""));
+            ;
 
 
     updateButtonVisibility();
@@ -803,7 +802,8 @@ void ImageForm::mouseOverImage(QPointF pos)
     _pos = pos;
     QString str = QString("(%1 x %2 : [").arg((int)pos.x()).arg((int)pos.y());
 
-    QList<unsigned> l =_interactor->getData(pos, packed);
+    int field = 0;
+    QList<unsigned> l =_interactor->getData(pos,field, packed );
     for (int i = 0; i < l.size(); ++i)
         str += QString("%1 ").arg(l.at(i));
     str += "])";
@@ -812,6 +812,12 @@ void ImageForm::mouseOverImage(QPointF pos)
     str += bias_correction ? "B" : "";
     imagePosInfo = str;
 
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
+            .arg(_interactor->getSequenceFileModel()->Pos())
+            .arg(_interactor->getZ())
+            .arg(_interactor->getTimePoint())
+            .arg(field);
+    textItem->setPlainText(imageInfos);
     textItem2->setPlainText(imagePosInfo);
     // Need to fetch image infos...
     //  qDebug() << pos <<
@@ -820,13 +826,12 @@ void ImageForm::mouseOverImage(QPointF pos)
 void ImageForm::changeCurrentSelection()
 {
     //  Well Name C1 (Z: z, t: t, F: f)
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)%5")
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
             .arg(_interactor->getSequenceFileModel()->Pos())
             .arg(_interactor->getZ())
             .arg(_interactor->getTimePoint())
             .arg(_interactor->getField())
-        .arg(QString("%1%2").arg(packed ? " " : " U")
-            .arg(bias_correction ? "B" : ""));;
+        ;
     textItem->setPlainText(imageInfos);
     if (sz)
     {
@@ -925,13 +930,12 @@ void ImageForm::timerEvent(QTimerEvent *event)
 
     setPixmap(_interactor->getPixmap(packed, bias_correction));
     //        changeCurrentSelection();
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)%5")
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
             .arg(_interactor->getSequenceFileModel()->Pos())
             .arg(_interactor->getZ())
             .arg(_interactor->getTimePoint())
             .arg(_interactor->getField())
-        .arg(QString("%1%2").arg(packed ? " " : " U")
-            .arg(bias_correction ? "B" : ""));;
+        ;
     textItem->setPlainText(imageInfos);
     this->repaint();
 }
@@ -1091,12 +1095,11 @@ void ImageForm::saveVideo()
 
         setPixmap(_interactor->getPixmap(packed, bias_correction));
         //        changeCurrentSelection();
-        imageInfos = QString("%1 (Z: %2, t: %3, F: %4)%5")
+        imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
                 .arg(pos)
                 .arg(z)
                 .arg(i)
-                .arg(f).arg(QString("%1%2").arg(packed ? " " : " U")
-                    .arg(bias_correction ? "B" : ""));;
+                .arg(f);
         textItem->setPlainText(imageInfos);
        // repaint();
         QPixmap pixmap(this->size());
@@ -1118,13 +1121,12 @@ void ImageForm::saveVideo()
     progress.setValue( _interactor->getTimePointCount());
 
     _interactor->setTimePoint(currentTime);
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)%5")
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
             .arg(_interactor->getSequenceFileModel()->Pos())
             .arg(_interactor->getZ())
             .arg(_interactor->getTimePoint())
             .arg(_interactor->getField())
-        .arg(QString("%1%2").arg(packed ? " " : " U")
-            .arg(bias_correction ? "B" : ""));;
+        ;
     textItem->setPlainText(imageInfos);
     repaint();
 

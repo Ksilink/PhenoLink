@@ -91,8 +91,10 @@ void ScrollZone::dropEvent(QDropEvent *event)
 
     if (CheckoutErrorHandler::getInstance().hasErrors())
     {
-        qDebug() << "Error while loading image occured !" << CheckoutErrorHandler::getInstance().getErrors();
-        QMessageBox::critical(this, "Drop file yielded errors", CheckoutErrorHandler::getInstance().getErrors());
+        QString err = CheckoutErrorHandler::getInstance().getErrors();
+        qDebug() << "Error while loading image occured !" << err;
+        err.truncate(80);
+        QMessageBox::critical(this, "Drop file yielded errors", err);
         CheckoutErrorHandler::getInstance().resetErrors();
     }
 }

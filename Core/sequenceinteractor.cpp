@@ -476,7 +476,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
 
             int x = li.first.indexOf(p.x());
             int y = li.second.size() - li.second.indexOf(p.y()) - 1;
-            toField[x][y] = i;
+            toField[x][y] = i+1;
 
             QPainter pa(&toPix);
             QPoint offset = QPoint(x*toStitch[0].second.width(), y * toStitch[0].second.height());
@@ -626,13 +626,14 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
 }
 
 
-QList<unsigned> SequenceInteractor::getData(QPointF d, bool packed, bool bias)
+QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed, bool bias)
 {
     QList<unsigned> res;
     if (packed)
     {
 
         QStringList list = getAllChannel();
+        field = _field;
 
         int ii = 0;
 
@@ -656,6 +657,7 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, bool packed, bool bias)
         d.setY(d.y() - cy * m.rows);
 
         int f = this->toField[cx][cy];
+        field = f;
 
         int ii = 0;
         QStringList list = getAllChannel(f);
