@@ -52,6 +52,8 @@ public:
     void setSelectState(bool val);
     void updateButtonVisibility();
 
+    QStringList getChannelNames();
+
 protected:
     virtual void resizeEvent(QResizeEvent * event) ;
     virtual void mousePressEvent(QMouseEvent *event);
@@ -101,6 +103,7 @@ private slots:
     void copyCurrentSequencePath();
     void saveVideo();
     void changePacking();
+    void refinePacking();
     void biasCorrection();
     void popImage();
     void removeFromView();

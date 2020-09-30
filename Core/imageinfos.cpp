@@ -290,6 +290,16 @@ void ImageInfos::setColor(QColor c, bool refresh)
     }
 }
 
+void ImageInfos::setChannelName(QString name)
+{
+    channelName = name;
+}
+
+QString ImageInfos::getChannelName()
+{
+    return channelName;
+}
+
 
 void ImageInfos::setColor(unsigned char r, unsigned char g, unsigned char b)
 {

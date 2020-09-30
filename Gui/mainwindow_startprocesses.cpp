@@ -262,7 +262,8 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
         obj["ProcessStartId"] = StartId;
 
         // Need to fill the parameters with appropriate values
-        QJsonArray params = obj["Parameters"].toArray();
+        QJsonArray params = obj["Parameters"].toArray(), bias;
+
         for (int i = 0; i < params.size(); ++i )
         { // First set the images up, so that it will match the input data
             QJsonObject par = params[i].toObject();
@@ -271,9 +272,22 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
             {
                 foreach (QString j, im.keys())
                     par.insert(j, im[j]);
+
+                if (par["Channels"].isArray() && bias.isEmpty())
+                {
+                    QJsonArray chs = par["Channels"].toArray();
+                    for (int j = 0; j < chs.size(); ++j)
+                    {
+                        int channel = chs[j].toInt();
+                        QString bias_file = sfm->property(QString("ShadingCorrectionSource_ch%1").arg(channel));
+                        bias.append(bias_file);
+                    }
+                }
+
+
+                par["bias"] = bias;
                 params.replace(i, par);
             }
-
 
         }
 
@@ -282,7 +296,9 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
         {
             QJsonObject par = params[i].toObject();
             if (par["Channels"].isArray() && cchans.isEmpty())
+            {
                 cchans = par["Channels"].toArray();
+            }
         }
         //        qDebug() << "Found channels:" << cchans;
         for (int i = 0; i < params.size(); ++i )
@@ -324,8 +340,10 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                     getValue(wid, par, "Value2", wids.size() > 1);
                 params.replace(i, par);
             }
+
         }
 
+       
         obj["Parameters"] = params;
 
         params = obj["ReturnData"].toArray();
@@ -348,7 +366,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                 //                qDebug() << "Setting optional state:" << wid->checkState();
                 params.replace(i, par);
             }
-
+            
         }
 
         obj["ReturnData"] = params;
@@ -366,11 +384,11 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
         obj["CommitName"] = _commitName->text();
         obj["WellTags"] = sfm->getTags().join(";");
 
+
         procArray.append(obj);
-
-        //            qDebug()  << im["zPos"]<< im["FieldId"]<< im["TimePos"]<< im["Channel"]<< im["Channels"];
     }
-
+    // Display first image set
+    qDebug() << procArray[0];
 
     //    handler.startProcess(_preparedProcess, procArray);
     if (procArray.size()) started = true;

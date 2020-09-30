@@ -364,6 +364,11 @@ void ImageForm::updateButtonVisibility()
     }
 }
 
+QStringList ImageForm::getChannelNames()
+{
+    return _interactor->getChannelNames();
+}
+
 void ImageForm::setModelView(SequenceFileModel *view, SequenceInteractor* interactor)
 {
     this->_view = view;
@@ -946,6 +951,13 @@ void ImageForm::changePacking()
     redrawPixmap();
 }
 
+void ImageForm::refinePacking()
+{
+    // Perform fit of packing !!!!
+
+    _interactor->refinePacking();
+}
+
 void ImageForm::biasCorrection()
 {
     bias_correction = !bias_correction;
@@ -981,7 +993,10 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
     if (_interactor->getFieldCount() > 1)
     {
         menu.addAction("Unpack/repack Fields", this, SLOT(changePacking()));
-
+        if (packed == false)
+        {
+            menu.addAction("Refine unpack", this, SLOT(refinePacking()));
+        }
     }
     menu.addAction("Correct bias field", this, SLOT(biasCorrection()));
     menu.addSeparator();

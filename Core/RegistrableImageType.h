@@ -13,7 +13,7 @@ class RegistrableImageParent: public RegistrableParent
     typedef RegistrableImageParent Self;
 
 public:
-    RegistrableImageParent(): _vectorImage(false), _withMeta(false), _autoload(true)
+    RegistrableImageParent(): _vectorImage(false), _withMeta(false), _autoload(true), _unbias(0),_tiles(0)
     {
     }
 
@@ -23,7 +23,7 @@ public:
         return *this;
     }
 
-    virtual void read(const QJsonObject &json)
+    virtual void read(const QJsonObject& json)
     {
         RegistrableParent::read(json);
         if (json.contains("Properties"))
@@ -31,6 +31,16 @@ public:
             //            json["Properties"].toArray().toString
         }
 
+        if (json.contains("unbias"))
+            _unbias = json["unbias"].toBool();
+        if (json.contains("tiled"))
+            _tiles = json["tiled"].toInt();
+        if (json.contains("ChannelNames"))
+        {
+            QJsonArray t = json["ChannelNames"].toArray();
+            for (int i = 0; i < t.size(); ++i)
+                _vectorNames << t[i].toString();
+        }
         if (json.contains("Colormap"))
         {
             QJsonObject ob = json["Colormap"].toObject();
@@ -49,6 +59,11 @@ public:
         RegistrableParent::write(json);
         json["isImage"] = true;
         json["asVectorImage"] = _vectorImage;
+        json["unbias"] = _unbias; // Tells the client to send the bias field data
+        json["tiled"] = (int)_tiles; // Tells the client to send the 8 sided images to be loaded as tiled data !
+
+        if (_vectorNames.size() > 0)
+            json["ChannelNames"] = QJsonArray::fromStringList(_vectorNames);
         if (_withMeta)
             json["Properties"] =  QJsonArray::fromStringList(_meta);
 
@@ -92,12 +107,32 @@ public:
 
     QString getMeta(QString me) { return _metaData[me]; }
 
+    // Unbias on load
+    Self& unbias()
+    { // Apply the bias correction to the loaded
+        _unbias = true;
+        return *this;
+    }
+
+    Self& loadTiled(unsigned size)
+    {
+        _tiles = size;
+        return *this;
+    }
+
     virtual bool hasData(void* data) = 0;
 
 
-    void setColormap(Colormap color)
+    Self& setColormap(Colormap color)
     {
         _colormap = color;
+        return *this;
+    }
+
+    Self& setChannelNames(QStringList names)
+    {
+        _vectorNames = names;
+        return *this;
     }
 
 protected:
@@ -106,7 +141,11 @@ protected:
     bool        _vectorImage;
     bool        _withMeta;
     bool        _autoload;
+    bool        _unbias;
+    unsigned        _tiles;
+
     QStringList _meta;
+    QStringList _vectorNames;
     QMap<QString, QString> _metaData;
 };
 

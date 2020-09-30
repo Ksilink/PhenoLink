@@ -145,7 +145,12 @@ public:
   void clearTags();
   QStringList getTags();
 
+  void setChannelNames(QStringList names);
+  QStringList getChannelNames();
+
 protected:
+
+
 
   bool _isValid;
   bool _isShowed;//, _isProcessResult;
@@ -156,7 +161,7 @@ protected:
 
   QList<SequenceFileModel*> _siblings;
   QSet<int> _channelsIds;
-  QStringList _tags;
+  QStringList _tags, _channelNames;
 
 private:
 

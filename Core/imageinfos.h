@@ -138,10 +138,14 @@ public slots:
 
     void setColor(QColor c, bool refresh=true);
 
+    void setChannelName(QString name);
+    QString getChannelName();
+
 protected:
 
 
     QString loadedWithkey;
+    QString channelName;
 
     ImageInfosShared& _ifo;
     SequenceInteractor* _parent;

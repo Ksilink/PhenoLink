@@ -283,7 +283,8 @@ QCheckBox* MainWindow::setupActiveBox(QCheckBox* box, ImageInfos* fo, int channe
         box->setAttribute(Qt::WA_DeleteOnClose);
         box->setChecked(fo->active());
     }
-    //  box->setToolTip(QString("box%1").arg(channel));
+    if (!fo->getChannelName().isEmpty()) // Set the Channel Name
+        box->setToolTip(fo->getChannelName());
 
     connect(box, SIGNAL(toggled(bool)), this, SLOT(active_Channel(bool)), Qt::UniqueConnection);
 

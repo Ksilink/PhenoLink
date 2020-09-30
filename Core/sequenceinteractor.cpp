@@ -38,16 +38,16 @@ void SequenceInteractor::setField(unsigned t)
     ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
     if (ifo)
     {
-       QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
-       foreach(ImageInfos* info, list)
-       {
-           SequenceInteractor* inter = info->getInteractor();
-           if (inter)
-           {
-               inter->setField(t);
-               inter->modifiedImage();
-           }
-       }
+        QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
+        foreach(ImageInfos* info, list)
+        {
+            SequenceInteractor* inter = info->getInteractor();
+            if (inter && inter != _current)
+            {
+                inter->setField(t);
+                inter->modifiedImage();
+            }
+        }
     }
 
 
@@ -62,16 +62,16 @@ void SequenceInteractor::setZ(unsigned z)
     ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
     if (ifo)
     {
-       QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
-       foreach(ImageInfos* info, list)
-       {
-           SequenceInteractor* inter = info->getInteractor();
-           if (inter)
-           {
-               inter->setZ(z);
-               inter->modifiedImage();
-           }
-       }
+        QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
+        foreach(ImageInfos* info, list)
+        {
+            SequenceInteractor* inter = info->getInteractor();
+            if (inter && inter != _current)
+            {
+                inter->setZ(z);
+                inter->modifiedImage();
+            }
+        }
     }
 }
 
@@ -93,6 +93,16 @@ void SequenceInteractor::setFps(double fps)
 
 
 
+}
+
+QStringList SequenceInteractor::getChannelNames()
+{
+    return channel_names;
+}
+
+void SequenceInteractor::setChannelNames(QStringList names)
+{
+    channel_names = names;
 }
 
 unsigned SequenceInteractor::getFieldCount()
@@ -224,13 +234,13 @@ void SequenceInteractor::clearMemory()
     for (unsigned ii = 1; ii <= _mdl->getChannels(); ++ii)
     {
         QString nm = _mdl->getFile(_timepoint, _field, _zpos, ii);
-  
+
         bool exists = false;
         ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), exists, loadkey);
         info->deleteInstance();
         delete info;
     }
-//    qDebug() << "FIXME: Clear Memory called for SequenceInteractor, but may not be honored";
+    //    qDebug() << "FIXME: Clear Memory called for SequenceInteractor, but may not be honored";
 }
 
 
@@ -345,6 +355,13 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
         }
         else
             info->setDefaultColor(ii);
+
+        // Also setup the channel names if needed
+        if (!_mdl->getChannelNames().isEmpty())
+        {
+            QString name = _mdl->getChannelNames()[ii-1];
+            info->setChannelName(name);
+        }
     }
     /*    lock_infos.lock();ta
         _infos[file] = info;
@@ -352,6 +369,122 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
     //}
 
     return info;
+}
+
+
+
+double mse(cv::Mat i1, cv::Mat i2)
+{
+    double ms = 0;
+
+    int rows  = i1.rows, cols = i1.cols;
+    assert(i1.rows == i2.rows && i1.cols == i2.cols);
+
+    for (int i = 0; i < rows; ++i)
+    {
+        unsigned short* l = i1.ptr<unsigned short>(i);
+        unsigned short* r = i2.ptr<unsigned short>(i);
+
+        for (int j = 0; j < cols; ++j, ++l,++r)
+        {
+            double d = (*l - *r);
+            ms += d*d;
+        }
+
+    }
+
+    return ms / (cols*rows);
+}
+
+QPoint refineLeft(cv::Mat& left, cv::Mat& right)
+{
+    QPoint res;
+    double mii = std::numeric_limits<double>::max();
+    int overlap = 100;
+
+    int rw = left.rows, cl = left.cols;
+
+    for (int c = 1; c < overlap; ++c)
+    {
+        for (int r = 0; r < overlap; ++r)
+        {
+            cv::Rect2d le( left.cols-c, 0, c, left.rows-r);
+            cv::Rect2d ri(0,r,  c, left.rows-r);
+            // FIXME : Should square measure here !
+            double s = mse(left(le), right(ri));
+            if (s < mii)
+            {
+                mii  = s;
+                res = QPoint(c,r);
+            }
+            le = cv::Rect2d(left.cols - c, r, c, left.rows - r);
+            ri = cv::Rect2d(0, 0, c, left.rows - r);
+            s = mse(left(le), right(ri));
+            if (s < mii)
+            {
+                mii = s;
+                res = QPoint(c, -r);
+            }
+        }
+    }
+
+    return res;
+}
+
+QPoint refineLower(cv::Mat& up, cv::Mat& down)
+{
+    QPoint res;
+    return res;
+}
+
+
+void SequenceInteractor::refinePacking()
+{
+    // Parellelize stuffs !
+
+
+    // Assume single channel is enough !
+
+    // Need to compute the unpacking starting from upper left hand corner
+    //for (unsigned i = 0; i < _mdl->getFieldCount(); ++i)
+    QPoint offset;
+    cv::Mat ref;
+    
+    this->pixOffset.resize(_mdl->getFieldCount());
+
+    for (auto it = toField.begin(), end = toField.end(); it != end; ++it)
+    {
+        for (auto sit = it.value().begin(), send = it.value().end(); sit != send; ++sit)
+        {
+            if (ref.empty())
+            {
+               QString file = _mdl->getFile(_timepoint, sit.value(), _zpos, 1);
+               ref = imageInfos(file, -1, loadkey)->image();
+               continue;
+            }
+            QString file = _mdl->getFile(_timepoint, sit.value(), _zpos, 1);
+            cv::Mat right = imageInfos(file, -1, loadkey)->image();
+
+            QPoint of;
+            if (sit == it.value().begin())
+            {
+                of = refineLower(ref, right);
+            }
+            else
+            {
+                of = refineLeft(ref, right);
+            }
+            qDebug() << "Refine Unpack: " << it.key() << sit.key() << sit.value() << of;
+            this->pixOffset[sit.value()-1] = offset + of;// combine previous with current
+            offset += of;
+            ref = right;
+        }
+        QString file = _mdl->getFile(_timepoint, it.value().begin().value(), _zpos, 1);
+        offset = pixOffset[it.value().begin().value()-1];
+        ref = imageInfos(file, -1, loadkey)->image();
+    }
+
+
 }
 
 void SequenceInteractor::preloadImage()
@@ -433,7 +566,7 @@ struct StitchStruct
     }
 
     float _sc;
-     bool bias_correction;
+    bool bias_correction;
     SequenceInteractor* seq;
 
 };
@@ -443,7 +576,7 @@ struct StitchStruct
 
 QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float scale)
 {
-//    qDebug() << "getPixmap" << packed;
+    //    qDebug() << "getPixmap" << packed;
     Q_UNUSED(scale);
     if (packed)
     {

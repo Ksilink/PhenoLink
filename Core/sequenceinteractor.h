@@ -69,6 +69,8 @@ public:
   QPointF getFieldPosition(int field = -1);
 //protected:
   ImageInfos *imageInfos(QString file, int channel = -1, QString key = QString());
+  void refinePacking();
+
 
 public slots:
 
@@ -79,6 +81,10 @@ public slots:
   void setFps(double fps);
 
 
+    QStringList getChannelNames();
+
+    void setChannelNames(QStringList names);
+
 protected:
 
   SequenceFileModel* _mdl;
@@ -86,6 +92,7 @@ protected:
   double _fps;
 
   QString loadkey;
+  QStringList channel_names;
 
   //QList<ImageForm*> linked_images;
   //QMap<QString, ImageInfos*> _infos;

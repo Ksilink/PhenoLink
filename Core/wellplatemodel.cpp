@@ -769,6 +769,16 @@ QStringList SequenceFileModel::getTags()
     return _tags;
 }
 
+void SequenceFileModel::setChannelNames(QStringList names)
+{
+    _channelNames = names;
+}
+
+QStringList SequenceFileModel::getChannelNames()
+{
+    return _channelNames;
+}
+
 
 
 
@@ -1457,7 +1467,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
                     cv::Mat im(r, c, cvtype, &(data.data()[chans]));
 
 
-                    cv::imwrite(QString("c:/temp/im%1.jpg").arg(hash).toStdString(), im*255);
+                 //   cv::imwrite(QString("c:/temp/im%1.jpg").arg(hash).toStdString(), im*255);
 
                     cv::Mat* m = new cv::Mat();
 
@@ -1505,6 +1515,14 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
                             color[it.key().toInt()] = col;
                         }
                         MemoryHandler::handler().addColor(fname, color);
+                    }
+                    if (ob.contains("ChannelNames"))
+                    {
+                        QStringList names;
+                        QJsonArray ar = ob["ChannelNames"].toArray();
+                        for (int i = 0; i < ar.size(); ++i)
+                            names << ar[i].toString();
+                        seq.setChannelNames(names);
                     }
                 }
             }
