@@ -278,25 +278,28 @@ void MainWindow::databaseModified()
 void MainWindow::channelCheckboxMenu(const QPoint & pos)
 {
     QPoint globalPos = ((QWidget*) sender())->mapToGlobal(pos);
-      // for QAbstractScrollArea and derived classes you would use:
-      // QPoint globalPos = myWidget->viewport()->mapToGlobal(pos);
-//        ImageInfos* fo = inter->getChannelImageInfos(i + 1);
+
+    int chan = sender()->objectName().replace("box", "").toInt();
+    SequenceInteractor* inter = _sinteractor.current();
+    ImageInfos* fo = inter->getChannelImageInfos(chan+1);
+
 
       QMenu myMenu;
       auto action = myMenu.addAction("Saturated Channel");
       action->setCheckable(true);
-      int chan = sender()->objectName().replace("box", "").toInt();
-      SequenceInteractor* inter = _sinteractor.current();
-      ImageInfos* fo = inter->getChannelImageInfos(chan+1);
-
       action->setChecked(fo->isSaturated());
-      // ...
+
+      auto inverted = myMenu.addAction("Inverted Signal");
+      inverted->setCheckable(true);
+      inverted->setChecked(fo->isInverted());
 
       QAction* selectedItem = myMenu.exec(globalPos);
       if (selectedItem)
       {
           if (selectedItem == action)
               fo->toggleSaturate();
+          if (selectedItem == inverted)
+              fo->toggleInverted();
 //          inter->;
       }
       else

@@ -676,6 +676,7 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
 
         int ncolors = img[c]->nbColors() ;
         bool saturate = img[c]->isSaturated();
+        bool inverted = img[c]->isInverted();
 
         if (!img[c]->active()) { if (ncolors < 16) lastPal += ncolors; continue; }
 
@@ -728,7 +729,8 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
                         unsigned short v = *p  / (*b/10000.);
                         if (!saturate)
                             v = v > ma ? mi : v;
-                        const float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+                         float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+                         if (inverted) f = 1 - f;
 
                         pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
                                       std::min(255.f, qGreen(pix[j]) + f * G),
@@ -748,7 +750,8 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
                         if (!saturate)
                             v = v > ma ? mi : v;
 
-                        const float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+                        float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+                        if (inverted) f = 1 - f;
 
                         pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
                                       std::min(255.f, qGreen(pix[j]) + f * G),

@@ -13,7 +13,7 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     _name(fname),
     _plate(platename),
     bias_correction(false),
-    _saturate(true)
+    _saturate(true), _uninverted(true)
 {
     QMutexLocker lock(&_lockImage);
     loadedWithkey = key();
@@ -262,6 +262,14 @@ void ImageInfos::toggleSaturate(){
 }
 
 bool ImageInfos::isSaturated() { return _saturate; }
+
+void ImageInfos::toggleInverted()
+{
+    _uninverted = !_uninverted;
+    Update();
+}
+
+bool ImageInfos::isInverted() { return !_uninverted; }
 
 QList<CoreImage*> ImageInfos::getCoreImages()
 {
