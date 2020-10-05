@@ -275,6 +275,37 @@ void MainWindow::databaseModified()
     //    _mdl->select();
 }
 
+void MainWindow::channelCheckboxMenu(const QPoint & pos)
+{
+    QPoint globalPos = ((QWidget*) sender())->mapToGlobal(pos);
+      // for QAbstractScrollArea and derived classes you would use:
+      // QPoint globalPos = myWidget->viewport()->mapToGlobal(pos);
+//        ImageInfos* fo = inter->getChannelImageInfos(i + 1);
+
+      QMenu myMenu;
+      auto action = myMenu.addAction("Saturated Channel");
+      action->setCheckable(true);
+      int chan = sender()->objectName().replace("box", "").toInt();
+      SequenceInteractor* inter = _sinteractor.current();
+      ImageInfos* fo = inter->getChannelImageInfos(chan+1);
+
+      action->setChecked(fo->isSaturated());
+      // ...
+
+      QAction* selectedItem = myMenu.exec(globalPos);
+      if (selectedItem)
+      {
+          if (selectedItem == action)
+              fo->toggleSaturate();
+//          inter->;
+      }
+      else
+      {
+          // nothing was chosen
+      }
+}
+
+
 QCheckBox* MainWindow::setupActiveBox(QCheckBox* box, ImageInfos* fo, int channel, bool reconnect)
 {
     if (!reconnect)
@@ -282,6 +313,11 @@ QCheckBox* MainWindow::setupActiveBox(QCheckBox* box, ImageInfos* fo, int channe
         box->setObjectName(QString("box%1").arg(channel));
         box->setAttribute(Qt::WA_DeleteOnClose);
         box->setChecked(fo->active());
+
+        box->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(box, SIGNAL(customContextMenuRequested(const QPoint&)),
+            this, SLOT(channelCheckboxMenu(const QPoint&)));
+
     }
     if (!fo->getChannelName().isEmpty()) // Set the Channel Name
         box->setToolTip(fo->getChannelName());

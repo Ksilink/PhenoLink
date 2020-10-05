@@ -12,7 +12,8 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     _modified(true),
     _name(fname),
     _plate(platename),
-    bias_correction(false)
+    bias_correction(false),
+    _saturate(true)
 {
     QMutexLocker lock(&_lockImage);
     loadedWithkey = key();
@@ -254,6 +255,13 @@ void ImageInfos::toggleBiasCorrection()
 {
     this->bias_correction = !this->bias_correction;
 }
+
+void ImageInfos::toggleSaturate(){
+    _saturate = !_saturate;
+    Update();
+}
+
+bool ImageInfos::isSaturated() { return _saturate; }
 
 QList<CoreImage*> ImageInfos::getCoreImages()
 {

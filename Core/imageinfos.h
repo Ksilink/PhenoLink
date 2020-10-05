@@ -81,8 +81,8 @@ public:
     QList<ImageInfos*> getLinkedImagesInfos();
 
     void toggleBiasCorrection();
-
-
+    void toggleSaturate();
+    bool isSaturated();
     bool isTime() const ;
     double getFps() const;
 
@@ -160,6 +160,7 @@ protected:
     QMutex _lockImage;
     double _fps;
     bool bias_correction;
+    bool _saturate;
 };
 
 

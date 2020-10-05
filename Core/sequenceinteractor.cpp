@@ -458,9 +458,9 @@ void SequenceInteractor::refinePacking()
         {
             if (ref.empty())
             {
-               QString file = _mdl->getFile(_timepoint, sit.value(), _zpos, 1);
-               ref = imageInfos(file, -1, loadkey)->image();
-               continue;
+                QString file = _mdl->getFile(_timepoint, sit.value(), _zpos, 1);
+                ref = imageInfos(file, -1, loadkey)->image();
+                continue;
             }
             QString file = _mdl->getFile(_timepoint, sit.value(), _zpos, 1);
             cv::Mat right = imageInfos(file, -1, loadkey)->image();
@@ -675,6 +675,7 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
         if (images[c].empty()) continue;
 
         int ncolors = img[c]->nbColors() ;
+        bool saturate = img[c]->isSaturated();
 
         if (!img[c]->active()) { if (ncolors < 16) lastPal += ncolors; continue; }
 
@@ -724,8 +725,9 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
                     QRgb* pix = (QRgb*)toPix.scanLine(i);
                     for (int j = 0; j < cols; ++j, ++p,++b)
                     {
-                        const unsigned short v = *p  / (*b/10000.);
-
+                        unsigned short v = *p  / (*b/10000.);
+                        if (!saturate)
+                            v = v > ma ? mi : v;
                         const float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
 
                         pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
@@ -742,7 +744,9 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
                     QRgb* pix = (QRgb*)toPix.scanLine(i);
                     for (int j = 0; j < cols; ++j, ++p)
                     {
-                        const unsigned short v = *p;
+                        unsigned short v = *p;
+                        if (!saturate)
+                            v = v > ma ? mi : v;
 
                         const float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
 

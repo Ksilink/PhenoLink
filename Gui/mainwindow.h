@@ -147,6 +147,7 @@ private slots:
 	QJsonArray sortParameters(QJsonArray& arr);
 
     void startProcessRun();
+    void channelCheckboxMenu(const QPoint&);
 
 public slots:
 
