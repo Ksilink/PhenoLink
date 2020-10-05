@@ -42,7 +42,7 @@ void SequenceInteractor::setField(unsigned t)
         foreach(ImageInfos* info, list)
         {
             SequenceInteractor* inter = info->getInteractor();
-            if (inter && inter != _current)
+            if (inter && inter != _current && inter != this)
             {
                 inter->setField(t);
                 inter->modifiedImage();

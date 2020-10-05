@@ -88,9 +88,11 @@ int main(int ac,  char* av[])
     ProcessServer server;
     //    QThreadPool::globalInstance()->setMaxThreadCount(  QThreadPool::globalInstance()->maxThreadCount()/2);
 
-    qDebug() << "Max number of threads : " << QThreadPool::globalInstance()->maxThreadCount() - 1;
+    int nb_Threads = QThreadPool::globalInstance()->maxThreadCount() - 1;
+//    nb_Threads = 1;
+    qDebug() << "Max number of threads : " << nb_Threads;
 
-    QThreadPool::globalInstance()->setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount()-1);
+    QThreadPool::globalInstance()->setMaxThreadCount(nb_Threads);
 
     if (!server.listen(QHostAddress::Any, port))
     {

@@ -338,11 +338,7 @@ ctkDoubleRangeSlider* MainWindow::RangeWidgetSetup(ctkDoubleRangeSlider* w, Imag
         w->setRange(fo->getMin(), fo->getMax());
         w->setPositions(fo->getDispMin(), fo->getDispMax());
     }
-
-    //  w->disconnect();
-    //  w->setToolTip(QString("Channel%4 %1: %2 %3").arg((uint)w,8,16).arg(w->minimum()).arg(w->maximum()).arg(channel));
-    //  qDebug() << "Connect: " << w  << "to" << fo << this;
-    //  connect(w, SIGNAL(valuesChanged(double,double)), fo, SLOT(rangeChanged(double,double)),Qt::UniqueConnection);
+    w->setSymmetricMoves(false);
     connect(w, SIGNAL(valuesChanged(double, double)), this, SLOT(rangeChange(double, double)), Qt::UniqueConnection);
     return w;
 }
@@ -395,12 +391,10 @@ QDoubleSpinBox* MainWindow::setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* 
     extr->disconnect();
     if (isMin)
     {
-        //      connect(extr, SIGNAL(valueChanged(double)), fo, SLOT(forceMinValue(double)),  Qt::UniqueConnection);
         connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeRangeValueMin(double)), Qt::UniqueConnection);
     }
     else
     {
-        //      connect(extr, SIGNAL(valueChanged(double)), fo, SLOT(forceMaxValue(double)),  Qt::UniqueConnection);
         connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeRangeValueMax(double)), Qt::UniqueConnection);
     }
     return extr;
@@ -1504,6 +1498,16 @@ void MainWindow::setupPython()
 #endif
 }
 
+
+
+void lockedChangeValue(QDoubleSpinBox* sp, double val)
+{
+    sp->blockSignals(true);
+    sp->setValue(val);
+    sp->blockSignals(false);
+}
+
+
 void MainWindow::rangeChange(double mi, double ma)
 {
 
@@ -1512,18 +1516,29 @@ void MainWindow::rangeChange(double mi, double ma)
     QWidget* wwid = 0;
     wwid = _imageControls[inter->getExperimentName()];
     QString name = sender()->objectName().replace("Channel", "");
+    //sender()
+    //ctkDoubleRangeSlider* range = qobject_cast<ctkDoubleRangeSlider*>(sender());
+    //qDebug() << "Value Range!!!" << mi << ma << name << range->minimum() << range->maximum();
 
+    //if (range)
+    //{
+    //    int th = 0; // abs(ma - mi) > 1000 ? 100 : 10;
+    //    if (mi == range.setMin)
+    //    range->setMinimum(mi-th);
+    //    range->setMaximum(ma+th);
+    //}
 
-    //  qDebug() << "Value Range!!!" << mi << ma << name;
-
+  
     if (!wwid) return;
 
     QList<QDoubleSpinBox*> vmi = wwid->findChildren<QDoubleSpinBox*>(QString("vMin%1").arg(name));
 
-    if (vmi.size()) vmi.first()->setValue(mi);
+    if (vmi.size()) {
+        lockedChangeValue(vmi.first(), mi);
+    }
 
     QList<QDoubleSpinBox*> vma = wwid->findChildren<QDoubleSpinBox*>(QString("vMax%1").arg(name));
-    if (vma.size()) vma.first()->setValue(ma);
+    if (vma.size()) lockedChangeValue(vma.first(), ma);
 
 
     ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
@@ -1562,10 +1577,6 @@ void MainWindow::changeRangeValueMin(double val)
     QString name = sender()->objectName().replace("vMin", "");
     //  qDebug() << "Value Min !!!" << val << name;
     
-
-//    qDebug() << "Interactor: changeRangeValue " << sender()->objectName();// << fo;
-
-
     if (!wwid) return;
     QList<ctkDoubleRangeSlider*> crs = wwid->findChildren<ctkDoubleRangeSlider*>(QString("Channel%1").arg(name));
     if (crs.size()) crs.first()->setMinimumValue(val);
@@ -1573,7 +1584,6 @@ void MainWindow::changeRangeValueMin(double val)
 
     ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
     fo->forceMinValue(val);
-//    qDebug() << "Interactor: changeRangeValue " << sender()->objectName() << fo;
 
 }
 

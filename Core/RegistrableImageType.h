@@ -8,6 +8,9 @@
 
 typedef QMap<int, QColor> Colormap;
 
+
+
+
 class RegistrableImageParent: public RegistrableParent
 {
     typedef RegistrableImageParent Self;
@@ -82,6 +85,16 @@ public:
 
     }
 
+    void setBiasFiles(QStringList bias)
+    {
+        _bias_files = bias;
+    }
+
+    QStringList getBiasFiles()
+    {
+        return _bias_files;
+    }
+
     virtual QString toString() const
     {
         return QString("Image results");
@@ -101,9 +114,11 @@ public:
 
 
     virtual void storeJson(QJsonObject json)  = 0;
+    virtual void applyBiasField(cv::Mat bias) = 0;
 
     Self& noImageAutoLoading(bool state = false) { _autoload = state; return *this; }
     bool imageAutoloading() { return _autoload; }
+
 
     QString getMeta(QString me) { return _metaData[me]; }
 
@@ -112,6 +127,11 @@ public:
     { // Apply the bias correction to the loaded
         _unbias = true;
         return *this;
+    }
+
+    bool shallUnbias()
+    {
+        return _unbias;
     }
 
     Self& loadTiled(unsigned size)
@@ -147,6 +167,7 @@ protected:
     QStringList _meta;
     QStringList _vectorNames;
     QMap<QString, QString> _metaData;
+    QStringList _bias_files;
 };
 
 #include <QThread>
@@ -269,6 +290,14 @@ public:
         cocvMat::loadFromJSON(json, *_value);
     }
 
+
+    virtual void applyBiasField(cv::Mat bias)
+    {
+        DataType& im = *_value;
+        cv::Mat tmp;
+        cv::divide(im, bias, tmp);
+        cv::swap(tmp, *_value);
+    }
 
     virtual QString basePath(QJsonObject json)
     {
@@ -429,6 +458,21 @@ public:
     {
         _value->loadFromJSON(json);
     }
+
+
+    virtual void applyBiasField(cv::Mat bias)
+    {
+        DataType& im = *_value;
+
+        for (size_t i = 0; i < im.count(); ++i)
+        {
+            cv::Mat tmp;
+            cv::divide(im[i], bias, tmp);
+            cv::swap(tmp, im[i]);
+        }
+    }
+
+
     virtual QString basePath(QJsonObject json)
     {
         return _value->basePath(json);
@@ -597,7 +641,17 @@ public:
     {
         _value->loadFromJSON(json);
     }
+    virtual void applyBiasField(cv::Mat bias)
+    {
+        DataType& im = *_value;
 
+        for (size_t i = 0; i < im.count(); ++i)
+        {
+            cv::Mat tmp;
+            cv::divide(im[i], bias, tmp);
+            cv::swap(tmp, im[i]);
+        }
+    }
     virtual QString basePath(QJsonObject json)
     {
         return _value->basePath(json);
@@ -689,7 +743,17 @@ public:
     {
         _value->loadFromJSON(json);
     }
+    virtual void applyBiasField(cv::Mat bias)
+    {
+        DataType& im = *_value;
 
+        for (size_t i = 0; i < im.count(); ++i)
+        {
+            cv::Mat tmp;
+            cv::divide(im[i], bias, tmp);
+            cv::swap(tmp, im[i]);
+        }
+    }
     virtual QString basePath(QJsonObject json)
     {
         return _value->basePath(json);
@@ -779,7 +843,21 @@ public:
         _value->loadFromJSON(json);
     }
 
+    virtual void applyBiasField(cv::Mat bias)
+    {
+        DataType& time = *_value;
 
+        for (size_t t = 0; t < time.count(); ++t)
+        {
+            StackedImage& im = time[t];
+            for (size_t i = 0; i < im.count(); ++i)
+            {
+                cv::Mat tmp;
+                cv::divide(im[i], bias, tmp);
+                cv::swap(tmp, im[i]);
+            }
+        }
+    }
     virtual QString basePath(QJsonObject json)
     {
         return _value->basePath(json);
@@ -872,6 +950,19 @@ public:
     {
         _value->loadFromJSON(json);
     }
+
+    virtual void applyBiasField(cv::Mat bias)
+    {
+        DataType& im = *_value;
+
+        for (size_t i = 0; i < im.count(); ++i)
+        {
+            cv::Mat tmp;
+            cv::divide(im[i], bias, tmp);
+            cv::swap(tmp, im[i]);
+        }
+    }
+
     virtual QString basePath(QJsonObject json)
     {
         return _value->basePath(json);
@@ -960,6 +1051,25 @@ public:
     virtual void loadImage(QJsonObject json)
     {
         _value->loadFromJSON(json);
+    }
+
+    virtual void applyBiasField(cv::Mat bias)
+    {
+//        DataType& time = *_value;
+
+//        for (size_t t = 0; t < im.count(); ++t)
+//        {
+//            StackedImage& im = time[t];
+//            for (size_t i = 0; i < im.count(); ++i)
+//            {
+//                cv::Mat tmp;
+//                cv::divide(im[i], bias, tmp);
+//                cv::swap(tmp, *_value);
+//            }
+//        }
+
+        qDebug() << "Not implemented yet !!!";
+
     }
 
     virtual QString basePath(QJsonObject json)
@@ -1052,6 +1162,26 @@ public:
         _value->loadFromJSON(json);
     }
 
+    virtual void applyBiasField(cv::Mat bias)
+    {
+//        DataType& time = *_value;
+
+//        for (size_t t = 0; t < im.count(); ++t)
+//        {
+//            StackedImage& im = time[t];
+//            for (size_t i = 0; i < im.count(); ++i)
+//            {
+//                cv::Mat tmp;
+//                cv::divide(im[i], bias, tmp);
+//                cv::swap(tmp, *_value);
+//            }
+//        }
+
+        qDebug() << "Not implemented yet !!!";
+
+    }
+
+
     virtual QString basePath(QJsonObject json)
     {
         return _value->basePath(json);
@@ -1141,6 +1271,27 @@ public:
     {
         _value->loadFromJSON(json);
     }
+
+    virtual void applyBiasField(cv::Mat bias)
+    {
+//        DataType& time = *_value;
+
+//        for (size_t t = 0; t < im.count(); ++t)
+//        {
+//            StackedImage& im = time[t];
+//            for (size_t i = 0; i < im.count(); ++i)
+//            {
+//                cv::Mat tmp;
+//                cv::divide(im[i], bias, tmp);
+//                cv::swap(tmp, *_value);
+//            }
+//        }
+
+        qDebug() << "Not implemented yet !!!";
+
+    }
+
+
     virtual QString basePath(QJsonObject json)
     {
         return _value->basePath(json);
@@ -1230,6 +1381,24 @@ public:
     virtual void loadImage(QJsonObject json)
     {
         _value->loadFromJSON(json);
+    }
+    virtual void applyBiasField(cv::Mat bias)
+    {
+//        DataType& time = *_value;
+
+//        for (size_t t = 0; t < im.count(); ++t)
+//        {
+//            StackedImage& im = time[t];
+//            for (size_t i = 0; i < im.count(); ++i)
+//            {
+//                cv::Mat tmp;
+//                cv::divide(im[i], bias, tmp);
+//                cv::swap(tmp, *_value);
+//            }
+//        }
+
+        qDebug() << "Not implemented yet !!!";
+
     }
 
     virtual QString basePath(QJsonObject json)

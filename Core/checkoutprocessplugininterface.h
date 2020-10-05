@@ -193,6 +193,9 @@ public:
 
     cv::Mat& getBiasField(int i)
     { // "datahash"
+        if (_meta.isEmpty())
+            return cv::Mat();
+
         QString hash =_meta.first().hash;
 
         if (i <= _hashtoBias[hash].size())
@@ -201,18 +204,36 @@ public:
         }
         if (_hashtoBias[hash][i] == 0)
         { // create image
-            auto file = QString("%2/DC_sCMOS #%1_CAM%1.tif").arg(i).arg(_meta.first().file_path);
+            // auto file = QString("%2/DC_sCMOS #%1_CAM%1.tif").arg(i).arg(_meta.first().file_path);
+            QString file;
             cv::Mat* mat = new cv::Mat;
+            foreach (RegistrableParent* val, _parameters.values())
+            {
+                RegistrableImageParent* r = dynamic_cast<RegistrableImageParent* > (val);
+                if (r)
+                {
+                    auto t = r->getBiasFiles();
+                    if (i < t.size())
+                    {
+                        file = t[i];
+                        break;
+                    }
+                }
+            }
+
 
             if (QFileInfo::exists(file))
             {
-
                 *mat = cv::imread(file.toStdString(), 2);
+                cv::Mat m;
+                mat->convertTo(m, CV_32F, 1. / 10000.);
+                cv::swap(m, *mat);
+                m.release();
             }
             else
             {
                 qDebug() << file << "does not exists empty bias returned";
-                *mat = cv::Mat(2160,2560, CV_16UC1, cv::Scalar(1));
+                *mat = cv::Mat(2160,2560, CV_32F, cv::Scalar(1));
                 // FIXME: default value may not be 1, but could be more like max of U16 or .5 max of U16...
             }
             _hashtoBias[hash][i] = mat;
@@ -221,6 +242,9 @@ public:
 
         return *_hashtoBias[hash][i];
     }
+
+
+
 
     /// This function is to be called after executing the process,
     /// in order to fetch the processed data.

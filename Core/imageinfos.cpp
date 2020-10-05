@@ -39,7 +39,7 @@ QMutex protect_iminfos;
 
 
 QPair<ImageInfosShared* , QMap<QString, ImageInfos*> *>
-    instanceHolder()
+instanceHolder()
 {
 
     static ImageInfosShared* data = nullptr;
@@ -56,19 +56,19 @@ QPair<ImageInfosShared* , QMap<QString, ImageInfos*> *>
 ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QString platename,
                                     bool & exists, QString key)
 {
-	QPair<ImageInfosShared*, QMap<QString, ImageInfos*>*> t = instanceHolder();
-	ImageInfosShared* data = t.first;
-	QMap<QString, ImageInfos*>& stored = *t.second;
+    QPair<ImageInfosShared*, QMap<QString, ImageInfos*>*> t = instanceHolder();
+    ImageInfosShared* data = t.first;
+    QMap<QString, ImageInfos*>& stored = *t.second;
 
-	QMutexLocker lock(&protect_iminfos); // Just in case 2 instances try to create   the ImageInfosShared struct
+    QMutexLocker lock(&protect_iminfos); // Just in case 2 instances try to create   the ImageInfosShared struct
 
-	ImageInfos* ifo = nullptr;
+    ImageInfos* ifo = nullptr;
 
     // FIXME: Change stored image infos key : use XP / Workbench / deposit group
     QString k = key.isEmpty() ? ImageInfos::key() : key;
 
     if (data->_platename_palette_color.contains(platename + k)
-        || data->_platename_palette_color.contains(platename))
+            || data->_platename_palette_color.contains(platename))
         exists = true; // Avoid reupdating color on load...
 
     ifo = stored[fname+k];
@@ -171,7 +171,7 @@ cv::Mat ImageInfos::image(float scale, bool reload)
         if (max >= 16) _nbcolors+=1;
         if (_nbcolors <= 16 && min >= 0)
         {
-// if ext_cmap
+            // if ext_cmap
             int si = max-min+1;
             int start = _ifo._per_plateid[_plate];
 
@@ -234,8 +234,8 @@ cv::Mat ImageInfos::bias(int channel, float scale)
 
 void ImageInfos::addCoreImage(CoreImage *ifo)
 {
-  if (!_ifo._infos_to_coreimage[this].contains(ifo))
-      _ifo._infos_to_coreimage[this].append(ifo);
+    if (!_ifo._infos_to_coreimage[this].contains(ifo))
+        _ifo._infos_to_coreimage[this].append(ifo);
 }
 
 
@@ -276,7 +276,7 @@ void ImageInfos::setColor(QColor c, bool refresh)
     _modified = true;
     c.setHsv(c.hsvHue(), c.hsvSaturation(), 255);
 
-//    qDebug() << "Setting color" << this << c;
+    //    qDebug() << "Setting color" << this << c;
 
     _ifo._platename_to_colorCode[_plate]._r = c.red();
     _ifo._platename_to_colorCode[_plate]._g = c.green();
@@ -284,9 +284,7 @@ void ImageInfos::setColor(QColor c, bool refresh)
 
     if (refresh)
     {
-        _parent->modifiedImage();
-        foreach(ImageInfos * ifo, _ifo._platename_to_infos[_plate])
-            ifo->_parent->modifiedImage();
+        Update();
     }
 }
 
@@ -354,6 +352,16 @@ QVector<int> ImageInfos::getState()
     return _ifo._platename_palette_state[_plate];
 }
 
+void ImageInfos::Update()
+{
+    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
+    {
+        if (ifo && ifo != this)
+            ifo->_parent->modifiedImage();
+    }
+    _parent->modifiedImage();
+}
+
 QColor ImageInfos::getColor()
 {
     return QColor::fromRgb(_ifo._platename_to_colorCode[_plate]._r, _ifo._platename_to_colorCode[_plate]._g, _ifo._platename_to_colorCode[_plate]._b);
@@ -380,11 +388,7 @@ void ImageInfos::changeColorState(int chan)
         _ifo._platename_palette_state[_plate].resize(chan);
     _ifo._platename_palette_state[_plate][chan] = !_ifo._platename_palette_state[_plate][chan];
 
-    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
-    {
-        ifo->_parent->modifiedImage();
-    }
-    _parent->modifiedImage();
+  Update();
 }
 
 void ImageInfos::rangeChanged(double mi, double ma)
@@ -394,42 +398,28 @@ void ImageInfos::rangeChanged(double mi, double ma)
     _ifo._platename_to_colorCode[_plate]._dispMin = mi;
     _ifo._platename_to_colorCode[_plate]._dispMax = ma;
 
-    _parent->modifiedImage();
-    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
-    {
-        ifo->_parent->modifiedImage();
-
-    }
+   Update(); 
 }
 
+// Changing the ranges max/min value does not need to update the image, also no need to set modified flag
 void ImageInfos::forceMinValue(double val)
 {
-    _modified = true;
+    // _modified = true;
     //  qDebug() << "Image min " << _platename_to_colorCode[_plate].min << _platename_to_colorCode[_plate].max << val;
     _ifo._platename_to_colorCode[_plate].min = val;
     //  _platename_to_colorCode[_plate]._dispMin = val;
-
-    _parent->modifiedImage();
-    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
-    {
-        ifo->_parent->modifiedImage();
-
-    }
+   
+//   Update();
 }
 
 void ImageInfos::forceMaxValue(double val)
 {
-    _modified = true;
+   // _modified = true;
     // s qDebug() << "Image max " << _platename_to_colorCode[_plate].min << _platename_to_colorCode[_plate].max << val;
     _ifo._platename_to_colorCode[_plate].max = val;
     //  _platename_to_colorCode[_plate]._dispMax = val;
 
-    _parent->modifiedImage();
-    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
-    {
-        ifo->_parent->modifiedImage();
-
-    }
+  //  Update();
 }
 
 void ImageInfos::changeFps(double fps)
@@ -437,26 +427,16 @@ void ImageInfos::changeFps(double fps)
     _modified = true;
     _parent->setFps(fps);
 
-    _parent->modifiedImage();
-    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
-    {
-        ifo->_parent->modifiedImage();
-
-    }
+    Update();
 }
 
 void ImageInfos::rangeMinValueChanged(double mi)
 {
     _modified = true;
-      qDebug() << "Image infos range min" << this << mi ;
+    qDebug() << "Image infos range min" << this << mi ;
     _ifo._platename_to_colorCode[_plate]._dispMin = mi;
 
-    _parent->modifiedImage();
-    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
-    {
-        ifo->_parent->modifiedImage();
-
-    }
+    Update();
 }
 
 void ImageInfos::rangeMaxValueChanged(double ma)
@@ -465,11 +445,7 @@ void ImageInfos::rangeMaxValueChanged(double ma)
     qDebug() << "Image infos Range max" << this << ma;
     _ifo._platename_to_colorCode[_plate]._dispMax = ma;
 
-    _parent->modifiedImage();
-    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
-    {
-        ifo->_parent->modifiedImage();
-    }
+    Update();
 }
 
 
@@ -478,7 +454,5 @@ void ImageInfos::setActive(bool value)
     _modified = true;
     _ifo._platename_to_colorCode[_plate]._active = value;
 
-    _parent->modifiedImage();
-    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
-        ifo->_parent->modifiedImage();
+    Update();
 }

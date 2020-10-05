@@ -99,6 +99,7 @@ class DllCoreExport ImageXP: public ImageContainer
 public:
     virtual void loadFromJSON(QJsonObject data);
     virtual QString basePath(QJsonObject json);
+    virtual size_t getChannelCount();
     virtual cv::Mat getImage(int i, int c=-1);
 
 };

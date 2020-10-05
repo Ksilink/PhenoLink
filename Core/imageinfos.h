@@ -121,6 +121,9 @@ public:
     void setPalette(QMap<unsigned, QColor> pal);
 
     QVector<int> getState();
+
+    void Update();
+
 public slots:
     void changeColorState(int chan);
 

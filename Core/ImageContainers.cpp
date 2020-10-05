@@ -57,6 +57,7 @@ namespace cocvMat
     void loadFromJSON(QJsonObject data, cv::Mat& mat, int im)
     {
         QJsonArray times =    data["Data"].toArray();
+
         mat = loadImage(times, im);
     }
 
@@ -116,6 +117,7 @@ cv::Mat ImageContainer::getImage(size_t i)
 {
     if (_loaded) return (*this)[i];
 
+
     cv::Mat mat;
     cocvMat::loadFromJSON(_data, mat, (int)i);
     return mat;
@@ -139,7 +141,7 @@ void ImageContainer::setImage(size_t i, cv::Mat mat)
 void ImageContainer::deallocate()
 {
     for(size_t i = 0; i < images.size(); ++i)
-        images[i].deallocate();
+        images[i].release();
 }
 
 
@@ -290,10 +292,27 @@ QString ImageXP::basePath(QJsonObject json)
     return getbasePath(field.first().toObject()["Data"].toArray());
 }
 
+size_t ImageXP::getChannelCount()
+{
+    QJsonArray field =    _data["Data"].toArray();
+
+    QJsonObject ob = field.at(0).toObject();
+     QJsonArray chans = ob["Data"].toArray();
+     return chans.size();
+}
+
 cv::Mat ImageXP::getImage(int i, int c)
 {
-    if (_loaded) return (*this)[i];
-
+    if (_loaded) {
+        if (c >= 0)
+        {
+            cv::Mat res;
+            cv::extractChannel((*this)[i], res, c);
+            return res;
+        }
+        else    
+            return (*this)[i];
+    }
 
     QJsonArray field =    _data["Data"].toArray();
 
