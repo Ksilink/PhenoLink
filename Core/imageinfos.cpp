@@ -282,7 +282,10 @@ void ImageInfos::toggleInverted()
 
 bool ImageInfos::isInverted() { return !_uninverted; }
 
-void ImageInfos::setColorMap(QString name){ _colormap = name; }
+void ImageInfos::setColorMap(QString name){
+    _colormap = name;
+    propagate();
+}
 
 QString ImageInfos::colormap() { return _colormap; }
 
@@ -296,6 +299,7 @@ void ImageInfos::propagate()
         {
             ifo->_uninverted = this->_uninverted;
             ifo->_saturate = this->_saturate;
+            ifo->_colormap = this->_colormap;
             ifo->_parent->modifiedImage();
         }
 
