@@ -293,13 +293,25 @@ void MainWindow::channelCheckboxMenu(const QPoint & pos)
       inverted->setCheckable(true);
       inverted->setChecked(fo->isInverted());
 
+
+      auto submenu = myMenu.addMenu("Colormap");
+
+      submenu->addAction("");
+      submenu->addAction("inferno");
+      submenu->addAction("jet");
+
+
       QAction* selectedItem = myMenu.exec(globalPos);
       if (selectedItem)
       {
           if (selectedItem == action)
               fo->toggleSaturate();
-          if (selectedItem == inverted)
+          else if (selectedItem == inverted)
               fo->toggleInverted();
+          else {
+              QString cmap = selectedItem->text();
+              fo->setColorMap(cmap);
+          }
 //          inter->;
       }
       else

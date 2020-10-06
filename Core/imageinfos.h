@@ -89,6 +89,8 @@ public:
     void toggleInverted();
     bool isInverted();
 
+    void setColorMap(QString name);
+    QString colormap() ;
 
     void propagate();
 
@@ -171,6 +173,7 @@ protected:
     bool bias_correction;
     bool _saturate, _uninverted;
     int _channel;
+    QString _colormap;
 };
 
 

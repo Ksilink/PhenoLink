@@ -195,8 +195,8 @@ QStringList SequenceInteractor::getAllTimeFieldSameChannel()
 {
     QStringList l;
 
-    for (size_t t = 1; t <= getTimePoint(); ++t)
-        for (size_t f = 1; f <= getFieldCount(); ++f)
+    for (unsigned t = 1; t <= getTimePoint(); ++t)
+        for (unsigned f = 1; f <= getFieldCount(); ++f)
             l << _mdl->getFile(t, f, _zpos, _channel);
 
     return l;
@@ -413,7 +413,7 @@ QPoint refineLeft(cv::Mat& left, cv::Mat& right)
     double mii = std::numeric_limits<double>::max();
     int overlap = 100;
 
-    int rw = left.rows, cl = left.cols;
+    //    int rw = left.rows, cl = left.cols;
 
     for (int c = 1; c < overlap; ++c)
     {
@@ -444,6 +444,7 @@ QPoint refineLeft(cv::Mat& left, cv::Mat& right)
 
 QPoint refineLower(cv::Mat& up, cv::Mat& down)
 {
+
     QPoint res;
     return res;
 }
@@ -696,8 +697,8 @@ void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image,  cv::Mat& bias, QIma
             unsigned short v = *p  / (*b/10000.);
             if (!Saturate)
                 v = v > ma ? mi : v;
-             float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
-             if (Inverted) f = 1 - f;
+            float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+            if (Inverted) f = 1 - f;
 
             pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
                           std::min(255.f, qGreen(pix[j]) + f * G),
@@ -726,12 +727,52 @@ void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
             unsigned short v = *p  ;
             if (!Saturate)
                 v = v > ma ? mi : v;
-             float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
-             if (Inverted) f = 1 - f;
+            float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+            if (Inverted) f = 1 - f;
 
             pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
                           std::min(255.f, qGreen(pix[j]) + f * G),
                           std::min(255.f, qBlue(pix[j]) + f * R));
+        }
+    }
+}
+
+#include <colormap/color.hpp>
+#include <colormap/grid.hpp>
+#include <colormap/palettes.hpp>
+
+template <bool Saturate, bool Inverted>
+void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols)
+{
+
+    // Should get the colormap
+    const float mi = imifo->getDispMin(),
+            ma = imifo->getDispMax();
+    using namespace colormap ;
+    QByteArray tmp = imifo->colormap().toLocal8Bit();
+    const char* palette = tmp.constData();
+    // get a colormap and rescale it
+    auto pal = palettes.at(palette);
+    //    pal.rescale(mi, ma); // We are using already scaled data!!
+    pal.rescale(0, 1);//
+    float mami = ma - mi;
+    for (int i = 0; i < rows; ++i)
+    {
+        unsigned short* p = image.ptr<unsigned short>(i);
+
+        QRgb* pix = (QRgb*)toPix.scanLine(i);
+        for (int j = 0; j < cols; ++j, ++p)
+        {
+            unsigned short v = *p  ;
+            if (!Saturate)
+                v = v > ma ? mi : v;
+            float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+            if (Inverted) f = 1 - f;
+
+            auto colo = pal(f);
+            pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + (float)colo[0]),
+                    std::min(255.f, qGreen(pix[j])+ (float)colo[1]),
+                    std::min(255.f, qBlue(pix[j]) + (float)colo[2]));
         }
     }
 }
@@ -783,37 +824,52 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
         }
         else
         {
-            const float mi = img[c]->getDispMin(),
-                    ma = img[c]->getDispMax();
-            const int R = img[c]->Red();
-            const int G = img[c]->Green();
-            const int B = img[c]->Blue();
 
-            float mami = ma - mi;
-            if (bias_correction)
+            if (img[c]->colormap().isEmpty())
             {
-                cv::Mat bias = img[c]->bias(c+1);
 
-                if (saturate && inverted )
-                    colorizeImageUnbias<true, true>(img[c], images[c], bias, toPix, rows, cols);
-                if (saturate && !inverted )
-                    colorizeImageUnbias<true, false>(img[c], images[c], bias, toPix, rows, cols);
-                if (!saturate && inverted )
-                    colorizeImageUnbias<false, true>(img[c], images[c], bias, toPix, rows, cols);
-                if (!saturate && !inverted )
-                    colorizeImageUnbias<false, false>(img[c], images[c], bias, toPix, rows, cols);
+                const float mi = img[c]->getDispMin(),
+                        ma = img[c]->getDispMax();
+                const int R = img[c]->Red();
+                const int G = img[c]->Green();
+                const int B = img[c]->Blue();
 
-            }
-            else
-            {
+                float mami = ma - mi;
+                if (bias_correction)
+                {
+                    cv::Mat bias = img[c]->bias(c+1);
+
+                    if (saturate && inverted )
+                        colorizeImageUnbias<true, true>(img[c], images[c], bias, toPix, rows, cols);
+                    if (saturate && !inverted )
+                        colorizeImageUnbias<true, false>(img[c], images[c], bias, toPix, rows, cols);
+                    if (!saturate && inverted )
+                        colorizeImageUnbias<false, true>(img[c], images[c], bias, toPix, rows, cols);
+                    if (!saturate && !inverted )
+                        colorizeImageUnbias<false, false>(img[c], images[c], bias, toPix, rows, cols);
+
+                }
+                else
+                {
+                    if (saturate && inverted )
+                        colorizeImage<true, true>(img[c], images[c], toPix, rows, cols);
+                    if (saturate && !inverted )
+                        colorizeImage<true, false>(img[c], images[c], toPix, rows, cols);
+                    if (!saturate && inverted )
+                        colorizeImage<false, true>(img[c], images[c], toPix, rows, cols);
+                    if (!saturate && !inverted )
+                        colorizeImage<false, false>(img[c], images[c], toPix, rows, cols);
+
+                }
+            } else {
                 if (saturate && inverted )
-                    colorizeImage<true, true>(img[c], images[c], toPix, rows, cols);
+                    colorMapImage<true, true>(img[c], images[c], toPix, rows, cols);
                 if (saturate && !inverted )
-                    colorizeImage<true, false>(img[c], images[c], toPix, rows, cols);
+                    colorMapImage<true, false>(img[c], images[c], toPix, rows, cols);
                 if (!saturate && inverted )
-                    colorizeImage<false, true>(img[c], images[c], toPix, rows, cols);
+                    colorMapImage<false, true>(img[c], images[c], toPix, rows, cols);
                 if (!saturate && !inverted )
-                    colorizeImage<false, false>(img[c], images[c], toPix, rows, cols);
+                    colorMapImage<false, false>(img[c], images[c], toPix, rows, cols);
 
             }
 

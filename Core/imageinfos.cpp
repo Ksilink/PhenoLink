@@ -282,6 +282,10 @@ void ImageInfos::toggleInverted()
 
 bool ImageInfos::isInverted() { return !_uninverted; }
 
+void ImageInfos::setColorMap(QString name){ _colormap = name; }
+
+QString ImageInfos::colormap() { return _colormap; }
+
 void ImageInfos::propagate()
 {
 

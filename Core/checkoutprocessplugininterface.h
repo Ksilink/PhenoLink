@@ -193,8 +193,10 @@ public:
 
     cv::Mat& getBiasField(int i)
     { // "datahash"
+        static cv::Mat empty;
+
         if (_meta.isEmpty())
-            return cv::Mat();
+            return empty;
 
         QString hash =_meta.first().hash;
 
