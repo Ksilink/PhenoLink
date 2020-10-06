@@ -46,6 +46,7 @@ struct ImageInfosShared
      QMap<QString, QList<ImageInfos*> > _platename_to_infos;
      QMap<ImageInfos*, QList<CoreImage* > > _infos_to_coreimage;
      QMap<QString, QMap<int, cv::Mat> > bias_field; // Per plate bias field, channel
+     QMap<QString, cv::Mat> bias_single_loader; // Use this to only load once the file!
 
      QMap<QString, QVector<QColor> > _platename_palette_color;
      QMap<QString, QVector<int> > _platename_palette_state;

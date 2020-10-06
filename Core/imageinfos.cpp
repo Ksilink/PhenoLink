@@ -225,11 +225,18 @@ cv::Mat ImageInfos::bias(int channel, float scale)
 
     SequenceFileModel* mdl = _parent->getSequenceFileModel();
     QString bias_file = mdl->property(QString("ShadingCorrectionSource_ch%1").arg(channel));
-    QFileInfo path(mdl->getFile(1,1,1,channel));
+    QFileInfo path(mdl->getFile(1, 1, 1, channel));
     bias_file = path.absolutePath() + "/" + bias_file;
-    qDebug() << "Loading bias file" << bias_file;
+    if (_ifo.bias_single_loader.contains(bias_file))
+        bias = _ifo.bias_single_loader[bias_file];
+    else
+    {
+        qDebug() << "Loading bias file" << bias_file;
+         
+        bias = cv::imread(bias_file.toStdString(), 2);
+        _ifo.bias_single_loader[bias_file] = bias;
+    }
 
-    bias = cv::imread(bias_file.toStdString(), 2);
     _ifo.bias_field[_plate][channel] = bias;
     return bias;
 }

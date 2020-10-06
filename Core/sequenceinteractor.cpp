@@ -649,6 +649,94 @@ struct Loader
     }
 };
 
+void paletizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols, int& lastPal)
+{
+    QVector<QColor> pa = imifo->getPalette();
+    QVector<int> state = imifo->getState();
+    int ncolors = imifo->nbColors() ;
+
+    if (state.size() < 16) state.resize(16);
+    //            QRgb black = QColor(0,0,0).rgb();
+    for (int i = 0; i < rows; ++i)
+    {
+        unsigned short *p = image.ptr<unsigned short>(i);
+        QRgb *pix = (QRgb*)toPix.scanLine(i);
+        for (int j = 0; j < cols; ++j, ++p)
+        {
+            const unsigned short v = *p;
+            if (v != 0 && state[v]) // FIXME Need to fuse the image data and not clear it....
+                pix[j] = qRgb(std::min(255, qRed  (pix[j]) + pa[(v+lastPal)%16].red()),
+                        std::min(255, qGreen(pix[j]) + pa[(v+lastPal)%16].green()),
+                        std::min(255, qBlue (pix[j]) + pa[(v+lastPal)%16].blue()));
+            else pix[j] = qRgb(std::min(255, qRed  (pix[j]) + 0),
+                               std::min(255, qGreen(pix[j]) + 0),
+                               std::min(255, qBlue (pix[j]) + 0));
+        }
+    }
+    lastPal += ncolors;
+}
+template <bool Saturate, bool Inverted>
+void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image,  cv::Mat& bias, QImage& toPix, int rows, int cols)
+{
+    const float mi = imifo->getDispMin(),
+            ma = imifo->getDispMax();
+    const int R = imifo->Red();
+    const int G = imifo->Green();
+    const int B = imifo->Blue();
+
+    float mami = ma - mi;
+    for (int i = 0; i < rows; ++i)
+    {
+        unsigned short* p = image.ptr<unsigned short>(i);
+        unsigned short* b = bias.ptr<unsigned short>(i);
+
+        QRgb* pix = (QRgb*)toPix.scanLine(i);
+        for (int j = 0; j < cols; ++j, ++p,++b)
+        {
+            unsigned short v = *p  / (*b/10000.);
+            if (!Saturate)
+                v = v > ma ? mi : v;
+             float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+             if (Inverted) f = 1 - f;
+
+            pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
+                          std::min(255.f, qGreen(pix[j]) + f * G),
+                          std::min(255.f, qBlue(pix[j]) + f * R));
+        }
+    }
+}
+
+template <bool Saturate, bool Inverted>
+void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols)
+{
+    const float mi = imifo->getDispMin(),
+            ma = imifo->getDispMax();
+    const int R = imifo->Red();
+    const int G = imifo->Green();
+    const int B = imifo->Blue();
+
+    float mami = ma - mi;
+    for (int i = 0; i < rows; ++i)
+    {
+        unsigned short* p = image.ptr<unsigned short>(i);
+
+        QRgb* pix = (QRgb*)toPix.scanLine(i);
+        for (int j = 0; j < cols; ++j, ++p)
+        {
+            unsigned short v = *p  ;
+            if (!Saturate)
+                v = v > ma ? mi : v;
+             float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+             if (Inverted) f = 1 - f;
+
+            pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
+                          std::min(255.f, qGreen(pix[j]) + f * G),
+                          std::min(255.f, qBlue(pix[j]) + f * R));
+        }
+    }
+}
+
+
 QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, float scale)
 {
     QStringList list = getAllChannel(field);
@@ -679,8 +767,6 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
     toPix.fill(Qt::black);
 
     int lastPal = 0;
-
-
     for (int c = 0; c < list.size(); ++c)
     {
         if (images[c].empty()) continue;
@@ -693,27 +779,7 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
 
         if (img[c]->getMin() >= 0 && ncolors < 16)
         {
-            QVector<QColor> pa = img[c]->getPalette();
-            QVector<int> state = img[c]->getState();
-            if (state.size() < 16) state.resize(16);
-            //            QRgb black = QColor(0,0,0).rgb();
-            for (int i = 0; i < rows; ++i)
-            {
-                unsigned short *p = images[c].ptr<unsigned short>(i);
-                QRgb *pix = (QRgb*)toPix.scanLine(i);
-                for (int j = 0; j < cols; ++j, ++p)
-                {
-                    const unsigned short v = *p;
-                    if (v != 0 && state[v]) // FIXME Need to fuse the image data and not clear it....
-                        pix[j] = qRgb(std::min(255, qRed  (pix[j]) + pa[(v+lastPal)%16].red()),
-                                std::min(255, qGreen(pix[j]) + pa[(v+lastPal)%16].green()),
-                                std::min(255, qBlue (pix[j]) + pa[(v+lastPal)%16].blue()));
-                    else pix[j] = qRgb(std::min(255, qRed  (pix[j]) + 0),
-                                       std::min(255, qGreen(pix[j]) + 0),
-                                       std::min(255, qBlue (pix[j]) + 0));
-                }
-            }
-            lastPal += ncolors;
+            paletizeImage(img[c], images[c], toPix, rows, cols, lastPal);
         }
         else
         {
@@ -726,49 +792,29 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
             float mami = ma - mi;
             if (bias_correction)
             {
-
                 cv::Mat bias = img[c]->bias(c+1);
 
-                for (int i = 0; i < rows; ++i)
-                {
-                    unsigned short* p = images[c].ptr<unsigned short>(i);
-                    unsigned short* b = bias.ptr<unsigned short>(i);
+                if (saturate && inverted )
+                    colorizeImageUnbias<true, true>(img[c], images[c], bias, toPix, rows, cols);
+                if (saturate && !inverted )
+                    colorizeImageUnbias<true, false>(img[c], images[c], bias, toPix, rows, cols);
+                if (!saturate && inverted )
+                    colorizeImageUnbias<false, true>(img[c], images[c], bias, toPix, rows, cols);
+                if (!saturate && !inverted )
+                    colorizeImageUnbias<false, false>(img[c], images[c], bias, toPix, rows, cols);
 
-                    QRgb* pix = (QRgb*)toPix.scanLine(i);
-                    for (int j = 0; j < cols; ++j, ++p,++b)
-                    {
-                        unsigned short v = *p  / (*b/10000.);
-                        if (!saturate)
-                            v = v > ma ? mi : v;
-                         float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
-                         if (inverted) f = 1 - f;
-
-                        pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
-                                      std::min(255.f, qGreen(pix[j]) + f * G),
-                                      std::min(255.f, qBlue(pix[j]) + f * R));
-                    }
-                }
             }
             else
             {
-                for (int i = 0; i < rows; ++i)
-                {
-                    unsigned short* p = images[c].ptr<unsigned short>(i);
-                    QRgb* pix = (QRgb*)toPix.scanLine(i);
-                    for (int j = 0; j < cols; ++j, ++p)
-                    {
-                        unsigned short v = *p;
-                        if (!saturate)
-                            v = v > ma ? mi : v;
+                if (saturate && inverted )
+                    colorizeImage<true, true>(img[c], images[c], toPix, rows, cols);
+                if (saturate && !inverted )
+                    colorizeImage<true, false>(img[c], images[c], toPix, rows, cols);
+                if (!saturate && inverted )
+                    colorizeImage<false, true>(img[c], images[c], toPix, rows, cols);
+                if (!saturate && !inverted )
+                    colorizeImage<false, false>(img[c], images[c], toPix, rows, cols);
 
-                        float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
-                        if (inverted) f = 1 - f;
-
-                        pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
-                                      std::min(255.f, qGreen(pix[j]) + f * G),
-                                      std::min(255.f, qBlue(pix[j]) + f * R));
-                    }
-                }
             }
 
         }

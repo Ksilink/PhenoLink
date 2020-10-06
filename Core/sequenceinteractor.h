@@ -74,7 +74,6 @@ public:
   ImageInfos *imageInfos(QString file, int channel = -1, QString key = QString());
   void refinePacking();
 
-
 public slots:
 
   void setTimePoint(unsigned t);
@@ -107,7 +106,7 @@ protected:
   QPixmap           _cachePixmap; // Cache temporary image, pixmap are implicitly shared
   static SequenceInteractor* _current;
   float last_scale;
-};
+ };
 
 
 #endif // SEQUENCEINTERACTOR_H
