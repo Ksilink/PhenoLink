@@ -58,13 +58,14 @@ class DllCoreExport ImageInfos: public QObject
     Q_OBJECT
 public:
         
-    ImageInfos(ImageInfosShared& ifo, SequenceInteractor* par, QString fname, QString platename);
+    ImageInfos(ImageInfosShared& ifo, SequenceInteractor* par, QString fname, QString platename, int channel);
     ~ImageInfos();
 
 
     static QString key(QString k = QString());
 
-    static ImageInfos* getInstance(SequenceInteractor* par, QString fname, QString platename, bool& exists, QString key = QString());
+    static ImageInfos* getInstance(SequenceInteractor* par, QString fname, QString platename,int channel,
+                                   bool& exists, QString key = QString());
 
     void deleteInstance();
 
@@ -86,6 +87,9 @@ public:
 
     void toggleInverted();
     bool isInverted();
+
+
+    void propagate();
 
     bool isTime() const ;
     double getFps() const;
@@ -165,6 +169,7 @@ protected:
     double _fps;
     bool bias_correction;
     bool _saturate, _uninverted;
+    int _channel;
 };
 
 

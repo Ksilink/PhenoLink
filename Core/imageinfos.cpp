@@ -6,14 +6,15 @@
 #include <Core/checkouterrorhandler.h>
 
 
-ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString fname, QString platename):
+ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString fname, QString platename, int channel):
     _ifo(ifo),
     _parent(par),
     _modified(true),
     _name(fname),
     _plate(platename),
     bias_correction(false),
-    _saturate(true), _uninverted(true)
+    _saturate(true), _uninverted(true),
+    _channel(channel)
 {
     QMutexLocker lock(&_lockImage);
     loadedWithkey = key();
@@ -54,7 +55,7 @@ instanceHolder()
 }
 
 
-ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QString platename,
+ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QString platename, int channel,
                                     bool & exists, QString key)
 {
     QPair<ImageInfosShared*, QMap<QString, ImageInfos*>*> t = instanceHolder();
@@ -75,7 +76,7 @@ ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QStr
     ifo = stored[fname+k];
     if (!ifo)
     {
-        ifo = new ImageInfos(*data, par, fname, platename+k);
+        ifo = new ImageInfos(*data, par, fname, platename+k, channel);
         stored[fname+k] = ifo;
         exists = false;
         qDebug() << "New Image Info instance" << ifo << fname << ImageInfos::key() << k << platename << par->getSequenceFileModel()->getOwner()->name();
@@ -257,8 +258,10 @@ void ImageInfos::toggleBiasCorrection()
 }
 
 void ImageInfos::toggleSaturate(){
-    _saturate = !_saturate;
-    Update();
+   _saturate = !_saturate;
+
+
+    propagate();
 }
 
 bool ImageInfos::isSaturated() { return _saturate; }
@@ -266,10 +269,30 @@ bool ImageInfos::isSaturated() { return _saturate; }
 void ImageInfos::toggleInverted()
 {
     _uninverted = !_uninverted;
-    Update();
+
+    propagate();
 }
 
 bool ImageInfos::isInverted() { return !_uninverted; }
+
+void ImageInfos::propagate()
+{
+
+    foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
+    {
+        if (ifo && ifo != this &&
+                _channel == ifo->_channel) // Only propagate status to same channel & plates
+        {
+            ifo->_uninverted = this->_uninverted;
+            ifo->_saturate = this->_saturate;
+            ifo->_parent->modifiedImage();
+        }
+
+    }
+    _parent->modifiedImage();
+
+
+}
 
 QList<CoreImage*> ImageInfos::getCoreImages()
 {

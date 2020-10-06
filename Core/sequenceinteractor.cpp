@@ -191,6 +191,17 @@ int SequenceInteractor::getChannelsFromFileName(QString file)
     return -1;
 }
 
+QStringList SequenceInteractor::getAllTimeFieldSameChannel()
+{
+    QStringList l;
+
+    for (size_t t = 1; t <= getTimePoint(); ++t)
+        for (size_t f = 1; f <= getFieldCount(); ++f)
+            l << _mdl->getFile(t, f, _zpos, _channel);
+
+    return l;
+}
+
 QImage SequenceInteractor::getAllChannelsImage()
 {
     /// FIXME: Not done yet
@@ -236,7 +247,7 @@ void SequenceInteractor::clearMemory()
         QString nm = _mdl->getFile(_timepoint, _field, _zpos, ii);
 
         bool exists = false;
-        ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), exists, loadkey);
+        ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), ii, exists, loadkey);
         info->deleteInstance();
         delete info;
     }
@@ -342,7 +353,7 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
     // getWellPos();
     //        qDebug() << "Building Image info" << file << exp << ii;
     bool exists = false;
-    ImageInfos* info = ImageInfos::getInstance(this, file, exp + QString("%1").arg(ii), exists, key);
+    ImageInfos* info = ImageInfos::getInstance(this, file, exp + QString("%1").arg(ii), ii, exists, key);
     if (!exists)
     {
 

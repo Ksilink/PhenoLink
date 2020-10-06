@@ -49,6 +49,9 @@ public:
   QStringList getAllChannel(int field = -1);
   int getChannelsFromFileName(QString file);
 
+  QStringList getAllTimeFieldSameChannel();
+
+
   QImage getAllChannelsImage();
 
 //  void connectChannelRange(ctkDoubleRangeSlider* sld, unsigned channel);
