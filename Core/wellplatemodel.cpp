@@ -10,7 +10,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <QFile>
 #include <QtConcurrent>
-#include <functional>
 
 
 void stringToPos(QString pos, int& row, int& col);
@@ -1271,6 +1270,54 @@ ExperimentFileModel* loadScreenFunct(QString it)
 {
 	return nullptr; 
 }
+
+ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
+{
+    QDir dir(fileName); dir.cdUp();
+    QString tfile = dir.absolutePath() + "/tags.json";
+    QStringList tags;
+ 
+    QFile file;
+    file.setFileName(tfile);
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QString val = file.readAll();
+        file.close();
+        QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
+        if (d.isObject())
+        {
+
+            QSettings set;
+            tags = set.value("Tags", QStringList()).toStringList();
+            auto json = d.object();
+            if (json.contains("map"))
+            {
+                auto map = json["map"].toObject();
+                for (auto it = map.begin(), e = map.end(); it != e; ++it)
+                {
+                    tags << it.key();
+                    auto wells = it.value().toObject();
+                    for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+                    {
+                        auto arr = k.value().toArray();
+                        int r =  k.key().toUtf8().at(0) - 'A';
+                        for (int i = 0; i < arr.size(); ++i)
+                        {
+                            int c = arr[i].toInt();
+                            QPoint p(r, c); 
+                            mdl->setTag(p, it.key());
+                        }
+                    }
+                }
+            }
+            set.setValue("Tags", tags);
+        }     
+    }
+
+    return mdl;
+}
+
+
 // To use with blockingMapped function to load in //
 ExperimentFileModel* loadScreenFunc(QString it, bool allow_loaded, Screens& _screens)
 {
@@ -1289,7 +1336,7 @@ ExperimentFileModel* loadScreenFunc(QString it, bool allow_loaded, Screens& _scr
     //      qDebug() << "is already loaded" << *it << loaded << _screens.size();
     if (loaded) return 0;
 
-    return ScreensHandler::getHandler().loadScreen(it);
+    return loadJson(it, ScreensHandler::getHandler().loadScreen(it));
 }
 
 Screens ScreensHandler::loadScreens(QStringList list, bool allow_loaded)

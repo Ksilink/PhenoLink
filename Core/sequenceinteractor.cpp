@@ -414,10 +414,9 @@ QPoint refineLeft(cv::Mat& left, cv::Mat& right)
     int overlap = 100;
 
     //    int rw = left.rows, cl = left.cols;
-
-    for (int c = 1; c < overlap; ++c)
+    for (int r = 0; r < overlap; ++r)
     {
-        for (int r = 0; r < overlap; ++r)
+        for (int c = 1; c < overlap; ++c)
         {
             cv::Rect2d le( left.cols-c, 0, c, left.rows-r);
             cv::Rect2d ri(0,r,  c, left.rows-r);
@@ -487,7 +486,7 @@ void SequenceInteractor::refinePacking()
                 of = refineLeft(ref, right);
             }
             qDebug() << "Refine Unpack: " << it.key() << sit.key() << sit.value() << of;
-            this->pixOffset[sit.value()-1] = offset + of;// combine previous with current
+            this->pixOffset[sit.value()-1] = of;// combine previous with current
             offset += of;
             ref = right;
         }

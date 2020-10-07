@@ -191,7 +191,8 @@
                     rc->setBrush(QBrush(Qt::green));
                     rc->setFlags(QGraphicsItem::ItemIsSelectable);
                     _items << rc;
-                    rc->setToolTip(posToString(r,col));
+                    QString disp = QString("[%1] %2").arg(posToString(r,col)).arg(mdl->getTags(QPoint(r,col)).join(','));
+                    rc->setToolTip(disp);
                 }
                 else
                   {
