@@ -284,41 +284,47 @@ void MainWindow::channelCheckboxMenu(const QPoint & pos)
     ImageInfos* fo = inter->getChannelImageInfos(chan+1);
 
 
-      QMenu myMenu;
-      auto action = myMenu.addAction("Saturated Channel");
-      action->setCheckable(true);
-      action->setChecked(fo->isSaturated());
+    QMenu myMenu;
+    auto action = myMenu.addAction("Saturated Channel");
+    action->setCheckable(true);
+    action->setChecked(fo->isSaturated());
 
-      auto inverted = myMenu.addAction("Inverted Signal");
-      inverted->setCheckable(true);
-      inverted->setChecked(fo->isInverted());
-
-
-      auto submenu = myMenu.addMenu("Colormap");
-
-      submenu->addAction("");
-      submenu->addAction("inferno");
-      submenu->addAction("jet");
-      submenu->addAction("random");
+    auto inverted = myMenu.addAction("Inverted Signal");
+    inverted->setCheckable(true);
+    inverted->setChecked(fo->isInverted());
 
 
-      QAction* selectedItem = myMenu.exec(globalPos);
-      if (selectedItem)
-      {
-          if (selectedItem == action)
-              fo->toggleSaturate();
-          else if (selectedItem == inverted)
-              fo->toggleInverted();
-          else {
-              QString cmap = selectedItem->text();
-              fo->setColorMap(cmap);
-          }
-//          inter->;
-      }
-      else
-      {
-          // nothing was chosen
-      }
+    auto binarized = myMenu.addAction("Binarize");
+    binarized->setCheckable(true);
+    binarized->setChecked(fo->isBinarized());
+
+    auto submenu = myMenu.addMenu("Colormap");
+
+    submenu->addAction("");
+    submenu->addAction("inferno");
+    submenu->addAction("jet");
+    submenu->addAction("random");
+
+
+    QAction* selectedItem = myMenu.exec(globalPos);
+    if (selectedItem)
+    {
+        if (selectedItem == action) {
+            fo->toggleSaturate();
+        } else if (selectedItem == inverted) {
+            fo->toggleInverted();
+        }  else if (selectedItem == binarized) {
+            fo->toggleBinarized();
+        }else {
+            QString cmap = selectedItem->text();
+            fo->setColorMap(cmap);
+        }
+        //          inter->;
+    }
+    else
+    {
+        // nothing was chosen
+    }
 }
 
 
@@ -332,7 +338,7 @@ QCheckBox* MainWindow::setupActiveBox(QCheckBox* box, ImageInfos* fo, int channe
 
         box->setContextMenuPolicy(Qt::CustomContextMenu);
         connect(box, SIGNAL(customContextMenuRequested(const QPoint&)),
-            this, SLOT(channelCheckboxMenu(const QPoint&)));
+                this, SLOT(channelCheckboxMenu(const QPoint&)));
 
     }
     if (!fo->getChannelName().isEmpty()) // Set the Channel Name
@@ -345,7 +351,7 @@ QCheckBox* MainWindow::setupActiveBox(QCheckBox* box, ImageInfos* fo, int channe
 
 QDoubleSpinBox *MainWindow::setupVideoFrameRate(QDoubleSpinBox *extr, QString text)
 {
-   // qDebug() << _sinteractor.current()->getFps();
+    // qDebug() << _sinteractor.current()->getFps();
 
     extr->setObjectName(text);
     extr->setMinimum(0);
@@ -357,7 +363,7 @@ QDoubleSpinBox *MainWindow::setupVideoFrameRate(QDoubleSpinBox *extr, QString te
 
     extr->disconnect();
 
-        //      connect(extr, SIGNAL(valueChanged(double)), fo, SLOT(forceMaxValue(double)),  Qt::UniqueConnection);
+    //      connect(extr, SIGNAL(valueChanged(double)), fo, SLOT(forceMaxValue(double)),  Qt::UniqueConnection);
     connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeFpsValue(double)), Qt::UniqueConnection);
 
     return extr;
@@ -374,7 +380,7 @@ void MainWindow::active_Channel(bool c)
     fo->setActive(c);
 
 
-//    qDebug() << "Interactor: change active channel " << sender()->objectName()  << fo;
+    //    qDebug() << "Interactor: change active channel " << sender()->objectName()  << fo;
 
 }
 
@@ -435,7 +441,7 @@ QDoubleSpinBox* MainWindow::setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* 
         extr->setMinimum(-10 * fabs(fo->getMin()));
         extr->setMaximum(10 * fabs(fo->getMax()));
         extr->setDecimals(0);
-        extr->setValue(isMin ? fo->getMin() : fo->getMax());
+        extr->setValue(isMin ? fo->getDispMin() : fo->getDispMax());
     }
 
     extr->setToolTip(text);
@@ -543,7 +549,7 @@ void MainWindow::updateCurrentSelection()
 
     // Add FrameRate control if it makes sense
     if (inter->getTimePointCount() > 1) {
-      bvl->addWidget(setupVideoFrameRate(new QDoubleSpinBox(wwid), QString("Video Frame Rate")));
+        bvl->addWidget(setupVideoFrameRate(new QDoubleSpinBox(wwid), QString("Video Frame Rate")));
     }
 
     ui->imageControl->layout()->addWidget(wwid);
@@ -868,7 +874,7 @@ Widget* setupProcessParameterDouble(Widget* s, QJsonObject& par, QString def)
 
 QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
 {
-//    qDebug() << par;
+    //    qDebug() << par;
     QWidget* wid = 0;
 
     if (par.contains("isImage") && par["isImage"].toBool() == true)
@@ -960,7 +966,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
             auto le = new ctkPathLineEdit();
             if (par.contains("Default"))
             {
-            le->setCurrentPath(par["Default"].toString());
+                le->setCurrentPath(par["Default"].toString());
             }
             wid = le;
         }
@@ -1459,7 +1465,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                  | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -1580,7 +1586,7 @@ void MainWindow::rangeChange(double mi, double ma)
     //    range->setMaximum(ma+th);
     //}
 
-  
+
     if (!wwid) return;
 
     QList<QDoubleSpinBox*> vmi = wwid->findChildren<QDoubleSpinBox*>(QString("vMin%1").arg(name));
@@ -1607,7 +1613,7 @@ void MainWindow::changeRangeValueMax(double val)
     wwid = _imageControls[inter->getExperimentName()];
     QString name = sender()->objectName().replace("vMax", "");
     //  qDebug() << "Value Max!!!" << val << name;
-//    qDebug() << "Interactor: changeRangeValue " << sender()->objectName();// << fo;
+    //    qDebug() << "Interactor: changeRangeValue " << sender()->objectName();// << fo;
 
     if (!wwid) return;
     QList<ctkDoubleRangeSlider*> crs = wwid->findChildren<ctkDoubleRangeSlider*>(QString("Channel%1").arg(name));
@@ -1616,7 +1622,7 @@ void MainWindow::changeRangeValueMax(double val)
 
     ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
     fo->forceMaxValue(val);
-//    qDebug() << "Interactor: changeRangeValue " << sender()->objectName() << fo;
+    //    qDebug() << "Interactor: changeRangeValue " << sender()->objectName() << fo;
 
 }
 
@@ -1644,7 +1650,7 @@ void MainWindow::changeFpsValue(double val)
     SequenceInteractor* inter = _sinteractor.current();
     inter->setFps(val);
 
-//    qDebug() << "Interactor: changeFps " << sender()->objectName();// << fo;
+    //    qDebug() << "Interactor: changeFps " << sender()->objectName();// << fo;
 
 }
 
@@ -1688,7 +1694,7 @@ void MainWindow::changeColorState(QString link)
     ImageInfos* fo = inter->getChannelImageInfos(l.at(0).toInt() + 1);
     fo->changeColorState(l.at(1).toInt());
 
-//    qDebug() << "Interactor: changeColorState " << sender()->objectName() << fo;
+    //    qDebug() << "Interactor: changeColorState " << sender()->objectName() << fo;
 
 }
 
@@ -1800,7 +1806,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
                                                       set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                      |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                        |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;

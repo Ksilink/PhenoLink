@@ -14,7 +14,7 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     _plate(platename),
     bias_correction(false),
     _saturate(true), _uninverted(true),
-    _channel(channel)
+    _channel(channel), _binarized(false)
 {
     QMutexLocker lock(&_lockImage);
     loadedWithkey = key();
@@ -282,10 +282,22 @@ void ImageInfos::toggleInverted()
 
 bool ImageInfos::isInverted() { return !_uninverted; }
 
+void ImageInfos::toggleBinarized()
+{
+    _binarized = !_binarized;
+
+    propagate();
+}
+
+bool ImageInfos::isBinarized() { return !_binarized; }
+
 void ImageInfos::setColorMap(QString name){
     _colormap = name;
     propagate();
 }
+
+
+
 
 QString ImageInfos::colormap() { return _colormap; }
 
@@ -300,6 +312,7 @@ void ImageInfos::propagate()
             ifo->_uninverted = this->_uninverted;
             ifo->_saturate = this->_saturate;
             ifo->_colormap = this->_colormap;
+            ifo->_binarized = this->_binarized;
             ifo->_parent->modifiedImage();
         }
 

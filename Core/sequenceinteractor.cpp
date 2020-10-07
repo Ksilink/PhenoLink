@@ -676,7 +676,7 @@ void paletizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
     lastPal += ncolors;
 }
 template <bool Saturate, bool Inverted>
-void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image,  cv::Mat& bias, QImage& toPix, int rows, int cols)
+void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image,  cv::Mat& bias, QImage& toPix, int rows, int cols, bool binarize)
 {
     const float mi = imifo->getDispMin(),
             ma = imifo->getDispMax();
@@ -696,8 +696,12 @@ void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image,  cv::Mat& bias, QIma
             unsigned short v = *p  / (*b/10000.);
             if (!Saturate)
                 v = v > ma ? mi : v;
+            if (binarize)
+                v = v > mi ? ma : mi;
+
             float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
             if (Inverted) f = 1 - f;
+
 
             pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
                           std::min(255.f, qGreen(pix[j]) + f * G),
@@ -707,7 +711,7 @@ void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image,  cv::Mat& bias, QIma
 }
 
 template <bool Saturate, bool Inverted>
-void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols)
+void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols, bool binarize)
 {
     const float mi = imifo->getDispMin(),
             ma = imifo->getDispMax();
@@ -726,6 +730,8 @@ void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
             unsigned short v = *p  ;
             if (!Saturate)
                 v = v > ma ? mi : v;
+            if (binarize)
+                v = v > mi ? ma : mi;
             float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
             if (Inverted) f = 1 - f;
 
@@ -844,6 +850,7 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
         int ncolors = img[c]->nbColors() ;
         bool saturate = img[c]->isSaturated();
         bool inverted = img[c]->isInverted();
+        bool binarize = img[c]->isBinarized();
 
         if (!img[c]->active()) { if (ncolors < 16) lastPal += ncolors; continue; }
 
@@ -856,38 +863,30 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
 
             if (img[c]->colormap().isEmpty())
             {
-
-                const float mi = img[c]->getDispMin(),
-                        ma = img[c]->getDispMax();
-                const int R = img[c]->Red();
-                const int G = img[c]->Green();
-                const int B = img[c]->Blue();
-
-                float mami = ma - mi;
                 if (bias_correction)
                 {
                     cv::Mat bias = img[c]->bias(c+1);
 
                     if (saturate && inverted )
-                        colorizeImageUnbias<true, true>(img[c], images[c], bias, toPix, rows, cols);
+                        colorizeImageUnbias<true, true>(img[c], images[c], bias, toPix, rows, cols, binarize);
                     if (saturate && !inverted )
-                        colorizeImageUnbias<true, false>(img[c], images[c], bias, toPix, rows, cols);
+                        colorizeImageUnbias<true, false>(img[c], images[c], bias, toPix, rows, cols, binarize);
                     if (!saturate && inverted )
-                        colorizeImageUnbias<false, true>(img[c], images[c], bias, toPix, rows, cols);
+                        colorizeImageUnbias<false, true>(img[c], images[c], bias, toPix, rows, cols, binarize);
                     if (!saturate && !inverted )
-                        colorizeImageUnbias<false, false>(img[c], images[c], bias, toPix, rows, cols);
+                        colorizeImageUnbias<false, false>(img[c], images[c], bias, toPix, rows, cols, binarize);
 
                 }
                 else
                 {
                     if (saturate && inverted )
-                        colorizeImage<true, true>(img[c], images[c], toPix, rows, cols);
+                        colorizeImage<true, true>(img[c], images[c], toPix, rows, cols, binarize);
                     if (saturate && !inverted )
-                        colorizeImage<true, false>(img[c], images[c], toPix, rows, cols);
+                        colorizeImage<true, false>(img[c], images[c], toPix, rows, cols, binarize);
                     if (!saturate && inverted )
-                        colorizeImage<false, true>(img[c], images[c], toPix, rows, cols);
+                        colorizeImage<false, true>(img[c], images[c], toPix, rows, cols, binarize);
                     if (!saturate && !inverted )
-                        colorizeImage<false, false>(img[c], images[c], toPix, rows, cols);
+                        colorizeImage<false, false>(img[c], images[c], toPix, rows, cols, binarize);
 
                 }
             } else {

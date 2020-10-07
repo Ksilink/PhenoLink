@@ -89,6 +89,12 @@ public:
     void toggleInverted();
     bool isInverted();
 
+
+    void toggleBinarized();
+
+    bool isBinarized();
+
+
     void setColorMap(QString name);
     QString colormap() ;
 
@@ -174,6 +180,7 @@ protected:
     bool _saturate, _uninverted;
     int _channel;
     QString _colormap;
+    bool _binarized;
 };
 
 
