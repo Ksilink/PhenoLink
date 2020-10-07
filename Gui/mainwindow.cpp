@@ -299,6 +299,7 @@ void MainWindow::channelCheckboxMenu(const QPoint & pos)
       submenu->addAction("");
       submenu->addAction("inferno");
       submenu->addAction("jet");
+      submenu->addAction("random");
 
 
       QAction* selectedItem = myMenu.exec(globalPos);

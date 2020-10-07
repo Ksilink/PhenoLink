@@ -739,6 +739,29 @@ void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
 #include <colormap/color.hpp>
 #include <colormap/grid.hpp>
 #include <colormap/palettes.hpp>
+#include <random>
+
+
+void randomMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols)
+{
+
+    for (int i = 0; i < rows; ++i)
+    {
+        unsigned short* p = image.ptr<unsigned short>(i);
+
+        QRgb* pix = (QRgb*)toPix.scanLine(i);
+        for (int j = 0; j < cols; ++j, ++p)
+        {
+            unsigned short v = *p  ;
+            std::minstd_rand0 nb(v);
+            int r = nb(), g = nb(), b = nb(); // get a random value
+
+            pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + (float)r),
+                    std::min(255.f, qGreen(pix[j])+ (float)(g&0xFF)),
+                    std::min(255.f, qBlue(pix[j]) + (float)(b&0xFF)));
+        }
+    }
+}
 
 template <bool Saturate, bool Inverted>
 void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols)
@@ -748,8 +771,15 @@ void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
     const float mi = imifo->getDispMin(),
             ma = imifo->getDispMax();
     using namespace colormap ;
+
+    if (imifo->colormap() == "random")
+    {
+        randomMapImage(imifo, image, toPix, rows, cols);
+        return;
+    }
     QByteArray tmp = imifo->colormap().toLocal8Bit();
     const char* palette = tmp.constData();
+
     // get a colormap and rescale it
     auto pal = palettes.at(palette);
     //    pal.rescale(mi, ma); // We are using already scaled data!!
