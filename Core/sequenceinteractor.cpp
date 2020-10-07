@@ -407,6 +407,7 @@ double mse(cv::Mat i1, cv::Mat i2)
     return ms / (cols*rows);
 }
 
+
 QPoint refineLeft(cv::Mat& left, cv::Mat& right)
 {
     QPoint res;
@@ -420,12 +421,12 @@ QPoint refineLeft(cv::Mat& left, cv::Mat& right)
         {
             cv::Rect2d le( left.cols-c, 0, c, left.rows-r);
             cv::Rect2d ri(0,r,  c, left.rows-r);
-            // FIXME : Should square measure here !
+            
             double s = mse(left(le), right(ri));
             if (s < mii)
             {
                 mii  = s;
-                res = QPoint(c,r);
+                res = QPoint(-c,r);
             }
             le = cv::Rect2d(left.cols - c, r, c, left.rows - r);
             ri = cv::Rect2d(0, 0, c, left.rows - r);
@@ -433,7 +434,7 @@ QPoint refineLeft(cv::Mat& left, cv::Mat& right)
             if (s < mii)
             {
                 mii = s;
-                res = QPoint(c, -r);
+                res = QPoint(-c, -r);
             }
         }
     }
@@ -443,8 +444,38 @@ QPoint refineLeft(cv::Mat& left, cv::Mat& right)
 
 QPoint refineLower(cv::Mat& up, cv::Mat& down)
 {
-
     QPoint res;
+
+    double mii = std::numeric_limits<double>::max();
+    int overlap = 100;
+
+   
+    for (int r = 1; r < overlap; ++r)
+    {
+        for (int c = 0; c < overlap; ++c)
+        {           
+            cv::Rect2d u(0, up.rows - r, up.cols - c, r);          
+            cv::Rect2d l(c, 0, down.cols - c, r);
+            double s = mse(up(u), down(l));
+            if (s < mii)
+            {
+                mii = s;
+                res = QPoint(-c, -r);
+            }
+            u = cv::Rect2d(c, up.rows - r,  up.cols - c, r);
+            l = cv::Rect2d(0, 0, down.cols - c, r);
+            s = mse(up(u), down(l));;
+            if (s < mii)
+            {
+                mii = s;
+                res = QPoint(-c, r);
+            }
+        }
+    }
+
+
+
+
     return res;
 }
 
@@ -467,7 +498,7 @@ void SequenceInteractor::refinePacking()
     {
         for (auto sit = it.value().begin(), send = it.value().end(); sit != send; ++sit)
         {
-            qDebug() << "Field " << it.value() << " is at position" << it.key() << sit.key();
+            qDebug() << "Field " << sit.value() << " is at position" << it.key() << sit.key();
             if (ref.empty())
             {
                 QString file = _mdl->getFile(_timepoint, sit.value(), _zpos, 1);
@@ -480,14 +511,14 @@ void SequenceInteractor::refinePacking()
             QPoint of;
             if (sit == it.value().begin())
             {
-                of = refineLower(ref, right);
+                of = refineLeft(ref, right);
             }
             else
             {
-                of = refineLeft(ref, right);
+                of = refineLower(ref, right);
             }
             qDebug() << "Refine Unpack: " << it.key() << sit.key() << sit.value() << of;
-            this->pixOffset[sit.value()-1] = of;// combine previous with current
+            this->pixOffset[sit.value()-1] = offset + of;// combine previous with current
             offset += of;
             ref = right;
         }
