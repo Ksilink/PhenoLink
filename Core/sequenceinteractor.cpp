@@ -467,6 +467,7 @@ void SequenceInteractor::refinePacking()
     {
         for (auto sit = it.value().begin(), send = it.value().end(); sit != send; ++sit)
         {
+            qDebug() << "Field " << it.value() << " is at position" << it.key() << sit.key();
             if (ref.empty())
             {
                 QString file = _mdl->getFile(_timepoint, sit.value(), _zpos, 1);

@@ -289,7 +289,7 @@ void ImageInfos::toggleBinarized()
     propagate();
 }
 
-bool ImageInfos::isBinarized() { return !_binarized; }
+bool ImageInfos::isBinarized() { return _binarized; }
 
 void ImageInfos::setColorMap(QString name){
     _colormap = name;
