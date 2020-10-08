@@ -148,6 +148,9 @@ public:
   void setChannelNames(QStringList names);
   QStringList getChannelNames();
 
+  void setColor(QString col);
+  QString getColor();
+
 protected:
 
 
@@ -162,6 +165,7 @@ protected:
   QList<SequenceFileModel*> _siblings;
   QSet<int> _channelsIds;
   QStringList _tags, _channelNames;
+  QString _color;
 
 private:
 
@@ -346,8 +350,11 @@ public:
 
   QStringList getTags(QPoint pos);
   void setTag(QPoint pos, QString list);
-
   bool hasTag();
+
+  QString getColor(QPoint pos);
+  void setColor(QPoint pos, QString col);
+
 
   QList<SequenceFileModel*> getSelection();
   QList<SequenceFileModel*> getAllSequenceFiles();

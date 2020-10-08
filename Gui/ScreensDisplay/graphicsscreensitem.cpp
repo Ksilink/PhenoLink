@@ -188,10 +188,15 @@
 
                 if (mdl->hasMeasurements(QPoint(r, col)) && (*mdl)(r,col).isValid())
                 {
-                    rc->setBrush(QBrush(Qt::green));
+                    auto w = (*mdl)(r,col);
+                    QColor color(Qt::green);
+                    if (!w.getColor().isEmpty())
+                        color = QColor(w.getColor());
+                    rc->setBrush(QBrush(color));
+
                     rc->setFlags(QGraphicsItem::ItemIsSelectable);
                     _items << rc;
-                    QString disp = QString("[%1] %2").arg(posToString(r,col)).arg(mdl->getTags(QPoint(r,col)).join(','));
+                    QString disp = QString("[%1] %2").arg(posToString(r,col)).arg(w.getTags().join(','));
                     rc->setToolTip(disp);
                 }
                 else

@@ -69,6 +69,24 @@ bool ExperimentFileModel::hasTag()
     return _hasTag;
 }
 
+QString ExperimentFileModel::getColor(QPoint Pos)
+{
+    SequenceFileModel& res = _sequences[Pos.x()][Pos.y()];
+    if (res.isValid())
+        return res.getColor();
+
+    return QString();
+}
+
+void ExperimentFileModel::setColor(QPoint Pos, QString col)
+{
+    SequenceFileModel& res = _sequences[Pos.x()][Pos.y()];
+    if (res.isValid())
+    {
+        res.setColor(col);
+    }
+}
+
 
 
 
@@ -778,6 +796,16 @@ QStringList SequenceFileModel::getChannelNames()
     return _channelNames;
 }
 
+void SequenceFileModel::setColor(QString col)
+{
+    _color = col;
+}
+
+QString SequenceFileModel::getColor()
+{
+    return _color;
+}
+
 
 
 
@@ -1268,7 +1296,7 @@ void ScreensHandler::addScreen(ExperimentFileModel* xp)
 }
 ExperimentFileModel* loadScreenFunct(QString it)
 {
-	return nullptr; 
+    return nullptr;
 }
 
 ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
@@ -1276,7 +1304,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
     QDir dir(fileName); dir.cdUp();
     QString tfile = dir.absolutePath() + "/tags.json";
     QStringList tags;
- 
+
     QFile file;
     file.setFileName(tfile);
     if (file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -1304,14 +1332,34 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
                         for (int i = 0; i < arr.size(); ++i)
                         {
                             int c = arr[i].toInt();
-                            QPoint p(r, c); 
+                            QPoint p(r, c);
                             mdl->setTag(p, it.key());
                         }
                     }
                 }
             }
+            if (json.contains("color_map"))
+            {
+                auto map = json["color_map"].toObject();
+                for (auto it = map.begin(), e = map.end(); it != e; ++it)
+                {
+                    tags << it.key();
+                    auto wells = it.value().toObject();
+                    for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+                    {
+                        auto arr = k.value().toArray();
+                        int r =  k.key().toUtf8().at(0) - 'A';
+                        for (int i = 0; i < arr.size(); ++i)
+                        {
+                            int c = arr[i].toInt();
+                            QPoint p(r, c);
+                            mdl->setColor(p, it.key());
+                        }
+                    }
+                }
+            }
             set.setValue("Tags", tags);
-        }     
+        }
     }
 
     return mdl;
@@ -1345,7 +1393,7 @@ Screens ScreensHandler::loadScreens(QStringList list, bool allow_loaded)
     // This class shall use the plugin interface to expose multiple instances of the CheckoutDataLoaderPluginInterface
 #if 1
 
-	auto func = std::bind(loadScreenFunc, std::placeholders::_1 , allow_loaded, _screens);
+    auto func = std::bind(loadScreenFunc, std::placeholders::_1 , allow_loaded, _screens);
     Screens tmp = QtConcurrent::blockingMapped(list, func);
 
     Screens res;
@@ -1514,7 +1562,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
                     cv::Mat im(r, c, cvtype, &(data.data()[chans]));
 
 
-                 //   cv::imwrite(QString("c:/temp/im%1.jpg").arg(hash).toStdString(), im*255);
+                    //   cv::imwrite(QString("c:/temp/im%1.jpg").arg(hash).toStdString(), im*255);
 
                     cv::Mat* m = new cv::Mat();
 
