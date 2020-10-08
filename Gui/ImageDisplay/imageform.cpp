@@ -168,8 +168,8 @@ void ImageForm::watcherPixmap()
     QFutureWatcher<QPixmap>* wa = dynamic_cast<QFutureWatcher<QPixmap>* >(sender());
     //  qDebug() << "Redrzw";
     if (!wa) {
-          isRunning = false;
-          qDebug() << "Error retreiving watchers finished state";
+        isRunning = false;
+        qDebug() << "Error retreiving watchers finished state";
         return;
     }
 
@@ -184,7 +184,7 @@ void ImageForm::watcherPixmap()
     }
 
     if (packed != wasPacked)
-     currentScale =  pixItem->pixmap().width()/res.width();
+        currentScale =  pixItem->pixmap().width()/res.width();
 
     redrawPixmap(res);
     isRunning = false;
@@ -222,7 +222,7 @@ void ImageForm::redrawPixmap()
 {
     //qDebug() << "Redraw Pixmap started";
     if (!isRunning)
-    { 
+    {
         //qDebug() << "Redraw Pixmap running";
         isRunning = true;
         QFutureWatcher<QPixmap>* wa = new QFutureWatcher<QPixmap>();
@@ -235,7 +235,7 @@ void ImageForm::redrawPixmap()
     }
     //  scale(0);
 
-  //  qDebug() << "Redraw Pixmap done";
+    //  qDebug() << "Redraw Pixmap done";
     //    redrawPixmap(QPixmap::fromImage(_interactor->getImage()));
 }
 
@@ -836,7 +836,7 @@ void ImageForm::changeCurrentSelection()
             .arg(_interactor->getZ())
             .arg(_interactor->getTimePoint())
             .arg(_interactor->getField())
-        ;
+            ;
     textItem->setPlainText(imageInfos);
     if (sz)
     {
@@ -940,7 +940,7 @@ void ImageForm::timerEvent(QTimerEvent *event)
             .arg(_interactor->getZ())
             .arg(_interactor->getTimePoint())
             .arg(_interactor->getField())
-        ;
+            ;
     textItem->setPlainText(imageInfos);
     this->repaint();
 }
@@ -962,7 +962,7 @@ void ImageForm::biasCorrection()
 {
     bias_correction = !bias_correction;
     redrawPixmap();
-//    _interactor->clearMemory();
+    //    _interactor->clearMemory();
 }
 
 
@@ -1063,7 +1063,7 @@ cv::Mat QImageToMat(QImage image)
         break;
     case QImage::Format_RGB888:
         mat = cv::Mat(image.height(), image.width(), CV_8UC3, (void*)image.constBits(), image.bytesPerLine());
-          cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+        cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
         break;
     case QImage::Format_Grayscale8:
         mat = cv::Mat(image.height(), image.width(), CV_8UC1, (void*)image.constBits(), image.bytesPerLine());
@@ -1089,18 +1089,16 @@ void ImageForm::saveVideo()
     progress.setWindowModality(Qt::WindowModal);
 
     int currentTime = _interactor->getTimePoint();
+    QDir os;
 
+    os.mkpath("c:/temp/CheckoutVideo");
+    int w = this->size().width(), h = this->size().height();
+    w = w + w % 2;
+    h = h + h % 2;
 
-    int w = ceil(this->width()/8.)*8;
-    int h = ceil(this->height()/8.)*8;
-
-    cv::Mat im(h,w, CV_8UC3);
-    cv::Size s(h,w);
-  
-
-    cv::VideoWriter writer;
-    int fourcc =  cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
-    writer.open(filename.toStdString(),  fourcc, (int)_interactor->getFps(), s);
+    //    cv::VideoWriter writer;
+    //    int fourcc =  cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
+    //    writer.open(filename.toStdString(),  fourcc, (int)_interactor->getFps(), s);
 
     QString pos = _interactor->getSequenceFileModel()->Pos();
     int z = _interactor->getZ(), f = _interactor->getField();
@@ -1116,23 +1114,18 @@ void ImageForm::saveVideo()
                 .arg(i)
                 .arg(f);
         textItem->setPlainText(imageInfos);
-       // repaint();
+        // repaint();
         QPixmap pixmap(this->size());
         this->render(&pixmap);
+        pixmap=pixmap.scaled(w,h);
 
-        //QImage img = grab().toImage();
-        // Now opencv stuff*
-        //pixmap.save(QString("c:/tmp/im_raw%1.jpg").arg(i));
-        im = QImageToMat(pixmap.toImage());
-        writer.write(im);
-        //cv::imwrite(QString("c:/tmp/im%1.jpg").arg(i).toStdString(), im);
-
+        pixmap.save(QString("c:/temp/CheckoutVideo/im_raw%1.jpg").arg((uint)i,5,10,QChar('0')));
 
         if (progress.wasCanceled())
             break;
     }
 
-    writer.release();
+    //    writer.release();
     progress.setValue( _interactor->getTimePointCount());
 
     _interactor->setTimePoint(currentTime);
@@ -1141,10 +1134,58 @@ void ImageForm::saveVideo()
             .arg(_interactor->getZ())
             .arg(_interactor->getTimePoint())
             .arg(_interactor->getField())
-        ;
+            ;
     textItem->setPlainText(imageInfos);
     repaint();
 
+
+
+
+    QProcess ffmpeg;
+    ffmpeg.setProcessChannelMode(QProcess::MergedChannels);
+    //server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() +"/CheckoutServer_log.txt");
+    ffmpeg.setWorkingDirectory(qApp->applicationDirPath());
+    QString r = "ffmpeg.exe";
+
+    QStringList args;
+    args << "-framerate" << QString("%1").arg(_interactor->getFps())
+         << "-start_number" << "0"
+         << "-i" << "c:\\temp\\CheckoutVideo\\im_raw%05d.jpg"
+         << "-vframes" << QString("%1").arg(_interactor->getTimePointCount())
+         //<< "-pix_fmt" << "yuv420p"
+         << "-c:v" << "libx264"
+         << filename
+            ;
+
+    ffmpeg.setProgram(r);
+    ffmpeg.setArguments(args);
+    ffmpeg.start();
+    if (!ffmpeg.waitForStarted())
+    {
+        qDebug() << ffmpeg.errorString();
+    }
+    else
+    {
+        QProgressDialog prog("Converting Video", "Abort Generation", 0, 100, this);
+        prog.setWindowModality(Qt::WindowModal);
+
+        int c = 0;
+        while (!ffmpeg.waitForFinished(150))
+        {
+            prog.setValue(c++);
+            qDebug() << ffmpeg.readAll();
+            if (QProcess::UnknownError != ffmpeg.error())
+                qDebug() << ffmpeg.errorString();
+            if (c > 99) c = 0;
+            if (prog.wasCanceled()) { ffmpeg.kill(); break; }
+        }
+        qDebug() << ffmpeg.readAll();
+        if (QProcess::UnknownError != ffmpeg.error())
+            qDebug() << ffmpeg.errorString();
+    }
+
+    os.setPath("c:/temp/CheckoutVideo");
+    os.removeRecursively();
 }
 
 void ImageForm::popImage()

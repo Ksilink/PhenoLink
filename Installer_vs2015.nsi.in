@@ -35,6 +35,7 @@ SetOutPath $INSTDIR\bin
 # specify file to go in output path
 File "@CMAKE_BINARY_DIR@\bin\Checkout.exe"
 File "@CMAKE_BINARY_DIR@\bin\CheckoutProcessServer.exe"
+File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 
 CreateDirectory $INSTDIR\bin\Cache
 
