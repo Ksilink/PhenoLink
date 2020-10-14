@@ -183,16 +183,16 @@ QString SequenceInteractor::getFile()
 }
 
 
-QStringList SequenceInteractor::getAllChannel(int field)
+QList<QPair<int, QString> > SequenceInteractor::getAllChannel(int field)
 {
-    QStringList l;
+    QList<QPair<int, QString> > l;
 
     if (field <= 0) field = _field;
     SequenceFileModel::Channel& chans = _mdl->getChannelsFiles(_timepoint, field, _zpos);
 
     for (SequenceFileModel::Channel::const_iterator it = chans.cbegin(), e = chans.cend();
          it != e; ++it)
-        if (!it.value().isEmpty())   l <<   it.value();
+        if (!it.value().isEmpty())   l <<  qMakePair(it.key(), it.value());
 
     return l;
 }
@@ -391,6 +391,7 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
             QString name = _mdl->getChannelNames()[ii-1];
             info->setChannelName(name);
         }
+        qDebug() << "Set with color"<< exp << ii << file << info->getColor().name();
     }
     /*    lock_infos.lock();ta
         _infos[file] = info;
@@ -612,10 +613,10 @@ void SequenceInteractor::preloadImage()
     //QString exp = getExperimentName();
 
     //  t.start();
-    QStringList list = getAllChannel();
-    for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it)
+    QList<QPair<int, QString> > list = getAllChannel();
+    for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it)
     {
-        imageInfos(*it, -1, loadkey)->image();
+        imageInfos(it->second, it->first, loadkey)->image();
     }
 
 }
@@ -700,6 +701,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
 
             QPainter pa(&toPix);
             QPoint offset = QPoint(x*toStitch[0].second.width(), y * toStitch[0].second.height());
+            qDebug() << "Field" << i << toStitch[i].first << "X Y:" << x << y << "Offset:" << offset;
             if (pixOffset.size()  > 0)
                 offset += pixOffset[i];
 
@@ -891,14 +893,14 @@ void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
 
 QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, float scale)
 {
-    QStringList list = getAllChannel(field);
+    QList<QPair<int, QString> > list = getAllChannel(field);
 
     QList<ImageInfos*> img;
     QList<cv::Mat> images;//(list.size());
     int ii = 0;
-    for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it,++ii)
+    for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it,++ii)
     {
-        img.append(imageInfos(*it,ii+1, loadkey));
+        img.append(imageInfos(it->second, it->first, loadkey)); // Auto channel determination
     }
 
 
@@ -989,14 +991,14 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
     if (packed)
     {
 
-        QStringList list = getAllChannel();
+        QList<QPair<int, QString> > list = getAllChannel();
         field = _field;
 
         int ii = 0;
 
-        for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
+        for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
         {
-            cv::Mat m = imageInfos(*it, -1, loadkey)->image();
+            cv::Mat m = imageInfos(it->second, it->first, loadkey)->image();
             if (m.rows > d.y() && m.cols > d.x())
                 res << m.at<unsigned short>((int)d.y(), (int)d.x());
         }
@@ -1018,11 +1020,11 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
         field = f;
 
         int ii = 0;
-        QStringList list = getAllChannel(f);
+        QList<QPair<int, QString> > list = getAllChannel(f);
 
-        for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
+        for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
         {
-            cv::Mat m = imageInfos(*it, -1, loadkey)->image();
+            cv::Mat m = imageInfos(it->second, it->first, loadkey)->image();
             if (m.rows > d.y() && m.cols > d.x())
                 res << m.at<unsigned short>((int)d.y(), (int)d.x());
         }
@@ -1031,7 +1033,3 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
     return res;
 }
 
-
-
-// DT 008 QJ
-//

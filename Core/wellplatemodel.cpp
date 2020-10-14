@@ -138,7 +138,7 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
     QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
     std::sort(xl.begin(), xl.end());
     std::sort(yl.begin(), yl.end());
-    //    qDebug() <<  xl << yl;
+    qDebug() << "Unpack well pos sorted" <<  xl << yl;
     //    xl.indexOf(), yl.indexOf()
     return qMakePair(xl,yl);
 }
@@ -150,6 +150,7 @@ QPointF getFieldPos(SequenceFileModel* seq, int field, int z, int t, int c)
     k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
     double y = seq->property(k).toDouble();
 
+    qDebug() << "Extracting Field Pos :" << x << y;
     return QPointF(x,y);
 }
 

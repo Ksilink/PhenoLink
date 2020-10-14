@@ -46,7 +46,7 @@ public:
 
 
   // Return all channels file for current selection
-  QStringList getAllChannel(int field = -1);
+  QList<QPair<int, QString> > getAllChannel(int field = -1);
   int getChannelsFromFileName(QString file);
 
   QStringList getAllTimeFieldSameChannel();

@@ -1029,10 +1029,11 @@ void ImageForm::copyToClipboard()
 
 void ImageForm::copyCurrentImagePath()
 {
-    QStringList chans = _interactor->getAllChannel();
+    QList<QPair<int, QString> > chans = _interactor->getAllChannel();
+    QStringList l;
     for (int i = 0; i < chans.size(); i++)
-        chans[i] = QString("\"%1\"").arg(chans[i]);
-    QApplication::clipboard()->setText(QString("[%1]").arg(chans.join(",")));
+        l << QString("\"%1\"").arg(chans[i].second);
+    QApplication::clipboard()->setText(QString("[%1]").arg(l.join(",")));
 }
 
 void ImageForm::copyCurrentSequencePath()
