@@ -1654,7 +1654,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
                             z = meta["zPos"].toInt(),
                             ch = meta["channel"].toInt();
 
-                    int cc = datasizes.size() > 1  ? i : ch;
+                    int cc = datasizes.size() > 1  ? i+1 : ch;
 
                     QString fname =  QString(":/mem/%1_%2_%3_%4_T%5F%6Z%7C%8.png")
                             .arg(hash)
@@ -1690,8 +1690,8 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
                     {
                         QStringList names;
                         QJsonArray ar = ob["ChannelNames"].toArray();
-                        for (int i = 0; i < ar.size(); ++i)
-                            names << ar[i].toString();
+                        for (int n = 0; n < ar.size(); ++n)
+                            names << ar[n].toString();
                         mdl->setChannelNames(names);
                     }
                 }
