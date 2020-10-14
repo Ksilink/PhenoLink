@@ -13,13 +13,13 @@
 
 QMutex sequence_interactorMutex;
 
-SequenceInteractor::SequenceInteractor(): _mdl(0), _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),last_scale(-1.)
+SequenceInteractor::SequenceInteractor(): _mdl(0), _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),last_scale(-1.), _updating(false)
 {
 }
 
 SequenceInteractor::SequenceInteractor(SequenceFileModel *mdl, QString key):
     _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),
-    _fps(25.), loadkey(key), last_scale(-1.)
+    _fps(25.), loadkey(key), last_scale(-1.), _updating(false)
 {
 }
 
@@ -32,6 +32,8 @@ void SequenceInteractor::setTimePoint(unsigned t)
 
 void SequenceInteractor::setField(unsigned t)
 {
+    _updating = true;
+
     if (_mdl->getFieldCount() >= t)
         _field = t;
 
@@ -48,7 +50,8 @@ void SequenceInteractor::setField(unsigned t)
             foreach(ImageInfos* info, list)
             {
                 SequenceInteractor* inter = info->getInteractor();
-                if (inter && inter != _current && inter != this)
+        
+                if (inter && !inter->isUpdating())
                 {
                     inter->setField(t);
                     inter->modifiedImage();
@@ -56,12 +59,13 @@ void SequenceInteractor::setField(unsigned t)
             }
         }
     }
-
+    _updating = false;
 
 }
 
 void SequenceInteractor::setZ(unsigned z)
 {
+    _updating = true;
     if (_mdl->getZCount() >= z)
         _zpos = z;
 
@@ -78,7 +82,7 @@ void SequenceInteractor::setZ(unsigned z)
             foreach(ImageInfos* info, list)
             {
                 SequenceInteractor* inter = info->getInteractor();
-                if (inter && inter != _current)
+                if (inter && !inter->isUpdating())
                 {
                     inter->setZ(z);
                     inter->modifiedImage();
@@ -86,6 +90,7 @@ void SequenceInteractor::setZ(unsigned z)
             }
         }
     }
+    _updating = false;
 }
 
 void SequenceInteractor::setChannel(unsigned c)

@@ -87,6 +87,11 @@ public slots:
 
     void setChannelNames(QStringList names);
 
+
+    bool isUpdating() {
+        return _updating
+            ;
+    }
 protected:
 
   SequenceFileModel* _mdl;
@@ -104,6 +109,7 @@ protected:
   QPixmap           _cachePixmap; // Cache temporary image, pixmap are implicitly shared
   static SequenceInteractor* _current;
   float last_scale;
+  bool _updating;
  };
 
 
