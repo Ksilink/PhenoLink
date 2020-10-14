@@ -1,4 +1,5 @@
 #include "sequenceinteractor.h"
+#include <tuple>
 
 #include <QImage>
 
@@ -35,17 +36,23 @@ void SequenceInteractor::setField(unsigned t)
         _field = t;
 
     QString nm = _mdl->getFile(_timepoint, _field, _zpos, _channel);
-    ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
-    if (ifo)
+    QSettings set;
+
+    if (set.value("SyncFields", true).toBool())
     {
-        QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
-        foreach(ImageInfos* info, list)
+        ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
+
+        if (ifo)
         {
-            SequenceInteractor* inter = info->getInteractor();
-            if (inter && inter != _current && inter != this)
+            QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
+            foreach(ImageInfos* info, list)
             {
-                inter->setField(t);
-                inter->modifiedImage();
+                SequenceInteractor* inter = info->getInteractor();
+                if (inter && inter != _current && inter != this)
+                {
+                    inter->setField(t);
+                    inter->modifiedImage();
+                }
             }
         }
     }
@@ -59,17 +66,23 @@ void SequenceInteractor::setZ(unsigned z)
         _zpos = z;
 
     QString nm = _mdl->getFile(_timepoint, _field, _zpos, _channel);
-    ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
-    if (ifo)
+
+    QSettings set;
+
+    if (set.value("SyncField", true).toBool())
     {
-        QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
-        foreach(ImageInfos* info, list)
+        ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
+        if (ifo)
         {
-            SequenceInteractor* inter = info->getInteractor();
-            if (inter && inter != _current)
+            QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
+            foreach(ImageInfos* info, list)
             {
-                inter->setZ(z);
-                inter->modifiedImage();
+                SequenceInteractor* inter = info->getInteractor();
+                if (inter && inter != _current)
+                {
+                    inter->setZ(z);
+                    inter->modifiedImage();
+                }
             }
         }
     }
@@ -407,92 +420,97 @@ double mse(cv::Mat i1, cv::Mat i2)
     return ms / (cols*rows);
 }
 
-
-QPoint refineLeft(cv::Mat& left, cv::Mat& right)
+std::tuple< double, QPoint> refineLeft(cv::Mat& left, cv::Mat& right, int overlap, bool first = true)
 {
     QPoint res;
     double mii = std::numeric_limits<double>::max();
-    int overlap = 100;
 
     //    int rw = left.rows, cl = left.cols;
     for (int r = 0; r < overlap; ++r)
     {
         for (int c = 1; c < overlap; ++c)
         {
-            cv::Rect2d le( left.cols-c, 0, c, left.rows-r);
-            cv::Rect2d ri(0,r,  c, left.rows-r);
-            
-            double s = mse(left(le), right(ri));
-            if (s < mii)
+            if (first)
             {
-                mii  = s;
-                res = QPoint(-c,r);
+                cv::Rect2d le( left.cols-c, 0, c, left.rows-r);
+                cv::Rect2d ri(0,r,  c, left.rows-r);
+
+                double s = mse(left(le), right(ri));
+                if (s < mii)
+                {
+                    mii  = s;
+                    res = QPoint(-c,-r);
+                }
             }
-            le = cv::Rect2d(left.cols - c, r, c, left.rows - r);
-            ri = cv::Rect2d(0, 0, c, left.rows - r);
-            s = mse(left(le), right(ri));
-            if (s < mii)
+            else
             {
-                mii = s;
-                res = QPoint(-c, -r);
+                cv::Rect2d le = cv::Rect2d(left.cols - c, r, c, left.rows - r);
+                cv::Rect2d ri = cv::Rect2d(0, 0, c, left.rows - r);
+                double s = mse(left(le), right(ri));
+                if (s < mii)
+                {
+                    mii = s;
+                    res = QPoint(-c, r);
+                }
             }
         }
     }
-
-    return res;
+    return std::make_tuple(mii, res);
 }
 
-QPoint refineLower(cv::Mat& up, cv::Mat& down)
+std::tuple<double, QPoint> refineLower(cv::Mat& up, cv::Mat& down, int overlap, bool first = true)
 {
     QPoint res;
 
     double mii = std::numeric_limits<double>::max();
-    int overlap = 100;
-
-   
+    
     for (int r = 1; r < overlap; ++r)
     {
         for (int c = 0; c < overlap; ++c)
-        {           
-            cv::Rect2d u(0, up.rows - r, up.cols - c, r);          
-            cv::Rect2d l(c, 0, down.cols - c, r);
-            double s = mse(up(u), down(l));
-            if (s < mii)
+        {
+            if (first)
             {
-                mii = s;
-                res = QPoint(-c, -r);
+                cv::Rect2d u(0, up.rows - r, up.cols - c, r);
+                cv::Rect2d l(c, 0, down.cols - c, r);
+                double s = mse(up(u), down(l));
+                if (s < mii)
+                {
+                    mii = s;
+                    res = QPoint(c, -r);
+                }
             }
-            u = cv::Rect2d(c, up.rows - r,  up.cols - c, r);
-            l = cv::Rect2d(0, 0, down.cols - c, r);
-            s = mse(up(u), down(l));;
-            if (s < mii)
+            else
             {
-                mii = s;
-                res = QPoint(-c, r);
+                cv::Rect2d u = cv::Rect2d(c, up.rows - r,  up.cols - c, r);
+                cv::Rect2d l = cv::Rect2d(0, 0, down.cols - c, r);
+                double s = mse(up(u), down(l));;
+                if (s < mii)
+                {
+                    mii = s;
+                    res = QPoint(-c, -r);
+                }
             }
         }
     }
 
-
-
-
-    return res;
+    return std::make_tuple(mii, res);
 }
 
 
 void SequenceInteractor::refinePacking()
 {
-    // Parellelize stuffs !
-
-
     // Assume single channel is enough !
 
     // Need to compute the unpacking starting from upper left hand corner
     //for (unsigned i = 0; i < _mdl->getFieldCount(); ++i)
-    QPoint offset;
     cv::Mat ref;
+
+    QList<std::tuple<int, cv::Mat, cv::Mat, bool /*left/up*/,  bool/*1st/2nd step*/> > data_mapping;
     
     this->pixOffset.resize(_mdl->getFieldCount());
+
+
+    auto toField = _mdl->getOwner()->getFieldPosition();
 
     for (auto it = toField.begin(), end = toField.end(); it != end; ++it)
     {
@@ -508,25 +526,78 @@ void SequenceInteractor::refinePacking()
             QString file = _mdl->getFile(_timepoint, sit.value(), _zpos, 1);
             cv::Mat right = imageInfos(file, -1, loadkey)->image();
 
-            QPoint of;
-            if (sit == it.value().begin())
-            {
-                of = refineLeft(ref, right);
-            }
-            else
-            {
-                of = refineLower(ref, right);
-            }
-            qDebug() << "Refine Unpack: " << it.key() << sit.key() << sit.value() << of;
-            this->pixOffset[sit.value()-1] = offset + of;// combine previous with current
-            offset += of;
-            ref = right;
+            std::tuple<int, cv::Mat, cv::Mat, bool /*left/up*/,  bool/*1st/2nd step*/> tuple;
+
+            tuple = std::make_tuple(sit.value()-1, ref, right, sit == it.value().begin(), true);
+            data_mapping.push_back(tuple);
+            tuple = std::make_tuple(sit.value()-1, ref, right, sit == it.value().begin(), false);
+            data_mapping.push_back(tuple);
+
         }
         QString file = _mdl->getFile(_timepoint, it.value().begin().value(), _zpos, 1);
-        offset = pixOffset[it.value().begin().value()-1];
         ref = imageInfos(file, -1, loadkey)->image();
     }
 
+    // Now i'd like to use the QtConcurrent Map function !!!
+    struct Mapping{
+
+        typedef std::tuple<int, double, QPoint> result_type;
+
+        std::tuple<int, double, QPoint> operator()(std::tuple<int, cv::Mat, cv::Mat, bool /*left/up*/,  bool/*1st/2nd step*/> data)
+        {
+            int xp = std::get<0>(data);
+
+            cv::Mat a = std::get<1>(data);
+            cv::Mat b = std::get<2>(data);
+
+            bool left = std::get<3>(data);
+            bool first = std::get<4>(data);
+
+            std::tuple<double, QPoint> res;
+            if (left)
+                res = refineLeft(a,b, 200, first);
+            else
+                res = refineLower(a,b, 200, first);
+
+            qDebug() << xp << (int)first << (left ? "RefineLeft" : "RefineLower") << std::get<0>(res) << std::get<1>(res);
+            return std::make_tuple(xp, std::get<0>(res), std::get<1>(res));
+        }
+
+    };
+
+    QList< std::tuple<int, double, QPoint> > res =
+            QtConcurrent::blockingMapped(data_mapping, Mapping()); //apply the mapping
+
+
+    QMap<int, QPair<double, QPoint> > proj;
+    for (auto v : res)
+    {
+        if (proj.contains(std::get<0>(v)))
+        {
+            QPair<double, QPoint> t = proj[std::get<0>(v)];
+            if (t.first > std::get<1>(v))
+                proj[std::get<0>(v)] = qMakePair(std::get<1>(v), std::get<2>(v));
+        }
+        else
+        {
+            proj[std::get<0>(v)] = qMakePair(std::get<1>(v), std::get<2>(v));
+        }
+    }
+    qDebug() << proj;
+    bool start = true;
+    QPoint offset;
+    for (int r = 0; r < toField.size(); ++r)
+    {
+        for (int c = 0; c < toField[r].size(); ++c)
+        {
+            if (start) { start = false; continue;  }
+            int field = toField[r][c] - 1;
+            QPoint of = proj[field].second;
+            if (r == 0) offset = pixOffset[toField[r][c - 1]-1];
+            if (c > 0) offset = pixOffset[toField[r][c]-1];
+            this->pixOffset[field] = offset + of;
+        }
+    }
 
 }
 
@@ -560,38 +631,6 @@ QPoint getMatrixSize(SequenceFileModel* seq, unsigned fieldc,  int z, int t, int
     }
 
     return QPoint(x.size(), y.size());
-}
-
-
-QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned fieldc,  int z, int t, int c)
-{
-
-    QSet<double> x,y;
-
-    for (unsigned field = 1; field < fieldc; ++ field)
-    {
-        QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
-        x.insert(seq->property(k).toDouble());
-        k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
-        y.insert(seq->property(k).toDouble());
-
-    }
-    QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
-    std::sort(xl.begin(), xl.end());
-    std::sort(yl.begin(), yl.end());
-    //    qDebug() <<  xl << yl;
-    //    xl.indexOf(), yl.indexOf()
-    return qMakePair(xl,yl);
-}
-
-QPointF getFieldPos(SequenceFileModel* seq, int field, int z, int t, int c)
-{
-    QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
-    double x = seq->property(k).toDouble();
-    k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
-    double y = seq->property(k).toDouble();
-
-    return QPointF(x,y);
 }
 
 
@@ -652,7 +691,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
 
             int x = li.first.indexOf(p.x());
             int y = li.second.size() - li.second.indexOf(p.y()) - 1;
-            toField[x][y] = i+1;
+           // toField[x][y] = i+1;
 
             QPainter pa(&toPix);
             QPoint offset = QPoint(x*toStitch[0].second.width(), y * toStitch[0].second.height());
@@ -795,8 +834,8 @@ void randomMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, 
             int r = nb(), g = nb(), b = nb(); // get a random value
 
             pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + (float)r),
-                    std::min(255.f, qGreen(pix[j])+ (float)(g&0xFF)),
-                    std::min(255.f, qBlue(pix[j]) + (float)(b&0xFF)));
+                          std::min(255.f, qGreen(pix[j])+ (float)(g&0xFF)),
+                          std::min(255.f, qBlue(pix[j]) + (float)(b&0xFF)));
         }
     }
 }
@@ -969,7 +1008,8 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
         d.setX(d.x() - cx * m.cols);
         d.setY(d.y() - cy * m.rows);
 
-        int f = this->toField[cx][cy];
+
+        int f = _mdl->getOwner()->getFieldPosition()[cx][cy];
         field = f;
 
         int ii = 0;
@@ -985,3 +1025,8 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
     }
     return res;
 }
+
+
+
+// DT 008 QJ
+//

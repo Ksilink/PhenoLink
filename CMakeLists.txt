@@ -17,7 +17,7 @@ project(Checkout)
 set(Checkout_VERSION_MAJOR 1)
 set(Checkout_VERSION_MINOR 5)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 0)
+set(Checkout_VERSION_RELEASE 1)
 
 option(BUILD_PLUGINS "Build plugins" ON)
 option(BUILD_PYTHON_SCRIPTING "Build with Core side Python Scripting" OFF)
@@ -40,23 +40,10 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Update to CMake
-find_package(Qt5 COMPONENTS Widgets Xml XmlPatterns OpenGL Concurrent Sql WinExtras REQUIRED)
+find_package(Qt5 COMPONENTS
+    Widgets Xml XmlPatterns
+    OpenGL Concurrent Sql WinExtras Charts REQUIRED)
 
-# find_package(Qt5Widgets REQUIRED)
-# find_package(Qt5Xml REQUIRED)
-# find_package(Qt5XmlPatterns REQUIRED)
-# find_package(Qt5OpenGL REQUIRED)
-#find_package(Qt5WebKitWidgets REQUIRED)
-# find_package(Qt5Concurrent REQUIRED)
-# find_package(Qt5Sql REQUIRED)
-# find_package(Qt5WinExtras REQUIRED)
-
-
-#find_package(Qt5Test REQUIRED)
-
-#include(DeployQt5.cmake)
-
-#find_package(OpenCV REQUIRED core highgui)
 
 find_package(OpenCV REQUIRED )
 

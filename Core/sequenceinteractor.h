@@ -98,8 +98,6 @@ protected:
 
   //QList<ImageForm*> linked_images;
   //QMap<QString, ImageInfos*> _infos;
-
-  QMap<int, QMap<int, int> > toField;
   QVector<QPoint> pixOffset;
 
   QList<CoreImage*> _ImageList;

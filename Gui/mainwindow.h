@@ -38,7 +38,7 @@ class QWinTaskbarProgress;
 class DllGuiExport MainWindow : public QMainWindow
 {
     Q_OBJECT
-
+         
     QProcess* server;
 public:
     explicit MainWindow(QProcess* serverProc, QWidget *parent = 0);
@@ -148,6 +148,10 @@ private slots:
 
     void startProcessRun();
     void channelCheckboxMenu(const QPoint&);
+
+    void on_sync_fields_toggled(bool arg1);
+
+    void on_sync_zstack_toggled(bool arg1);
 
 public slots:
 

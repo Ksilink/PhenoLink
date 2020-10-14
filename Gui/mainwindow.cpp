@@ -148,6 +148,8 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     ui->actionVery_Advanced->setChecked(set.value("UserMode/VeryAdvanced", false).toBool());
     ui->actionDebug->setChecked(set.value("UserMode/Debug", false).toBool());
 
+    ui->sync_fields->setChecked(set.value("SyncFields", true).toBool());
+    ui->sync_zstack->setChecked(set.value("SyncZstack", true).toBool());
 
 
     if (!l.isEmpty())
@@ -1874,4 +1876,18 @@ void MainWindow::on_actionNo_network_toggled(bool arg1)
 QString MainWindow::workbenchKey()
 {
     return QString("%1").arg(ui->tabWidget->currentIndex());
+}
+
+void MainWindow::on_sync_fields_toggled(bool arg1)
+{
+    QSettings set;
+
+    set.setValue("SyncFields", arg1);
+}
+
+void MainWindow::on_sync_zstack_toggled(bool arg1)
+{
+    QSettings set;
+
+    set.setValue("SyncZstack", arg1);
 }

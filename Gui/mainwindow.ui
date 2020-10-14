@@ -83,7 +83,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -127,8 +127,16 @@
     </property>
     <addaction name="actionPython_Core"/>
    </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>Options</string>
+    </property>
+    <addaction name="sync_fields"/>
+    <addaction name="sync_zstack"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuOptions"/>
    <addaction name="menuProcess"/>
    <addaction name="menuScripts"/>
   </widget>
@@ -320,7 +328,7 @@
           <x>0</x>
           <y>0</y>
           <width>262</width>
-          <height>291</height>
+          <height>261</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -470,7 +478,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>256</width>
-                 <height>68</height>
+                 <height>83</height>
                 </rect>
                </property>
                <layout class="QFormLayout" name="formLayout">
@@ -502,7 +510,7 @@
           <x>0</x>
           <y>0</y>
           <width>262</width>
-          <height>68</height>
+          <height>83</height>
          </rect>
         </property>
        </widget>
@@ -796,6 +804,28 @@
    </property>
    <property name="toolTip">
     <string>avoid sending the process to the server</string>
+   </property>
+  </action>
+  <action name="sync_fields">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Synchronize Fields</string>
+   </property>
+  </action>
+  <action name="sync_zstack">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Synchronize Z stack</string>
    </property>
   </action>
  </widget>

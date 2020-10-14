@@ -122,6 +122,62 @@ QSize ExperimentFileModel::getSize()
     return QSize(_rows, _cols);
 }
 
+QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned fieldc,  int z, int t, int c)
+{
+
+    QSet<double> x,y;
+
+    for (unsigned field = 1; field < fieldc; ++ field)
+    {
+        QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
+        x.insert(seq->property(k).toDouble());
+        k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
+        y.insert(seq->property(k).toDouble());
+
+    }
+    QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
+    std::sort(xl.begin(), xl.end());
+    std::sort(yl.begin(), yl.end());
+    //    qDebug() <<  xl << yl;
+    //    xl.indexOf(), yl.indexOf()
+    return qMakePair(xl,yl);
+}
+
+QPointF getFieldPos(SequenceFileModel* seq, int field, int z, int t, int c)
+{
+    QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
+    double x = seq->property(k).toDouble();
+    k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
+    double y = seq->property(k).toDouble();
+
+    return QPointF(x,y);
+}
+
+
+
+void ExperimentFileModel::setFieldPosition()
+{
+    // get first Well
+    auto mdl = _sequences.begin().value().begin().value();
+    QPair<QList<double>, QList<double> > li =
+            getWellPos(&mdl, mdl.getFieldCount(), 1, 1, 1);
+
+    for (unsigned i = 0; i < mdl.getFieldCount(); ++i)
+    {
+        QPointF p = getFieldPos(&mdl, i+1, 1, 1, 1);
+
+        int x = li.first.indexOf(p.x());
+        int y = li.second.size() - li.second.indexOf(p.y()) - 1;
+
+        toField[x][y] = i+1;
+    }
+}
+
+QMap<int, QMap<int, int> > ExperimentFileModel::getFieldPosition()
+{
+    return toField;
+}
+
 SequenceFileModel &ExperimentFileModel::operator()(int row, int col)
 {
     SequenceFileModel& res = _sequences[row][col];
@@ -189,6 +245,11 @@ QList<SequenceFileModel *> ExperimentFileModel::getValidSequenceFiles()
     }
 
     return r;
+}
+
+SequenceFileModel& ExperimentFileModel::getFirstValidSequenceFiles()
+{
+    return _sequences.begin().value().begin().value();
 }
 
 void ExperimentFileModel::addToDatabase()
@@ -362,6 +423,10 @@ QString ExperimentFileModel::hash()
 {
     return _hash;
 }
+
+void ExperimentFileModel::setChannelNames(QStringList names) { _channelNames = names;}
+
+QStringList ExperimentFileModel::getChannelNames() {return _channelNames; }
 
 
 void ExperimentFileModel::addSiblings(QString map, ExperimentFileModel *efm)
@@ -788,12 +853,12 @@ QStringList SequenceFileModel::getTags()
 
 void SequenceFileModel::setChannelNames(QStringList names)
 {
-    _channelNames = names;
+    _owner->setChannelNames(names);
 }
 
 QStringList SequenceFileModel::getChannelNames()
 {
-    return _channelNames;
+    return    _owner->getChannelNames();
 }
 
 void SequenceFileModel::setColor(QString col)
@@ -1301,6 +1366,8 @@ ExperimentFileModel* loadScreenFunct(QString it)
 
 ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
 {
+    if (!mdl)
+        return mdl;
     QDir dir(fileName); dir.cdUp();
     QString tfile = dir.absolutePath() + "/tags.json";
     QStringList tags;
@@ -1383,8 +1450,11 @@ ExperimentFileModel* loadScreenFunc(QString it, bool allow_loaded, Screens& _scr
     }
     //      qDebug() << "is already loaded" << *it << loaded << _screens.size();
     if (loaded) return 0;
+    ExperimentFileModel* res = ScreensHandler::getHandler().loadScreen(it);
+    if (res)
+        res->setFieldPosition();
 
-    return loadJson(it, ScreensHandler::getHandler().loadScreen(it));
+    return loadJson(it, res);
 }
 
 Screens ScreensHandler::loadScreens(QStringList list, bool allow_loaded)
@@ -1617,7 +1687,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
                         QJsonArray ar = ob["ChannelNames"].toArray();
                         for (int i = 0; i < ar.size(); ++i)
                             names << ar[i].toString();
-                        seq.setChannelNames(names);
+                        mdl->setChannelNames(names);
                     }
                 }
             }

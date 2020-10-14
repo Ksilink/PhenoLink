@@ -345,6 +345,11 @@ public:
 
   QSize getSize();
 
+  void setFieldPosition();
+
+  QMap<int, QMap<int, int> > getFieldPosition();
+
+
   SequenceFileModel& operator()(int row, int col);
   SequenceFileModel& operator()(QPoint Pos);
 
@@ -360,6 +365,7 @@ public:
   QList<SequenceFileModel*> getAllSequenceFiles();
 
   QList<SequenceFileModel*> getValidSequenceFiles();
+  SequenceFileModel &getFirstValidSequenceFiles();
   
   void Q_DECL_DEPRECATED addToDatabase();
 
@@ -398,6 +404,9 @@ public:
 
   QString hash();
 
+  void setChannelNames(QStringList names);
+  QStringList getChannelNames();
+
 protected:
 
   void setState(QPoint pos, WellState state, bool active);
@@ -420,6 +429,8 @@ protected:
   QMap<int, QMap<int, unsigned> > _state;
   QMap<int, QMap<int, SequenceFileModel> > _sequences;
   QList<QPoint> _positions;
+  QMap<int, QMap<int, int> > toField;
+  QStringList _channelNames;
 };
 
 typedef QList<ExperimentFileModel*> Screens;
@@ -454,5 +465,12 @@ protected:
 //  static QMutex _mutex;
 };
 
+
+
+
+// other helper func
+
+QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned fieldc,  int z, int t, int c);
+QPointF getFieldPos(SequenceFileModel* seq, int field, int z, int t, int c);
 
 #endif // WELLPLATEMODEL_H
