@@ -348,7 +348,7 @@ public:
   void setFieldPosition();
 
   QMap<int, QMap<int, int> > getFieldPosition();
-
+  QPair<QList<double>, QList<double> > getFieldSpatialPositions();
 
   SequenceFileModel& operator()(int row, int col);
   SequenceFileModel& operator()(QPoint Pos);
@@ -430,6 +430,7 @@ protected:
   QMap<int, QMap<int, SequenceFileModel> > _sequences;
   QList<QPoint> _positions;
   QMap<int, QMap<int, int> > toField;
+  QPair<QList<double>, QList<double> > fields_pos;
   QStringList _channelNames;
 };
 

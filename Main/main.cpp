@@ -17,6 +17,12 @@
 #include "Core/pluginmanager.h"
 #include "Core/networkprocesshandler.h"
 
+#include <QLoggingCategory>
+
+#include <windows.h>
+#include <wincon.h>
+
+
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     Q_UNUSED(context);
@@ -52,16 +58,25 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
     logFile.flush();
 }
 
+void show_console() {
+     AllocConsole();
+     freopen("conin$", "r", stdin);
+     freopen("conout$", "w", stdout);
+     freopen("conout$", "w", stderr);
+}
+
 int main(int argc, char *argv[])
 {
     //    qInstallMessageHandler(myMessageOutput);
-
+  //  show_console();
     QApplication a(argc, argv);
     a.setApplicationName("Checkout");
     a.setApplicationVersion(CHECKOUT_VERSION);
     a.setApplicationDisplayName(QString("Checkout %1").arg(CHECKOUT_VERSION));
     a.setOrganizationDomain("WD");
     a.setOrganizationName("WD");
+
+    QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
 
     // Force number locale to use the "C" style for floating point value
     QLocale loc = QLocale::system(); // current locale

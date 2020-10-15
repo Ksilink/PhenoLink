@@ -678,8 +678,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
         float scale = set.value("unpackScaling", 1.0).toDouble();
 
 
-        QPair<QList<double>, QList<double> > li =
-                getWellPos(_mdl, _mdl->getFieldCount(), _zpos, _timepoint, _channel);
+        QPair<QList<double>, QList<double> > li = _mdl->getOwner()->getFieldSpatialPositions();
 
         QList<int> perf; for (unsigned i = 0; i < _mdl->getFieldCount(); ++i) perf.append( i+1);
         QList<QPair<int, QImage> > toStitch = QtConcurrent::blockingMapped(perf, StitchStruct(this, bias_correction, scale));
@@ -697,7 +696,6 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
 
             int x = li.first.indexOf(p.x());
             int y = li.second.size() - li.second.indexOf(p.y()) - 1;
-           // toField[x][y] = i+1;
 
             QPainter pa(&toPix);
             QPoint offset = QPoint(x*toStitch[0].second.width(), y * toStitch[0].second.height());
@@ -889,7 +887,7 @@ void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
         }
     }
 }
-
+/* #region Main */
 
 QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, float scale)
 {
@@ -984,6 +982,7 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
     return toPix;
 }
 
+/* endregion */
 
 QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed, bool bias)
 {

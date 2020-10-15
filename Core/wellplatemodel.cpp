@@ -160,15 +160,44 @@ void ExperimentFileModel::setFieldPosition()
 {
     // get first Well
     auto mdl = _sequences.begin().value().begin().value();
-    QPair<QList<double>, QList<double> > li =
-            getWellPos(&mdl, mdl.getFieldCount(), 1, 1, 1);
+    int first_chan = *mdl.getChannelsIds().begin();
+
+    int z = 1, t = 1, c = first_chan;
+    QSet<double> x,y;
+
+    for (auto sit = _sequences.begin(), se = _sequences.end(); sit != se; ++sit)
+    {
+        for (auto it = sit.value().begin(), ei = sit.value().end(); it != ei; ++it)
+        {
+            //
+
+
+            for (unsigned field = 1; field <= it.value().getFieldCount(); ++field)
+            {
+                QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
+                x.insert(it.value().property(k).toDouble());
+                k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
+                y.insert(it.value().property(k).toDouble());
+            }
+        }
+    }
+
+
+    QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
+    std::sort(xl.begin(), xl.end());
+    std::sort(yl.begin(), yl.end());
+    qDebug() << "Unpack well pos sorted" <<  xl << yl;
+
+
+
+    fields_pos = qMakePair(xl,yl);
 
     for (unsigned i = 0; i < mdl.getFieldCount(); ++i)
     {
         QPointF p = getFieldPos(&mdl, i+1, 1, 1, 1);
 
-        int x = li.first.indexOf(p.x());
-        int y = li.second.size() - li.second.indexOf(p.y()) - 1;
+        int x = fields_pos.first.indexOf(p.x());
+        int y = fields_pos.second.size() - fields_pos.second.indexOf(p.y()) - 1;
 
         toField[x][y] = i+1;
     }
@@ -178,6 +207,15 @@ QMap<int, QMap<int, int> > ExperimentFileModel::getFieldPosition()
 {
     return toField;
 }
+
+QPair<QList<double>, QList<double> > ExperimentFileModel::getFieldSpatialPositions()
+{
+    return fields_pos;
+}
+
+
+
+
 
 SequenceFileModel &ExperimentFileModel::operator()(int row, int col)
 {
