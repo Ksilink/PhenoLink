@@ -679,10 +679,42 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
 
 
         QPair<QList<double>, QList<double> > li = _mdl->getOwner()->getFieldSpatialPositions();
+        QPair<QList<bool>, QList<bool> > filt;
+
+        for (int p = 0; p < li.first.size(); ++p)
+            filt.first << false;
+        for (int p = 0; p < li.second.size(); ++p)
+            filt.second << false;
+
+
+
 
         QList<int> perf; for (unsigned i = 0; i < _mdl->getFieldCount(); ++i) perf.append( i+1);
         QList<QPair<int, QImage> > toStitch = QtConcurrent::blockingMapped(perf, StitchStruct(this, bias_correction, scale));
 
+        for (unsigned i = 0; i < _mdl->getFieldCount(); ++i)
+        {
+            QPointF p = getFieldPos(_mdl, toStitch[i].first, _zpos, _timepoint, _channel);
+
+
+            int x = li.first.indexOf(p.x());
+            filt.first[x] = true;
+            int y =li.second.indexOf(p.y());
+            filt.second[y] = true;
+        }
+
+        QList<double> a, b;
+
+        for (unsigned i =0; i < li.first.size(); ++i)
+                if (filt.first[i])
+                   a << li.first[i];
+
+        for (unsigned i =0; i < li.second.size(); ++i)
+            if (filt.second[i])
+                b << li.second[i];
+
+        li.first = a;
+        li.second = b;
 
         const int rows = li.first.size() * toStitch[0].second.width();
         const int cols = li.second.size() * toStitch[0].second.height();
