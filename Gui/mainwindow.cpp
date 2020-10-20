@@ -941,12 +941,16 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
 
         {
             QComboBox* box = new QComboBox();
+            box->setObjectName("Channels");
             QList<int> list = _channelsIds.values();
             std::sort(list.begin(), list.end());
 
             foreach(int i, list)
             {
-                box->addItem(QString("%1").arg(i));
+                if (_channelsNames.contains(i))
+                    box->addItem(_channelsNames[i]);
+                else
+                    box->addItem(QString("%1").arg(i));
             }
 
             if (par.contains("Default") && par["Default"].isDouble())
@@ -1193,7 +1197,11 @@ void MainWindow::setupProcessCall(QJsonObject obj)
             std::sort(list.begin(), list.end());
             foreach(int channels, list)
             {
-                QCheckBox* box = new QCheckBox(QString("Channel %1").arg(p++));
+                QCheckBox* box = nullptr;
+                if (_channelsNames.size() == _channelsIds.size())
+                     box = new QCheckBox(_channelsNames[list.at(channels-1)]);
+                else
+                    box = new QCheckBox(QString("Channel %1").arg(p++));
                 box->setObjectName(QString("Channel_%1").arg(channels));
                 box->setChecked(true);
                 vbox->addWidget(box);

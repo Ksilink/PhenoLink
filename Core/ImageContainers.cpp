@@ -36,7 +36,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1)
             if (!m.empty())
                 vec.push_back(m);
         }
-        cv::merge(&vec[0], vec.size(), mat);
+        cv::merge(&vec[0], vec.size(), mat); // FIXME : Overkill case most of the time we want to process decorrelated channels !!!
     }
     else
     {

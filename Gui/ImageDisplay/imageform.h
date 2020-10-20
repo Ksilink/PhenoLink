@@ -101,6 +101,7 @@ private slots:
     void copyToClipboard();
     void copyCurrentImagePath();
     void copyCurrentSequencePath();
+    void overlayHistogram();
     void saveVideo();
     void changePacking();
     void refinePacking();

@@ -29,6 +29,7 @@
 
 #include <QFileDialog>
 #include <QProgressDialog>
+#include <QtCharts>
 
 #include <opencv2/opencv.hpp>
 //ImageForm* ImageForm::_selectedForm = 0;
@@ -979,6 +980,7 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
         QMenu* cp = menu.addMenu("Copy path");
         cp->addAction("Current Image", this, SLOT(copyCurrentImagePath()));
         cp->addAction("Image Sequence", this, SLOT(copyCurrentSequencePath()));
+        cp->addAction("Overlay Histogram", this, SLOT(overlayHistogram()));
         menu.addSeparator();
         // add menu video & save video with progress bar
         menu.addAction("Save as a Video", this, SLOT(saveVideo()));
@@ -1049,6 +1051,11 @@ void ImageForm::copyCurrentSequencePath()
         data << QString("[%1]").arg(l.join(","));
     }
     QApplication::clipboard()->setText(QString("[%1]").arg(data.join(",")));
+}
+
+void ImageForm::overlayHistogram()
+{
+
 }
 
 cv::Mat QImageToMat(QImage image)

@@ -75,6 +75,10 @@ int main(int argc, char *argv[])
     a.setApplicationDisplayName(QString("Checkout %1").arg(CHECKOUT_VERSION));
     a.setOrganizationDomain("WD");
     a.setOrganizationName("WD");
+    QSettings set;
+
+    if (set.value("UserMode/Debug", false).toBool())
+        show_console();
 
     QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
 
@@ -115,8 +119,7 @@ int main(int argc, char *argv[])
     //}
 
 
-    QSettings set;
-    if (!set.contains("databaseDir"))
+     if (!set.contains("databaseDir"))
         set.setValue("databaseDir", QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/databases/");
 
     // Start the network worker for processes

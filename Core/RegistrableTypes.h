@@ -314,13 +314,25 @@ public:
         if (json.contains("Value"))
         {
             if (json["Value"].isArray())
-                *_value1 = json["Value"].toArray().at(0).toInt();
+            { // Might need magick c++ tricks for type dispatch :(
+                QJsonArray ar = json["Value"].toArray();
+                for (int i = 0; i < ar.size(); ++i)
+                    (*_value1).push_back(ar.at(i).toInt());
+            }
             else
                 *_value1 = json["Value"].toInt();
         }
         if (json.contains("Value2"))
-            *_value2 = json["Value2"].toInt();
-
+        {
+            if (json["Value2"].isArray())
+            { // Might need magick c++ tricks for type dispatch :(
+                QJsonArray ar = json["Value2"].toArray();
+                for (int i = 0; i < ar.size(); ++i)
+                    (*_value2).push_back(ar.at(i).toInt());
+            }
+            else
+                *_value2 = json["Value2"].toInt();
+        }
     }
 
     virtual RegistrableParent* dup()
@@ -546,6 +558,14 @@ public:
         return *this;
     }
 
+    Self& setRegex(QString match)
+    {
+        // Suggested Nuclei  regex like : "i(nuclei)|(hoechst).*"
+        // TODO: 'i' starting  regex shall be case insensitive...
+        _regex = match;
+        return *this;
+    }
+
 
     virtual QString toString() const
     {
@@ -575,6 +595,7 @@ public:
         json["Type"] = QString("ChannelSelector");
         json["Default"] = _default;
         json["DefaultValue"] = _default;
+        json["regex"] = _regex;
         RegistrableParent::write(json);
     }
 
@@ -595,7 +616,7 @@ public:
 protected:
     DataType* _value;
     QStringList _enum;
-
+    QString _regex;
     bool _hasDefault;
     int _default;
 };

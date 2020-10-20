@@ -153,6 +153,7 @@ private slots:
 
     void on_sync_zstack_toggled(bool arg1);
 
+
 public slots:
 
     void updateCurrentSelection();
@@ -247,6 +248,7 @@ private:
 
     QList<QCheckBox*> _ChannelPicker;  // keep track of visual selection of channels
     QSet<int> _channelsIds; // To keep track of the number of channels loaded & their respective true "value" i.e. C1/C2, etc...
+    QMap<int, QString> _channelsNames;
 
     CheckoutCorePythonInterface* _python_interface;
 

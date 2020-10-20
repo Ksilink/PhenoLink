@@ -137,6 +137,14 @@ void MainWindow::loadSelection(QStringList checked)
         {
             _channelsIds.unite(mm->getChannelsIds());
         }
+        QStringList ch =         mdl->getChannelNames();
+        if (_channelsNames.size() != ch.size())
+        {
+            for (int i = 0; i < ch.size(); ++i)
+            {
+                _channelsNames[i+1] = ch.at(i);
+            }
+        }
     }
 
     if (!lastOk) return;

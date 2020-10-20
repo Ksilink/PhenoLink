@@ -189,7 +189,23 @@ public:
         return par;
     }
 
+    QString wellName()
+    {
+      return _callParams["Pos"].toString();
+    }
 
+
+    QString plateName()
+    {
+        //
+        return _callParams["PlateName"].toString();
+    }
+
+
+    QStringList channelNames()
+    { // FIXME: get channel Names from plugin
+        return QStringList();
+    }
 
     cv::Mat& getBiasField(int i)
     { // "datahash"

@@ -16,13 +16,14 @@ class RegistrableImageParent: public RegistrableParent
     typedef RegistrableImageParent Self;
 
 public:
-    RegistrableImageParent(): _vectorImage(false), _withMeta(false), _autoload(true), _unbias(0),_tiles(0)
+    RegistrableImageParent(): _vectorImage(false), _splitted(false), _withMeta(false), _autoload(true), _unbias(0),_tiles(0)
     {
     }
 
-    Self& channelsAsVector()
+    Self& channelsAsVector(bool splitted = false)
     {
         _vectorImage = true;
+        _splitted = splitted;
         return *this;
     }
 
@@ -33,6 +34,9 @@ public:
         {
             //            json["Properties"].toArray().toString
         }
+
+        if (json.contains("splitted"))
+            _splitted = json["splitted"].toBool();
 
         if (json.contains("unbias"))
             _unbias = json["unbias"].toBool();
@@ -62,6 +66,7 @@ public:
         RegistrableParent::write(json);
         json["isImage"] = true;
         json["asVectorImage"] = _vectorImage;
+        if (_splitted) json["splitted"] = true;
         json["unbias"] = _unbias; // Tells the client to send the bias field data
         json["tiled"] = (int)_tiles; // Tells the client to send the 8 sided images to be loaded as tiled data !
 
@@ -155,10 +160,15 @@ public:
         return *this;
     }
 
+    QStringList getChannelNames()
+    {
+        return _vectorNames;
+    }
+
 protected:
     Colormap _colormap;
 
-    bool        _vectorImage;
+    bool        _vectorImage, _splitted;
     bool        _withMeta;
     bool        _autoload;
     bool        _unbias;

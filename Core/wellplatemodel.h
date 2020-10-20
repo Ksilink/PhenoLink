@@ -164,7 +164,7 @@ protected:
 
   QList<SequenceFileModel*> _siblings;
   QSet<int> _channelsIds;
-  QStringList _tags, _channelNames;
+  QStringList _tags;
   QString _color;
 
 private:

@@ -1020,6 +1020,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
 
     parent["Data"] = data;
     parent["Channels"] = chans;
+    parent["ChannelNames"] = QJsonArray::fromStringList(this->getChannelNames());
     parent["Channel"] = -1;
     res << parent;
 
@@ -1126,6 +1127,7 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(Channel channe
             QJsonArray da; da.append(it.value());
 
             parent["Channels"] = ch;
+            parent["ChannelNames"] = QJsonArray::fromStringList(this->getChannelNames());
             parent["Data"] = da;
             res[it.key()] << parent;
         }
@@ -1236,7 +1238,8 @@ typedef QMap<int, ImageStack> FieldImaging;
 */
 
 
-QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorImage, QList<bool> selectedChanns, QStringList& metaData)
+QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorImage,
+                                             QList<bool> selectedChanns, QStringList& metaData)
 {
     QList<QJsonObject> res;
 
@@ -1257,6 +1260,17 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
             }
             QJsonObject obj;
 
+            //            QStringList metas;
+            //            for (auto el : metaData)
+            //            {
+            //                QStringList met;
+            //                for (QMap<QString, QVariant>::iterator it = _properties.begin(), e = _properties.end(); it != e; ++it)
+            //                {
+            //                 if (it.key().endsWith(el))
+            ///                     met
+            //                }
+
+            //            }
 
             obj["Data"] = data;
             obj["ImageType"]=imageType;
@@ -1265,6 +1279,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
             obj["DataHash"] = getOwner()->hash();
             obj["Pos"] = Pos();
             obj["asVectorImage"]=true;
+            obj["PlateName"] = getOwner()->name();
 
             res << obj;
             return res;
@@ -1281,6 +1296,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
                 o["DataHash"] = getOwner()->hash();
                 o["Pos"] = Pos();
                 o["asVectorImage"]=true;
+                o["PlateName"] = getOwner()->name();
 
                 res << o;
             }
@@ -1313,6 +1329,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
                 obj["DataHash"] = getOwner()->hash();
                 obj["Pos"] = Pos();
                 obj["asVectorImage"]=true;
+                obj["PlateName"] = getOwner()->name();
 
                 res << obj;
             }
@@ -1332,6 +1349,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
                     o["DataHash"] = getOwner()->hash();
                     o["Pos"] = Pos();
                     o["asVectorImage"]=true;
+                    o["PlateName"] = getOwner()->name();
 
                     res << o;
                 }

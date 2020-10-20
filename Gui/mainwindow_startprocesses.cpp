@@ -134,7 +134,10 @@ void setData(QJsonObject& obj, QString tag, bool list, QComboBox* s)
         }
         else
         {
-            obj[tag] = s->currentText();
+            if (s->objectName() == "Channels") // To return index of channel names
+                obj[tag] = QString("%1").arg(s->currentIndex()+1);
+            else
+                obj[tag] = s->currentText();
         }
     }
 }
@@ -414,6 +417,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     CheckoutProcess& handler = CheckoutProcess::handler();
 
     handler.getParameters(_preparedProcess, objR);
+
     handler.setProcessCounter(new int());
     QSettings set;
     int minProcs = set.value("MinProcs", 20).toInt();
@@ -422,7 +426,9 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     QJsonArray procArray;
     int count = 0;
     QMap<QString, int > adapt;
-
+    bool deb = set.value("UserMode/Debug", false).toBool();
+    if (deb)
+        qDebug() << "Process to prepare: " << objR;
 
 
     foreach (SequenceFileModel* sfm, lsfm)
@@ -434,7 +440,16 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         }
         // startProcess is more a prepare process list function now
         QJsonArray tmp  = startProcess(sfm, objR, selectedChanns);
+        if (count == 0 && deb && tmp.size())
+        { // If debug mode copy the first start object to clipboard!
+            QJsonDocument d(tmp[0].toObject());
+            qDebug() << "Copy to Clipboard" << d;
 
+            QMimeData* data = new QMimeData;
+            data->setText(QString(d.toJson()));
+            QApplication::clipboard()->setMimeData(data);
+            deb = false;
+        }
         adapt[sfm->getOwner()->name()] += tmp.size();
         count += tmp.size();
         _StatusProgress->setMaximum(count);
@@ -636,6 +651,8 @@ void MainWindow::startProcessRun()
         _StatusProgress->setFormat("%v/%m");
     }
     _StatusProgress->setRange(0,0);
+//
+
 
     QFuture<void> future = QtConcurrent::run(this, &MainWindow::startProcessOtherStates,
                                              selectedChanns, lsfm, started, tags_map);
