@@ -172,6 +172,7 @@ public:
             Registrable<Type>* r = dynamic_cast<Registrable<Type>* > (val);
             if (r)
             {
+                qDebug() << "Found param meta for" << r->tag();
                 return *r;
             }
         }
@@ -181,6 +182,7 @@ public:
             Registrable<Type>* r = dynamic_cast<Registrable<Type>* > (val);
             if (r)
             {
+                 qDebug() << "Found result meta for" << r->tag();
                 return *r;
             }
         }

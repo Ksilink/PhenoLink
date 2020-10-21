@@ -15,9 +15,9 @@ project(Checkout)
 
 
 set(Checkout_VERSION_MAJOR 1)
-set(Checkout_VERSION_MINOR 5)
+set(Checkout_VERSION_MINOR 6)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 2)
+set(Checkout_VERSION_RELEASE 0)
 
 option(BUILD_PLUGINS "Build plugins" ON)
 option(BUILD_PYTHON_SCRIPTING "Build with Core side Python Scripting" OFF)

@@ -2520,7 +2520,9 @@ void *MemoryHandler::getData(QString vfs)
 
 QMap<unsigned, QColor> MemoryHandler::getColor(QString vfs)
 {
-    return _cmap[vfs];
+    if (_cmap.contains(vfs))
+        return _cmap[vfs];
+    return QMap<unsigned,QColor>();
 }
 
 void MemoryHandler::addColor(QString vfs, QMap<unsigned, QColor> color)

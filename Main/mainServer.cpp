@@ -19,6 +19,10 @@
 
 #include "Core/config.h"
 
+
+#include <windows.h>
+#include <wincon.h>
+
 std::ofstream outfile("c:/temp/CheckoutServer_log.txt");
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
@@ -48,6 +52,13 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 }
 
 
+
+void show_console() {
+     AllocConsole();
+     freopen("conin$", "r", stdin);
+     freopen("conout$", "w", stdout);
+     freopen("conout$", "w", stderr);
+}
 
 int main(int ac,  char* av[])
 {
@@ -82,6 +93,8 @@ int main(int ac,  char* av[])
         qInfo() << "Changing server port to :" << port;
     }
 
+    if (data.contains("-d"))
+        show_console();
 
     PluginManager::loadPlugins(true);
 

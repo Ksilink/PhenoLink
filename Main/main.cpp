@@ -130,6 +130,9 @@ int main(int argc, char *argv[])
     QString r = "CheckoutProcessServer.exe";
 
     server.setProgram(r);
+    if (set.value("UserMode/Debug", false).toBool())
+        server.setArguments(QStringList() << "-d");
+
     server.start();
 
     if (!server.waitForStarted())
