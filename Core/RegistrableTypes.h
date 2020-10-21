@@ -306,33 +306,33 @@ public:
         return *this;
     }
 
+    template <class T>
+    void setValue(T* val, QString v, const QJsonObject& json)
+    {
+        *val = json[v].toInt();
+    }
+
+    template <>
+    void setValue(std::vector<int>* val, QString v,const QJsonObject& json)
+    {
+        if (!json.contains(v)) return;
+        if (json[v].isArray())
+        { // Might need magick c++ tricks for type dispatch :(
+            QJsonArray ar = json[v].toArray();
+            for (int i = 0; i < ar.size(); ++i)
+                (*val).push_back(ar.at(i).toInt());
+        }
+        else
+            *val = json[v].toInt();
+    }
+
     virtual void read(const QJsonObject &json)
     {
         //        qDebug() << "Reading value: " << json["Value"]
         //                 << json["Value2"];
         RegistrableParent::read(json);
-        if (json.contains("Value"))
-        {
-            if (json["Value"].isArray())
-            { // Might need magick c++ tricks for type dispatch :(
-                QJsonArray ar = json["Value"].toArray();
-                for (int i = 0; i < ar.size(); ++i)
-                    (*_value1).push_back(ar.at(i).toInt());
-            }
-            else
-                *_value1 = json["Value"].toInt();
-        }
-        if (json.contains("Value2"))
-        {
-            if (json["Value2"].isArray())
-            { // Might need magick c++ tricks for type dispatch :(
-                QJsonArray ar = json["Value2"].toArray();
-                for (int i = 0; i < ar.size(); ++i)
-                    (*_value2).push_back(ar.at(i).toInt());
-            }
-            else
-                *_value2 = json["Value2"].toInt();
-        }
+        setValue(_value1, "Value", json);
+        setValue(_value2, "Value2", json);
     }
 
     virtual RegistrableParent* dup()

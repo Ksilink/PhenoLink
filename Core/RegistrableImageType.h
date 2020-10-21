@@ -33,6 +33,16 @@ public:
         if (json.contains("Properties"))
         {
             //            json["Properties"].toArray().toString
+            auto ob = json["Properties"].toObject();
+
+            for (auto q : _meta)
+            {
+                if (ob.contains(q))
+                {
+                    _metaData[q] = ob[q].toString();
+                }
+            }
+
         }
 
         if (json.contains("splitted"))
@@ -1065,18 +1075,18 @@ public:
 
     virtual void applyBiasField(cv::Mat bias)
     {
-//        DataType& time = *_value;
+        //        DataType& time = *_value;
 
-//        for (size_t t = 0; t < im.count(); ++t)
-//        {
-//            StackedImage& im = time[t];
-//            for (size_t i = 0; i < im.count(); ++i)
-//            {
-//                cv::Mat tmp;
-//                cv::divide(im[i], bias, tmp);
-//                cv::swap(tmp, *_value);
-//            }
-//        }
+        //        for (size_t t = 0; t < im.count(); ++t)
+        //        {
+        //            StackedImage& im = time[t];
+        //            for (size_t i = 0; i < im.count(); ++i)
+        //            {
+        //                cv::Mat tmp;
+        //                cv::divide(im[i], bias, tmp);
+        //                cv::swap(tmp, *_value);
+        //            }
+        //        }
 
         qDebug() << "Not implemented yet !!!";
 
@@ -1174,18 +1184,18 @@ public:
 
     virtual void applyBiasField(cv::Mat bias)
     {
-//        DataType& time = *_value;
+        //        DataType& time = *_value;
 
-//        for (size_t t = 0; t < im.count(); ++t)
-//        {
-//            StackedImage& im = time[t];
-//            for (size_t i = 0; i < im.count(); ++i)
-//            {
-//                cv::Mat tmp;
-//                cv::divide(im[i], bias, tmp);
-//                cv::swap(tmp, *_value);
-//            }
-//        }
+        //        for (size_t t = 0; t < im.count(); ++t)
+        //        {
+        //            StackedImage& im = time[t];
+        //            for (size_t i = 0; i < im.count(); ++i)
+        //            {
+        //                cv::Mat tmp;
+        //                cv::divide(im[i], bias, tmp);
+        //                cv::swap(tmp, *_value);
+        //            }
+        //        }
 
         qDebug() << "Not implemented yet !!!";
 
@@ -1284,18 +1294,18 @@ public:
 
     virtual void applyBiasField(cv::Mat bias)
     {
-//        DataType& time = *_value;
+        //        DataType& time = *_value;
 
-//        for (size_t t = 0; t < im.count(); ++t)
-//        {
-//            StackedImage& im = time[t];
-//            for (size_t i = 0; i < im.count(); ++i)
-//            {
-//                cv::Mat tmp;
-//                cv::divide(im[i], bias, tmp);
-//                cv::swap(tmp, *_value);
-//            }
-//        }
+        //        for (size_t t = 0; t < im.count(); ++t)
+        //        {
+        //            StackedImage& im = time[t];
+        //            for (size_t i = 0; i < im.count(); ++i)
+        //            {
+        //                cv::Mat tmp;
+        //                cv::divide(im[i], bias, tmp);
+        //                cv::swap(tmp, *_value);
+        //            }
+        //        }
 
         qDebug() << "Not implemented yet !!!";
 
@@ -1394,18 +1404,18 @@ public:
     }
     virtual void applyBiasField(cv::Mat bias)
     {
-//        DataType& time = *_value;
+        //        DataType& time = *_value;
 
-//        for (size_t t = 0; t < im.count(); ++t)
-//        {
-//            StackedImage& im = time[t];
-//            for (size_t i = 0; i < im.count(); ++i)
-//            {
-//                cv::Mat tmp;
-//                cv::divide(im[i], bias, tmp);
-//                cv::swap(tmp, *_value);
-//            }
-//        }
+        //        for (size_t t = 0; t < im.count(); ++t)
+        //        {
+        //            StackedImage& im = time[t];
+        //            for (size_t i = 0; i < im.count(); ++i)
+        //            {
+        //                cv::Mat tmp;
+        //                cv::divide(im[i], bias, tmp);
+        //                cv::swap(tmp, *_value);
+        //            }
+        //        }
 
         qDebug() << "Not implemented yet !!!";
 
