@@ -30,11 +30,13 @@ public:
     virtual void read(const QJsonObject& json)
     {
         RegistrableParent::read(json);
+        qDebug() << json;
         if (json.contains("Properties"))
         {
+
             //            json["Properties"].toArray().toString
             auto ob = json["Properties"].toObject();
-
+            qDebug() << ob;
             for (auto q : _meta)
             {
                 if (ob.contains(q))
@@ -228,6 +230,26 @@ public:
         RegistrableImageParent::read(json);
         //    if (json.contains("asVectorImage"))
         //      _vectorImage = json["asVectorImage"].toBool();
+        if (json.contains("Properties"))
+        {
+
+            //            json["Properties"].toArray().toString
+            auto ob = json["Properties"].toObject();
+            for (auto q : _meta)
+            {
+                if (ob.contains(q))
+                {
+                    _metaData[q] = ob[q].toString();
+                }
+            }
+
+        }
+        if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
+        {
+            QJsonArray t = json["ChannelNames"].toArray();
+            for (int i = 0; i < t.size(); ++i)
+                _vectorNames << t[i].toString();
+        }
     }
 
     void write(QJsonObject &json) const
@@ -393,6 +415,26 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
+        if (json.contains("Properties"))
+        {
+
+            //            json["Properties"].toArray().toString
+            auto ob = json["Properties"].toObject();
+            for (auto q : _meta)
+            {
+                if (ob.contains(q))
+                {
+                    _metaData[q] = ob[q].toString();
+                }
+            }
+
+        }
+        if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
+        {
+            QJsonArray t = json["ChannelNames"].toArray();
+            for (int i = 0; i < t.size(); ++i)
+                _vectorNames << t[i].toString();
+        }
     }
 
     virtual void write(QJsonObject &json) const
@@ -571,6 +613,28 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
+        if (json.contains("Properties"))
+        {
+
+            //            json["Properties"].toArray().toString
+            auto ob = json["Properties"].toObject();
+            for (auto q : _meta)
+            {
+                if (ob.contains(q))
+                {
+                    _metaData[q] = ob[q].toString();
+                }
+            }
+
+        }
+        if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
+        {
+            QJsonArray t = json["ChannelNames"].toArray();
+            for (int i = 0; i < t.size(); ++i)
+                _vectorNames << t[i].toString();
+        }
+
+
         //    if (json.contains("asVectorImage"))
         //      _vectorImage = json["asVectorImage"].toBool();
     }
@@ -751,6 +815,30 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
+        qDebug() << json;
+        if (json.contains("Properties"))
+        {
+
+            //            json["Properties"].toArray().toString
+            auto ob = json["Properties"].toObject();
+            qDebug() << ob;
+            for (auto q : _meta)
+            {
+                if (ob.contains(q))
+                {
+                    _metaData[q] = ob[q].toString();
+                }
+            }
+
+        }
+        if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
+        {
+            QJsonArray t = json["ChannelNames"].toArray();
+            for (int i = 0; i < t.size(); ++i)
+                _vectorNames << t[i].toString();
+        }
+
+
     }
 
     virtual void write(QJsonObject &json) const
@@ -850,6 +938,24 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
+        if (json.contains("Properties"))
+        {
+            auto ob = json["Properties"].toObject();
+            for (auto q : _meta)
+            {
+                if (ob.contains(q))
+                {
+                    _metaData[q] = ob[q].toString();
+                }
+            }
+        }
+        if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
+        {
+            QJsonArray t = json["ChannelNames"].toArray();
+            for (int i = 0; i < t.size(); ++i)
+                _vectorNames << t[i].toString();
+        }
+
     }
 
     virtual void write(QJsonObject &json) const
@@ -958,6 +1064,34 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
+        // Need to find out the metadata!!!
+        qDebug() << json;
+        QJsonArray data = json["Data"].toArray();
+        for (int i = 0; i < data.size(); i++)
+        {
+            auto d = data.at(i).toObject();
+            if (d.contains("Properties"))
+            {
+                auto ob = d["Properties"].toObject();
+                for (auto q : _meta)
+                {
+                    if (ob.contains(q))
+                    {
+                        _metaData[QString("f%1%2").arg(i).arg(q)] = ob[q].toString();
+                    }
+                }
+            }
+            if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
+            {
+                QJsonArray t = d["ChannelNames"].toArray();
+                for (int i = 0; i < t.size(); ++i)
+                    _vectorNames << t[i].toString();
+            }
+        }
+
+
+
+
     }
 
     virtual void write(QJsonObject &json) const
@@ -1060,6 +1194,29 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
+        auto data = json["Data"].toArray();
+        for (int i = 0; i < data.size(); i++)
+        {
+            auto d = data.at(i).toObject();
+            if (d.contains("Properties"))
+            {
+                auto ob = d["Properties"].toObject();
+                for (auto q : _meta)
+                {
+                    if (ob.contains(q))
+                    {
+                        _metaData[QString("f%1%2").arg(i).arg(q)] = ob[q].toString();
+                    }
+                }
+            }
+            if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
+            {
+                QJsonArray t = d["ChannelNames"].toArray();
+                for (int i = 0; i < t.size(); ++i)
+                    _vectorNames << t[i].toString();
+            }
+
+        }
     }
 
     virtual void write(QJsonObject &json) const
@@ -1169,6 +1326,29 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
+        auto data = json["Data"].toArray();
+        for (int i = 0; i < data.size(); i++)
+        {
+            auto d = data.at(i).toObject();
+            if (d.contains("Properties"))
+            {
+                auto ob = d["Properties"].toObject();
+                for (auto q : _meta)
+                {
+                    if (ob.contains(q))
+                    {
+                        _metaData[QString("f%1%2").arg(i).arg(q)] = ob[q].toString();
+                    }
+                }
+            }
+            if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
+            {
+                QJsonArray t = d["ChannelNames"].toArray();
+                for (int i = 0; i < t.size(); ++i)
+                    _vectorNames << t[i].toString();
+            }
+
+        }
     }
 
     virtual void write(QJsonObject &json) const
@@ -1279,6 +1459,29 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
+        auto data = json["Data"].toArray();
+        for (int i = 0; i < data.size(); i++)
+        {
+            auto d = data.at(i).toObject();
+            if (d.contains("Properties"))
+            {
+                auto ob = d["Properties"].toObject();
+                for (auto q : _meta)
+                {
+                    if (ob.contains(q))
+                    {
+                        _metaData[QString("f%1%2").arg(i).arg(q)] = ob[q].toString();
+                    }
+                }
+            }
+            if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
+            {
+                QJsonArray t = d["ChannelNames"].toArray();
+                for (int i = 0; i < t.size(); ++i)
+                    _vectorNames << t[i].toString();
+            }
+
+        }
     }
 
     virtual void write(QJsonObject &json) const
@@ -1390,6 +1593,29 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
+        auto data = json["Data"].toArray();
+        for (int i = 0; i < data.size(); i++)
+        {
+            auto d = data.at(i).toObject();
+            if (d.contains("Properties"))
+            {
+                auto ob = d["Properties"].toObject();
+                for (auto q : _meta)
+                {
+                    if (ob.contains(q))
+                    {
+                        _metaData[QString("f%1%2").arg(i).arg(q)] = ob[q].toString();
+                    }
+                }
+            }
+            if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
+            {
+                QJsonArray t = d["ChannelNames"].toArray();
+                for (int i = 0; i < t.size(); ++i)
+                    _vectorNames << t[i].toString();
+            }
+
+        }
     }
 
     virtual void write(QJsonObject &json) const

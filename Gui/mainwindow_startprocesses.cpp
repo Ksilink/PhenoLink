@@ -433,6 +433,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
     foreach (SequenceFileModel* sfm, lsfm)
     {
+        if (!sfm) continue;
         if (_shareTags->isChecked())
         {
             sfm->clearTags();

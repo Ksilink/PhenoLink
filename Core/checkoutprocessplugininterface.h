@@ -170,9 +170,9 @@ public:
         foreach (RegistrableParent* val, _parameters.values())
         {
             Registrable<Type>* r = dynamic_cast<Registrable<Type>* > (val);
-            if (r)
+            if (r && (&r->value()) == value)
             {
-                qDebug() << "Found param meta for" << r->tag();
+//                qDebug() << "Found param meta for" << r->tag();
                 return *r;
             }
         }
@@ -180,9 +180,9 @@ public:
         foreach (RegistrableParent* val, _results.values())
         {
             Registrable<Type>* r = dynamic_cast<Registrable<Type>* > (val);
-            if (r)
+            if (r && (&r->value()) == value)
             {
-                 qDebug() << "Found result meta for" << r->tag();
+//                 qDebug() << "Found result meta for" << r->tag();
                 return *r;
             }
         }

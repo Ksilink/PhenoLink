@@ -266,11 +266,12 @@ void MainWindow::deleteDirPath(QString dir)
 void MainWindow::addDirectory()
 {
     QSettings set;
-	// For multiple file selection we shall not use native dialog to allow multiple value selection
+    // For multiple file selection we shall not use native dialog to allow multiple value selection
 
     QFileDialog* _f_dlg = new QFileDialog(this);
     _f_dlg->setDirectory(set.value("LastAddedDir","c:/").toString());
     _f_dlg->setOption(QFileDialog::ShowDirsOnly, true);
+    _f_dlg->setFileMode(QFileDialog::DirectoryOnly);
     _f_dlg->setOption(QFileDialog::DontUseNativeDialog, true);
 
     QListView* l = _f_dlg->findChild<QListView*>("listView");
@@ -279,20 +280,15 @@ void MainWindow::addDirectory()
     QTreeView* t = _f_dlg->findChild<QTreeView*>();
     if (t) t->setSelectionMode(QTreeView::MultiSelection);
 
-	// in order to change "Cancel" to a more user friendly name: "Done" :)
-	foreach(auto b, _f_dlg->findChildren<QPushButton*>())
-	{
-		if (b->text() == "Cancel") b->setText("Done");
-	}
-
     int nMode = _f_dlg->exec();
-    if (nMode != QDialog::Rejected)
+    if (nMode == QDialog::Rejected)
         return;//
+
 
     QStringList dirs = _f_dlg->selectedFiles();
 
-	if (dirs.isEmpty()) // Just to skip the case when no directory is selected... 
-		return;
+    if (dirs.isEmpty()) // Just to skip the case when no directory is selected...
+        return;
 
     foreach(QString d, dirs)
         addDirectoryName(d);
@@ -307,7 +303,7 @@ void MainWindow::addDirectoryName(QString dir)
     if (!l.contains(dir))
         l << dir;
     set.setValue("ScreensDirectory", l);
-	
+
     QtConcurrent::run(mdl, &ScreensModel::addDirectoryTh,  dir);
 }
 
