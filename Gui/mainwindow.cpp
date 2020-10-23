@@ -854,22 +854,49 @@ void MainWindow::prepareProcessCall()
     CheckoutProcess::handler().getParameters(process);
 }
 
+int getValInt(QJsonObject& par, QString v)
+{
+    int low = 0;
+
+    if (par.contains(v))
+    {
+        if (par[v].isArray())
+            low = par[v].toArray()[0].toInt();
+        else
+            low = par[v].toInt();
+    }
+    return low;
+}
+int getValDouble(QJsonObject& par, QString v)
+{
+    double low = 0;
+
+    if (par.contains(v))
+    {
+        if (par[v].isArray())
+            low = par[v].toArray()[0].toDouble();
+        else
+            low = par[v].toDouble();
+    }
+    return low;
+}
+
 
 template <class Widget>
 Widget* setupProcessParameterInt(Widget* s, QJsonObject& par, QString def)
 {
-    s->setRange(par["Range/Low"].toInt(), par["Range/High"].toInt());
+    s->setRange(getValInt(par, "Range/Low"), getValInt(par,"Range/High"));
     if (par.contains(def))
-        s->setValue(par[def].toInt());
+        s->setValue(getValInt(par, def));
     return s;
 }
 
 template <class Widget>
 Widget* setupProcessParameterDouble(Widget* s, QJsonObject& par, QString def)
 {
-    s->setRange(par["Range/Low"].toDouble(), par["Range/High"].toDouble());
+    s->setRange(getValDouble(par,"Range/Low"), getValDouble(par,"Range/High"));
     if (par.contains(def))
-        s->setValue(par[def].toDouble());
+        s->setValue(getValDouble(par,def));
     return s;
 }
 
@@ -1110,12 +1137,20 @@ void MainWindow::setupProcessCall(QJsonObject obj)
             int p = 1;
             QList<int> list = _channelsIds.values();
             std::sort(list.begin(), list.end());
-            foreach(int i, list)
+            foreach(int channels, list)
             {
 
+
                 QWidget* w = widgetFromJSON(par);
-                l->addRow(QString("Channel %1").arg(p++), w);
-                w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(i));
+                QString nm;
+
+                if (_channelsNames.size() == _channelsIds.size())
+                     nm = QString(_channelsNames[list.at(channels-1)]);
+                else
+                    nm = QString("Channel %1").arg(p++);
+
+                l->addRow(nm, w);
+                w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(channels));
 
             }
         }

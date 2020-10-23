@@ -11,6 +11,8 @@
 #include "checkoutprocessplugininterface.h"
 #include "checkoutprocess.h"
 
+#include <QtConcurrent>
+
 namespace PluginManager
 {
 
@@ -48,48 +50,62 @@ void loadPlugins(bool isServer)
     CheckoutDataLoader& loader = CheckoutDataLoader::handler();
     CheckoutProcess & process = CheckoutProcess::handler();
 
-    foreach (QString fileName, pluginsDir.entryList(QDir::Files))
-    {
-       	//qDebug() << "Plugin manager: " << pluginsDir.absoluteFilePath(fileName);
-        QPluginLoader pluginLoader(pluginsDir.absoluteFilePath(fileName));
-        
 
-        QObject *plugin = pluginLoader.instance();
-
-		//if (pluginLoader.isLoaded())
-		//	qDebug() << "Plugin" << fileName << "loaded";
-		//else
-		//	qDebug() << pluginLoader.errorString(); 
-
-        if (plugin)
+    struct paraLoader{
+        paraLoader(CheckoutDataLoader& l, CheckoutProcess & p, QDir pl, bool serv):
+            loader(l), process(p), pluginsDir(pl), isServer(serv)
         {
-			bool added = false;
-        	//qDebug() << "Plugin" << pluginsDir.absoluteFilePath(fileName);
-            CheckoutDataLoaderPluginInterface* pl = qobject_cast<CheckoutDataLoaderPluginInterface*>(plugin);
-            if (pl)
-            {
-                qDebug() << "Plugin" << pl->pluginName() << "(" << fileName << ") loaded handling: " << pl->handledFiles();
-                loader.addPlugin(pl);
-				added = true;
-            }
 
-            CheckoutProcessPluginInterface* pr = qobject_cast<CheckoutProcessPluginInterface*>(plugin);
-            if (isServer && pr)
-            {
-                qDebug() << "Plugin" << pr->getPath() << pr->getComments() << "(" << pr->getAuthors() << ")";
-                process.addProcess(pr);
-				added = true;
-            }
-
-			if (!added)
-			{ // Removed plugin not added...
-//				qDebug() << "Unloading plugin" << pluginLoader.errorString();
-				pluginLoader.unload();
-			}
         }
+        CheckoutDataLoader& loader;
+        CheckoutProcess& process;
+        QDir pluginsDir;
+        bool isServer;
+
+        void operator()(QString fileName)
+        {
+            QPluginLoader pluginLoader(pluginsDir.absoluteFilePath(fileName));
 
 
-    }
+            QObject *plugin = pluginLoader.instance();
+
+            //if (pluginLoader.isLoaded())
+            //	qDebug() << "Plugin" << fileName << "loaded";
+            //else
+            //	qDebug() << pluginLoader.errorString();
+
+            if (plugin)
+            {
+                bool added = false;
+                //qDebug() << "Plugin" << pluginsDir.absoluteFilePath(fileName);
+                CheckoutDataLoaderPluginInterface* pl = qobject_cast<CheckoutDataLoaderPluginInterface*>(plugin);
+                if (pl)
+                {
+                    qDebug() << "Plugin" << pl->pluginName() << "(" << fileName << ") loaded handling: " << pl->handledFiles();
+                    loader.addPlugin(pl);
+                    added = true;
+                }
+
+                CheckoutProcessPluginInterface* pr = qobject_cast<CheckoutProcessPluginInterface*>(plugin);
+                if (isServer && pr)
+                {
+                    qDebug() << "Plugin" << pr->getPath() << pr->getComments() << "(" << pr->getAuthors() << ")";
+                    process.addProcess(pr);
+                    added = true;
+                }
+
+                if (!added)
+                { // Removed plugin not added...
+                    //				qDebug() << "Unloading plugin" << pluginLoader.errorString();
+                    pluginLoader.unload();
+                }
+            }
+        }
+    };
+
+    QStringList entries = pluginsDir.entryList(QDir::Files);
+    QtConcurrent::blockingMap(entries, paraLoader(loader, process, pluginsDir, isServer));
 
 }
+
 }

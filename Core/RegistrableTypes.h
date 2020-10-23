@@ -254,7 +254,18 @@ protected:
     DataType* _value;
 };
 
-
+template <class T> inline QString tostr(T& val)
+{
+    return QString("%1").arg(val);
+}
+template <>
+inline QString tostr(std::vector<int>& val)
+{
+    QString r;
+    for (auto i : val)
+        r = QString("%1,%2").arg(r).arg(i);
+    return r;
+}
 
 template <class Type>
 class RegistrablePair: public RegistrableParent
@@ -294,7 +305,7 @@ public:
         // if the following code does not compile,
         // it means that your are trying to Register an unsuported type
         // Please ask for datatype support to : wiest.daessle@gmail.com
-        return QString("%1;%2").arg(*_value1).arg(*_value2);
+        return QString("%1;%2").arg(tostr(*_value1)).arg(tostr(*_value2));
     }
 
 
@@ -315,6 +326,7 @@ public:
     template <>
     void setValue(std::vector<int>* val, QString v,const QJsonObject& json)
     {
+        (*val).clear();
         if (!json.contains(v)) return;
         if (json[v].isArray())
         { // Might need magick c++ tricks for type dispatch :(
@@ -323,7 +335,7 @@ public:
                 (*val).push_back(ar.at(i).toInt());
         }
         else
-            *val = json[v].toInt();
+            (*val).push_back(json[v].toInt());
     }
 
     virtual void read(const QJsonObject &json)
@@ -352,10 +364,23 @@ public:
         return s;
     }
 
+    template <typename T> inline QJsonValue tojson(const T& def) const {  static_assert(sizeof(T) == -1, "You have to have a specialization for to json");  }
+    template <> inline QJsonValue tojson(const int& def) const { return  QJsonValue((int)def); }
+    template <> inline QJsonValue tojson(const double& def) const { return  QJsonValue((double)def); }
+    template <> inline QJsonValue tojson(const float& def) const { return  QJsonValue((double)def); }
+
+    template <>
+    inline QJsonValue tojson(const std::vector<int>& vals) const
+    {
+        QJsonArray res;
+        for (int i = 0; i < vals.size(); ++i)
+            res.push_back(vals[i]);
+        return res;
+    }
+    
 
     virtual void write(QJsonObject &json) const
     {
-
 
         RegistrableParent::write(json);
 
@@ -381,14 +406,14 @@ public:
 
         if (_hasDefault)
         {
-            json["Default"] = _default1;
-            json["Default2"] = _default2;
+            json["Default"] = tojson(_default1);
+            json["Default2"] = tojson(_default2);
         }
 
 
         json["Range/Set"] = _hasRange;
-        json["Range/Low"] = _minRange;
-        json["Range/High"] = _maxRange;
+        json["Range/Low"] = tojson(_minRange);
+        json["Range/High"] = tojson(_maxRange);
 
 
     }
