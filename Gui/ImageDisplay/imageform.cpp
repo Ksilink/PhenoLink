@@ -864,9 +864,9 @@ void ImageForm::changeCurrentSelection()
             }
 
             foreach (ImageForm* p, l)
-                p->repaint();
+                if (p) p->repaint();
             foreach (ImageForm* p, sz->currentSelection())
-                p->repaint();
+                if (p) p->repaint();
         }
 
         _interactor->setCurrent(_interactor);

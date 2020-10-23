@@ -250,19 +250,21 @@ void ScrollZone::selectRange(ImageForm *f)
     //  QList<ImageForm*> l = ((FlowLayout*)widget()->layout())->childs<ImageForm*>();
     QList<ImageForm*> l = ((FlowLayout*)_wid->layout())->childs<ImageForm*>();
 
-
-    bool start = false;
-    ImageForm* last = _selection.last();
-
-    foreach (ImageForm* i, l)
+    if (_selection.size())
     {
-        if (i == f || i == last)
-            start = !start;
+        bool start = false;
+        ImageForm* last = _selection.last();
 
-        if (start && !_selection.contains(i))
-            select(i);
+        foreach(ImageForm * i, l)
+        {
+            if (i == f || i == last)
+                start = !start;
+
+            if (start && !_selection.contains(i))
+                select(i);
+        }
+        select(f);
     }
-    select(f);
 }
 
 void ScrollZone::select(ImageForm *f)
