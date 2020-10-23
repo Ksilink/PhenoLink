@@ -49,11 +49,11 @@ void loadPlugins(bool isServer)
 
     CheckoutDataLoader& loader = CheckoutDataLoader::handler();
     CheckoutProcess & process = CheckoutProcess::handler();
-
+    QMutex mutex;
 
     struct paraLoader{
-        paraLoader(CheckoutDataLoader& l, CheckoutProcess & p, QDir pl, bool serv):
-            loader(l), process(p), pluginsDir(pl), isServer(serv)
+        paraLoader(CheckoutDataLoader& l, CheckoutProcess & p, QDir pl, bool serv, QMutex& mut):
+            loader(l), process(p), pluginsDir(pl), isServer(serv), mutx(mut)
         {
 
         }
@@ -61,6 +61,7 @@ void loadPlugins(bool isServer)
         CheckoutProcess& process;
         QDir pluginsDir;
         bool isServer;
+        QMutex& mutx;
 
         void operator()(QString fileName)
         {
@@ -82,7 +83,9 @@ void loadPlugins(bool isServer)
                 if (pl)
                 {
                     qDebug() << "Plugin" << pl->pluginName() << "(" << fileName << ") loaded handling: " << pl->handledFiles();
+                    mutx.lock();
                     loader.addPlugin(pl);
+                    mutx.unlock();
                     added = true;
                 }
 
@@ -90,7 +93,9 @@ void loadPlugins(bool isServer)
                 if (isServer && pr)
                 {
                     qDebug() << "Plugin" << pr->getPath() << pr->getComments() << "(" << pr->getAuthors() << ")";
+                    mutx.lock();
                     process.addProcess(pr);
+                    mutx.unlock();
                     added = true;
                 }
 
@@ -104,7 +109,7 @@ void loadPlugins(bool isServer)
     };
 
     QStringList entries = pluginsDir.entryList(QDir::Files);
-    QtConcurrent::blockingMap(entries, paraLoader(loader, process, pluginsDir, isServer));
+    QtConcurrent::blockingMap(entries, paraLoader(loader, process, pluginsDir, isServer, mutex));
 
 }
 

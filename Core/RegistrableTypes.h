@@ -682,9 +682,10 @@ public:
       return *this;
     }
 
-    virtual void isPath(bool p = true)
+    virtual Self& isPath(bool p = true)
     {
         _isPath = p;
+        return *this;
     }
 
     virtual void read(const QJsonObject &json)
