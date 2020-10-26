@@ -476,8 +476,10 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
     stored["Experiments"] = QJsonArray::fromStringList(QStringList(xps.begin(), xps.end()));
     QDir dir; dir.mkdir(set.value("databaseDir").toString() +"/params/");
+
+    QString prc = _preparedProcess;
     QString fn = set.value("databaseDir").toString() +"/params/" +
-            _preparedProcess.replace("/", "_") + "_" +
+            prc.replace("/", "_") + "_" +
             QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss")+".json";
     qDebug() << "Saving run params to:"<<fn;
     QJsonDocument doc(stored);
