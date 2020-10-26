@@ -475,8 +475,11 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
     objR["Experiments"] = QJsonArray::fromStringList(QStringList(xps.begin(), xps.end()));
 
+    QString fn = set.value("databaseDir").toString() +"/"
+            + QDateTime::currentDateTime().toString("yyyyMMDD_hhmmss")+".json";
+    qDebug() << "Saving run params to:"<<fn;
     QJsonDocument doc(objR);
-    QFile saveFile(set.value("databaseDir").toString() +"/"+ QDateTime::currentDateTime().toString()+".json");
+    QFile saveFile(fn);
 
     if (!saveFile.open(QIODevice::WriteOnly)) {
         qWarning("Couldn't open save file.");
