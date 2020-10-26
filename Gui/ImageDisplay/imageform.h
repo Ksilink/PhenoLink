@@ -143,7 +143,7 @@ private:
     QPointF _pos;
 
     // Fir taking measurements over image
-    QPointF _size_start;
+    QPointF _size_start, _size_end;
     bool _moving;
     QGraphicsLineItem* _ruler;
     int playTimerId;

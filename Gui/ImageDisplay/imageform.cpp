@@ -815,10 +815,11 @@ void ImageForm::imageClick(QPointF pos)
 {
     Q_UNUSED(pos);
     //  qDebug() << pos;
-    if (_moving)
+    if (!_size_start.isNull() && _moving)
     {
-        qDebug() << "Line from" << _size_start << "to" << pos;
+      //  qDebug() << "Line from" << _size_start << "to" << pos;
         _moving = false;
+        _size_end = pos;
     }
     else
     {
@@ -862,12 +863,18 @@ void ImageForm::mouseOverImage(QPointF pos)
 
     if (!_size_start.isNull())
     {
-        _ruler->setVisible(true);
-        _ruler->setLine(_size_start.x(), _size_start.y(), pos.x(), pos.y());
+        if (_moving)
+            _size_end = pos;
 
-        float s = sqrt(pow(pos.x() - _size_start.x(), 2) +
-                       pow(pos.y() - _size_start.y(), 2));
-        str += QString(" - %1 px").arg(s, 0, 'g', 2);
+        _ruler->setVisible(true);
+       
+        _ruler->setLine(_size_start.x(), _size_start.y(), _size_end.x(), _size_end.y());
+
+        float s = sqrt(pow(_size_end.x() - _size_start.x(), 2) +
+                       pow(_size_end.y() - _size_start.y(), 2));
+        QString unit("px");
+
+        str += QString(" - %1 %2").arg(s, 0, 'g', 2).arg(unit);
     }
 
     imagePosInfo = str;
