@@ -83,6 +83,8 @@ protected slots:
 #endif
 
     void imageClick(QPointF pos);
+    void imageDoubleClick(QPointF pos);
+    void imageMouseMove(QPointF pos);
     void mouseOverImage(QPointF pos);
     void watcherPixmap();
 protected:
@@ -140,6 +142,10 @@ private:
 
     QPointF _pos;
 
+    // Fir taking measurements over image
+    QPointF _size_start;
+    bool _moving;
+    QGraphicsLineItem* _ruler;
     int playTimerId;
 
     // User Settings
@@ -148,6 +154,7 @@ private:
     //  static ImageForm* _selectedForm;
     bool isRunning, fromButton;
     int timer_id;
+
     //  static SequenceInteractor* _current_interactor;
     Q_DISABLE_COPY(ImageForm);
 };

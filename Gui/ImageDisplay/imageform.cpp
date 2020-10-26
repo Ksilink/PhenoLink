@@ -58,6 +58,7 @@ ImageForm::ImageForm(QWidget *parent, bool packed) :
     connect(pixItem, SIGNAL(mouseClick(QPointF)), this, SLOT(changeCurrentSelection()));
 
     connect(pixItem, SIGNAL(mouseClick(QPointF)), this, SLOT(imageClick(QPointF)));
+    connect(pixItem, SIGNAL(mouseDoubleClick(QPointF)), this, SLOT(imageDoubleClick(QPointF)));
     connect(pixItem, SIGNAL(mouseOver(QPointF)), this, SLOT(mouseOverImage(QPointF)));
 
     connect(pixItem, SIGNAL(mouseWheel(int)), this, SLOT(scale(int)));
@@ -107,6 +108,15 @@ ImageForm::ImageForm(QWidget *parent, bool packed) :
     textItem2->setPlainText(imagePosInfo);
 
     scene->addItem(textItem2);
+
+    _ruler = new QGraphicsLineItem(pixItem);
+    QPen pen(Qt::yellow);
+    pen.setWidth(3);
+    _ruler->setPen(pen);
+    _ruler->setVisible(false);
+    _ruler->setZValue(pixItem->zValue()+1); // draw above the image
+    //scene->addItem(_ruler);
+    //_ruler->setParentItem(pixItem);
 
 
     QSettings q;
@@ -485,6 +495,10 @@ void ImageForm::mousePressEvent(QMouseEvent *event)
     //  event->accept();
     //  qDebug() << "PressEvent...";
     //  qDebug() << pixItem->pos();
+    if (_moving)
+    {
+        _moving = false;
+    }
 }
 
 void ImageForm::mouseDoubleClickEvent(QMouseEvent *event)
@@ -801,6 +815,33 @@ void ImageForm::imageClick(QPointF pos)
 {
     Q_UNUSED(pos);
     //  qDebug() << pos;
+    if (_moving)
+    {
+        qDebug() << "Line from" << _size_start << "to" << pos;
+        _moving = false;
+    }
+    else
+    {
+        _ruler->setVisible(false);
+        _size_start = QPointF(); // reset position
+    }
+}
+
+void ImageForm::imageDoubleClick(QPointF pos)
+{
+    if (_size_start.isNull())
+    {
+
+        _size_start = pos;
+        _moving = true;
+        _ruler->setVisible(true);
+    }
+
+}
+
+void ImageForm::imageMouseMove(QPointF pos)
+{
+
 }
 
 void ImageForm::mouseOverImage(QPointF pos)
@@ -814,8 +855,21 @@ void ImageForm::mouseOverImage(QPointF pos)
         str += QString("%1 ").arg(l.at(i));
     str += "])";
 
+
+
     str += packed ? " " : " U";
     str += bias_correction ? "B" : "";
+
+    if (!_size_start.isNull())
+    {
+        _ruler->setVisible(true);
+        _ruler->setLine(_size_start.x(), _size_start.y(), pos.x(), pos.y());
+
+        float s = sqrt(pow(pos.x() - _size_start.x(), 2) +
+                       pow(pos.y() - _size_start.y(), 2));
+        str += QString(" - %1 px").arg(s, 0, 'g', 2);
+    }
+
     imagePosInfo = str;
 
     imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
@@ -827,6 +881,7 @@ void ImageForm::mouseOverImage(QPointF pos)
     textItem2->setPlainText(imagePosInfo);
     // Need to fetch image infos...
     //  qDebug() << pos <<
+
 }
 
 void ImageForm::changeCurrentSelection()
@@ -1160,7 +1215,7 @@ void ImageForm::saveVideo()
          << "-start_number" << "0"
          << "-i" << "c:\\temp\\CheckoutVideo\\im_raw%05d.jpg"
          << "-vframes" << QString("%1").arg(_interactor->getTimePointCount())
-         //<< "-pix_fmt" << "yuv420p"
+            //<< "-pix_fmt" << "yuv420p"
          << "-c:v" << "libx264"
          << filename
             ;

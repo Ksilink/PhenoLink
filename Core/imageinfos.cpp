@@ -14,7 +14,7 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     _plate(platename),
     bias_correction(false),
     _saturate(true), _uninverted(true),
-    _channel(channel), _binarized(false)
+    _channel(channel), _binarized(false), _lockImage(QMutex::NonRecursive)
 {
     QMutexLocker lock(&_lockImage);
     loadedWithkey = key();
@@ -37,7 +37,7 @@ QString ImageInfos::key(QString k)
     return str;
 }
 
-QMutex protect_iminfos;
+QMutex protect_iminfos(QMutex::NonRecursive);
 
 
 QPair<ImageInfosShared* , QMap<QString, ImageInfos*> *>

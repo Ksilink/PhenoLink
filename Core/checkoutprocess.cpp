@@ -7,11 +7,11 @@
 #include <QtSql>
 #include <QSharedMemory>
 
-QMutex process_mutex;
-QMutex hash_to_save_mtx;
+QMutex process_mutex(QMutex::NonRecursive);
+QMutex hash_to_save_mtx(QMutex::NonRecursive);
 
 CheckoutProcess::CheckoutProcess():
-    _counter(0)
+    _counter(0), mutex_dataupdate(QMutex::NonRecursive)
 {
     startTimer(100);
 }

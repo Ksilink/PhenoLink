@@ -1150,6 +1150,7 @@ void MainWindow::setupProcessCall(QJsonObject obj)
                     nm = QString("Channel %1").arg(p++);
 
                 l->addRow(nm, w);
+
                 w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(channels));
 
             }

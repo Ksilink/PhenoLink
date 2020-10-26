@@ -11,7 +11,7 @@
 #include <QElapsedTimer>
 
 
-QMutex sequence_interactorMutex;
+QMutex sequence_interactorMutex(QMutex::NonRecursive);
 
 SequenceInteractor::SequenceInteractor(): _mdl(0), _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),last_scale(-1.), _updating(false)
 {
@@ -351,7 +351,7 @@ void callImage(ImageInfos* img)
 }
 
 
-QMutex lock_infos;
+QMutex lock_infos(QMutex::NonRecursive);
 
 ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString key)
 {

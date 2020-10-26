@@ -1873,7 +1873,7 @@ void SequenceViewContainer::setCurrent(SequenceFileModel *mdl)
     _current = mdl;
 }
 
-QMutex ExperimentDataModel::_lock;
+QMutex ExperimentDataModel::_lock(QMutex::NonRecursive);
 
 ExperimentDataTableModel::ExperimentDataTableModel(ExperimentFileModel *parent, int nX, int nY): _owner(parent), nbX(nX), nbY(nY)
 {

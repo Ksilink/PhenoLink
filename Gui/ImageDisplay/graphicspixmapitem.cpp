@@ -58,10 +58,10 @@ void GraphicsPixmapItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
   emit mouseClick(event->pos());
 }
 
-//void GraphicsPixmapItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
-//{
-
-//}
+void GraphicsPixmapItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
+{
+ emit mouseDoubleClick(event->pos());
+}
 
 void GraphicsPixmapItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
 {
@@ -73,4 +73,10 @@ void GraphicsPixmapItem::wheelEvent(QGraphicsSceneWheelEvent *event)
 { 
   event->accept();
   emit mouseWheel(event->delta());
+}
+
+void GraphicsPixmapItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+{
+    QGraphicsPixmapItem::mouseMoveEvent(event);
+    emit mouseMove(event->pos());
 }
