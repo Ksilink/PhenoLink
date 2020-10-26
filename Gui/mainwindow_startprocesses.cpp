@@ -412,7 +412,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 {
     Q_UNUSED(started);
     //    _startingProcesses = true;
-    QJsonObject objR;
+    QJsonObject objR, stored;
 
     CheckoutProcess& handler = CheckoutProcess::handler();
 
@@ -451,6 +451,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         { // If debug mode copy the first start object to clipboard!
             QJsonDocument d(tmp[0].toObject());
             qDebug() << d;
+            stored=tmp[0].toObject();
 
 //            QMimeData* data = new QMimeData;
 //            data->setText(QString(d.toJson()));
@@ -473,12 +474,12 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     if (this->networking &&  procArray.size())
         handler.startProcess(_preparedProcess, procArray);
 
-    objR["Experiments"] = QJsonArray::fromStringList(QStringList(xps.begin(), xps.end()));
+    stored["Experiments"] = QJsonArray::fromStringList(QStringList(xps.begin(), xps.end()));
 
     QString fn = set.value("databaseDir").toString() +"/"
             + QDateTime::currentDateTime().toString("yyyyMMDD_hhmmss")+".json";
     qDebug() << "Saving run params to:"<<fn;
-    QJsonDocument doc(objR);
+    QJsonDocument doc(stored);
     QFile saveFile(fn);
 
     if (!saveFile.open(QIODevice::WriteOnly)) {
