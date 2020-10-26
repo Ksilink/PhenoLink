@@ -74,7 +74,10 @@ public:
     if (json.contains("Value"))
       {
         _wasSet = true;
-        *_value = (DataType)json["Value"].toInt();
+        if (json["Value"].isArray())
+            *_value = (DataType)json["Value"].toArray().at(0).toInt();
+        else
+            *_value = (DataType)json["Value"].toInt();
       }
 
   }

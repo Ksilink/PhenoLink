@@ -175,8 +175,8 @@ public:
 
     void keepInMem(bool mem) { _keepInMem = mem; }
 
-//    void Q_DECL_DEPRECATED attachPayload(QByteArray arr) const;
-//    void Q_DECL_DEPRECATED attachPayload(QString hash, QByteArray arr) const;
+    //    void Q_DECL_DEPRECATED attachPayload(QByteArray arr) const;
+    //    void Q_DECL_DEPRECATED attachPayload(QString hash, QByteArray arr) const;
 
     void attachPayload(std::vector<unsigned char> arr, size_t pos = 0) const;
     void attachPayload(QString hash, std::vector<unsigned char> arr, size_t pos = 0) const;
@@ -320,7 +320,10 @@ public:
     template <class T>
     void setValue(T* val, QString v, const QJsonObject& json)
     {
-        *val = json[v].toInt();
+        if (json[v].isArray())
+            *val = json[v].toArray().at(0).toInt();
+        else
+            *val = json[v].toInt();
     }
 
     template <>
@@ -651,8 +654,8 @@ template <>
 class Registrable<QString>: public RegistrableParent
 {
 public:
-  typedef Registrable<QString> Self;
-  typedef QString DataType;
+    typedef Registrable<QString> Self;
+    typedef QString DataType;
 
     Registrable(): _hasDefault(false), _isPath(false)
     {
@@ -661,25 +664,25 @@ public:
 
     DataType& value()
     {
-      return *_value;
+        return *_value;
     }
     void setValue(DataType t)
     {
-      _wasSet = true;
-      *_value = t;
+        _wasSet = true;
+        *_value = t;
     }
     Self& setValuePointer(DataType *v)
     {
-      _value = v;
-      return *this;
+        _value = v;
+        return *this;
 
     }
 
     Self& setDefault(DataType v)
     {
-      _hasDefault = true;
-      _default = v;
-      return *this;
+        _hasDefault = true;
+        _default = v;
+        return *this;
     }
 
     virtual Self& isPath(bool p = true)
@@ -690,51 +693,51 @@ public:
 
     virtual void read(const QJsonObject &json)
     {
-      RegistrableParent::read(json);
+        RegistrableParent::read(json);
 
-      if (json.contains("Value"))
+        if (json.contains("Value"))
         {
-          _wasSet = true;
-          *_value = (DataType)json["Value"].toString();
+            _wasSet = true;
+            *_value = (DataType)json["Value"].toString();
         }
 
     }
 
     virtual void write(QJsonObject &json) const
     {
-      RegistrableParent::write(json);
-      json["isString"] = true;
-      json["isPath"] = _isPath;
-      if (_hasDefault)
+        RegistrableParent::write(json);
+        json["isString"] = true;
+        json["isPath"] = _isPath;
+        if (_hasDefault)
         {
-          json["Default"] = _default;
+            json["Default"] = _default;
         }
 
     }
 
     virtual QString toString() const
     {
-      return QString("%1").arg(*_value);
+        return QString("%1").arg(*_value);
     }
 
     virtual RegistrableParent* dup()
     {
-      DataType* data = new DataType();
-      *data = *_value;
+        DataType* data = new DataType();
+        *data = *_value;
 
-      Self* s = new Self();
-      s->setValuePointer(data);
+        Self* s = new Self();
+        s->setValuePointer(data);
 
-      s->setTag(this->_tag);
-      s->setComment(this->_comment);
-      s->setHash(this->_hash);
-      s->isPath(_isPath);
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+        s->isPath(_isPath);
 
-      return s;
+        return s;
     }
 
 
-  protected:
+protected:
     DataType* _value;
     bool _isPath;
     bool _hasDefault;
