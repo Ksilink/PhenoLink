@@ -1040,6 +1040,26 @@ QJsonObject SequenceFileModel::getMeta(SequenceFileModel::MetaDataHandler &h)
         QString t = this->property(mtag);
         if (!t.isEmpty())
             props[k] = t;
+        t = this->property(k);
+        if (!t.isEmpty())
+            props[k] = t;
+    }
+
+    if (_owner)
+    {
+        for (auto k: h.metaData)
+        {
+            QString t = _owner->property(k);
+            if (!t.isEmpty())
+                props[k] = t;
+            for (unsigned c = 0; c < this->getChannels(); ++c)
+            {
+                QString ch =k+QString("_ch%1").arg(c+1);
+                QString t = _owner->property(ch);
+                if (!t.isEmpty())
+                    props[ch] = t;
+            }
+        }
     }
 
     return props;

@@ -430,10 +430,16 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     if (deb)
         qDebug() << "Process to prepare: " << objR;
 
+    QSet<QString> xps;
 
     foreach (SequenceFileModel* sfm, lsfm)
     {
         if (!sfm) continue;
+        if (sfm->getOwner())
+        {
+            QString s = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
+            xps.insert(s);
+        }
         if (_shareTags->isChecked())
         {
             sfm->clearTags();
@@ -444,11 +450,11 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         if (count == 0 && deb && tmp.size())
         { // If debug mode copy the first start object to clipboard!
             QJsonDocument d(tmp[0].toObject());
-            qDebug() << "Copy to Clipboard" << d;
+            qDebug() << d;
 
-            QMimeData* data = new QMimeData;
-            data->setText(QString(d.toJson()));
-            QApplication::clipboard()->setMimeData(data);
+//            QMimeData* data = new QMimeData;
+//            data->setText(QString(d.toJson()));
+//            QApplication::clipboard()->setMimeData(data);
             deb = false;
         }
         adapt[sfm->getOwner()->name()] += tmp.size();
@@ -466,6 +472,17 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
     if (this->networking &&  procArray.size())
         handler.startProcess(_preparedProcess, procArray);
+
+    objR["Experiments"] = QJsonArray::fromStringList(QStringList(xps.begin(), xps.end()));
+
+    QJsonDocument doc(objR);
+    QFile saveFile(set.value("databaseDir").toString() +"/"+ QDateTime::currentDateTime().toString()+".json");
+
+    if (!saveFile.open(QIODevice::WriteOnly)) {
+        qWarning("Couldn't open save file.");
+    }
+    else
+        saveFile.write(doc.toJson());
 
 
     for (auto kv = adapt.begin(), ke = adapt.end(); kv != ke; ++kv) {
