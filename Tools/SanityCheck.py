@@ -39,7 +39,7 @@ for line in f:
         continue
 
     print(line)
-    break
+#    break
 f.close()
 print("Number of started processed    :",started)
 print("Remaining accepted processes   :", len(maped))
