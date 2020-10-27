@@ -711,42 +711,6 @@ void MainWindow::conditionChanged(int val)
 
 void MainWindow::processStarted(QString hash)
 {
-    //    QList<QWidget*> list = ui->processingArea->findChildren<QWidget*>();
-    //    foreach(QWidget* wid, list)
-    //    {
-    //        wid->hide();
-    //        wid->close();
-
-    //        ui->processingArea->layout()->removeWidget(wid);
-    //        //      if (wid != this->_typeOfprocessing)
-    //        //        delete wid;
-    //    }
-
-    //	ui->statusBar->showMessage(QString("Process Started %1").arg(hash));
-
-    //    if (_StatusProgress)
-    //    {
-    //        _StatusProgress->setMaximum(_StatusProgress->maximum()+1);
-    //        _StatusProgress->show();
-    //    }
-    //    else
-    //    {
-    //        _StatusProgress = new QProgressBar(this);
-    //        this->statusBar()->addPermanentWidget(_StatusProgress);
-
-    //        _StatusProgress->setValue(1);
-    //        _StatusProgress->setFormat("%v/%m");
-    //        _StatusProgress->setRange(0, 1);
-    //    }
-
-
-    //    if (_progress)
-    //    {
-    //        _progress->setMaximum(_progress->maximum()+1);
-    //    }
-
-
-
 }
 
 void MainWindow::server_processFinished(int exitCode, QProcess::ExitStatus status)
@@ -783,13 +747,6 @@ void MainWindow::processFinished()
     QList<QPushButton*> list = ui->processingArea->findChildren<QPushButton*>();
     foreach(QPushButton* b, list)
         b->setEnabled(true);
-
-    //    if (_StatusProgress)
-    //    {
-    //        _StatusProgress->setValue(0);
-    //        _StatusProgress->setMaximum(0);
-    //        _StatusProgress->hide();
-    //    }
 
     // Auto commit delegated to the renew screen
     Screens& screens = ScreensHandler::getHandler().getScreens();
@@ -867,7 +824,8 @@ int getValInt(QJsonObject& par, QString v)
     }
     return low;
 }
-int getValDouble(QJsonObject& par, QString v)
+
+double getValDouble(QJsonObject& par, QString v)
 {
     double low = 0;
 

@@ -14,10 +14,65 @@ cmake_minimum_required(VERSION 3.12.0 FATAL_ERROR)
 project(Checkout)
 
 
+find_package(Git)
+
+
 set(Checkout_VERSION_MAJOR 1)
 set(Checkout_VERSION_MINOR 6)
 set(Checkout_VERSION_COMPLEMENT R)
 set(Checkout_VERSION_RELEASE 0)
+
+message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
+
+set(git_dirty "")
+execute_process(
+  COMMAND           "${GIT_EXECUTABLE}"
+                    rev-parse
+                    --short
+                    HEAD
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  RESULT_VARIABLE   git_return
+  OUTPUT_VARIABLE   app_hash_short)
+string(STRIP "${app_hash_short}" app_hash_short)
+execute_process(
+  COMMAND           "${GIT_EXECUTABLE}"
+                    rev-parse
+                    --short
+                    HEAD
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/../CheckoutPlugins"
+  RESULT_VARIABLE   git_return
+  OUTPUT_VARIABLE   plugin_hash_short)
+string(STRIP "${plugin_hash_short}" plugin_hash_short)
+
+execute_process(
+   COMMAND           "${GIT_EXECUTABLE}"
+                     diff
+                     --no-ext-diff
+                     --quiet
+                     --exit-code
+   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+   RESULT_VARIABLE   git_return)
+if (git_return)
+   set(git_dirty "-dirtyApp")
+endif ()
+execute_process(
+   COMMAND           "${GIT_EXECUTABLE}"
+                     diff
+                     --no-ext-diff
+                     --quiet
+                     --exit-code
+   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/../CheckoutPlugins"
+   RESULT_VARIABLE   git_return)
+if (git_return)
+       set(git_dirty "${git_dirty}-dirtyPlugins")
+endif ()
+
+
+message(STATUS "With App git hash ${app_hash_short}-${plugin_hash_short}${git_dirty}")
+set(Checkout_VERSION_RELEASE "${Checkout_VERSION_RELEASE}-${app_hash_short}-${plugin_hash_short}${git_dirty}")
+
+add_definitions(-DCheckout_Git_Hash="${app_hash_short}-${plugin_hash_short}${git_dirty}")
+
 
 option(BUILD_PLUGINS "Build plugins" ON)
 option(BUILD_PYTHON_SCRIPTING "Build with Core side Python Scripting" OFF)
