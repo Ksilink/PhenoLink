@@ -12,7 +12,7 @@ import glob
 #%%
 
 
-path="C:/Users/NicolasWiestDaessle/AppData/Local/WD/Checkout/databases/*.csv"
+path="C:/Users/arno/AppData/Local/WD/Checkout/databases/*.csv"
 #filename="C:/Users/NicolasWiestDaessle/AppData/Local/WD/Checkout/databases/0ad1a33e6f6f7e6c71cf1ce9520931a3_cc2.csv"
 
 for filename in glob.glob(path):

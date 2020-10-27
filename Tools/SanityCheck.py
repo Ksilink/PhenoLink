@@ -19,7 +19,7 @@ def prBlack(skk): print("\033[98m {}\033[00m" .format(skk))
 core=set()
 maped=dict()
 started=0
-f = open("C:/Users/NicolasWiestDaessle/AppData/Local/WD/Checkout/HashLogs.txt", "r")
+f = open("C:/Users/arno/AppData/Local/WD/Checkout/HashLogs.txt", "r")
 for line in f:
     line=line.strip()
     if line.startswith("Started Core"):
