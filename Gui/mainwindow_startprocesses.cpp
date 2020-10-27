@@ -477,7 +477,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     stored["Experiments"] = QJsonArray::fromStringList(QStringList(xps.begin(), xps.end()));
 
     // If no commit store the start in params, otherwise with the commit name !!!
-    QString st = (stored["CommitName"].toString().isEmpty()) ? "/params":
+    QString st = (stored["CommitName"].toString().isEmpty()) ? "/params/":
                                                                 "/"+stored["CommitName"].toString() +"/";
 
     QString proc = _preparedProcess;
