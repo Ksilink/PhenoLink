@@ -427,24 +427,9 @@ void MainWindow::networkProcessFinished(QJsonObject data)
     if (_StatusProgress)
     {
         _StatusProgress->setValue(_StatusProgress->value()+1);
-//        if (CheckoutProcess::handler().numberOfRunningProcess() == 0)
-//        {
-//            _StatusProgress->hide();
-//            _StatusProgress->setValue(0);
-//            _StatusProgress->setMaximum(0);
-//        }
     }
 
-    //    if (_progress)
-    //    {
-    //        _progress->setValue(_progress->value()+1);
-    //        if (CheckoutProcess::handler().numberOfRunningProcess() == 0)
-    //        {
-    //            _progress->hide();
-    //            _progress->setValue(0);
-    //            _progress->setMaximum(0);
-    //        }
-    //    }
+
 
     int procId = data["ProcessStartId"].toInt();
     QString processHash = data["Hash"].toString();
@@ -636,7 +621,7 @@ void MainWindow::setProgressBar()
     {
         qDebug() << "Network starting errors!" << handler.errors();
        // QMessageBox::warning(this, "Network error", QString("%1 processes where not properly started, check network config").arg(handler.errors()));
-		ui->statusBar->showMessage(QString("Network error: %1 processes where not properly started, check network config").arg(handler.errors()));
+        ui->statusBar->showMessage(QString("Network error: %1 processes where not properly started, check network config").arg(handler.errors()));
     }
 
 

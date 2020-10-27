@@ -573,6 +573,7 @@ void CheckoutProcess::addToComputedDataModel(QJsonObject ob)
             mutex_dataupdate.lock();
             datamdl = mdl->computedDataModel();
             mutex_dataupdate.unlock();
+            break;
         }
 
     if (!datamdl) {
@@ -621,7 +622,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
 
             QString hash=ob["Hash"].toString();
             _status.remove(hash);
-            //            qDebug() << "Finished Hahs" << hash << _hash_to_save.contains(hash);
+//            qDebug() << "GUI Finished Hash" << hash << _hash_to_save.contains(hash);
 
             hash_to_save_mtx.lock();
 
@@ -633,7 +634,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
 
                 if (tc == 0)
                 {
-                    qDebug() << "Hash finished" << hash;
+                    qDebug() << "GUI Hash finished" << hash;
                     NetworkProcessHandler::handler().processFinished(hash);
                     // Last object of the running process, check for the field CommitName in ob & commit to the database if not empty
 
@@ -646,6 +647,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
 
             if (_status.isEmpty())
             {
+                qDebug() << NetworkProcessHandler::handler().remainingProcess();
                 emit emptyProcessList();
             }
             //            else
@@ -721,8 +723,8 @@ void CheckoutProcess::finishedProcess(QString hash, QJsonObject result)
 
     delete intf;
 
-    //  qDebug() << "process finished, remaining" << _status.size();
-    //  qDebug() << "Removing" << hash;
+      qDebug() << "process finished, remaining" << _status.size();
+      qDebug() << "Removing" << hash;
     _status.remove(hash);
     _finished[hash] = result;
     //    NetworkProcessHandler::handler().processFinished(hash);

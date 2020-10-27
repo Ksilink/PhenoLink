@@ -15,7 +15,7 @@
 void stringToPos(QString pos, int& row, int& col);
 
 ExperimentFileModel::ExperimentFileModel(Dictionnary dict): DataProperty(dict),
-    _cols(0), _rows(0), _computedData(0), _hasTag(false), _owner(0)
+    _cols(0), _rows(0), _hasTag(false), _owner(0), _computedData(0)
 {
 }
 
@@ -471,6 +471,10 @@ void ExperimentFileModel::setChannelNames(QStringList names) { _channelNames = n
 
 QStringList ExperimentFileModel::getChannelNames() {return _channelNames; }
 
+void ExperimentFileModel::setMetadataPath(QString m) { metadataPath = m; }
+
+QString ExperimentFileModel::getMetadataPath() { return metadataPath; }
+
 
 void ExperimentFileModel::addSiblings(QString map, ExperimentFileModel *efm)
 {
@@ -529,38 +533,56 @@ void ExperimentFileModel::reloadDatabaseData()
     QSettings set;
     QDir dir(set.value("databaseDir").toString());
 
-    QFileInfoList ff = dir.entryInfoList(QStringList() <<  _hash +"_*.csv", QDir::Files);
-
-    foreach (QFileInfo i, ff)
+    QFileInfoList dirs = dir.entryInfoList(QStringList() << "*", QDir::Dirs);
+    foreach (QFileInfo d, dirs)
     {
-
-        QString t =  i.absoluteFilePath().remove(dir.absolutePath() + "/"+ _hash +"_");
-        t.remove(".csv");
-        if (t.isEmpty()) continue;
-        reloadDatabaseData(i, t, false);
+        if (QFile::exists(d.filePath() + "/"+_hash+".csv"))
+        {
+            QString t =  d.absoluteFilePath().remove(dir.absolutePath()+"/");
+            if (t.isEmpty()) continue;
+            reloadDatabaseData(d.filePath() + "/"+_hash+".csv", t, false);
+        }
+        if (QFile::exists(d.filePath() + "/ag"+_hash+".csv"))
+        {
+            QString t =  d.absoluteFilePath().remove(dir.absolutePath()+"/");
+            if (t.isEmpty()) continue;
+            reloadDatabaseData(d.filePath() + "/ag"+_hash+".csv", t, false);
+        }
 
     }
 
-    ff = dir.entryInfoList(QStringList() << "ag" << _hash +"_*.csv", QDir::Files);
+    // Legacy code loading ?
+    QFileInfoList ff = dir.entryInfoList(QStringList() <<  _hash +"_*.csv", QDir::Files);
     foreach (QFileInfo i, ff)
     {
 
         QString t =  i.absoluteFilePath().remove(dir.absolutePath() + "/"+ _hash +"_");
         t.remove(".csv");
+
+        if (t.isEmpty()) continue;
+        reloadDatabaseData(i.filePath(), t, false);
+
+    }
+
+    ff = dir.entryInfoList(QStringList() << "*/ag" << _hash +".csv", QDir::Files);
+    foreach (QFileInfo i, ff)
+    {
+        QString t =  i.absoluteFilePath().remove(dir.absolutePath() + "/ag"+ _hash +"_");
+        t.remove(".csv");
+
         if (t.isEmpty()) continue;
 
-        reloadDatabaseData(i, t, true);
-
+        reloadDatabaseData(i.filePath(), t, true);
     }
 }
 
 
-void ExperimentFileModel::reloadDatabaseData(QFileInfo i, QString t, bool aggregat)
+void ExperimentFileModel::reloadDatabaseData(QString file, QString t, bool aggregat)
 {
     ExperimentDataModel* data = databaseDataModel(t);
 
 
-    QFile files(i.filePath());
+    QFile files(file);
     if (!files.open(QIODevice::ReadOnly | QIODevice::Text ))
         return;
     QTextStream in(&files);
@@ -703,7 +725,8 @@ bool DataProperty::hasProperty(QString tag)
 }
 
 
-SequenceFileModel::SequenceFileModel(Dictionnary dict): DataProperty(dict), _owner(0), _isValid(true), _isShowed(false), _toDisplay(true)
+SequenceFileModel::SequenceFileModel(Dictionnary dict):
+    DataProperty(dict), _isValid(true), _isShowed(false), _toDisplay(true), _owner(0)
 {
 
 }
@@ -873,6 +896,7 @@ bool SequenceFileModel::isSelected()
 
 void SequenceFileModel::setTag(QString tag)
 {
+    tag.replace(",",";");
     if (!tag.simplified().isEmpty())
         if (!_tags.contains(tag))
             _tags << tag;
@@ -1481,6 +1505,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
     file.setFileName(tfile);
     if (file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
+        mdl->setMetadataPath(tfile);
         QString val = file.readAll();
         file.close();
         QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
@@ -1666,6 +1691,13 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
             QString hash = meta["DataHash"].toString();
             QString tag = ob["Tag"].toString();
             //    qDebug() << tag << hash <<  ob;
+
+            if (!_mscreens.contains(hash))
+            {
+                qDebug() << "Cannot find original XP for hash" << hash;
+                qDebug() << "#### NOT ADDING IMAGE ##########";
+                return rmdl;
+            }
 
             ExperimentFileModel* mdl =  _mscreens[hash]->getSibling( tag + procId);
             mdl->setProperties("hash", hash);
@@ -2201,6 +2233,7 @@ double Aggregate(QList<double>& f, QString& ag)
 
 int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
 {
+    if (prefix.isEmpty()) return 0;
     int linecounter = 0;
 
     QSettings set;
@@ -2214,7 +2247,8 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
 
     {
         QDir dir(set.value("databaseDir").toString());
-        QFile file(dir.absolutePath() + "/"+ hash +"_" + prefix + ".csv");
+        dir.mkdir(dir.absolutePath()+"/"+prefix);
+        QFile file(dir.absolutePath() + "/"+prefix+"/"+ hash + ".csv");
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
             return -1;
 
@@ -2250,7 +2284,7 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
 
     {
         QDir dir(set.value("databaseDir").toString());
-        QFile file(dir.absolutePath() + "/ag"+ hash +"_" + prefix + ".csv");
+        QFile file(dir.absolutePath() + "/" + prefix + "/ag"+ hash + ".csv");
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
             return -1;
 
@@ -2277,6 +2311,15 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
         file.close();
 
     }
+
+    if (!_owner->getMetadataPath().isEmpty())
+    {
+        QFile meta(_owner->getMetadataPath());
+        QDir dir(set.value("databaseDir").toString());
+        meta.copy(dir.absolutePath() + "/" + prefix + "/tags.json");
+    }
+
+
     return linecounter;
 }
 

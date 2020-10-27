@@ -282,8 +282,6 @@ public:
     QVariant getData(int row, QString) const;
     QString getMeta(int row, int col) const;
 
-
-
 protected:
     ExperimentFileModel* _owner;
     QString _commitName;
@@ -350,7 +348,7 @@ public:
     void setMeasurements(QPoint pos, bool active = true);
 
     void reloadDatabaseData();
-    void reloadDatabaseData(QFileInfo i, QString t, bool aggregat);
+    void reloadDatabaseData(QString file, QString t, bool aggregat);
 
     void setProperties(QString tag, QString value);
     virtual QString property(QString tag);
@@ -419,6 +417,10 @@ public:
     void setChannelNames(QStringList names);
     QStringList getChannelNames();
 
+    void setMetadataPath(QString m);
+    QString getMetadataPath();
+
+
 protected:
 
     void setState(QPoint pos, WellState state, bool active);
@@ -432,6 +434,10 @@ protected:
     bool _hasTag;
 
     bool _displayed;
+
+    QString metadataPath;
+
+
     QMap<QString, ExperimentFileModel *> _siblings;
     ExperimentFileModel* _owner;
 

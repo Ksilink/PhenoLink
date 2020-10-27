@@ -48,6 +48,7 @@ public:
 
     void readResponse(QTcpSocket *tcpSocket);
 
+    QStringList remainingProcess();
 protected:
     void writeInitialQuery(QTcpSocket *soc);
 

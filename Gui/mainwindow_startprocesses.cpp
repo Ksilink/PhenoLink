@@ -346,7 +346,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
 
         }
 
-       
+
         obj["Parameters"] = params;
 
         params = obj["ReturnData"].toArray();
@@ -369,7 +369,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                 //                qDebug() << "Setting optional state:" << wid->checkState();
                 params.replace(i, par);
             }
-            
+
         }
 
         obj["ReturnData"] = params;
@@ -475,12 +475,18 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         handler.startProcess(_preparedProcess, procArray);
 
     stored["Experiments"] = QJsonArray::fromStringList(QStringList(xps.begin(), xps.end()));
-    QDir dir; dir.mkdir(set.value("databaseDir").toString() +"/params/");
 
-    QString prc = _preparedProcess;
-    QString fn = set.value("databaseDir").toString() +"/params/" +
-            prc.replace("/", "_") + "_" +
+    // If no commit store the start in params, otherwise with the commit name !!!
+    QString st = (stored["CommitName"].toString().isEmpty()) ? "/params":
+                                                                "/"+stored["CommitName"].toString() +"/";
+
+    QString proc = _preparedProcess;
+    QDir dir; dir.mkdir(set.value("databaseDir").toString() +st);
+
+    QString fn = set.value("databaseDir").toString() + st +
+            proc.replace("/", "_").replace(" ", "_") + "_" +
             QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss")+".json";
+
     qDebug() << "Saving run params to:"<<fn;
     QJsonDocument doc(stored);
     QFile saveFile(fn);

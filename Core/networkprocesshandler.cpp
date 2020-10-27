@@ -11,7 +11,7 @@
 
 QTextStream *hash_logfile = nullptr;
 
- inline QDataStream& operator<< (QDataStream& out, const std::vector<unsigned char>& args)
+inline QDataStream& operator<< (QDataStream& out, const std::vector<unsigned char>& args)
 {
     out << (quint64)args.size();
     for (const auto& val : args )
@@ -99,7 +99,7 @@ void NetworkProcessHandler::establishNetworkAvailability()
             soc->close();
             delete soc;
             continue;
-         }
+        }
 
         activeHosts << h;
 
@@ -218,7 +218,7 @@ void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
     qDebug() << "Pushing " << itemsPerServ << "processes to each server";
     // Perform server order reorganisation to ensure proper dispatch among servers
 
-//    qDebug() << "Starting with server" << last_serv_pos;
+    //    qDebug() << "Starting with server" << last_serv_pos;
 
     last_serv_pos = last_serv_pos % procsList.size();
 
@@ -227,8 +227,8 @@ void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
     for (int i = 0; i < last_serv_pos; ++i)
         procsList.push_back(procsList.takeFirst());
 
-//    foreach (CheckoutHost* h, procsList)
-//        qDebug() << h->address << h->port;
+    //    foreach (CheckoutHost* h, procsList)
+    //        qDebug() << h->address << h->port;
 
     int lastItem = 0;
     foreach(CheckoutHost* h, procsList)
@@ -243,7 +243,7 @@ void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
             (*hash_logfile) << "Started Core "<< t["CoreProcess_hash"].toString() << Qt::endl;
             runningProcs[t["CoreProcess_hash"].toString()] = h;
         }
-//        qDebug() << "Starting" << h->address << h->port << ar.size();
+        //        qDebug() << "Starting" << h->address << h->port << ar.size();
         if (ar.size())
         {
             static const int subs = 10;
@@ -308,7 +308,7 @@ void NetworkProcessHandler::startProcess(CheckoutHost *h, QString process, QJson
 // Large image sets are at risk for the handling of data this may lock the user interface with heavy processing
 QJsonArray ProcessMessageStatusFunctor(CheckoutHost* h, QList<QString > hash, NetworkProcessHandler* owner)
 {
-   // qDebug()  << "Status Query" << hash.size() << h->address << h->port;
+    // qDebug()  << "Status Query" << hash.size() << h->address << h->port;
     // First Create the socket
     QTcpSocket* soc = new QTcpSocket;
     if (!soc)
@@ -400,7 +400,7 @@ void NetworkProcessHandler::getProcessMessageStatus(QString process, QList<QStri
 {
     QSettings set;
     int Server_query_max_hash = set.value("maxRefreshQuery", 2000).toInt();
-//    qDebug() << "Get States from server" << hash.size();
+    //    qDebug() << "Get States from server" << hash.size();
 
     if (_waiting_Update) {  /*qDebug() << "Waiting for last reply...";*/ return; }
 
@@ -471,17 +471,17 @@ void NetworkProcessHandler::queryPayload(QString ohash)
     QString hash=ohash;
     hash.truncate(32);
     //    CheckoutHost* h = procMapper.first().first();
-
+    (*hash_logfile) << "Payload " << ohash << Qt::endl;
     CheckoutHost* h = runningProcs[hash];
 
     if (!h)
     {
-        qDebug() << "queryPayload: Get Network process handler";
+        qDebug() << "queryPayload: Get Network process handler" << hash;
         return;
     }
     else
     {
-        runningProcs.remove(hash);
+        runningProcs.remove(ohash);
         qDebug() << "query Payload: Network Stack remaining hash" << runningProcs.size();
     }
 
@@ -510,18 +510,17 @@ void NetworkProcessHandler::deletePayload(QString hash)
 {
     //    CheckoutHost* h = procMapper.first().first();
     CheckoutHost* h = runningProcs[hash];
+    runningProcs.remove(hash);
 
     if (!h)
     {
-    //    qDebug() << "deletePayload: Get Network process handler" << hash;
+        //    qDebug() << "deletePayload: Get Network process handler" << hash;
         return;
     }
     else
     {
-      //  qDebug() << "deletePayload: sending delete command for" << hash;
-        runningProcs.remove(hash);
+        //  qDebug() << "deletePayload: sending delete command for" << hash;
         qDebug() << "Delete payload: Network Stack remaining hash" << runningProcs.size();
-
     }
 
     //  qDebug() << "Query Payload";
@@ -548,12 +547,13 @@ void NetworkProcessHandler::deletePayload(QString hash)
 
 void NetworkProcessHandler::processFinished(QString hash)
 {
-//    runningProcs.remove(hash);
-    qDebug() << "Process finished : Network Stack remaining hash" << runningProcs.size();
-    (*hash_logfile) << "Finished " << hash << Qt::endl;
+    if (runningProcs.contains(hash))
+        runningProcs.remove(hash);
 
-//    qDebug() << "Query clear mem" << hash;
-//    CheckoutProcess::handler().deletePayload(hash);
+    qDebug() << "Process finished : "<< hash << "Network Stack remaining hash" << runningProcs.size();
+    (*hash_logfile) << "Finished " << hash << Qt::endl;
+    //    qDebug() << "Query clear mem" << hash;
+    //    CheckoutProcess::handler().deletePayload(hash);
 
 }
 
@@ -690,7 +690,7 @@ void NetworkProcessHandler::handleMessageProcessStart(QString& keyword, QDataStr
 
     if (keyword == name)
     {
-//        qDebug()* << "Server return value" << name;
+        //        qDebug()* << "Server return value" << name;
         QByteArray arr;
         in >> arr;
         QJsonObject obj = QJsonDocument::fromBinaryData(arr).object();
@@ -704,13 +704,13 @@ void NetworkProcessHandler::handleMessageProcessStart(QString& keyword, QDataStr
         {
             QString coreHash = Core.at(i).toString("");
             QString hash = Run.at(i).toString("");
-            //qDebug() << "Process UID" << coreHash << hash;
-            // qDebug() << "..." << runningProcs[coreHash] << runningProcs[hash];
+
             CheckoutHost* h = runningProcs[coreHash];
             runningProcs.remove(coreHash);
             runningProcs[hash] = h;
 
             (*hash_logfile) << coreHash << "->" << hash << Qt::endl;
+
             emit processStarted(coreHash, hash);
         }
     }
@@ -830,9 +830,14 @@ void NetworkProcessHandler::readResponse(QTcpSocket* tcpSocket)
     // Only keep connection when starting processes
     tcpSocket->close();
     activeProcess.removeAll(tcpSocket);
-//    delete tcpSocket;
+    //    delete tcpSocket;
     tcpSocket->deleteLater();
     blockSize  = 0;
+}
+
+QStringList NetworkProcessHandler::remainingProcess()
+{
+    return runningProcs.keys();
 }
 
 void NetworkProcessHandler::displayError(QAbstractSocket::SocketError socketError)

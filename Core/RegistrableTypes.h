@@ -612,8 +612,10 @@ public:
             int val = 0;
             for (int i = 0; i < ar.size(); ++i)
                 if (cur == ar.at(i).toString())
+                {
                     val = i;
-
+                    break;  // Stop on first value if multiple of same are given
+                }
             _value->setValue(val);
         }
     }
