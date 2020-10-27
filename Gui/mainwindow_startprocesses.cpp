@@ -447,10 +447,11 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         }
         // startProcess is more a prepare process list function now
         QJsonArray tmp  = startProcess(sfm, objR, selectedChanns);
-        if (count == 0 && deb && tmp.size())
+        if (count == 0  && tmp.size())
         { // If debug mode copy the first start object to clipboard!
             QJsonDocument d(tmp[0].toObject());
-            qDebug() << d;
+            if (deb)
+                qDebug() << d;
             stored=tmp[0].toObject();
 
 //            QMimeData* data = new QMimeData;

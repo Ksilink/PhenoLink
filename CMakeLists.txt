@@ -44,28 +44,28 @@ execute_process(
   OUTPUT_VARIABLE   plugin_hash_short)
 string(STRIP "${plugin_hash_short}" plugin_hash_short)
 
-execute_process(
-   COMMAND           "${GIT_EXECUTABLE}"
-                     diff
-                     --no-ext-diff
-                     --quiet
-                     --exit-code
-   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-   RESULT_VARIABLE   git_return)
-if (git_return)
-   set(git_dirty "-dirtyApp")
-endif ()
-execute_process(
-   COMMAND           "${GIT_EXECUTABLE}"
-                     diff
-                     --no-ext-diff
-                     --quiet
-                     --exit-code
-   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/../CheckoutPlugins"
-   RESULT_VARIABLE   git_return)
-if (git_return)
-       set(git_dirty "${git_dirty}-dirtyPlugins")
-endif ()
+#execute_process(
+#   COMMAND           "${GIT_EXECUTABLE}"
+#                     diff
+#                     --no-ext-diff
+#                     --quiet
+#                     --exit-code
+#   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+#   RESULT_VARIABLE   git_return)
+#if (git_return)
+#   set(git_dirty "-dirtyApp")
+#endif ()
+#execute_process(
+#   COMMAND           "${GIT_EXECUTABLE}"
+#                     diff
+#                     --no-ext-diff
+#                     --quiet
+#                     --exit-code
+#   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/../CheckoutPlugins"
+#   RESULT_VARIABLE   git_return)
+#if (git_return)
+#       set(git_dirty "${git_dirty}-dirtyPlugins")
+#endif ()
 
 
 message(STATUS "With App git hash ${app_hash_short}-${plugin_hash_short}${git_dirty}")
