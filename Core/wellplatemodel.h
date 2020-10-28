@@ -468,7 +468,7 @@ public:
 
     QList<SequenceFileModel *> addProcessResultImage(QJsonObject &data);
     SequenceFileModel *addProcessResultSingleImage(QJsonObject &data);
-    SequenceFileModel *addProcessResultSingleImage(QJsonObject &data, QString processHash, int procId, bool displayed);
+//    SequenceFileModel *addProcessResultSingleImage(QJsonObject &data, QString processHash, int procId, bool displayed);
 
     QList<QString> &getTemporaryFiles();
 

@@ -27,5 +27,6 @@
         <file alias="python.png">Images/Python.png</file>
         <file alias="configuration.png">Images/configuration.png</file>
         <file alias="copy.png">Images/copy.png</file>
+        <file alias="cancel.png">Images/cancel.png</file>
     </qresource>
 </RCC>

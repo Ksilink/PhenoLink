@@ -127,18 +127,51 @@ void ScreensModel::recurse(QString dir, QStringList search, QStandardItem* paren
 {
     step = 1;
 
+    QStringList nowild, wild;
+
     for (QStringList::iterator it = search.begin(),e = search.end();
          it != e; ++it)
-    {
+        if (it->contains("*")) // First process non wild card dataset, to increase speed with large amount of data
+            wild << *it;
+        else
+            nowild << *it;
 
-        if (it->contains("*"))
+    bool done = false;
+
+    for (QStringList::iterator it = nowild.begin(),e = nowild.end();
+         it != e && !done ; ++it)
+    {
+        QFileInfo i(dir + "/" + *it);
+        if (i.exists())
+        {
+            parent->setData(i.absoluteFilePath(), Qt::UserRole + 4);
+            //          qDebug() << i.absoluteFilePath();
+            parent->setFlags(parent->flags() | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+            parent->setData(Qt::Unchecked, Qt::CheckStateRole);
+            if (pparent)
+            {
+                pparent->setFlags(parent->flags() | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+                pparent->setData(Qt::Unchecked, Qt::CheckStateRole);
+            }
+            if (gpparent)
+            {
+                gpparent->setFlags(parent->flags() | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+                gpparent->setData(Qt::Unchecked, Qt::CheckStateRole);
+            }
+            done = true;
+        }
+    }
+    if (!done) // if already process can skip this
+    {
+        for (QStringList::iterator it = wild.begin(),e = wild.end();
+             it != e && ! done ; ++it)
         {
             QDir glob(dir);
             QFileInfoList ff = glob.entryInfoList(QStringList() << *it, QDir::Files);
             foreach (QFileInfo i, ff)
             {
                 parent->setData(i.absoluteFilePath(), Qt::UserRole + 4);
-//                qDebug() << i.absoluteFilePath();
+                //                qDebug() << i.absoluteFilePath();
                 parent->setFlags(parent->flags() | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
                 parent->setData(Qt::Unchecked, Qt::CheckStateRole);
                 if (pparent)
@@ -151,27 +184,8 @@ void ScreensModel::recurse(QString dir, QStringList search, QStandardItem* paren
                     gpparent->setFlags(parent->flags() | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
                     gpparent->setData(Qt::Unchecked, Qt::CheckStateRole);
                 }
-            }
-        }
-        else
-        {
-            QFileInfo i(dir + "/" + *it);
-            if (i.exists())
-            {
-                parent->setData(i.absoluteFilePath(), Qt::UserRole + 4);
-                //          qDebug() << i.absoluteFilePath();
-                parent->setFlags(parent->flags() | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
-                parent->setData(Qt::Unchecked, Qt::CheckStateRole);
-                if (pparent)
-                {
-                    pparent->setFlags(parent->flags() | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
-                    pparent->setData(Qt::Unchecked, Qt::CheckStateRole);
-                }
-                if (gpparent)
-                {
-                    gpparent->setFlags(parent->flags() | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
-                    gpparent->setData(Qt::Unchecked, Qt::CheckStateRole);
-                }
+                done = true;
+                break;
             }
         }
     }
@@ -196,14 +210,14 @@ void ScreensModel::addDirectoryTh(QString &dir)
 
 QStandardItem* ScreensModel::addDirectory(QString &dir)
 {
-	//qDebug() << "Addding directory scan: " << dir;
+    //qDebug() << "Addding directory scan: " << dir;
     QFileInfo f(dir);
 
     QString dispName = f.completeBaseName();
 
     QStringList search = CheckoutDataLoader::handler().handledFiles();
 
-//	qDebug() << "Data loader file patterns: " << search;
+    //	qDebug() << "Data loader file patterns: " << search;
 
 
     QStandardItem* item = new QStandardItem(dispName);

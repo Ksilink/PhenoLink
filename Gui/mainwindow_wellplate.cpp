@@ -216,6 +216,8 @@ void MainWindow::on_toolButton_clicked()
 
     /// FIXME: Need to construct some plugin based solution to add query data
     menu.addAction("&Add data directory", this, SLOT(addDirectory()));
+    menu.addAction("Delete All dirs", this, SLOT(clearDirectories()));
+
 
     QStandardItem* root = mdl->invisibleRootItem();
     QMenu *del = menu.addMenu(tr("&Delete"));

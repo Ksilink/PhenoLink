@@ -701,6 +701,20 @@ void MainWindow::conditionChanged(QWidget* sen, int val)
 
 }
 
+void MainWindow::clearDirectories()
+{
+    QStandardItem* root = mdl->invisibleRootItem();
+    QStringList l;
+    for (int i = 0; i < root->rowCount(); ++i)
+    {
+        QStandardItem* item = root->child(i);
+        l << item->text();
+    }
+
+    for (auto s: l)  deleteDirPath(s);
+
+}
+
 void MainWindow::conditionChanged(int val)
 {
     QWidget* sen = dynamic_cast<QWidget*>(sender());
@@ -1767,6 +1781,20 @@ void MainWindow::setDataIcon()
     QSettings q;
     q.setValue(QString("Icons/%1").arg(ui->treeView->model()->data(_icon_model).toString()), v);
 }
+
+void MainWindow::rmDirectory()
+{
+    QStandardItem* root = mdl->invisibleRootItem();
+    root->removeRow(_icon_model.row());
+}
+
+void MainWindow::loadPlate()
+{
+    // Set selection
+    mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
+    on_loadSelection_clicked();
+}
+
 bool MainWindow::close()
 {
     //  CheckoutProcess::handler().exitServer();
@@ -1787,14 +1815,23 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
     {
         QMenu menu(this);
 
+        auto *ico = menu.addMenu("Set Icon");
+        menu.addAction("Load plate", this, SLOT(loadPlate()));
+        menu.addSeparator();
+        menu.addAction("add Directory", this, SLOT(addDirectory()));
+        menu.addAction("remove Directory", this, SLOT(rmDirectory()));
+        menu.addSeparator();
+        menu.addAction("clear all Directories", this, SLOT(clearDirectories()));
+
         for (int i = 0; i < 15; ++i)
         {
             QIcon cmic(QString(":/MicC%1.png").arg(i));
             QAction* nmic = new QAction(cmic, tr("&Set Icon"), this);
             connect(nmic, SIGNAL(triggered()), this, SLOT(setDataIcon()));
-            menu.addAction(nmic);
+            ico->addAction(nmic);
             nmic->setData(i);
         }
+
 
         this->_icon_model = idx;
 

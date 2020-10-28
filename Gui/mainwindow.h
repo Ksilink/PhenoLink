@@ -110,6 +110,7 @@ private slots:
     void deleteDirectoryPath();
     void on_loadSelection_clicked();
     void addDirectory();
+    void clearDirectories();
     void deleteDirPath(QString dir);
     void loadSelection(QStringList checked);
     void on_actionOpen_Single_Image_triggered();
@@ -125,6 +126,8 @@ private slots:
     void on_actionPick_Intensities_toggled(bool arg1);
 
     void setDataIcon();
+    void rmDirectory();
+    void loadPlate();
     void databaseModified();
     void on_actionStandard_toggled(bool arg1);
     void on_actionAdvanced_User_toggled(bool arg1);
