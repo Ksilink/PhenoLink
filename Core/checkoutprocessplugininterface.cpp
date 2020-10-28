@@ -12,10 +12,6 @@ QMutex CheckoutProcessPluginInterface::mutex(QMutex::NonRecursive);
 QMap<QString, QVector<cv::Mat*> > CheckoutProcessPluginInterface::_hashtoBias;
 QMap<QString, int > CheckoutProcessPluginInterface::_hashtoBiasCount;
 
-
-
-
-
 CheckoutProcessPluginInterface::CheckoutProcessPluginInterface(): _state(NotStarted)
 {
     _infos << QString("[%1]").arg((quint64)QThread::currentThreadId());
@@ -307,7 +303,7 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
 
         p->write(cobj);
 
-        qDebug() << "Payload" << cobj["Payload"];
+       // qDebug() << "Payload" << cobj["Payload"];
 
         cobj.remove("Comment");
         cobj.remove("CoreProcess_hash");
@@ -318,27 +314,6 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
         //        }
 
     }
-
-    //    qDebug() <<"Finisehd results";
-
-    //  foreach ( RegistrableParent* regs, _parameters)
-    //    {
-
-
-
-    //      RegistrableImageParent* im = dynamic_cast< RegistrableImageParent*>(regs);
-    //      if (im)
-    //        {
-    //          QJsonArray params = _callParams["Parameters"].toArray();
-    //          for (int i = 0; i < params.size(); ++i)
-    //            {
-    //              if (params[i].toObject()["Tag"] == im->tag())
-    //                {
-    //                 // qDebug() << params[i].toObject();
-    //                }
-    //            }
-    //        }
-    //    }
 
     ob["Infos"] = QJsonArray::fromStringList(_infos);
     ob["LoadingTime"] = _result["LoadingTime"];
@@ -353,8 +328,6 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     ob["shallDisplay"] = _shallDisplay;
     ob["ProcessStartId"] = processStartId;
     ob["CommitName"] = _callParams["CommitName"].toString();
-
-
 
     if (_state == Finished)
         ob["Result"] = _result;

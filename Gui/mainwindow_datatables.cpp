@@ -434,11 +434,12 @@ void MainWindow::networkProcessFinished(QJsonObject data)
     int procId = data["ProcessStartId"].toInt();
     QString processHash = data["Hash"].toString();
 
-    //qDebug() << data;
+//    qDebug() << "Object to finalize: " << data;
 
     bool removeHash = true;
 
     QJsonArray ar = data["Data"].toArray();
+
     for (int i = 0; i < ar.size(); ++i)
     {
         //        QCoreApplication::processEvents();
@@ -458,7 +459,7 @@ void MainWindow::networkProcessFinished(QJsonObject data)
             bool should_delete = ob.contains("isOptional") && !ob["optionalState"].toBool();
 
             //                                qDebug() << "Query payload" << dhash;
-            QList<QString> hashes; hashes << dhash;
+            QList<QString> hashes; //hashes << dhash;
             if (!should_delete) _waitingForImages[dhash] = ob;
             if (ob.contains("Payload"))
             {

@@ -38,3 +38,4 @@ CMakeLists.txt.user
 CMakeLists.txt.user
 *.pyc
 out/
+*.autosave

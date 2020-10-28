@@ -448,15 +448,12 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         // startProcess is more a prepare process list function now
         QJsonArray tmp  = startProcess(sfm, objR, selectedChanns);
         if (count == 0  && tmp.size())
-        { // If debug mode copy the first start object to clipboard!
+        {
             QJsonDocument d(tmp[0].toObject());
             if (deb)
                 qDebug() << d;
             stored=tmp[0].toObject();
 
-//            QMimeData* data = new QMimeData;
-//            data->setText(QString(d.toJson()));
-//            QApplication::clipboard()->setMimeData(data);
             deb = false;
         }
         adapt[sfm->getOwner()->name()] += tmp.size();
@@ -683,8 +680,6 @@ void MainWindow::startProcessRun()
         _StatusProgress->setFormat("%v/%m");
     }
     _StatusProgress->setRange(0,0);
-//
-
 
     QFuture<void> future = QtConcurrent::run(this, &MainWindow::startProcessOtherStates,
                                              selectedChanns, lsfm, started, tags_map);
@@ -692,10 +687,7 @@ void MainWindow::startProcessRun()
     _watchers.insert(watcher);
 
 
-    // if (started)
-    //    {
     QPushButton* s = qobject_cast<QPushButton*>(sender());
     if (s) s->setDisabled(true);
-    //    }
 
 }
