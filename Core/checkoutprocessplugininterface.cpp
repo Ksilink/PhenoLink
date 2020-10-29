@@ -239,6 +239,11 @@ void CheckoutProcessPluginInterface::setColormap(void *data, CheckoutProcessPlug
     }
 }
 
+QString CheckoutProcessPluginInterface::user()
+{
+    return _callParams["Username"].toString()+ "@" +  _callParams["Computer"].toString();
+}
+
 QJsonObject CheckoutProcessPluginInterface::createStatusMessage()
 {
     QJsonObject ob;

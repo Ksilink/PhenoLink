@@ -81,6 +81,7 @@ public:
         //       trayIconMenu->addAction(maximizeAction);
         //       trayIconMenu->addAction(restoreAction);
         //       trayIconMenu->addSeparator();
+        _cancelMenu = trayIconMenu->addMenu("Cancel Processes:");
         trayIconMenu->addAction(quitAction);
 
         trayIcon = new QSystemTrayIcon(this);
@@ -89,7 +90,7 @@ public:
         trayIcon->setToolTip(QString("Checkout Server listenning on port %1").arg(sets.value("ServerPort", 13378).toUInt()));
         trayIcon->show();
 
-        startTimer(1000);
+        startTimer(2000);
 
     }
 
@@ -106,15 +107,49 @@ public:
 
         CheckoutProcess& procs = CheckoutProcess::handler();
         int npro = procs.numberOfRunningProcess();
+        QString tooltip;
         if (npro != 0)
-            trayIcon->setToolTip(QString("Checkout Server processing %1 requests").arg(npro));
+            tooltip = QString("Checkout Server processing %1 requests").arg(npro);
         else
-            trayIcon->setToolTip(QString("Checkout Server listenning on port %1").arg(_serv->serverPort()));
+            tooltip = QString("Checkout Server listenning on port %1").arg(_serv->serverPort());
+
+        QStringList missing_users;
+        for (auto user : procs.users())
+        {
+            tooltip = QString("%1\r\n%2").arg(tooltip).arg(user);
+            bool missing = true;
+            for (auto me: _users)
+                if (me->text() == user)
+                {
+                    missing = false;
+                    break;
+                }
+            if (missing) missing_users << user;
+        }
+
+        for (auto old: _users)
+        {
+            bool rem = true;
+            for (auto ne: procs.users())
+            {
+                if (ne == old->text())
+                    rem = false;
+            }
+            if (rem)
+                _users.removeOne(old);
+        }
+        trayIcon->setToolTip(tooltip);
 
         if (lastNpro != npro && npro == 0)
             trayIcon->showMessage("Checkout Server", "Checkout server has finished all his process");
 
         lastNpro = npro;
+
+        for (auto user: missing_users)
+            _users.append(_cancelMenu->addAction(user));
+
+
+
     }
 
 
@@ -126,8 +161,19 @@ public slots:
         qApp->quit();
     }
 
+    void cancelUser()
+    {
+        // Play with QSender grab name & call QProcess Cancel func.
+        QAction* origin = qobject_cast<QAction*>(sender());
+        if (!origin) return;
+        QString user = origin->text();
+        CheckoutProcess::handler().cancelUser(user);
+    }
+
 protected:
     QAction* quitAction;
+    QMenu*   _cancelMenu;
+    QList<QAction*> _users;
 
     QSystemTrayIcon* trayIcon;
     QMenu* trayIconMenu;

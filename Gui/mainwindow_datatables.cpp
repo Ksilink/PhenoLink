@@ -464,10 +464,10 @@ void MainWindow::networkProcessFinished(QJsonObject data)
             if (ob.contains("Payload"))
             {
                 QJsonArray ar = ob["Payload"].toArray();
-                for (size_t i = 1; i < (size_t)ar.size(); ++i)
+                for (size_t i = 0; i < (size_t)ar.size(); ++i)
                  {
-
-                    QString hh = QString("%1%2").arg(dhash).arg(i);
+                    
+                    QString hh = ar[i].toObject()["DataHash"].toString(); //QString("%1%2").arg(dhash).arg(i);
 
 //                    qDebug() << hh;
                     if (!should_delete)  _waitingForImages[hh] = ob;

@@ -61,6 +61,13 @@ public:
   bool hasPayload(QString hash);
   unsigned errors();
 
+
+
+  QStringList users();
+  void removeRunner(QString user, void* run);
+
+  void cancelUser(QString user);
+
 protected slots:
 
   void updatePath();
@@ -108,6 +115,8 @@ signals:
    QMap<QString, QSharedMemory*> _inmems;
    QMap<QString, CheckoutProcessPluginInterface*> _stored;
    
+   QMap<QString, QList<void*> > _peruser_runners;
+
    int* _counter;
    QMutex mutex_dataupdate;
 

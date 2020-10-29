@@ -171,6 +171,7 @@ public:
             timer.start();
             p=4;
             plugin->exec();
+            CheckoutProcess::handler().removeRunner(plugin->user(), (void*)this);
             p=5;
             plugin->finished();
             p=6;
@@ -196,7 +197,7 @@ public:
     }
 
 protected:
-    CheckoutProcessPluginInterface* plugin;
+    CheckoutProcessPluginInterface* plugin;    
     QString _hash;
 
 };
@@ -366,6 +367,9 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
 
             //           qDebug() << "Starting process";
             PluginRunner* runner = new PluginRunner(plugin, hash);
+
+            QString key = params["Username"].toString()+ "@" +  params["Computer"].toString();
+            _peruser_runners[key].push_back((void*)runner);
             QThreadPool::globalInstance()->start(runner);
         }
     }
@@ -642,6 +646,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
                 if (tc == 0)
                 {
                     qDebug() << "GUI Hash finished" << hash;
+                    qDebug() << ob;
                     NetworkProcessHandler::handler().processFinished(hash);
                     // Last object of the running process, check for the field CommitName in ob & commit to the database if not empty
 
@@ -837,6 +842,22 @@ bool CheckoutProcess::hasPayload(QString hash)
 unsigned CheckoutProcess::errors()
 {
     return NetworkProcessHandler::handler().errors();
+}
+
+QStringList CheckoutProcess::users() { return _peruser_runners.keys(); }
+
+void CheckoutProcess::removeRunner(QString user, void *run) {
+    _peruser_runners[user].removeOne(run);
+    if (_peruser_runners.empty())
+        _peruser_runners.remove(user);
+}
+
+void CheckoutProcess::cancelUser(QString user)
+{
+    for (auto q : _peruser_runners[user])
+        QThreadPool::globalInstance()->tryTake(static_cast<PluginRunner*>(q));
+    _peruser_runners[user].clear();
+    _peruser_runners.remove(user);
 }
 
 std::vector<unsigned char> CheckoutProcess::detachPayload(QString hash)

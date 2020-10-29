@@ -323,6 +323,7 @@ public:
 
 
     void setColormap(void* data, Colormap color);
+    QString user();
 
 protected:
     QString path;

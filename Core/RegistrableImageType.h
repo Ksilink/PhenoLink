@@ -27,25 +27,24 @@ public:
         return *this;
     }
 
+    void setProperties(const QJsonObject& json, QString prefix=QString())
+    {
+        if (json.contains("Properties") && json["Properties"].isObject())
+        {
+            auto ob = json["Properties"].toObject();
+            for (auto ks : ob.keys())
+            {
+                if (!ob[ks].toString().isEmpty())
+                    _metaData[prefix+ks] = ob[ks].toString();
+            }
+        }
+    }
+
     virtual void read(const QJsonObject& json)
     {
         RegistrableParent::read(json);
-        qDebug() << json;
-        if (json.contains("Properties"))
-        {
-
-            //            json["Properties"].toArray().toString
-            auto ob = json["Properties"].toObject();
-            qDebug() << ob;
-            for (auto q : _meta)
-            {
-                if (ob.contains(q))
-                {
-                    _metaData[q] = ob[q].toString();
-                }
-            }
-
-        }
+    //    qDebug() << "Reading Meta:" << json;
+        setProperties(json);
 
         if (json.contains("splitted"))
             _splitted = json["splitted"].toBool();
@@ -137,7 +136,10 @@ public:
     bool imageAutoloading() { return _autoload; }
 
 
-    QString getMeta(QString me) { return _metaData[me]; }
+    QString getMeta(QString me) 
+    { 
+        return _metaData[me]; 
+    }
 
     // Unbias on load
     Self& unbias()
@@ -230,20 +232,9 @@ public:
         RegistrableImageParent::read(json);
         //    if (json.contains("asVectorImage"))
         //      _vectorImage = json["asVectorImage"].toBool();
-        if (json.contains("Properties"))
-        {
+        setProperties(json);
 
-            //            json["Properties"].toArray().toString
-            auto ob = json["Properties"].toObject();
-            for (auto q : _meta)
-            {
-                if (ob.contains(q))
-                {
-                    _metaData[q] = ob[q].toString();
-                }
-            }
 
-        }
         if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
         {
             QJsonArray t = json["ChannelNames"].toArray();
@@ -415,20 +406,8 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
-        if (json.contains("Properties"))
-        {
+        setProperties(json);
 
-            //            json["Properties"].toArray().toString
-            auto ob = json["Properties"].toObject();
-            for (auto q : _meta)
-            {
-                if (ob.contains(q))
-                {
-                    _metaData[q] = ob[q].toString();
-                }
-            }
-
-        }
         if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
         {
             QJsonArray t = json["ChannelNames"].toArray();
@@ -613,20 +592,8 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
-        if (json.contains("Properties"))
-        {
+        setProperties(json);
 
-            //            json["Properties"].toArray().toString
-            auto ob = json["Properties"].toObject();
-            for (auto q : _meta)
-            {
-                if (ob.contains(q))
-                {
-                    _metaData[q] = ob[q].toString();
-                }
-            }
-
-        }
         if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
         {
             QJsonArray t = json["ChannelNames"].toArray();
@@ -815,22 +782,8 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
-        qDebug() << json;
-        if (json.contains("Properties"))
-        {
+        setProperties(json);
 
-            //            json["Properties"].toArray().toString
-            auto ob = json["Properties"].toObject();
-            qDebug() << ob;
-            for (auto q : _meta)
-            {
-                if (ob.contains(q))
-                {
-                    _metaData[q] = ob[q].toString();
-                }
-            }
-
-        }
         if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
         {
             QJsonArray t = json["ChannelNames"].toArray();
@@ -938,17 +891,8 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
-        if (json.contains("Properties"))
-        {
-            auto ob = json["Properties"].toObject();
-            for (auto q : _meta)
-            {
-                if (ob.contains(q))
-                {
-                    _metaData[q] = ob[q].toString();
-                }
-            }
-        }
+        setProperties(json);
+
         if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
         {
             QJsonArray t = json["ChannelNames"].toArray();
@@ -1065,22 +1009,14 @@ public:
     {
         RegistrableImageParent::read(json);
         // Need to find out the metadata!!!
-        qDebug() << json;
-        QJsonArray data = json["Data"].toArray();
+         QJsonArray data = json["Data"].toArray();
+       
+
         for (int i = 0; i < data.size(); i++)
         {
             auto d = data.at(i).toObject();
-            if (d.contains("Properties"))
-            {
-                auto ob = d["Properties"].toObject();
-                for (auto q : _meta)
-                {
-                    if (ob.contains(q))
-                    {
-                        _metaData[QString("f%1%2").arg(i).arg(q)] = ob[q].toString();
-                    }
-                }
-            }
+            setProperties(d,QString("f%1").arg(i));
+           
             if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
             {
                 QJsonArray t = d["ChannelNames"].toArray();
@@ -1198,17 +1134,8 @@ public:
         for (int i = 0; i < data.size(); i++)
         {
             auto d = data.at(i).toObject();
-            if (d.contains("Properties"))
-            {
-                auto ob = d["Properties"].toObject();
-                for (auto q : _meta)
-                {
-                    if (ob.contains(q))
-                    {
-                        _metaData[QString("f%1%2").arg(i).arg(q)] = ob[q].toString();
-                    }
-                }
-            }
+            setProperties(d, QString("f%1").arg(i));
+            
             if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
             {
                 QJsonArray t = d["ChannelNames"].toArray();
@@ -1330,17 +1257,8 @@ public:
         for (int i = 0; i < data.size(); i++)
         {
             auto d = data.at(i).toObject();
-            if (d.contains("Properties"))
-            {
-                auto ob = d["Properties"].toObject();
-                for (auto q : _meta)
-                {
-                    if (ob.contains(q))
-                    {
-                        _metaData[QString("f%1%2").arg(i).arg(q)] = ob[q].toString();
-                    }
-                }
-            }
+            setProperties(d, QString("f%1").arg(i));
+
             if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
             {
                 QJsonArray t = d["ChannelNames"].toArray();
@@ -1463,17 +1381,8 @@ public:
         for (int i = 0; i < data.size(); i++)
         {
             auto d = data.at(i).toObject();
-            if (d.contains("Properties"))
-            {
-                auto ob = d["Properties"].toObject();
-                for (auto q : _meta)
-                {
-                    if (ob.contains(q))
-                    {
-                        _metaData[QString("f%1%2").arg(i).arg(q)] = ob[q].toString();
-                    }
-                }
-            }
+            setProperties(d, QString("f%1").arg(i));
+           
             if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
             {
                 QJsonArray t = d["ChannelNames"].toArray();
@@ -1597,17 +1506,8 @@ public:
         for (int i = 0; i < data.size(); i++)
         {
             auto d = data.at(i).toObject();
-            if (d.contains("Properties"))
-            {
-                auto ob = d["Properties"].toObject();
-                for (auto q : _meta)
-                {
-                    if (ob.contains(q))
-                    {
-                        _metaData[QString("f%1%2").arg(i).arg(q)] = ob[q].toString();
-                    }
-                }
-            }
+            setProperties(d, QString("f%1").arg(i));
+
             if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
             {
                 QJsonArray t = d["ChannelNames"].toArray();

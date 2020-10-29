@@ -1859,12 +1859,12 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QJsonObject& dat
     bool displayed = data["shallDisplay"].toBool();
     for (int i = 0; i < ar.size(); ++i)
     {
-//        QJsonObject ob = ar.at(i).toObject();
+        QJsonObject ob = ar.at(i).toObject();
 
-//        SequenceFileModel* mdl = addProcessResultSingleImage(ob, processHash, procId, displayed);
+        SequenceFileModel* mdl = addProcessResultSingleImage(ob);// , processHash, procId, displayed);
 
-//        if (mdl && !mdls.contains(mdl))
-//            mdls << mdl;
+        if (mdl && !mdls.contains(mdl))
+            mdls << mdl;
 
     }
     return mdls;
