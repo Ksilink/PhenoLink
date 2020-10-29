@@ -436,10 +436,7 @@ void MainWindow::networkProcessFinished(QJsonObject data)
 
 //    qDebug() << "Object to finalize: " << data;
 
-    bool removeHash = true;
-
     QJsonArray ar = data["Data"].toArray();
-
     for (int i = 0; i < ar.size(); ++i)
     {
         //        QCoreApplication::processEvents();
@@ -479,18 +476,19 @@ void MainWindow::networkProcessFinished(QJsonObject data)
             foreach (QString h, hashes)
                 if (should_delete)
                 {
-                    removeHash=false;
+                    //removeHash=false;
                     CheckoutProcess::handler().deletePayload(h);
                 }
                 else
                 {
-                    removeHash = false;
+                    //removeHash = false;
                     CheckoutProcess::handler().queryPayload(h);
                 }
         }
     }
-//    if (removeHash)
-//        CheckoutProcess::handler().
+    CheckoutProcess::handler().finishedProcess(processHash);
+
+   
 
     foreach (ExperimentFileModel* mdl, ScreensHandler::getHandler().getScreens())
         if (ui->wellPlateViewTab->tabText(ui->wellPlateViewTab->currentIndex()) == mdl->name())

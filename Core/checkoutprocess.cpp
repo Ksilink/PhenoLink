@@ -69,10 +69,10 @@ QStringList CheckoutProcess::pluginPaths()
 {
     QStringList l;
     foreach(CheckoutProcessPluginInterface* plugin,  _plugins)
-    if (plugin)
-    {
-        l << plugin->getPath();
-    }
+        if (plugin)
+        {
+            l << plugin->getPath();
+        }
     return l;
 }
 
@@ -197,7 +197,7 @@ public:
     }
 
 protected:
-    CheckoutProcessPluginInterface* plugin;    
+    CheckoutProcessPluginInterface* plugin;
     QString _hash;
 
 };
@@ -223,7 +223,7 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
         _process_to_start[params["CoreProcess_hash"].toString()] = params;
         _display[params["CoreProcess_hash"].toString()] = true;
 
-      //  QSqlQuery q;
+        //  QSqlQuery q;
         QJsonObject pp(params);
         pp.remove("Comment");
         pp.remove("CommitName");
@@ -266,7 +266,7 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
 
 
         QJsonDocument doc(pp);
-      /*  if (! q.exec(QString("insert into Processes (process_tag, process_json, lastload) values ('%1', '%2', '%3');")
+        /*  if (! q.exec(QString("insert into Processes (process_tag, process_json, lastload) values ('%1', '%2', '%3');")
                      .arg(process)
                      .arg(QString(doc.toJson()).replace("'", " "))
                      .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss")))
@@ -326,13 +326,13 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
 
 void CheckoutProcess::restartProcessOnErrors()
 {
-   NetworkProcessHandler& handler = NetworkProcessHandler::handler();
-   QList<QPair<QString, QJsonArray> > errors = handler.erroneousProcesses();
+    NetworkProcessHandler& handler = NetworkProcessHandler::handler();
+    QList<QPair<QString, QJsonArray> > errors = handler.erroneousProcesses();
 
-  foreach (auto d, errors)
-  {
-      handler.startProcess(d.first, d.second);
-  }
+    foreach (auto d, errors)
+    {
+        handler.startProcess(d.first, d.second);
+    }
 
 }
 
@@ -633,7 +633,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
 
             QString hash=ob["Hash"].toString();
             _status.remove(hash);
-//            qDebug() << "GUI Finished Hash" << hash << _hash_to_save.contains(hash);
+            //            qDebug() << "GUI Finished Hash" << hash << _hash_to_save.contains(hash);
 
             hash_to_save_mtx.lock();
 
@@ -646,8 +646,10 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
                 if (tc == 0)
                 {
                     qDebug() << "GUI Hash finished" << hash;
-                    qDebug() << ob;
-                    NetworkProcessHandler::handler().processFinished(hash);
+                    //                    qDebug() << ob;
+
+
+
                     // Last object of the running process, check for the field CommitName in ob & commit to the database if not empty
 
                     _hash_to_save.remove(hash);
@@ -664,7 +666,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
             }
             //            else
             //          {
-            NetworkProcessHandler::handler().processFinished(ob["Hash"].toString());
+            //            NetworkProcessHandler::handler().processFinished(ob["Hash"].toString());
             emit processFinished(ob);
             //        }
 
@@ -735,11 +737,11 @@ void CheckoutProcess::finishedProcess(QString hash, QJsonObject result)
 
     delete intf;
 
-      qDebug() << "process finished, remaining" << _status.size();
-      qDebug() << "Removing" << hash;
+    qDebug() << "process finished, remaining" << _status.size();
+    qDebug() << "Removing" << hash;
     _status.remove(hash);
     _finished[hash] = result;
-    //    NetworkProcessHandler::handler().processFinished(hash);
+    //NetworkProcessHandler::handler().processFinished(hash);
 }
 
 unsigned CheckoutProcess::numberOfRunningProcess()
@@ -784,7 +786,7 @@ void CheckoutProcess::deletePayload(QString hash)
         NetworkProcessHandler::handler().deletePayload(hash);
 
     if (_inmems.contains(hash))
-    {   
+    {
         _inmems[hash]->detach();
         _inmems.remove(hash);
         QSharedMemory* m = _inmems[hash];
@@ -860,6 +862,11 @@ void CheckoutProcess::cancelUser(QString user)
     _peruser_runners.remove(user);
 }
 
+void CheckoutProcess::finishedProcess(QString dhash)
+{
+    NetworkProcessHandler::handler().processFinished(dhash);
+}
+
 std::vector<unsigned char> CheckoutProcess::detachPayload(QString hash)
 {
     std::vector<unsigned char> r;
@@ -874,7 +881,7 @@ std::vector<unsigned char> CheckoutProcess::detachPayload(QString hash)
             CheckoutProcessPluginInterface* p = _stored[hash];
 
             _stored.remove(hash);
-/*
+            /*
             QList<CheckoutProcessPluginInterface*> l = _stored.values();
             int cc = 0;
             foreach(CheckoutProcessPluginInterface* pt, l)

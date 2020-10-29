@@ -67,6 +67,7 @@ public:
   void removeRunner(QString user, void* run);
 
   void cancelUser(QString user);
+  void finishedProcess(QString dhash);
 
 protected slots:
 
