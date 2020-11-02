@@ -45,6 +45,7 @@ void CheckoutProcessPluginInterface::write(QJsonObject &json) const
     }
 
     json["Path"] = path;
+    json["PluginVersion"] = plugin_version();
     json["authors"] = QJsonArray::fromStringList(authors);
     json["Comment"] = comments;
     json["Parameters"] = params;

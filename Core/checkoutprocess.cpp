@@ -756,7 +756,7 @@ void CheckoutProcess::exitServer()
 
 void CheckoutProcess::queryPayload(QString hash)
 {
-    qDebug() << "get payload" << hash;
+    //qDebug() << "get payload" << hash;
 
     QSharedMemory mem(hash);
     if (mem.attach())
@@ -765,8 +765,6 @@ void CheckoutProcess::queryPayload(QString hash)
         size_t s = *(size_t*)mem.data();
         std::vector<unsigned char> data(s);
         std::memcpy(data.data(), ( char*)(mem.data())+sizeof(size_t), s);
-        //  QByteArray data(( char*)(mem.data())+sizeof(unsigned int), s);
-
 
         attachPayload(hash, data);
         mem.unlock();

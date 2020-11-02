@@ -82,6 +82,8 @@ public:
 
     CheckoutProcessPluginInterface();
 
+    virtual QString plugin_version() const { return "" ; }
+
     // This function is to be called in plugins constructors to declare to the handler what data is required as input
     // value is the plugin registered parameter
     // tag is a unique name for display and user query (enhence user displayed)

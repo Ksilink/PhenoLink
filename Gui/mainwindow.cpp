@@ -1402,6 +1402,9 @@ void MainWindow::setupProcessCall(QJsonObject obj)
 
     if (_shareTags) delete _shareTags;
     _shareTags = new QCheckBox("Share Tags");
+    // From now on, we force the transfert of tags to the server & back
+    _shareTags->setChecked(true);
+    _shareTags->hide();
 
 
     if (_commitName) delete _commitName;

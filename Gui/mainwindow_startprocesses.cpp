@@ -396,7 +396,8 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
         procArray.append(obj);
     }
     // Display first image set
-    qDebug() << procArray[0];
+    if (procArray.size() > 0)
+        qDebug() << procArray[0];
 
     //    handler.startProcess(_preparedProcess, procArray);
     if (procArray.size()) started = true;

@@ -16,9 +16,14 @@ class RegistrableImageParent: public RegistrableParent
     typedef RegistrableImageParent Self;
 
 public:
-    RegistrableImageParent(): _vectorImage(false), _splitted(false), _withMeta(false), _autoload(true), _unbias(0),_tiles(0)
+
+    enum ContentType { Image, Roi_cv_stats, Roi_rect, Histogram } ;
+
+
+    RegistrableImageParent(): _vectorImage(false), _splitted(false), _withMeta(false), _autoload(true), _unbias(0),_tiles(0), _content_type(Image)
     {
     }
+
 
     Self& channelsAsVector(bool splitted = false)
     {
@@ -179,6 +184,19 @@ public:
         return _vectorNames;
     }
 
+    RegistrableImageParent& setContentType(ContentType t)
+    {
+        _content_type = t;
+        return *this;
+    }
+
+
+    ContentType contentType()
+    {
+        return _content_type;
+    }
+
+
 protected:
     Colormap _colormap;
 
@@ -187,6 +205,7 @@ protected:
     bool        _autoload;
     bool        _unbias;
     unsigned        _tiles;
+    ContentType _content_type;
 
     QStringList _meta;
     QStringList _vectorNames;
