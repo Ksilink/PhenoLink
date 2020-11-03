@@ -138,6 +138,11 @@ cv::Mat ImageInfos::image(float scale, bool reload)
         else
             _image = cv::imread(_name.toStdString(), 2);
 
+        if (scale < 1.0) // Only resize after loading data
+            cv::resize(_image, _image, cv::Size(), scale, scale, cv::INTER_AREA);
+
+        _size = QSize(_image.cols, _image.rows);
+
         if (_image.empty())
         {
             CheckoutErrorHandler::getInstance().addError(QString("Loading image went wrong %1").arg(_name));
@@ -210,9 +215,7 @@ cv::Mat ImageInfos::image(float scale, bool reload)
         }
 
     }
-    if (scale < 1.0)
-        cv::resize(_image, _image, cv::Size(), scale, scale, cv::INTER_AREA);
-    //  _modified = false;
+
     return _image;
 }
 
@@ -428,6 +431,8 @@ void ImageInfos::Update()
     }
     _parent->modifiedImage();
 }
+
+QSize ImageInfos::imSize() { return _size; }
 
 QColor ImageInfos::getColor()
 {

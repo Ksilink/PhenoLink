@@ -490,14 +490,14 @@ void MainWindow::updateCurrentSelection()
     wwid = new QWidget;
     QVBoxLayout* bvl = new QVBoxLayout(wwid);
     bvl->setSpacing(1);
-
+     QSize pix;
     //  qDebug() << "Creating Controls" << channels;
     for (unsigned i = 0; i < channels; ++i)
     {
 
         ImageInfos* fo = inter->getChannelImageInfos(i + 1);
         //          qDebug() << "Adding " << i << QString("Channel%1").arg(i);
-
+        pix = fo->imSize();
         if (Q_UNLIKELY(!fo))        return;
 
         QWidget* wid = new QWidget;
@@ -591,6 +591,9 @@ void MainWindow::updateCurrentSelection()
     items.append(new QTreeWidgetItem(QStringList() << "timePoints" << QString("%2/%1").arg(inter->getTimePointCount()).arg(inter->getTimePoint())));
     items.append(new QTreeWidgetItem(QStringList() << "Fields" << QString("%2/%1").arg(inter->getFieldCount()).arg(inter->getField())));
     items.append(new QTreeWidgetItem(QStringList() << "Channels" << QString("%1").arg(channels)));
+
+    items.append(new QTreeWidgetItem(QStringList() << "Size" << QString("%1x%2").arg(pix.width()).arg(pix.height())));
+
     items.append(new QTreeWidgetItem(QStringList() << "Files" << QString("%1").arg(inter->getFile())));
 
 
@@ -708,7 +711,7 @@ void MainWindow::clearDirectories()
     for (int i = 0; i < root->rowCount(); ++i)
     {
         QStandardItem* item = root->child(i);
-        l << item->text();
+        l << item->data(Qt::ToolTipRole).toString();
     }
 
     for (auto s: l)  deleteDirPath(s);
@@ -1788,6 +1791,17 @@ void MainWindow::setDataIcon()
 void MainWindow::rmDirectory()
 {
     QStandardItem* root = mdl->invisibleRootItem();
+//    root->data()
+    QString dir = root->child(_icon_model.row())->data(Qt::ToolTipRole).toString();
+
+    QSettings set;
+    QStringList l = set.value("ScreensDirectory", QVariant(QStringList())).toStringList();
+    l.removeAll(dir);
+
+    set.setValue("ScreensDirectory", l);
+
+
+
     root->removeRow(_icon_model.row());
 }
 

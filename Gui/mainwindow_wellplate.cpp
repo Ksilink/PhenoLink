@@ -247,7 +247,6 @@ void MainWindow::deleteDirPath(QString dir)
 {
     QSettings set;
     QStringList l = set.value("ScreensDirectory", QVariant(QStringList())).toStringList();
-
     l.removeAll(dir);
 
     set.setValue("ScreensDirectory", l);

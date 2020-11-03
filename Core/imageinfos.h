@@ -140,6 +140,7 @@ public:
     QVector<int> getState();
 
     void Update();
+    QSize imSize();
 
 public slots:
     void changeColorState(int chan);
@@ -181,6 +182,7 @@ protected:
     int _channel;
     QString _colormap;
     bool _binarized;
+    QSize _size;
 };
 
 
