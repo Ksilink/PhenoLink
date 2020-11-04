@@ -786,6 +786,9 @@ void paletizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
 template <bool Saturate, bool Inverted>
 void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image,  cv::Mat& bias, QImage& toPix, int rows, int cols, bool binarize)
 {
+    if (bias.empty())
+        colorizeImage<Saturate, Inverted>(imifo, image, toPix, rows, cols, binarize);
+
     const float mi = imifo->getDispMin(),
             ma = imifo->getDispMax();
     const int R = imifo->Red();

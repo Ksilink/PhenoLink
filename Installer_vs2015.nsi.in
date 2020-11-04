@@ -3,7 +3,7 @@
 OutFile "Checkout_InstallerV@Checkout_VERSION_MAJOR@.@Checkout_VERSION_MINOR@.@Checkout_VERSION_COMPLEMENT@@Checkout_VERSION_RELEASE@.exe"
 
 SetCompressor /FINAL /SOLID lzma
-SetCompressorDictSize 8
+SetCompressorDictSize 4
 !define MUI_COMPONENTSPAGE_SMALLDESC ;No value
 
 !insertmacro MUI_PAGE_COMPONENTS

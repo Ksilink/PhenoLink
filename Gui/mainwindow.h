@@ -128,6 +128,9 @@ private slots:
     void setDataIcon();
     void rmDirectory();
     void loadPlate();
+    void loadPlateFirst();
+    void loadPlateDisplay3();
+
     void databaseModified();
     void on_actionStandard_toggled(bool arg1);
     void on_actionAdvanced_User_toggled(bool arg1);

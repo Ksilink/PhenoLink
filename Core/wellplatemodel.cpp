@@ -772,6 +772,42 @@ void SequenceFileModel::addFile(int timePoint, int fieldIdx, int Zindex, int cha
     _data[fieldIdx][Zindex][timePoint][channel] = file;
 }
 
+void SequenceFileModel::addMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name, StructuredMetaData meta)
+{
+    _sdata[fieldIdx][Zindex][timePoint][channel][name] = meta;
+}
+
+StructuredMetaData &SequenceFileModel::getMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name)
+{
+    static StructuredMetaData r;
+
+    return r;
+}
+
+QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, int fieldIdx, int Zindex, int channel)
+{
+    static QMap<QString, StructuredMetaData> r;
+return r;
+}
+
+QStringList SequenceFileModel::getMetaNames(int timePoint, int fieldIdx, int Zindex, int channel)
+{
+    return QStringList();
+}
+
+bool SequenceFileModel::hasMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name )
+{
+    if (name.isEmpty())
+    {
+
+    }
+    else
+    {
+
+    }
+    return false;
+}
+
 bool SequenceFileModel::hasChannel(int timePoint, int fieldIdx, int Zindex, int channel)
 {
     return  _data[fieldIdx][Zindex][timePoint].contains(channel);
@@ -1674,7 +1710,8 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
 
     if (ob["isImage"].toBool())
     {
-        qDebug() << "Add result object:" << ob;
+        // Find whats is the content type & store it accordingly
+        //        qDebug() << "Add result object:" << ob;
         //      if (ob.contains("DataHash") && !ob["DataHash"].toString().isEmpty())
         if (ob.contains("isOptional") && ob["optionalState"].toBool())
         {
@@ -2599,3 +2636,11 @@ void MemoryHandler::release(QString vfs)
     if (_cmap.contains(vfs))
         _cmap.remove(vfs);
 }
+
+StructuredMetaData::StructuredMetaData(Dictionnary dict): DataProperty(dict)
+{
+}
+
+cv::Mat &StructuredMetaData::content() { return _content; }
+
+void StructuredMetaData::setContent(cv::Mat cont) { _content = cont; }

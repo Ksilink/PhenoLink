@@ -91,6 +91,9 @@ public:
         if (_withMeta)
             json["Properties"] =  QJsonArray::fromStringList(_meta);
 
+        std::vector<QString> map = {"Image", "Roi_cv_stats", "Roi_rect", "Histogram"};
+        json["ContentType"] = map[_content_type];
+
         if (_colormap.size() > 0)
         {
             QJsonObject ob;

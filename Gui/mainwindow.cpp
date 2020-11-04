@@ -1812,6 +1812,51 @@ void MainWindow::loadPlate()
     on_loadSelection_clicked();
 }
 
+void MainWindow::loadPlateFirst()
+{
+    // Set selection
+    mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
+    on_loadSelection_clicked();
+
+    ScreensHandler& h = ScreensHandler::getHandler();
+    Screens& s = h.getScreens();
+    if (s.front())
+    {
+        auto l = s.front()->getValidSequenceFiles();
+        if (l.size())
+            l.front()->setSelectState(true);
+    }
+    this->_scrollArea->addSelectedWells();
+
+}
+
+void MainWindow::loadPlateDisplay3()
+{
+    mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
+    on_loadSelection_clicked();
+
+    ScreensHandler& h = ScreensHandler::getHandler();
+    Screens& s = h.getScreens();
+    if (s.front())
+    {
+        auto l = s.front()->getValidSequenceFiles();
+        if (l.size())
+        {
+            l.front()->setSelectState(true);
+            l.back()->setSelectState(true);
+            int ss = l.size();
+            if (ss > 3)
+            {
+                auto it = l.begin();
+                std::advance(it, ss/2);
+                (*it)->setSelectState(true);
+            }
+        }
+    }
+    this->_scrollArea->addSelectedWells();
+
+}
+
 bool MainWindow::close()
 {
     //  CheckoutProcess::handler().exitServer();
@@ -1834,6 +1879,9 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
 
         auto *ico = menu.addMenu("Set Icon");
         menu.addAction("Load plate", this, SLOT(loadPlate()));
+        auto mm = menu.addMenu("Load && Display");
+        mm->addAction("first well", this, SLOT(loadPlateFirst()));
+        mm->addAction("3 wells", this, SLOT(loadPlateDisplay3()));
         menu.addSeparator();
         menu.addAction("add Directory", this, SLOT(addDirectory()));
         menu.addAction("remove Directory", this, SLOT(rmDirectory()));

@@ -22,8 +22,7 @@
 
 #include "Core/Dll.h"
 
-
-
+#include <opencv2/opencv.hpp>
 
 class MemoryHandler
 {
@@ -75,19 +74,41 @@ protected:
     QMap<QString, QVariant> _properties;
 };
 
-
-
 class ExperimentFileModel;
+
+class DllCoreExport StructuredMetaData: public DataProperty
+{ // Place holder for cv::Mat used for Histograms, Roi, Roi_CC_Stats (from opencv connectedCompo)
+
+public:
+    StructuredMetaData(Dictionnary dict = Dictionnary());
+
+    cv::Mat& content();
+    void setContent(cv::Mat cont);
+
+   protected:
+    cv::Mat _content;
+
+};
 
 class DllCoreExport SequenceFileModel: public DataProperty
 {
 public:
     SequenceFileModel(Dictionnary dict = Dictionnary());
 
+    // For imaging
     typedef QMap<int, QString> Channel;
     typedef QMap<int, Channel> TimeLapse;
     typedef QMap<int, TimeLapse> ImageStack;
     typedef QMap<int, ImageStack> FieldImaging;
+
+    // For structured metadata content
+    typedef QMap<int, QMap<QString, StructuredMetaData> > SChannel;
+    typedef QMap<int, SChannel> STimeLapse;
+    typedef QMap<int, STimeLapse> SImageStack;
+    typedef QMap<int, SImageStack> SFieldImaging;
+
+
+
 
     unsigned getTimePointCount() const;
     unsigned getFieldCount() const;
@@ -98,13 +119,23 @@ public:
     //  MeasurementRecordFileModel& getAcquisition(int Field);
 
     void addFile(int timePoint, int fieldIdx, int Zindex, int Channel, QString file);
-    // This model need to handle data set as well
+    void addMeta(int timePoint, int fieldIdx, int Zindex, int Channel, QString name, StructuredMetaData meta);
 
+
+    // This model need to handle data set as well
     QString getFile(int timePoint, int fieldIdx, int Zindex, int channel);
     QString getFileChanId(int timePoint, int fieldIdx, int Zindex, int channel);
 
     Channel& getChannelsFiles(int timePoint, int fieldIdx, int Zindex);
     QSet<int> getChannelsIds();
+
+    StructuredMetaData& getMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name);
+    QMap<QString, StructuredMetaData>& getMetas(int timePoint, int fieldIdx, int Zindex, int channel);
+
+    QStringList getMetaNames(int timePoint, int fieldIdx, int Zindex, int channel);
+    bool hasMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name = QString());
+
+
 
     void setOwner(ExperimentFileModel* ow);
 
@@ -160,6 +191,8 @@ protected:
     bool _toDisplay, _isProcessResult;
     unsigned _row, _col;
     FieldImaging _data;
+    SFieldImaging _sdata;
+
     ExperimentFileModel* _owner;
 
     QList<SequenceFileModel*> _siblings;
