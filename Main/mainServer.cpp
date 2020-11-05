@@ -129,7 +129,7 @@ int main(int ac,  char* av[])
         forceNumaAll(node);
 
     }
-	forceNumaAll(10);
+	forceNumaAll(1);
 #endif
     if (data.contains("-d"))
         show_console();
