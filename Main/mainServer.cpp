@@ -69,30 +69,21 @@ int forceNumaAll(int node)
 
     DWORD_PTR processAffinityMask;
     DWORD_PTR systemAffinityMask;
+    ULONGLONG  processorMask;
 
     if (!GetProcessAffinityMask(process, &processAffinityMask, &systemAffinityMask))
         return -1;
 
-    int core = node; /* set this to the core you want your process to run on */
-    DWORD_PTR mask=0x1;
-    for (int bit=0, currentCore=0; bit < 64; bit++)
-    {
-        if (mask & processAffinityMask)
-        {
-            if (currentCore != core)
-            {
-                processAffinityMask &= ~mask;
-            }
-            currentCore++;
-        }
-        mask = mask << 1;
-    }
+    GetNumaNodeProcessorMask(node, &processorMask);
+
+    processAffinityMask = processAffinityMask & processorMask;
 
     BOOL success = SetProcessAffinityMask(process, processAffinityMask);
 
     qDebug() << success ;
     return success;
 }
+
 int main(int ac,  char* av[])
 {
     // 13378
