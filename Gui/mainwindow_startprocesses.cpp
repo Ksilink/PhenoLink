@@ -448,7 +448,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         }
         if (_shareTags->isChecked())
         {
-            sfm->clearTags();
+//            sfm->clearTags();
             foreach (QString l, tags_map[sfm->Pos()]) sfm->setTag(l);
         }
         // startProcess is more a prepare process list function now
