@@ -81,6 +81,29 @@ int forceNumaAll(int node)
     BOOL success = SetProcessAffinityMask(process, processAffinityMask);
 
     qDebug() << success ;
+      {    DWORD_PTR processAffinityMask;
+        DWORD_PTR systemAffinityMask;
+        DWORD_PTR setAffinityMask;
+        ULONGLONG processorMask;
+        ULONG highestNodeNumber;
+
+        // Is this a numa system
+
+        if (!GetNumaHighestNodeNumber(&highestNodeNumber))
+        {      fprintf(stderr, "GetNumaHighestNodeNumber failed with errorcode: %08X\n", GetLastError());      return -1;    }
+        if (highestNodeNumber == 0)
+        {      fprintf(stderr, "This is not a numa system. Cannot run this example.\n");      return -1;    }
+        // Find the cores that this process is allowed to use
+        if (!GetProcessAffinityMask(GetCurrentProcess(), &processAffinityMask, &systemAffinityMask))
+        {      fprintf(stderr, "GetProcessAffinityMask failed with errorcode: %08X\n", GetLastError());      return -1;    }
+
+        // Find the cores belonging to numa node 1
+        if (!GetNumaNodeProcessorMask(1, &processorMask)) {
+            fprintf(stderr, "GetNumaNodeProcessorMask failed with errorcode: %08X\n", GetLastError());      return -1;    }
+        // Use only the cores that is allowed for this process
+        setAffinityMask = processAffinityMask & processorMask;    // Make this process to run on a processor on numa node 1
+        if (!SetProcessAffinityMask(GetCurrentProcess(), setAffinityMask))
+        {      fprintf(stderr, "SetProcessAffinityMask failed with errorcode: %08X\n", GetLastError());      return -1;    }  }
     return success;
 }
 
