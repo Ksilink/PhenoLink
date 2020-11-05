@@ -85,6 +85,24 @@ int forceNumaAll(int node)
     return success;
 }
 
+void startup_execute(QString file)
+{
+    QFile f(file);
+
+    QString ex=QString(f.readLine());
+    while (!ex.isEmpty())
+    {
+        QStringList line = ex.split(" ");
+        QString prog = line.front();
+        line.pop_front();
+        QProcess::execute(prog, line);
+
+
+        ex = QString(f.readLine());
+    }
+
+}
+
 int main(int ac,  char* av[])
 {
     // 13378
@@ -118,7 +136,7 @@ int main(int ac,  char* av[])
     {
         int idx = data.indexOf("-p")+1;
         if (data.size() > idx) port = data.at(idx).toInt();
-        qInfo() << "Changing server port to :" << port;
+        qDebug() << "Changing server port to :" << port;
     }
 #if WIN32
     if (data.contains("-n"))
@@ -126,7 +144,7 @@ int main(int ac,  char* av[])
         int idx = data.indexOf("-n")+1;
         int node = 0;
         if (data.size() > idx) node = data.at(idx).toInt();
-        qInfo() << "Forcing node :" << node;
+        qDebug() << "Forcing node :" << node;
         forceNumaAll(node);
 
     }
@@ -134,6 +152,16 @@ int main(int ac,  char* av[])
 #endif
     if (data.contains("-d"))
         show_console();
+
+
+    if (data.contains("-s"))
+    {
+        int idx = data.indexOf("-ns")+1;
+        QString file;
+        if (data.size() > idx) file = data.at(idx);
+        qDebug() << "Loading startup script :" << file;
+        startup_execute(file);
+    }
 
     PluginManager::loadPlugins(true);
 
