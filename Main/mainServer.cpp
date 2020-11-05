@@ -62,7 +62,7 @@ void show_console() {
 
 
 
-int forceNumaAll()
+int forceNumaAll(int node)
 {
 
     HANDLE process = GetCurrentProcess();
@@ -73,9 +73,9 @@ int forceNumaAll()
     if (!GetProcessAffinityMask(process, &processAffinityMask, &systemAffinityMask))
         return -1;
 
-    int core = 2; /* set this to the core you want your process to run on */
+    int core = node; /* set this to the core you want your process to run on */
     DWORD_PTR mask=0x1;
-    for (int bit=0, currentCore=1; bit < 64; bit++)
+    for (int bit=0, currentCore=0; bit < 64; bit++)
     {
         if (mask & processAffinityMask)
         {
@@ -105,7 +105,6 @@ int main(int ac,  char* av[])
 #ifdef WIN32
     QApplication app(ac, av);
 
-    forceNumaAll();
 
 
 #else
@@ -129,7 +128,17 @@ int main(int ac,  char* av[])
         if (data.size() > idx) port = data.at(idx).toInt();
         qInfo() << "Changing server port to :" << port;
     }
+#if WIN32
+    if (data.contains("-n"))
+    {
+        int idx = data.indexOf("-n")+1;
+        int node = 0;
+        if (data.size() > idx) node = data.at(idx).toInt();
+        qInfo() << "Forcing node :" << node;
+        forceNumaAll(node);
 
+    }
+#endif
     if (data.contains("-d"))
         show_console();
 
