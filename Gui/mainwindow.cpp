@@ -1415,7 +1415,7 @@ void MainWindow::setupProcessCall(QJsonObject obj)
     _commitName->setToolTip("If non empty data will be saved to database with table having specified name");
 
     layo->addRow(_typeOfprocessing);
-    layo->addRow(_shareTags);
+//    layo->addRow(_shareTags);
     layo->addRow("Commit Name:", _commitName);
 
     QPushButton* button = new QPushButton("Start");

@@ -609,7 +609,7 @@ void CheckoutProcess::addToComputedDataModel(QJsonObject ob)
         {
             QStringList t = d["Data"].toString().split(";",Qt::SkipEmptyParts);
             for (int i = 0; i < t.size(); ++i)
-                datamdl->addData(QString("%1#%2").arg(tag).arg(i), fieldId, sliceId, timepoint, channel, id, t[i].toDouble());
+                datamdl->addData(QString("%1#%2").arg(tag).arg(i, 4, 10, QLatin1Char('0')), fieldId, sliceId, timepoint, channel, id, t[i].toDouble());
         }
         else
             datamdl->addData(tag, fieldId, sliceId, timepoint, channel, id,d["Data"].toString().toDouble());

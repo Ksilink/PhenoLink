@@ -614,7 +614,21 @@ public:
     virtual void read(const QJsonObject &json)
     {
         RegistrableImageParent::read(json);
-        setProperties(json);
+
+
+        QJsonArray data = json["Data"].toArray();
+        for (int i = 0; i < data.size(); i++)
+        {
+            auto d = data.at(i).toObject();
+            setProperties(d, QString("t%1").arg(i));
+
+            if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
+            {
+                QJsonArray t = d["ChannelNames"].toArray();
+                for (int i = 0; i < t.size(); ++i)
+                    _vectorNames << t[i].toString();
+            }
+        }
 
         if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
         {
