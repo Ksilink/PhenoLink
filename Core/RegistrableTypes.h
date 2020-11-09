@@ -659,7 +659,7 @@ public:
     typedef Registrable<QString> Self;
     typedef QString DataType;
 
-    Registrable(): _hasDefault(false), _isPath(false)
+    Registrable(): _hasDefault(false), _isPath(false), _isDbPath(false)
     {
 
     }
@@ -693,6 +693,13 @@ public:
         return *this;
     }
 
+    virtual Self& isDBPath(bool p = true)
+    {
+        _isPath = p;
+        _isDbPath = p;
+        return *this;
+    }
+
     virtual void read(const QJsonObject &json)
     {
         RegistrableParent::read(json);
@@ -714,6 +721,7 @@ public:
         {
             json["Default"] = _default;
         }
+        json["isDbPath"] = _isDbPath;
 
     }
 
@@ -741,7 +749,7 @@ public:
 
 protected:
     DataType* _value;
-    bool _isPath;
+    bool _isPath, _isDbPath;
     bool _hasDefault;
     DataType _default;
 };

@@ -969,13 +969,16 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
     {
         ///
         /// \brief le
-        if (par["isPath"].toBool())
+        if (par["isPath"].toBool() )
         {
             auto le = new ctkPathLineEdit();
             if (par.contains("Default"))
             {
                 le->setCurrentPath(par["Default"].toString());
             }
+            QSettings set;
+            if (par["isDbPath"].toBool())
+                le->setCurrentPath(set.value("databaseDir", par["Default"].toString()).toString());
             wid = le;
         }
         else

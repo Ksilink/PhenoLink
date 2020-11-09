@@ -198,6 +198,11 @@ public:
       return _callParams["Pos"].toString();
     }
 
+    QString XP()
+    {
+        return _callParams["XP"].toString();
+    }
+
 
     QString plateName()
     {

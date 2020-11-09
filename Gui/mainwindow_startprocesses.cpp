@@ -390,6 +390,8 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
 
         obj["CoreProcess_hash"] = QString(hash.toHex());
         obj["CommitName"] = _commitName->text();
+        if (sfm->getOwner())
+            obj["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
         obj["WellTags"] = sfm->getTags().join(";");
 
 
