@@ -2353,7 +2353,7 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
     {
         QFile meta(_owner->getMetadataPath());
         QDir dir(set.value("databaseDir").toString());
-        meta.copy(dir.absolutePath() + "/" + prefix + "/tags.json");
+        meta.copy(dir.absolutePath() + "/" + prefix + "/"+ hash + "_tags.json");
     }
 
 
