@@ -79,6 +79,16 @@ public:
         else
             *_value = (DataType)json["Value"].toInt();
       }
+    else {
+        if (json.contains("Default"))
+          {
+            _wasSet = true;
+            if (json["Default"].isArray())
+                *_value = (DataType)json["Default"].toArray().at(0).toInt();
+            else
+                *_value = (DataType)json["Default"].toInt();
+          }
+    }
 
   }
 
