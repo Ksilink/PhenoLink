@@ -82,6 +82,10 @@ public:
           _wasSet = true;
           *_value = (DataType)json["Value"].toDouble();
         }
+      else {
+        if (json.contains("Default"))
+             *_value =(DataType)json["Default"].toDouble();
+      }
 //      if (json.contains("isSlider"))
 //        _isSlider = json["isSlider"].toBool();
     }
