@@ -1860,6 +1860,21 @@ void MainWindow::loadPlateDisplay3()
 
 }
 
+void MainWindow::exportToCellProfiler()
+{
+    // Load plate if necessary
+    mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
+    on_loadSelection_clicked();
+
+    // Get all selected screens
+    ScreensHandler& h = ScreensHandler::getHandler();
+    Screens& s = h.getScreens();
+
+    // Now we have all :) Lets set a CSV file with all the metadata for CellProfiler
+
+
+}
+
 bool MainWindow::close()
 {
     //  CheckoutProcess::handler().exitServer();
@@ -1885,6 +1900,8 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
         auto mm = menu.addMenu("Load && Display");
         mm->addAction("first well", this, SLOT(loadPlateFirst()));
         mm->addAction("3 wells", this, SLOT(loadPlateDisplay3()));
+        menu.addSeparator();
+        menu.addAction("export for CP", this, SLOT(exportToCellProfiler()));
         menu.addSeparator();
         menu.addAction("add Directory", this, SLOT(addDirectory()));
         menu.addAction("remove Directory", this, SLOT(rmDirectory()));

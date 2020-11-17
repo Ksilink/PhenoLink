@@ -130,6 +130,7 @@ private slots:
     void loadPlate();
     void loadPlateFirst();
     void loadPlateDisplay3();
+    void exportToCellProfiler();
 
     void databaseModified();
     void on_actionStandard_toggled(bool arg1);

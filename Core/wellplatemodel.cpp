@@ -1083,8 +1083,8 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
     if (!props.isEmpty())
         parent["Properties"] = props;
 
-
-    res << parent;
+    if (!data.empty())
+        res << parent;
 
     return res;
 }
@@ -1146,7 +1146,8 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(TimeLapse times,
         QJsonObject obj;
         obj["Data"] = data;
         obj["TimePos"] = -1;
-        res << obj;
+        if (!data.empty())
+            res << obj;
         return res;
     }
     else
@@ -1189,7 +1190,8 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(ImageStack stack,
         QJsonObject obj;
         obj["Data"] = data;
         obj["zPos"] = -1;
-        res << obj;
+        if (!data.empty())
+            res << obj;
         return res;
     }
     else
@@ -1382,7 +1384,8 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
             obj["asVectorImage"]=true;
             obj["PlateName"] = getOwner()->name();
 
-            res << obj;
+            if (!data.empty())
+                res << obj;
             return res;
         }
 
