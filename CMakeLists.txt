@@ -18,9 +18,9 @@ find_package(Git)
 
 
 set(Checkout_VERSION_MAJOR 1)
-set(Checkout_VERSION_MINOR 6)
+set(Checkout_VERSION_MINOR 7)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 5)
+set(Checkout_VERSION_RELEASE 1)
 
 message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
 

@@ -59,16 +59,16 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 }
 
 void show_console() {
-     AllocConsole();
-     freopen("conin$", "r", stdin);
-     freopen("conout$", "w", stdout);
-     freopen("conout$", "w", stderr);
+    AllocConsole();
+    freopen("conin$", "r", stdin);
+    freopen("conout$", "w", stdout);
+    freopen("conout$", "w", stderr);
 }
 
 int main(int argc, char *argv[])
 {
     //    qInstallMessageHandler(myMessageOutput);
-  //  show_console();
+    //  show_console();
     QApplication a(argc, argv);
     a.setApplicationName("Checkout");
     a.setApplicationVersion(CHECKOUT_VERSION);
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     //qDebug()  << QStandardPaths::standardLocations(QStandardPaths::DataLocation);
 
 
-  /*  QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    /*  QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(dir.absolutePath() + "/WD_Checkout" + QString("%1").arg(CHECKOUT_VERSION) + ".db");
 
     bool ok = db.open();*/
@@ -119,26 +119,32 @@ int main(int argc, char *argv[])
     //}
 
 
-     if (!set.contains("databaseDir"))
+    if (!set.contains("databaseDir"))
         set.setValue("databaseDir", QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/databases/");
 
-    // Start the network worker for processes
+    QStringList var = set.value("Server", QStringList() << "127.0.0.1").toStringList();
     QProcess server;
-    server.setProcessChannelMode(QProcess::MergedChannels);
-    server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() +"/CheckoutServer_log.txt");
-    server.setWorkingDirectory(a.applicationDirPath());
-    QString r = "CheckoutProcessServer.exe";
 
-    server.setProgram(r);
-    if (set.value("UserMode/Debug", false).toBool())
-        server.setArguments(QStringList() << "-d");
+    if (var.contains("127.0.0.1") || var.contains("localhost"))
+    {
+        // Start the network worker for processes
+         server.setProcessChannelMode(QProcess::MergedChannels);
+        server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() +"/CheckoutServer_log.txt");
+        server.setWorkingDirectory(a.applicationDirPath());
+        QString r = "CheckoutProcessServer.exe";
 
-    server.start();
+        server.setProgram(r);
+        if (set.value("UserMode/Debug", false).toBool())
+            server.setArguments(QStringList() << "-d");
 
-    if (!server.waitForStarted())
-        qDebug() << "Server not properly started" << server.errorString() << r;
+        server.start();
 
-    QThread::sleep(5);
+        if (!server.waitForStarted())
+            qDebug() << "Server not properly started" << server.errorString() << r;
+
+        QThread::sleep(5);
+    }
+
 
     NetworkProcessHandler::handler().establishNetworkAvailability();
 
@@ -149,13 +155,13 @@ int main(int argc, char *argv[])
 
     MainWindow w(&server);
 
-//    QFile stylesheet("://Styles/darkorange.qss");
-//        if (stylesheet.open(QFile::ReadOnly))
-//        {
-//            QTextStream ss(&stylesheet);
-//            w.setStyleSheet(ss.readAll());
-//        }
-//    stylesheet.close();
+    //    QFile stylesheet("://Styles/darkorange.qss");
+    //        if (stylesheet.open(QFile::ReadOnly))
+    //        {
+    //            QTextStream ss(&stylesheet);
+    //            w.setStyleSheet(ss.readAll());
+    //        }
+    //    stylesheet.close();
 
     w.show();
     int res = a.exec();
