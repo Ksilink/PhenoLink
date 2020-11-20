@@ -8,6 +8,11 @@
 
 #include <Core/checkoutdataloaderplugininterface.h>
 
+#include <QDir>
+#include <QFileInfo>
+#include <QStandardItem>
+
+
 ScreensModel::ScreensModel(QObject *parent) :
     QStandardItemModel(parent)
 {
@@ -117,11 +122,6 @@ void ScreensModel::clearCheckedDirectories()
 
 
 }
-
-#include <QDir>
-#include <QFileInfo>
-#include <QStandardItem>
-
 
 void ScreensModel::recurse(QString dir, QStringList search, QStandardItem* parent, QStandardItem* pparent, QStandardItem *gpparent)
 {

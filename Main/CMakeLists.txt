@@ -10,7 +10,7 @@ add_executable(Checkout ${GUI_TYPE} main.cpp ${AppRCFILE} )
 
 target_include_directories(Checkout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(Checkout CheckoutGui  ${CheckoutLibs} Qt5::Widgets Qt5::Sql Qt5::Concurrent Qt5::WinExtras ${OpenCV_LIBS} )
+target_link_libraries(Checkout CheckoutGui  ${CheckoutLibs} Qt5::Widgets Qt5::Sql Qt5::Concurrent Qt5::WinExtras Qt5::WebView ${OpenCV_LIBS} )
 #install_qt5_executable(Checkout)
 install(TARGETS Checkout COMPONENT applications DESTINATION bin)
 

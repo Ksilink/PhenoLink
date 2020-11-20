@@ -21,6 +21,7 @@ protected:
     QWidget *features();
     QWidget* networkOptions();
     QWidget* screensPaths();
+    QWidget *dashOptions();
 
     QWidget* appDirectory();
     QLayout *buildPaths(QString fname);
@@ -51,6 +52,7 @@ protected:
     QSpinBox* serverPort;
     ctkPathListWidget* screensPath;
     ctkPathLineEdit* databasePath;
+
 
 };
 

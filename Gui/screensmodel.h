@@ -36,13 +36,14 @@ protected:
     //    bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const;
     bool recursiveCheck(const QModelIndex &index, const QVariant &value);
 
-    QSet<QModelIndex> checkedIndexes;
+
     void recurse(QString dir, QStringList search, QStandardItem *parent, QStandardItem *pparent, QStandardItem *gpparent);
 
     //signals:
 
     //public slots:
 protected:
+    QSet<QModelIndex> checkedIndexes;
     int step;
 
     QMultiMap<QString, QString> _group_toChild; // Associated directory with child data & parent data

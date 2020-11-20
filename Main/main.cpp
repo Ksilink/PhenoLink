@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <wincon.h>
 
+#include <QtWebView/QtWebView>
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -69,6 +70,9 @@ int main(int argc, char *argv[])
 {
     //    qInstallMessageHandler(myMessageOutput);
     //  show_console();
+
+    QtWebView::initialize();
+
     QApplication a(argc, argv);
     a.setApplicationName("Checkout");
     a.setApplicationVersion(CHECKOUT_VERSION);

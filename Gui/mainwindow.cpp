@@ -3,7 +3,7 @@
 
 #include "screensmodel.h"
 
-
+#include <map>
 #include <algorithm>
 
 #include <QFileSystemModel>
@@ -490,7 +490,7 @@ void MainWindow::updateCurrentSelection()
     wwid = new QWidget;
     QVBoxLayout* bvl = new QVBoxLayout(wwid);
     bvl->setSpacing(1);
-     QSize pix;
+    QSize pix;
     //  qDebug() << "Creating Controls" << channels;
     for (unsigned i = 0; i < channels; ++i)
     {
@@ -1123,7 +1123,7 @@ void MainWindow::setupProcessCall(QJsonObject obj)
                 QString nm;
 
                 if (_channelsNames.size() == _channelsIds.size())
-                     nm = QString(_channelsNames[list.at(channels-1)]);
+                    nm = QString(_channelsNames[list.at(channels-1)]);
                 else
                     nm = QString("Channel %1").arg(p++);
 
@@ -1213,7 +1213,7 @@ void MainWindow::setupProcessCall(QJsonObject obj)
             {
                 QCheckBox* box = nullptr;
                 if (_channelsNames.size() == _channelsIds.size())
-                     box = new QCheckBox(_channelsNames[list.at(channels-1)]);
+                    box = new QCheckBox(_channelsNames[list.at(channels-1)]);
                 else
                     box = new QCheckBox(QString("Channel %1").arg(p++));
                 box->setObjectName(QString("Channel_%1").arg(channels));
@@ -1418,7 +1418,7 @@ void MainWindow::setupProcessCall(QJsonObject obj)
     _commitName->setToolTip("If non empty data will be saved to database with table having specified name");
 
     layo->addRow(_typeOfprocessing);
-//    layo->addRow(_shareTags);
+    //    layo->addRow(_shareTags);
     layo->addRow("Commit Name:", _commitName);
 
     QPushButton* button = new QPushButton("Start");
@@ -1492,7 +1492,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                                                                | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                          | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -1794,7 +1794,7 @@ void MainWindow::setDataIcon()
 void MainWindow::rmDirectory()
 {
     QStandardItem* root = mdl->invisibleRootItem();
-//    root->data()
+    //    root->data()
     QString dir = root->child(_icon_model.row())->data(Qt::ToolTipRole).toString();
 
     QSettings set;
@@ -1860,6 +1860,15 @@ void MainWindow::loadPlateDisplay3()
 
 }
 
+int longestMatch(QString a, QString b)
+{
+    int i = 0;
+    for (; i < a.size() && i < b.size(); ++i)
+        if (a[i] != b[i])
+            break;
+    return i;
+}
+
 void MainWindow::exportToCellProfiler()
 {
     // Load plate if necessary
@@ -1872,6 +1881,123 @@ void MainWindow::exportToCellProfiler()
 
     // Now we have all :) Lets set a CSV file with all the metadata for CellProfiler
 
+    // Set up the headers
+    std::map<QString, QString> values;
+    QString basePath;
+    values["Metadata_Plate"]="";
+    values["Well"]="";
+    values["Field"]="";
+    values["Time"]="";
+    values["Z"]="";
+    QSet<QString> tags;
+    QSet<QString> chans;
+    for (auto xp: s)
+    {
+        QString plate_name = xp->name();
+        QString path = xp->fileName();
+        if (basePath.isEmpty())
+            basePath = path.left(path.indexOf(plate_name)-1);
+        else
+            basePath = basePath.left(longestMatch(basePath, path));
+
+        QStringList cname = xp->getChannelNames();
+        for (auto a: cname) chans.insert(a);
+
+        for (auto seq: xp->getValidSequenceFiles())
+        {
+            QStringList t = seq->getTags();
+            for (auto a: t)
+                tags.insert(a);
+
+        }
+    }
+    // "DCM-Tum-lines-seeded-for-6k-D9-4X"
+    // "C:/Data/DCM/DCM-Tum-lines-seeded-for-6k-D9-4X_20200702_110209/DCM-Tum-lines-seeded-for-6k-D9-4X/MeasurementDetail.mrf"
+    //("Hoechst 33342", "2", "3")
+    // QSet("D-001-Cb-08", "D-001-Cc-01", "W-004-017", "D-001-035 (3232)", "D-001-Ca-12")
+    qDebug() << basePath << chans << tags;
+    for (auto c : chans)
+    {
+        values[QString("Image_FileName_%1").arg(c)]=QString();
+        values[QString("Image_PathName_%1").arg(c)]=QString();
+    }
+    QSet<QString> titration,meta;
+    for (auto c : tags)
+    {
+        if (c.contains('#'))
+        {
+            c =  c.split('#').front();
+            if (!c.isEmpty())
+                titration.insert(c);
+        }
+        else
+            meta.insert(c);
+    }
+
+    for (auto c : meta) values[QString("Metadata_%1").arg(c)]=QString();
+    for (auto c : titration) values[QString("Titration_%1").arg(c)]=QString();
+
+    QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
+                                               0, /*QFileDialog::DontUseNativeDialog
+                                                                                                                                                                                | */QFileDialog::DontUseCustomDirectoryIcons
+                                               );
+    if (dir.isEmpty()) return;
+
+    QFile file(dir);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+        return ;
+
+    QTextStream resFile(&file);
+    for (auto c: values )      resFile << c.first << ',';
+    resFile << Qt::endl;
+
+    for (auto xp: s)
+    {
+        // Empty all the configs
+        for (auto c: values )  c.second=QString();
+
+        // Set the basepath for all files:
+        QString path = xp->fileName().split(":").last();
+        QStringList p = path.split('/'); p.pop_back();
+        path = p.join('\\');
+        QStringList cname = xp->getChannelNames();
+        for (auto a: cname)  values[QString("Image_PathName_%1").arg(a)]=path;
+
+        for (auto seq: xp->getValidSequenceFiles())
+        {
+            QStringList t = seq->getTags();
+            for (auto c : t)
+            {
+                if (c.contains('#'))
+                {
+                    QStringList sc =  c.split('#');
+                    if (!sc.isEmpty())
+                        values[QString("Titration_%1").arg(sc.front())] = sc.back();
+                }
+                else
+                    values[QString("Metadata_%1").arg(c)] = "1";
+            }
+
+            values["Well"]=seq->Pos();
+
+            for (unsigned int t = 0; t < seq->getTimePointCount(); ++t)
+                for (unsigned f = 0; f < seq->getFieldCount(); ++f)
+                    for (unsigned z = 0; z < seq->getZCount(); ++z)
+                    {
+                        for (unsigned c = 0; c < seq->getChannels(); ++c)
+                        {
+                            QString fi = seq->getFile(t+1,f+1, z+1, c+1);
+                            values["Field"]=QString("%1").arg(f);
+                            values["Time"]=QString("%1").arg(t);
+                            values["Z"]=QString("%1").arg(z);
+                            values[QString("Image_FileName_%1").arg(cname[c])]=fi.split('/').back();
+                        }
+
+                        for (auto c: values )      resFile << c.second << ',';
+                        resFile << Qt::endl;
+                    }
+        }
+    }
 
 }
 
@@ -1932,7 +2058,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
                                                       set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                                                                        |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                              |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;

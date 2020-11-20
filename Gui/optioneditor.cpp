@@ -252,6 +252,7 @@ GlobalOptions::GlobalOptions(QWidget *parent): QWidget(parent)
     //    connect(closeButton, &QAbstractButton::clicked, this, &QWidget::close);
 
     mainLayout->addWidget(networkOptions());
+    mainLayout->addWidget(dashOptions());
     mainLayout->addWidget(features());
     mainLayout->addWidget(screensPaths());
     mainLayout->addWidget(appDirectory());
@@ -428,6 +429,31 @@ QWidget *GlobalOptions::networkOptions()
     return ppython;
 }
 
+
+QWidget *GlobalOptions::dashOptions()
+{
+    QSettings set;
+    QFileIconProvider icp;
+
+    ctkCollapsibleGroupBox* ppython = new ctkCollapsibleGroupBox("Graphics Synthesis (Dash) options");
+
+    ppython->setObjectName("DashOpts");
+
+    QGridLayout* serv_layout = new QGridLayout;
+    serv_layout->setObjectName("DashLayout");
+    //mainLayout->addRow(serv_layout);
+
+    serverhost = new QLineEdit("192.168.2.127");
+    serverhost->setObjectName("DashServer");
+    serverhost->setToolTip("Address of the dash server to render the graphics (192.168.2.127)");
+    connect(serverhost, SIGNAL(textChanged(QString)), this, SLOT(updatePaths()));
+    serv_layout->addWidget(new QLabel("Dash Server Host"), 0, 0);
+    serv_layout->addWidget(serverhost, 0, 1);
+    ppython->setLayout(serv_layout);
+
+    return ppython;
+}
+
 QWidget *GlobalOptions::screensPaths()
 {
     QSettings set;
@@ -572,6 +598,10 @@ void GlobalOptions::updatePaths()
     set.setValue("Server", var);
     set.setValue("ServerP", ports);
 
+    QLineEdit* dash = findChild<QLineEdit*>(("DashServer"));
+
+    if (dash)
+        set.setValue("DashServer", dash->text());
 
 
     set.setValue("ScreensDirectory", screensPath->paths());
