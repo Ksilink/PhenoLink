@@ -64,6 +64,12 @@
 #include <ImageDisplay/scrollzone.h>
 
 #include "ScreensDisplay/screensgraphicsview.h"
+#include <QtWebView/QtWebView>
+
+
+#include <QtWebEngineWidgets/QWebEngineView>
+//#include <QtWebEngineWidgets/QtWebEngineWidgets>
+
 
 void MainWindow::on_loadSelection_clicked()
 {
@@ -71,6 +77,40 @@ void MainWindow::on_loadSelection_clicked()
     QStringList checked = mdl->getCheckedDirectories(false);
 
     loadSelection(checked);
+}
+
+void MainWindow::on_dashDisplay_clicked()
+{
+
+//    QWebEngineView* view = new QWebEngineView();
+    ScreensHandler& handler = ScreensHandler::getHandler();
+    QStringList checked = mdl->getCheckedDirectories(false);
+    handler.loadScreens(checked, false);
+    Screens data = handler.getScreens();
+
+    QStringList dbs, agdbs;
+    for (auto s: data)
+    {
+        QPair<QStringList, QStringList> db = s->databases();
+        dbs.append(db.first);
+        agdbs.append(db.second);
+    }
+
+
+//    int tab = ui->tabWidget->addTab(view, "Dash View");
+    QSettings set;
+    QWebEngineView *view = new QWebEngineView(this);
+    QUrl url(QString("http://%1:%2?dbs=%3&agdbs=%4")
+             .arg(set.value("DashServer", "127.0.0.1").toString())
+             .arg("8050")
+             .arg(dbs.join(";"))
+             .arg(agdbs.join(";"))
+             );
+    qDebug() << url;
+    view->load(url);
+    int tab = ui->tabWidget->addTab(view, "Dash View");
+
+    Q_UNUSED(tab);
 }
 
 void MainWindow::loadSelection(QStringList checked)

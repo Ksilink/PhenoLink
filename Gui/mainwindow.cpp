@@ -1948,7 +1948,8 @@ void MainWindow::exportToCellProfiler()
         return ;
 
     QTextStream resFile(&file);
-    for (auto c: values )      resFile << c.first << ',';
+    auto l = values.end()--;
+    for (auto c: values )  resFile << c.first << (c.first == l->first ? "" : ",");
     resFile << Qt::endl;
 
     for (auto xp: s)
@@ -1993,7 +1994,7 @@ void MainWindow::exportToCellProfiler()
                             values[QString("Image_FileName_%1").arg(cname[c])]=fi.split('/').back();
                         }
 
-                        for (auto c: values )      resFile << c.second << ',';
+                        for (auto c: values )      resFile << c.second << (c.first == l->first ? "" : ",");
                         resFile << Qt::endl;
                     }
         }

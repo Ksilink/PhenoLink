@@ -383,6 +383,8 @@ public:
     void reloadDatabaseData();
     void reloadDatabaseData(QString file, QString t, bool aggregat);
 
+    QPair<QStringList, QStringList> databases();
+
     void setProperties(QString tag, QString value);
     virtual QString property(QString tag);
 

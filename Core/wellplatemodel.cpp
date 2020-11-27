@@ -626,6 +626,32 @@ void ExperimentFileModel::reloadDatabaseData(QString file, QString t, bool aggre
     }
 }
 
+QPair<QStringList, QStringList> ExperimentFileModel::databases()
+{
+    QSettings set;
+    QDir dir(set.value("databaseDir").toString());
+
+    QFileInfoList dirs = dir.entryInfoList(QStringList() << "*", QDir::Dirs);
+    QStringList raw, ag;
+    foreach (QFileInfo d, dirs)
+    {
+        if (QFile::exists(d.filePath() + "/"+_hash+".csv"))
+        {
+            QString t =  d.absoluteFilePath().remove(dir.absolutePath()+"/");
+            if (t.isEmpty()) continue;
+            raw += d.filePath() + "/"+_hash+".csv";
+        }
+        if (QFile::exists(d.filePath() + "/ag"+_hash+".csv"))
+        {
+            QString t =  d.absoluteFilePath().remove(dir.absolutePath()+"/");
+            if (t.isEmpty()) continue;
+            ag += d.filePath() + "/ag"+_hash+".csv";
+        }
+
+    }
+    return qMakePair(raw, ag);
+}
+
 
 void ExperimentFileModel::setProperties(QString ttag, QString value)
 {

@@ -443,7 +443,9 @@ QWidget *GlobalOptions::dashOptions()
     serv_layout->setObjectName("DashLayout");
     //mainLayout->addRow(serv_layout);
 
-    serverhost = new QLineEdit("192.168.2.127");
+
+
+    serverhost = new QLineEdit(set.value("DashServer","192.168.2.127").toString());
     serverhost->setObjectName("DashServer");
     serverhost->setToolTip("Address of the dash server to render the graphics (192.168.2.127)");
     connect(serverhost, SIGNAL(textChanged(QString)), this, SLOT(updatePaths()));
