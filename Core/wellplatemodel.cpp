@@ -546,7 +546,7 @@ void ExperimentFileModel::reloadDatabaseData()
         {
             QString t =  d.absoluteFilePath().remove(dir.absolutePath()+"/");
             if (t.isEmpty()) continue;
-            reloadDatabaseData(d.filePath() + "/ag"+_hash+".csv", t, false);
+            reloadDatabaseData(d.filePath() + "/ag"+_hash+".csv", t, true);
         }
 
     }
