@@ -548,7 +548,6 @@ void ExperimentFileModel::reloadDatabaseData()
             if (t.isEmpty()) continue;
             reloadDatabaseData(d.filePath() + "/ag"+_hash+".csv", t, true);
         }
-
     }
 
     // Legacy code loading ?
@@ -803,6 +802,20 @@ void SequenceFileModel::addMeta(int timePoint, int fieldIdx, int Zindex, int cha
     _sdata[fieldIdx][Zindex][timePoint][channel][name] = meta;
 }
 
+QStringList SequenceFileModel::getAllFiles()
+{
+    QStringList files;
+
+
+    for (auto f: _data)
+        for (auto z: f)
+            for (auto t: z)
+                for (auto c: t)
+                    files << c;
+
+    return files;
+}
+
 StructuredMetaData &SequenceFileModel::getMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name)
 {
     static StructuredMetaData r;
@@ -813,26 +826,26 @@ StructuredMetaData &SequenceFileModel::getMeta(int timePoint, int fieldIdx, int 
 QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, int fieldIdx, int Zindex, int channel)
 {
     static QMap<QString, StructuredMetaData> r;
-return r;
+    return r;
 }
 
-QStringList SequenceFileModel::getMetaNames(int timePoint, int fieldIdx, int Zindex, int channel)
-{
-    return QStringList();
-}
+//QStringList SequenceFileModel::getMetaNames(int timePoint, int fieldIdx, int Zindex, int channel)
+//{
+//    return QStringList();
+//}
 
-bool SequenceFileModel::hasMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name )
-{
-    if (name.isEmpty())
-    {
+//bool SequenceFileModel::hasMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name )
+//{
+//    if (name.isEmpty())
+//    {
 
-    }
-    else
-    {
+//    }
+//    else
+//    {
 
-    }
-    return false;
-}
+//    }
+//    return false;
+//}
 
 bool SequenceFileModel::hasChannel(int timePoint, int fieldIdx, int Zindex, int channel)
 {
@@ -1585,7 +1598,9 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
                 auto map = json["map"].toObject();
                 for (auto it = map.begin(), e = map.end(); it != e; ++it)
                 {
-                    tags << it.key();
+                    QString ctag = it.key();
+                    ctag = ctag.replace(';', ' ');
+                    tags << ctag;
                     auto wells = it.value().toObject();
                     for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
                     {
@@ -1595,7 +1610,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
                         {
                             int c = arr[i].toInt();
                             QPoint p(r, c);
-                            mdl->setTag(p, it.key());
+                            mdl->setTag(p, ctag);
                         }
                     }
                 }
@@ -1605,7 +1620,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
                 auto map = json["color_map"].toObject();
                 for (auto it = map.begin(), e = map.end(); it != e; ++it)
                 {
-                    tags << it.key();
+                    // tags << it.key();
                     auto wells = it.value().toObject();
                     for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
                     {

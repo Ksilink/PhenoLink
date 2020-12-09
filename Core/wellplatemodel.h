@@ -121,6 +121,8 @@ public:
     void addFile(int timePoint, int fieldIdx, int Zindex, int Channel, QString file);
     void addMeta(int timePoint, int fieldIdx, int Zindex, int Channel, QString name, StructuredMetaData meta);
 
+    QStringList getAllFiles();
+
 
     // This model need to handle data set as well
     QString getFile(int timePoint, int fieldIdx, int Zindex, int channel);
@@ -132,8 +134,8 @@ public:
     StructuredMetaData& getMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name);
     QMap<QString, StructuredMetaData>& getMetas(int timePoint, int fieldIdx, int Zindex, int channel);
 
-    QStringList getMetaNames(int timePoint, int fieldIdx, int Zindex, int channel);
-    bool hasMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name = QString());
+//    QStringList getMetaNames(int timePoint, int fieldIdx, int Zindex, int channel);
+//    bool hasMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name = QString());
 
 
 

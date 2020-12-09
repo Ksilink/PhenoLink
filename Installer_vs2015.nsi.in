@@ -20,8 +20,8 @@ Section -Prerequisites
   SetOutPath $INSTDIR\Prerequisites
 
   MessageBox MB_YESNO "Install the Microsoft Visual C++ 2015 Redistribual (x64) - 14 ?" /SD IDYES IDNO endNetCF
-    File "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Redist\MSVC\14.16.27012\vcredist_x64.exe"
-    ExecWait "$INSTDIR\vcredist_x64.exe"
+    File "C:\Work\GitHub\redist\VC_redist.x64.exe"
+    ExecWait "$INSTDIR\VC_redist.x64.exe"
   endNetCF:
 
 SectionEnd
@@ -36,6 +36,12 @@ SetOutPath $INSTDIR\bin
 File "@CMAKE_BINARY_DIR@\bin\Checkout.exe"
 File "@CMAKE_BINARY_DIR@\bin\CheckoutProcessServer.exe"
 File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
+File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
+File "@CMAKE_BINARY_DIR@\bin\resources\*.pak"
+File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
+
+File "@CMAKE_BINARY_DIR@\bin\translations\*.qm"
+File "@CMAKE_BINARY_DIR@\bin\translations\qtwebengine_locales\*.pak"
 
 CreateDirectory $INSTDIR\bin\Cache
 
