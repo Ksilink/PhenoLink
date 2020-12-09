@@ -1901,7 +1901,7 @@ void MainWindow::exportToCellProfiler()
             basePath = basePath.left(longestMatch(basePath, path));
 
         QStringList cname = xp->getChannelNames();
-        for (auto a: cname) chans.insert(a);
+        for (auto a: cname) chans.insert(a.replace(" ", "_"));
 
         for (auto seq: xp->getValidSequenceFiles())
         {
@@ -1934,8 +1934,8 @@ void MainWindow::exportToCellProfiler()
             meta.insert(c);
     }
 
-    for (auto c : meta) values[QString("Metadata_%1").arg(c)]=QString();
-    for (auto c : titration) values[QString("Titration_%1").arg(c)]=QString();
+    for (auto c : meta) values[QString("Metadata_%1").arg(c.replace(" ", "_"))]=QString("0");
+    for (auto c : titration) values[QString("Titration_%1").arg(c.replace(" ", "_"))]=QString("0");
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
@@ -1948,14 +1948,16 @@ void MainWindow::exportToCellProfiler()
         return ;
 
     QTextStream resFile(&file);
-    for (auto c: values )      resFile << c.first << ',';
+	auto l = values.end()--;
+    for (auto c: values )      resFile << c.first << (c.first == l->first ? "" : ",");
     resFile << Qt::endl;
 
     for (auto xp: s)
     {
         // Empty all the configs
-        for (auto c: values )  c.second=QString();
+        for (auto c: values )  c.second=QString("0");
 
+		values["Metadata_Plate"] = xp->name();
         // Set the basepath for all files:
         QString path = xp->fileName().split(":").last();
         QStringList p = path.split('/'); p.pop_back();
@@ -1965,6 +1967,7 @@ void MainWindow::exportToCellProfiler()
 
         for (auto seq: xp->getValidSequenceFiles())
         {
+			for (auto c : values)  c.second = QString("0");
             QStringList t = seq->getTags();
             for (auto c : t)
             {
@@ -1972,10 +1975,10 @@ void MainWindow::exportToCellProfiler()
                 {
                     QStringList sc =  c.split('#');
                     if (!sc.isEmpty())
-                        values[QString("Titration_%1").arg(sc.front())] = sc.back();
+                        values[QString("Titration_%1").arg(sc.front().replace(" ", "_"))] = sc.back();
                 }
                 else
-                    values[QString("Metadata_%1").arg(c)] = "1";
+                    values[QString("Metadata_%1").arg(c.replace(" ", "_"))] = "1";
             }
 
             values["Well"]=seq->Pos();
@@ -1993,7 +1996,7 @@ void MainWindow::exportToCellProfiler()
                             values[QString("Image_FileName_%1").arg(cname[c])]=fi.split('/').back();
                         }
 
-                        for (auto c: values )      resFile << c.second << ',';
+                        for (auto c: values )      resFile << c.second << (c.first == l->first ? "" : ",");
                         resFile << Qt::endl;
                     }
         }
