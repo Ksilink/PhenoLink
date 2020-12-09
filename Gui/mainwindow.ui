@@ -83,7 +83,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -235,37 +235,14 @@
      <property name="spacing">
       <number>2</number>
      </property>
-     <item row="1" column="2">
+     <item row="1" column="3">
       <widget class="QToolButton" name="loadSelection">
        <property name="text">
         <string>Load Selection</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="1" column="0">
-      <widget class="QToolButton" name="toolButton">
-       <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Click here to Specify data search directory&lt;/p&gt;&lt;p&gt;or to delete entries&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0" colspan="3">
+     <item row="0" column="0" colspan="4">
       <widget class="QTreeView" name="treeView">
        <property name="contextMenuPolicy">
         <enum>Qt::ActionsContextMenu</enum>
@@ -284,6 +261,36 @@
        </property>
        <property name="headerHidden">
         <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QToolButton" name="toolButton">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Click here to Specify data search directory&lt;/p&gt;&lt;p&gt;or to delete entries&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="1" column="2">
+      <widget class="QPushButton" name="dashDisplay">
+       <property name="text">
+        <string>Dash Display</string>
        </property>
       </widget>
      </item>
@@ -328,7 +335,7 @@
           <x>0</x>
           <y>0</y>
           <width>262</width>
-          <height>261</height>
+          <height>286</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -478,7 +485,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>256</width>
-                 <height>83</height>
+                 <height>68</height>
                 </rect>
                </property>
                <layout class="QFormLayout" name="formLayout">
@@ -510,7 +517,7 @@
           <x>0</x>
           <y>0</y>
           <width>262</width>
-          <height>83</height>
+          <height>70</height>
          </rect>
         </property>
        </widget>

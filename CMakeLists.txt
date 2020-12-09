@@ -18,9 +18,9 @@ find_package(Git)
 
 
 set(Checkout_VERSION_MAJOR 1)
-set(Checkout_VERSION_MINOR 7)
+set(Checkout_VERSION_MINOR 8)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 1)
+set(Checkout_VERSION_RELEASE 0)
 
 message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
 
@@ -95,9 +95,10 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Update to CMake
-find_package(Qt5 COMPONENTS
+find_package(Qt5 REQUIRED COMPONENTS
     Widgets Xml XmlPatterns
-    OpenGL Concurrent Sql WinExtras Charts  WebView REQUIRED)
+    OpenGL Concurrent Sql WinExtras Charts WebView WebEngineWidgets
+    )
 
 
 find_package(OpenCV REQUIRED )

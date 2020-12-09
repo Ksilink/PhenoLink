@@ -1969,6 +1969,8 @@ void MainWindow::exportToCellProfiler()
         {
 			for (auto c : values)  c.second = QString("0");
             QStringList t = seq->getTags();
+            for (auto c: values )  c.second=QString();
+
             for (auto c : t)
             {
                 if (c.contains('#'))

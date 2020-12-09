@@ -64,6 +64,13 @@
 #include <ImageDisplay/scrollzone.h>
 
 #include "ScreensDisplay/screensgraphicsview.h"
+#include <QtWebView/QtWebView>
+
+
+#include <QtWebEngineWidgets/QWebEngineView>
+//#include <QtWebEngineWidgets/QtWebEngineWidgets>
+
+
 
 void MainWindow::on_loadSelection_clicked()
 {
@@ -72,6 +79,57 @@ void MainWindow::on_loadSelection_clicked()
 
     loadSelection(checked);
 }
+
+void MainWindow::on_dashDisplay_clicked()
+{
+
+//    QWebEngineView* view = new QWebEngineView();
+    ScreensHandler& handler = ScreensHandler::getHandler();
+    QStringList checked = mdl->getCheckedDirectories(false);
+    handler.loadScreens(checked, false);
+    Screens data = handler.getScreens();
+
+    QStringList dbs, agdbs;
+    for (auto s: data)
+    {
+        QPair<QStringList, QStringList> db = s->databases();
+        dbs.append(db.first);
+        agdbs.append(db.second);
+    }
+
+
+//    int tab = ui->tabWidget->addTab(view, "Dash View");
+    QSettings set;
+    QWebEngineView *view = new QWebEngineView(this);
+    QUrl url(QString("http://%1:%2?dbs=%3&agdbs=%4")
+             .arg(set.value("DashServer", "127.0.0.1").toString())
+             .arg("8050")
+             .arg(dbs.join(";"))
+             .arg(agdbs.join(";"))
+             );
+    qDebug() << url;
+    view->load(url);
+    int tab = ui->tabWidget->addTab(view, "Dash View");
+
+    Q_UNUSED(tab);
+}
+
+#include <QProgressDialog>
+
+QMutex mx;
+
+void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
+{
+
+    if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(pairs.second.toStdWString().c_str()))
+         {
+            mx.lock();
+            pairs.first->setInvalid();
+            mx.unlock();
+        }
+}
+
+
 
 void MainWindow::loadSelection(QStringList checked)
 {
@@ -106,23 +164,45 @@ void MainWindow::loadSelection(QStringList checked)
 
     int loadCount = 0;
     ExperimentFileModel* lastOk = 0;
+
+    QList<QPair<SequenceFileModel*, QString> > proc_mapps;
+
     foreach (ExperimentFileModel* mdl, data)
     {
-        multifield |= (mdl->getAllSequenceFiles().front()->getFieldCount() > 1);
+        for (auto seq : mdl->getAllSequenceFiles())
+        {
+            for (auto l :seq->getAllFiles())
+                proc_mapps.append(qMakePair(seq,l));
+        }
+    }
+
+    // Now we can map our model with progressbar :)
+    QProgressDialog dialog(this);
+    dialog.setLabelText("Checking Files");
+
+    QFutureWatcher<void> futureWatcher;
+    QObject::connect(&futureWatcher, &QFutureWatcher<void>::finished, &dialog, &QProgressDialog::reset);
+    QObject::connect(&dialog, &QProgressDialog::canceled, &futureWatcher, &QFutureWatcher<void>::cancel);
+    QObject::connect(&futureWatcher,  &QFutureWatcher<void>::progressRangeChanged, &dialog, &QProgressDialog::setRange);
+    QObject::connect(&futureWatcher, &QFutureWatcher<void>::progressValueChanged,  &dialog, &QProgressDialog::setValue);
+
+    // Start the computation.
+    futureWatcher.setFuture(QtConcurrent::map(proc_mapps, proc_mapped));
+
+    // Display the dialog and start the event loop.
+    dialog.exec();
+
+    futureWatcher.waitForFinished();
+
+
+
+
+    foreach (ExperimentFileModel* mdl, data)
+    {
+          multifield |= (mdl->getAllSequenceFiles().front()->getFieldCount() > 1);
 
         if (mdl)
         {
-            //mdl->addToDatabase();
-
-          /*  if (!QSqlDatabase::contains(mdl->hash()))
-            {
-                QSettings set;
-                QDir dir(set.value("databaseDir").toString());
-                QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", mdl->hash());
-                db.setDatabaseName(dir.absolutePath() + "/" + mdl->hash() + ".db");
-                db.open();
-            }
-*/
             createWellPlateViews(mdl);
             mdl->setDisplayed(true);
             mdl->setGroupName(this->mdl->getGroup(mdl->fileName()));
@@ -137,7 +217,7 @@ void MainWindow::loadSelection(QStringList checked)
         {
             _channelsIds.unite(mm->getChannelsIds());
         }
-        QStringList ch =         mdl->getChannelNames();
+        QStringList ch = mdl->getChannelNames();
         if (_channelsNames.size() != ch.size())
         {
             for (int i = 0; i < ch.size(); ++i)

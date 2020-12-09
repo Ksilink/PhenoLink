@@ -109,6 +109,7 @@ protected:
 private slots:
     void deleteDirectoryPath();
     void on_loadSelection_clicked();
+    void on_dashDisplay_clicked();
     void addDirectory();
     void clearDirectories();
     void deleteDirPath(QString dir);
