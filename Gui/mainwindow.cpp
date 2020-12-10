@@ -767,8 +767,13 @@ void MainWindow::processFinished()
 
     // Auto commit delegated to the renew screen
     Screens& screens = ScreensHandler::getHandler().getScreens();
-    ExperimentDataModel* datamdl = 0;
+    qDebug() << "Saving data for screens #" << screens.size();
     foreach (ExperimentFileModel* mdl, screens)
+         {
+        qDebug() <<  mdl->hasComputedDataModel();
+        if ( mdl->hasComputedDataModel())
+           qDebug() <<  mdl->computedDataModel()->getCommitName();
+
         if (mdl->hasComputedDataModel() && !mdl->computedDataModel()->getCommitName().isEmpty())
         {
             int vals = mdl->computedDataModel()->commitToDatabase(mdl->hash(), mdl->computedDataModel()->getCommitName());
@@ -781,7 +786,7 @@ void MainWindow::processFinished()
             mdl->reloadDatabaseData();
             mdl->computedDataModel()->setCommitName(QString());
         }
-
+ }
 
 }
 
@@ -978,7 +983,17 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
             }
             QSettings set;
             if (par["isDbPath"].toBool())
-                le->setCurrentPath(set.value("databaseDir", par["Default"].toString()).toString());
+            {
+                QString v = set.value("databaseDir", par["Default"].toString()).toString();
+
+                // retreive selection name ?
+
+                ScreensHandler& handler = ScreensHandler::getHandler();
+                auto screens = handler.getScreens();
+                if (screens.size())
+                    v=QString("%1/%2/Checkout_Results/").arg(v).arg(screens[0]->property("project"));
+                le->setCurrentPath(v);
+            }
             wid = le;
         }
         else
@@ -1405,6 +1420,9 @@ void MainWindow::setupProcessCall(QJsonObject obj)
           << "Selected Screens" << "All Loaded Screens";
 
     _typeOfprocessing->addItems(names);
+    if (_scrollArea->items() == 0)
+        _typeOfprocessing->setCurrentText( "Selected Screens");//Index(_typeOfprocessing->setCurrentText())
+
 
     if (_shareTags) delete _shareTags;
     _shareTags = new QCheckBox("Share Tags");

@@ -166,6 +166,11 @@ void ScrollZone::addSelectedWells()
     //  _progDiag = 0;
 }
 
+int ScrollZone::items()
+{
+  return  findChildren<ImageForm*>().size();
+}
+
 
 
 void ScrollZone::setupImageFormInteractor(ImageForm* f)

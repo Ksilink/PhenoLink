@@ -71,6 +71,7 @@
 #include <ImageDisplay/scrollzone.h>
 
 #include "ScreensDisplay/screensgraphicsview.h"
+#include <QInputDialog>
 
 
 
@@ -487,7 +488,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                                                                 "/"+stored["CommitName"].toString() +"/";
 
     QString proc = _preparedProcess;
-    QDir dir; dir.mkdir(set.value("databaseDir").toString() +st);
+    QDir dir; dir.mkpath(set.value("databaseDir").toString() +st);
 
     QString fn = set.value("databaseDir").toString() + st +
             proc.replace("/", "_").replace(" ", "_") + "_" +
@@ -579,20 +580,37 @@ void MainWindow::startProcessRun()
         ScreensHandler& handler = ScreensHandler::getHandler();
 
         Screens s = handler.loadScreens(checked, true);
+        QString projName;
         for(Screens::iterator it = s.begin(), e = s.end(); it != e; ++it)
         {
+            if ((*it)->property("project").isEmpty())
+            {
+                if (projName.isEmpty())
+                {
+                bool ok;
+                QStringList sug=(*it)->fileName().replace("\\", "/").split("/");
+                if (sug.size() > 4)
+                    sug[0] = sug[4];
+                else
+                    sug[0] = sug[sug.size()-2];
+
+                 QString text = QInputDialog::getText(this,
+                                                     QString("Please specify project Name for: %1 (%2)").arg((*it)->name()).arg((*it)->groupName()),
+                                                     "Project Name", QLineEdit::Normal,
+                                                     sug.at(0), &ok);
+                if (ok && !text.isEmpty())
+                   projName = text;
+                }
+                else (*it)->setProperties("project", projName);
+
+            }
+            else
+                projName = (*it)->property("project");
+
+
 
             if (*it)
             {
-                //(*it)->addToDatabase();
-                /*   if (!QSqlDatabase::contains((*it)->hash()))
-                {
-                    QSettings set;
-                    QDir dir(set.value("databaseDir").toString());
-                    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", (*it)->hash());
-                    db.setDatabaseName(dir.absolutePath() + "/" + (*it)->hash() + ".db");
-                    db.open();
-                }*/
 
                 if (!(*it)->displayed())
                 {

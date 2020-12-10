@@ -35,6 +35,8 @@ public:
     void selectRange(ImageForm* f);
     void addSelectedWells();
 
+    int items();
+
 protected:
     virtual void dragEnterEvent(QDragEnterEvent *event);
     virtual void dropEvent(QDropEvent *event);

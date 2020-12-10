@@ -709,7 +709,8 @@ void NetworkProcessHandler::handleMessageProcessStart(QString& keyword, QDataStr
             runningProcs.remove(coreHash);
             runningProcs[hash] = h;
 
-            (*hash_logfile) << coreHash << "->" << hash << Qt::endl;
+            if (hash_logfile)
+                (*hash_logfile) << coreHash << "->" << hash << Qt::endl;
 
             emit processStarted(coreHash, hash);
         }

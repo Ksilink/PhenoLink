@@ -65,6 +65,7 @@
 
 #include "ScreensDisplay/screensgraphicsview.h"
 #include <QtWebView/QtWebView>
+#include <QInputDialog>
 
 
 #include <QtWebEngineWidgets/QWebEngineView>
@@ -169,6 +170,30 @@ void MainWindow::loadSelection(QStringList checked)
 
     foreach (ExperimentFileModel* mdl, data)
     {
+        // Check for the property "project"
+        if (mdl->property("project").isEmpty())
+        {
+            bool ok;
+            QStringList sug=mdl->fileName().replace("\\", "/").split("/");
+            if (sug.size() > 4)
+                sug[0] = sug[4];
+            else
+                sug[0] = sug[sug.size()-2];
+
+            QMessageBox::warning(this, QString("Use Plate Tagger!!!"),
+                                 "Make use of plate tagger for setting your plate layout and project name ",
+                                 QMessageBox::Ok, QMessageBox::Ok);
+
+            QString text = QInputDialog::getText(this,
+                                                 QString("Please specify project Name for: %1 (%2)").arg(mdl->name()).arg(mdl->groupName()),
+                                                 "Project Name", QLineEdit::Normal,
+                                                 sug.at(0), &ok);
+            if (ok && !text.isEmpty())
+                mdl->setProperties("project", text);
+
+        }
+
+
         for (auto seq : mdl->getAllSequenceFiles())
         {
             for (auto l :seq->getAllFiles())
@@ -217,6 +242,8 @@ void MainWindow::loadSelection(QStringList checked)
         {
             _channelsIds.unite(mm->getChannelsIds());
         }
+        // With the _channelsIds we can
+
         QStringList ch = mdl->getChannelNames();
         if (_channelsNames.size() != ch.size())
         {

@@ -498,6 +498,8 @@ void ExperimentFileModel::setFileName(const QString &fileName)
 
 QString ExperimentFileModel::name() const
 {
+    if (_name.isEmpty() && _owner)
+        return _owner->name();
     return _name;
 }
 
@@ -530,48 +532,24 @@ void ExperimentFileModel::setOwner(ExperimentFileModel *own)
 
 void ExperimentFileModel::reloadDatabaseData()
 {
-    QSettings set;
-    QDir dir(set.value("databaseDir").toString());
 
-    QFileInfoList dirs = dir.entryInfoList(QStringList() << "*", QDir::Dirs);
-    foreach (QFileInfo d, dirs)
+    QPair<QStringList, QStringList> dbs = databases();
+
+    for (auto file: dbs.first)
     {
-        if (QFile::exists(d.filePath() + "/"+_hash+".csv"))
-        {
-            QString t =  d.absoluteFilePath().remove(dir.absolutePath()+"/");
-            if (t.isEmpty()) continue;
-            reloadDatabaseData(d.filePath() + "/"+_hash+".csv", t, false);
-        }
-        if (QFile::exists(d.filePath() + "/ag"+_hash+".csv"))
-        {
-            QString t =  d.absoluteFilePath().remove(dir.absolutePath()+"/");
-            if (t.isEmpty()) continue;
-            reloadDatabaseData(d.filePath() + "/ag"+_hash+".csv", t, true);
-        }
+          QString t = file;
+          QStringList spl = t.split("/");
+          t=spl[spl.size() -2];
+
+
+        reloadDatabaseData(file, t, false);
     }
-
-    // Legacy code loading ?
-    QFileInfoList ff = dir.entryInfoList(QStringList() <<  _hash +"_*.csv", QDir::Files);
-    foreach (QFileInfo i, ff)
+    for (auto file: dbs.first)
     {
-
-        QString t =  i.absoluteFilePath().remove(dir.absolutePath() + "/"+ _hash +"_");
-        t.remove(".csv");
-
-        if (t.isEmpty()) continue;
-        reloadDatabaseData(i.filePath(), t, false);
-
-    }
-
-    ff = dir.entryInfoList(QStringList() << "*/ag" << _hash +".csv", QDir::Files);
-    foreach (QFileInfo i, ff)
-    {
-        QString t =  i.absoluteFilePath().remove(dir.absolutePath() + "/ag"+ _hash +"_");
-        t.remove(".csv");
-
-        if (t.isEmpty()) continue;
-
-        reloadDatabaseData(i.filePath(), t, true);
+          QString t = file;
+          QStringList spl = t.split("/");
+          t=spl[spl.size() -2];
+          reloadDatabaseData(file, t, true);
     }
 }
 
@@ -625,29 +603,72 @@ void ExperimentFileModel::reloadDatabaseData(QString file, QString t, bool aggre
     }
 }
 
-QPair<QStringList, QStringList> ExperimentFileModel::databases()
-{
-    QSettings set;
-    QDir dir(set.value("databaseDir").toString());
 
+void getOLegacyDB(QString ddir, QString hash, QStringList& raw, QStringList& ag)
+{
+    QDir dir(ddir);
+    QFileInfoList ff = dir.entryInfoList(QStringList() <<  hash +"_*.csv", QDir::Files);
+    foreach (QFileInfo i, ff)
+    {
+
+        QString t =  i.absoluteFilePath();
+        raw += t;
+
+    }
+
+    ff = dir.entryInfoList(QStringList() << "*/ag" << hash +".csv", QDir::Files);
+    foreach (QFileInfo i, ff)
+    {
+        QString t =  i.absoluteFilePath();
+        ag += t;
+
+    }
+}
+
+
+void getDBs(QString ddir, QString hash, QStringList& raw, QStringList& ag)
+{
+    QDir dir(ddir);
     QFileInfoList dirs = dir.entryInfoList(QStringList() << "*", QDir::Dirs);
-    QStringList raw, ag;
     foreach (QFileInfo d, dirs)
     {
-        if (QFile::exists(d.filePath() + "/"+_hash+".csv"))
+        if (QFile::exists(d.filePath() + "/"+hash+".csv"))
         {
             QString t =  d.absoluteFilePath().remove(dir.absolutePath()+"/");
             if (t.isEmpty()) continue;
-            raw += d.filePath() + "/"+_hash+".csv";
+            raw += d.filePath() + "/"+hash+".csv";
         }
-        if (QFile::exists(d.filePath() + "/ag"+_hash+".csv"))
+        if (QFile::exists(d.filePath() + "/ag"+hash+".csv"))
         {
             QString t =  d.absoluteFilePath().remove(dir.absolutePath()+"/");
             if (t.isEmpty()) continue;
-            ag += d.filePath() + "/ag"+_hash+".csv";
+            ag += d.filePath() + "/ag"+hash+".csv";
         }
 
     }
+}
+
+QPair<QStringList, QStringList> ExperimentFileModel::databases()
+{
+    QSettings set;
+    QStringList raw, ag;
+
+
+     { // older legacy ..
+        getOLegacyDB(set.value("databaseDir").toString(), _hash, raw, ag);
+    }
+
+    { // Legacy 2nd version
+        getDBs(set.value("databaseDir").toString(), _hash, raw, ag);
+    }
+
+
+    { // New settings
+        QString writePath = QString("%1/%2/Checkout_Results/").arg(set.value("databaseDir").toString())
+                .arg(property("project"));
+        getDBs(writePath, name(), raw, ag);
+    }
+
     return qMakePair(raw, ag);
 }
 
@@ -1586,6 +1607,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
         mdl->setMetadataPath(tfile);
         QString val = file.readAll();
         file.close();
+        QStringList gtags;
         QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
         if (d.isObject())
         {
@@ -1593,6 +1615,30 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
             QSettings set;
             tags = set.value("Tags", QStringList()).toStringList();
             auto json = d.object();
+            if (json.contains("meta"))
+            {
+                auto meta = json["meta"].toObject();
+
+                if (meta.contains("project"))
+                {
+                    mdl->setProperties("project", meta["project"].toString());
+                }
+                if (meta.contains("global_tags"))
+                {
+                    auto ar = meta["global_tags"].toArray();
+
+                    for (auto i: ar) gtags << i.toString();
+
+                    mdl->setProperties("global_tags", gtags.join(";"));
+                }
+                if (meta.contains("cell_lines"))
+                {
+                    auto ar = meta["cell_lines"].toArray();
+                    QStringList ll;
+                    for (auto i: ar) ll << i.toString();
+                    mdl->setProperties("cell_lines", ll.join(";"));
+                }
+            }
             if (json.contains("map"))
             {
                 auto map = json["map"].toObject();
@@ -1610,7 +1656,9 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
                         {
                             int c = arr[i].toInt();
                             QPoint p(r, c);
+
                             mdl->setTag(p, ctag);
+
                         }
                     }
                 }
@@ -2328,8 +2376,16 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
 
     {
         QDir dir(set.value("databaseDir").toString());
-        dir.mkdir(dir.absolutePath()+"/"+prefix);
-        QFile file(dir.absolutePath() + "/"+prefix+"/"+ hash + ".csv");
+        // 20201210: Large behaviour change
+        // Now: Assuming the following reordering:
+        // dir + {tag.project} + Checkout_Results/ + prefix + / PlateName + .csv
+        // If file exists move previous file with a post_fix info
+        QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
+               ;
+        QString fname =  _owner->name() +".csv";
+
+        dir.mkpath(writePath);
+        QFile file(writePath + fname);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
             return -1;
 
@@ -2345,7 +2401,7 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
                     << h.stackZ << "," << h.time << ","
                     << h.chan << "," << (_owner->getTags(h.pos).join(";"));
 
-            int d = 0;
+
             foreach (QString key, _datanames)
             {
                 double v = h.data[key].first();
@@ -2365,7 +2421,10 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
 
     {
         QDir dir(set.value("databaseDir").toString());
-        QFile file(dir.absolutePath() + "/" + prefix + "/ag"+ hash + ".csv");
+
+        QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix);
+        QString fname ="ag" +  _owner->name() +".csv";
+        QFile file(writePath+fname);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
             return -1;
 
@@ -2379,7 +2438,7 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
             QPoint npos = intToPos(it.key());
             QString pos = posToString(npos);
             resFile << _owner->name() << "," << pos << "," << (_owner->getTags(npos).join(";"));
-            int d = 0;
+
             foreach (QString key, _datanames)
             {
                 double v = Aggregate(it.value()[key], getAggregationMethod(key));
@@ -2397,9 +2456,8 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
     {
         QFile meta(_owner->getMetadataPath());
         QDir dir(set.value("databaseDir").toString());
-        meta.copy(dir.absolutePath() + "/" + prefix + "/"+ hash + "_tags.json");
+        meta.copy(dir.absolutePath() + "/" + prefix + "/"+ _owner->name() + "_tags.json");
     }
-
 
     return linecounter;
 }

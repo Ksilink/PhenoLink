@@ -23,6 +23,7 @@
 #include <wincon.h>
 
 #include <QtWebView/QtWebView>
+#include <QStyleFactory>
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -74,6 +75,7 @@ int main(int argc, char *argv[])
     QtWebView::initialize();
 
     QApplication a(argc, argv);
+    QApplication::setStyle(QStyleFactory::create("Plastique"));
     a.setApplicationName("Checkout");
     a.setApplicationVersion(CHECKOUT_VERSION);
     a.setApplicationDisplayName(QString("Checkout %1").arg(CHECKOUT_VERSION));
@@ -94,7 +96,7 @@ int main(int argc, char *argv[])
 
     QDir dir( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
     //QDir dir("P:/DATABASES");
-    dir.mkdir(dir.absolutePath() + "/databases/");
+    dir.mkpath(dir.absolutePath() + "/databases/");
     dir.mkpath(dir.absolutePath());
 
     _logFile.setFileName(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/WD_CheckoutLog.txt");
@@ -159,13 +161,13 @@ int main(int argc, char *argv[])
 
     MainWindow w(&server);
 
-    //    QFile stylesheet("://Styles/darkorange.qss");
-    //        if (stylesheet.open(QFile::ReadOnly))
-    //        {
-    //            QTextStream ss(&stylesheet);
-    //            w.setStyleSheet(ss.readAll());
-    //        }
-    //    stylesheet.close();
+//    QFile stylesheet("://Styles/darkorange.qss");
+//    if (stylesheet.open(QFile::ReadOnly))
+//    {
+//        QTextStream ss(&stylesheet);
+//        w.setStyleSheet(ss.readAll());
+//    }
+//    stylesheet.close();
 
     w.show();
     int res = a.exec();
