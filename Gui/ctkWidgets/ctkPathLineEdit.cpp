@@ -221,7 +221,7 @@ QSize ctkPathLineEditPrivate::recomputeSizeHint(QSize& sh)const
             textWidth = this->LineEdit->fontMetrics().boundingRect(this->LineEdit->text()).width() + 8;
             }
           break;
-        case QComboBox::AdjustToMinimumContentsLength:
+//        case QComboBox::AdjustToMinimumContentsLength:
         default:
           ;
         }
@@ -259,7 +259,7 @@ QStringList nameFilterToExtensions(const QString& nameFilter)
     return QStringList();
     }
   QString f = regexp.cap(2);
-  return f.split(QLatin1Char(' '), QString::SkipEmptyParts);
+  return f.split(QLatin1Char(' '), Qt::SkipEmptyParts);
 }
 
 //-----------------------------------------------------------------------------

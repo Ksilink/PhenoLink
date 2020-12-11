@@ -254,10 +254,10 @@ void WellRepresentationItem::tagSelection(QString tag)
     {
         QTextStream ex(&file);
 
-        ex << tags.values().join(';') << endl;
+        ex << tags.values().join(';') << Qt::endl;
 
         foreach (SequenceFileModel* m, alls)
-            ex << m->Pos() << ';' << m->getTags().join(";") << endl;
+            ex << m->Pos() << ';' << m->getTags().join(";") << Qt::endl;
         file.close();
     }
 }
