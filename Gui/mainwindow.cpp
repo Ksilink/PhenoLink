@@ -1234,7 +1234,6 @@ void MainWindow::setupProcessCall(QJsonObject obj)
                 box->setObjectName(QString("Channel_%1").arg(channels));
                 box->setChecked(true);
                 vbox->addWidget(box);
-                //                gbox->
                 _ChannelPicker << box;
             }
             gbox->setLayout(vbox);

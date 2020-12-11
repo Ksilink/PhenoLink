@@ -98,6 +98,13 @@ void MainWindow::on_dashDisplay_clicked()
         agdbs.append(db.second);
     }
 
+    // Need to load first line of each file & accomodate with plate tags
+    // Also add a other csv input :) (like cellprofiler or other stuffs;
+    // allow linking with plates & plates tags then :)
+
+    // also we can see if we can introduce some "post processing in python..."
+
+
 
 //    int tab = ui->tabWidget->addTab(view, "Dash View");
     QSettings set;
@@ -201,6 +208,11 @@ void MainWindow::loadSelection(QStringList checked)
         }
     }
 
+
+    int threads = QThreadPool::globalInstance()->maxThreadCount();
+    // this this is IO bounded let's ask for more at once !
+    QThreadPool::globalInstance()->setMaxThreadCount(10*threads);
+
     // Now we can map our model with progressbar :)
     QProgressDialog dialog(this);
     dialog.setLabelText("Checking Files");
@@ -219,6 +231,7 @@ void MainWindow::loadSelection(QStringList checked)
 
     futureWatcher.waitForFinished();
 
+    QThreadPool::globalInstance()->setMaxThreadCount(threads);
 
 
 
