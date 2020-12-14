@@ -392,7 +392,7 @@ void MainWindow::addDirectory()
     QFileDialog* _f_dlg = new QFileDialog(this);
     _f_dlg->setDirectory(set.value("LastAddedDir","c:/").toString());
     _f_dlg->setOption(QFileDialog::ShowDirsOnly, true);
-    _f_dlg->setFileMode(QFileDialog::DirectoryOnly);
+//    _f_dlg->setFileMode(QFileDialog::DirectoryOnly);
     _f_dlg->setOption(QFileDialog::DontUseNativeDialog, true);
 
     QListView* l = _f_dlg->findChild<QListView*>("listView");

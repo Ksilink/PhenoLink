@@ -705,11 +705,11 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
 
         QList<double> a, b;
 
-        for (unsigned i =0; i < li.first.size(); ++i)
+        for (unsigned i =0; i < (unsigned)li.first.size(); ++i)
                 if (filt.first[i])
                    a << li.first[i];
 
-        for (unsigned i =0; i < li.second.size(); ++i)
+        for (unsigned i =0; i < (unsigned)li.second.size(); ++i)
             if (filt.second[i])
                 b << li.second[i];
 

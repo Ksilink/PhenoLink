@@ -54,10 +54,15 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 
 
 void show_console() {
-     AllocConsole();
-     freopen("conin$", "r", stdin);
-     freopen("conout$", "w", stdout);
-     freopen("conout$", "w", stderr);
+    AllocConsole();
+
+    FILE *newstdin = nullptr;
+    FILE *newstdout = nullptr;
+    FILE *newstderr = nullptr;
+
+    freopen_s(&newstdin, "conin$", "r", stdin);
+    freopen_s(&newstdout, "conout$", "w", stdout);
+    freopen_s(&newstderr, "conout$", "w", stderr);
 }
 
 
