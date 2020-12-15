@@ -3,14 +3,20 @@
 
 #include <QWidget>
 
-class Dashoptions : public QWidget
+namespace Ui {
+class DashOptions;
+}
+
+class DashOptions : public QWidget
 {
     Q_OBJECT
+
 public:
-    explicit Dashoptions(QWidget *parent = nullptr);
+    explicit DashOptions(QWidget *parent = nullptr);
+    ~DashOptions();
 
-signals:
-
+private:
+    Ui::DashOptions *ui;
 };
 
 #endif // DASHOPTIONS_H

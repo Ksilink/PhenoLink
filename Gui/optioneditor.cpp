@@ -717,12 +717,12 @@ void GlobalOptions::showInGraphicalShell(QWidget *parent, const QString &pathIn)
                              tr("Could not find explorer.exe in path to launch Windows Explorer."));
         return;
     }
-    QString param;
+    QStringList param;
     if (!QFileInfo(pathIn).isDir())
-        param = QLatin1String("/select,");
-    param += QDir::toNativeSeparators(pathIn);
-    QString command = explorer + " " + param;
-    QProcess::startDetached(command);
+        param << QLatin1String("/select,");
+    param << QDir::toNativeSeparators(pathIn);
+//    QString command = explorer + " " + param;
+    QProcess::startDetached(explorer, param);
 #elif defined(Q_OS_MAC)
     Q_UNUSED(parent)
     QStringList scriptArgs;
