@@ -166,13 +166,13 @@ int main(int argc, char *argv[])
 
     MainWindow w(&server);
 
-    QFile stylesheet("://Styles/darkorange.qss");
-    if (stylesheet.open(QFile::ReadOnly))
-    {
-        QTextStream ss(&stylesheet);
-        w.setStyleSheet(ss.readAll());
-    }
-    stylesheet.close();
+//    QFile stylesheet("://Styles/darkorange.qss");
+//    if (stylesheet.open(QFile::ReadOnly))
+//    {
+//        QTextStream ss(&stylesheet);
+//        w.setStyleSheet(ss.readAll());
+//    }
+//    stylesheet.close();
 
     w.show();
     int res = a.exec();
