@@ -124,6 +124,7 @@ QSize ExperimentFileModel::getSize()
 
 QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned fieldc,  int z, int t, int c)
 {
+    Q_UNUSED(fieldc);
 
     QSet<double> x,y;
 
@@ -839,6 +840,14 @@ QStringList SequenceFileModel::getAllFiles()
 
 StructuredMetaData &SequenceFileModel::getMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name)
 {
+    Q_UNUSED(timePoint  );
+    Q_UNUSED(fieldIdx);
+
+    Q_UNUSED(Zindex);
+    Q_UNUSED(channel);
+    Q_UNUSED(name);
+
+
     static StructuredMetaData r;
 
     return r;
@@ -846,6 +855,12 @@ StructuredMetaData &SequenceFileModel::getMeta(int timePoint, int fieldIdx, int 
 
 QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, int fieldIdx, int Zindex, int channel)
 {
+    Q_UNUSED(timePoint  );
+    Q_UNUSED(fieldIdx);
+
+    Q_UNUSED(Zindex);
+    Q_UNUSED(channel);
+
     static QMap<QString, StructuredMetaData> r;
     return r;
 }
@@ -1107,6 +1122,8 @@ ExperimentFileModel *SequenceFileModel::getOwner()
 QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
                                                    QString imageType, QList<bool> selectedChanns, MetaDataHandler &h)
 {
+    Q_UNUSED(imageType  );
+
     QList<QJsonObject> res;
 
     QJsonArray data;
@@ -1280,6 +1297,7 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(Channel channe
 {
     QMap<int, QList<QJsonObject> > res;
 
+    Q_UNUSED(imageType  );
 
     int channs = 0;
     for(Channel::iterator it = channels.begin(), e = channels.end(); it != e; ++it, ++channs)
@@ -1589,6 +1607,8 @@ void ScreensHandler::addScreen(ExperimentFileModel* xp)
 }
 ExperimentFileModel* loadScreenFunct(QString it)
 {
+    Q_UNUSED(it  );
+
     return nullptr;
 }
 
@@ -1983,9 +2003,9 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QJsonObject& dat
     //  qDebug() << data["CommitName"];
 
     QJsonArray ar = data["Data"].toArray();
-    int procId = data["ProcessStartId"].toInt();
+//    int procId = data["ProcessStartId"].toInt();
     QString processHash = data["Hash"].toString();
-    bool displayed = data["shallDisplay"].toBool();
+//    bool displayed = data["shallDisplay"].toBool();
     for (int i = 0; i < ar.size(); ++i)
     {
         QJsonObject ob = ar.at(i).toObject();
@@ -2456,7 +2476,11 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
     {
         QFile meta(_owner->getMetadataPath());
         QDir dir(set.value("databaseDir").toString());
-        meta.copy(dir.absolutePath() + "/" + prefix + "/"+ _owner->name() + "_tags.json");
+
+
+        QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix);
+
+        meta.copy(writePath + "/"+ _owner->name() + "_tags.json");
     }
 
     return linecounter;
@@ -2499,6 +2523,8 @@ QString& ExperimentDataTableModel::getAggregationMethod(QString XP)
 
 int ExperimentDataTableModel::rowCount(const QModelIndex &parent) const
 {
+    Q_UNUSED(parent  );
+
     // Let's count this...
     int res = this->getDataSize();
 
@@ -2568,6 +2594,8 @@ void ExperimentDataTableModel::clearAll()
 
 int ExperimentDataTableModel::exposeDataColumnCount(QStringList memlist, QStringList dblist)
 {
+    Q_UNUSED(dblist  );
+
 
     int memcolumnCount =  fields.size() * stacks.size() * times.size() * chans.size() * memlist.size();
     int dbcolumnCount = 0;

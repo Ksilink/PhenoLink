@@ -484,13 +484,29 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     stored["Experiments"] = QJsonArray::fromStringList(QStringList(xps.begin(), xps.end()));
 
     // If no commit store the start in params, otherwise with the commit name !!!
+
+
+
+
     QString st = (stored["CommitName"].toString().isEmpty()) ? "/params/":
                                                                 "/"+stored["CommitName"].toString() +"/";
 
     QString proc = _preparedProcess;
-    QDir dir; dir.mkpath(set.value("databaseDir").toString() +st);
 
-    QString fn = set.value("databaseDir").toString() + st +
+
+
+    QDir dir(set.value("databaseDir").toString());
+    dir.mkpath(set.value("databaseDir").toString() +st);
+
+    // 20201210: Large behaviour change
+    // Now: Assuming the following reordering:
+    // dir + {tag.project} + Checkout_Results/ + prefix + / PlateName + .csv
+    // If file exists move previous file with a post_fix info
+    QString writePath = QString("%1/%2/Checkout_Results/").arg(dir.absolutePath())
+            .arg(lsfm[0]->getOwner()->property("project"))
+           ;
+    dir.mkpath(writePath + st);
+    QString fn = writePath + st +
             proc.replace("/", "_").replace(" ", "_") + "_" +
             QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss")+".json";
 
