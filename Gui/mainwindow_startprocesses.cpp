@@ -185,7 +185,7 @@ void MainWindow::getValue(QWidget* wid, QJsonObject& obj, QString tag, bool list
 
     if (wid->isHidden()) return; // Skip hidden widget,
     // to handle the case where a single input is dependent on the context :)
-// For instance unit of measurement, where you can use the same input with different meaning, or different default value
+    // For instance unit of measurement, where you can use the same input with different meaning, or different default value
     // Say a surface can be expressed in px² or µm² but in the plugin code it is just a matter of adapting the value with respect to single parameter
 
     if (list && !obj.contains(tag))
@@ -451,7 +451,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         }
         if (_shareTags->isChecked())
         {
-//            sfm->clearTags();
+            //            sfm->clearTags();
             foreach (QString l, tags_map[sfm->Pos()]) sfm->setTag(l);
         }
         // startProcess is more a prepare process list function now
@@ -489,14 +489,14 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
 
     QString st = (stored["CommitName"].toString().isEmpty()) ? "/params/":
-                                                                "/"+stored["CommitName"].toString() +"/";
+                                                               "/"+stored["CommitName"].toString() +"/";
 
     QString proc = _preparedProcess;
 
 
 
     QDir dir(set.value("databaseDir").toString());
-    dir.mkpath(set.value("databaseDir").toString() +st);
+  //  dir.mkpath(set.value("databaseDir").toString() +st);
 
     // 20201210: Large behaviour change
     // Now: Assuming the following reordering:
@@ -504,7 +504,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     // If file exists move previous file with a post_fix info
     QString writePath = QString("%1/%2/Checkout_Results/").arg(dir.absolutePath())
             .arg(lsfm[0]->getOwner()->property("project"))
-           ;
+            ;
     dir.mkpath(writePath + st);
     QString fn = writePath + st +
             proc.replace("/", "_").replace(" ", "_") + "_" +
@@ -603,19 +603,19 @@ void MainWindow::startProcessRun()
             {
                 if (projName.isEmpty())
                 {
-                bool ok;
-                QStringList sug=(*it)->fileName().replace("\\", "/").split("/");
-                if (sug.size() > 4)
-                    sug[0] = sug[4];
-                else
-                    sug[0] = sug[sug.size()-2];
+                    bool ok;
+                    QStringList sug=(*it)->fileName().replace("\\", "/").split("/");
+                    if (sug.size() > 4)
+                        sug[0] = sug[4];
+                    else
+                        sug[0] = sug[sug.size()-2];
 
-                 QString text = QInputDialog::getText(this,
-                                                     QString("Please specify project Name for: %1 (%2)").arg((*it)->name()).arg((*it)->groupName()),
-                                                     "Project Name", QLineEdit::Normal,
-                                                     sug.at(0), &ok);
-                if (ok && !text.isEmpty())
-                   projName = text;
+                    QString text = QInputDialog::getText(this,
+                                                         QString("Please specify project Name for: %1 (%2)").arg((*it)->name()).arg((*it)->groupName()),
+                                                         "Project Name", QLineEdit::Normal,
+                                                         sug.at(0), &ok);
+                    if (ok && !text.isEmpty())
+                        projName = text;
                 }
                 else (*it)->setProperties("project", projName);
 

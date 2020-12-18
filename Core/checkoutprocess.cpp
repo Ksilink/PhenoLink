@@ -855,7 +855,10 @@ void CheckoutProcess::removeRunner(QString user, void *run) {
 void CheckoutProcess::cancelUser(QString user)
 {
     for (auto q : _peruser_runners[user])
-        QThreadPool::globalInstance()->tryTake(static_cast<PluginRunner*>(q));
+    {
+        auto res = QThreadPool::globalInstance()->tryTake(static_cast<PluginRunner*>(q));
+        Q_UNUSED(res);
+    }
     _peruser_runners[user].clear();
     _peruser_runners.remove(user);
 }
@@ -876,7 +879,7 @@ std::vector<unsigned char> CheckoutProcess::detachPayload(QString hash)
         if (_stored.contains(hash))
         {
             //            qDebug() << "Plugin Runner, deleting data for thread" << (uint)QThread::currentThreadId();
-            CheckoutProcessPluginInterface* p = _stored[hash];
+            //CheckoutProcessPluginInterface* p = _stored[hash];
 
             _stored.remove(hash);
             /*
