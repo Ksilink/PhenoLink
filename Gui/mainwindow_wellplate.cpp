@@ -71,7 +71,7 @@
 #include <QtWebEngineWidgets/QWebEngineView>
 //#include <QtWebEngineWidgets/QtWebEngineWidgets>
 
-
+#include <dashoptions.h>
 
 void MainWindow::on_loadSelection_clicked()
 {
@@ -83,20 +83,28 @@ void MainWindow::on_loadSelection_clicked()
 
 void MainWindow::on_dashDisplay_clicked()
 {
-
-//    QWebEngineView* view = new QWebEngineView();
     ScreensHandler& handler = ScreensHandler::getHandler();
     QStringList checked = mdl->getCheckedDirectories(false);
     handler.loadScreens(checked, false);
     Screens data = handler.getScreens();
+    // First fire the dashoption object with the Screens :)
 
-    QStringList dbs, agdbs;
-    for (auto s: data)
-    {
-        QPair<QStringList, QStringList> db = s->databases();
-        dbs.append(db.first);
-        agdbs.append(db.second);
-    }
+
+    DashOptions opt(data, this);
+    opt.exec();
+    //    opt->raise();
+    //       opt->activateWindow();
+
+
+    //    QWebEngineView* view = new QWebEngineView();
+
+    //    QStringList dbs, agdbs;
+    //    for (auto s: data)
+    //    {
+    //        QPair<QStringList, QStringList> db = s->databases();
+    //        dbs.append(db.first);
+    //        agdbs.append(db.second);
+    //    }
 
     // Need to load first line of each file & accomodate with plate tags
     // Also add a other csv input :) (like cellprofiler or other stuffs;
@@ -106,20 +114,20 @@ void MainWindow::on_dashDisplay_clicked()
 
 
 
-//    int tab = ui->tabWidget->addTab(view, "Dash View");
-    QSettings set;
-    QWebEngineView *view = new QWebEngineView(this);
-    QUrl url(QString("http://%1:%2?dbs=%3&agdbs=%4")
-             .arg(set.value("DashServer", "127.0.0.1").toString())
-             .arg("8050")
-             .arg(dbs.join(";"))
-             .arg(agdbs.join(";"))
-             );
-    qDebug() << url;
-    view->load(url);
-    int tab = ui->tabWidget->addTab(view, "Dash View");
+    //    int tab = ui->tabWidget->addTab(view, "Dash View");
+    //    QSettings set;
+    //    QWebEngineView *view = new QWebEngineView(this);
+    //    QUrl url(QString("http://%1:%2?dbs=%3&agdbs=%4")
+    //             .arg(set.value("DashServer", "127.0.0.1").toString())
+    //             .arg("8050")
+    //             .arg(dbs.join(";"))
+    //             .arg(agdbs.join(";"))
+    //             );
+    //    qDebug() << url;
+    //    view->load(url);
+    //    int tab = ui->tabWidget->addTab(view, "Dash View");
 
-    Q_UNUSED(tab);
+    //    Q_UNUSED(tab);
 }
 
 #include <QProgressDialog>
@@ -130,11 +138,11 @@ void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
 {
 
     if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(pairs.second.toStdWString().c_str()))
-         {
-            mx.lock();
-            pairs.first->setInvalid();
-            mx.unlock();
-        }
+    {
+        mx.lock();
+        pairs.first->setInvalid();
+        mx.unlock();
+    }
 }
 
 
@@ -237,7 +245,7 @@ void MainWindow::loadSelection(QStringList checked)
 
     foreach (ExperimentFileModel* mdl, data)
     {
-          multifield |= (mdl->getAllSequenceFiles().front()->getFieldCount() > 1);
+        multifield |= (mdl->getAllSequenceFiles().front()->getFieldCount() > 1);
 
         if (mdl)
         {
@@ -392,14 +400,17 @@ void MainWindow::addDirectory()
     QFileDialog* _f_dlg = new QFileDialog(this);
     _f_dlg->setDirectory(set.value("LastAddedDir","c:/").toString());
     _f_dlg->setOption(QFileDialog::ShowDirsOnly, true);
-//    _f_dlg->setFileMode(QFileDialog::DirectoryOnly);
-    _f_dlg->setOption(QFileDialog::DontUseNativeDialog, true);
+    _f_dlg->setFileMode(QFileDialog::Directory);
+    //    fileDialog.setOption(QFileDialog::ShowDirsOnly);
 
-    QListView* l = _f_dlg->findChild<QListView*>("listView");
+    //    _f_dlg->setFileMode(QFileDialog::DirectoryOnly);
+    //    _f_dlg->setOption(QFileDialog::DontUseNativeDialog, true);
 
-    if (l) l->setSelectionMode(QListView::MultiSelection);
-    QTreeView* t = _f_dlg->findChild<QTreeView*>();
-    if (t) t->setSelectionMode(QTreeView::MultiSelection);
+    //    QListView* l = _f_dlg->findChild<QListView*>("listView");
+
+    //    if (l) l->setSelectionMode(QListView::MultiSelection);
+    //    QTreeView* t = _f_dlg->findChild<QTreeView*>();
+    //    if (t) t->setSelectionMode(QTreeView::MultiSelection);
 
     int nMode = _f_dlg->exec();
     if (nMode == QDialog::Rejected)
