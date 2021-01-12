@@ -50,7 +50,7 @@ void SequenceInteractor::setField(unsigned t)
             foreach(ImageInfos* info, list)
             {
                 SequenceInteractor* inter = info->getInteractor();
-        
+
                 if (inter && !inter->isUpdating())
                 {
                     inter->setField(t);
@@ -706,8 +706,8 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
         QList<double> a, b;
 
         for (unsigned i =0; i < (unsigned)li.first.size(); ++i)
-                if (filt.first[i])
-                   a << li.first[i];
+            if (filt.first[i])
+                a << li.first[i];
 
         for (unsigned i =0; i < (unsigned)li.second.size(); ++i)
             if (filt.second[i])
@@ -783,6 +783,39 @@ void paletizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
     }
     lastPal += ncolors;
 }
+
+template <bool Saturate, bool Inverted>
+void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols, bool binarize)
+{
+    const float mi = imifo->getDispMin(),
+            ma = imifo->getDispMax();
+    const int R = imifo->Red();
+    const int G = imifo->Green();
+    const int B = imifo->Blue();
+
+    float mami = ma - mi;
+    for (int i = 0; i < rows; ++i)
+    {
+        unsigned short* p = image.ptr<unsigned short>(i);
+
+        QRgb* pix = (QRgb*)toPix.scanLine(i);
+        for (int j = 0; j < cols; ++j, ++p)
+        {
+            unsigned short v = *p  ;
+            if (!Saturate)
+                v = v > ma ? mi : v;
+            if (binarize)
+                v = v > mi ? ma : mi;
+            float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
+            if (Inverted) f = 1 - f;
+
+            pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
+                          std::min(255.f, qGreen(pix[j]) + f * G),
+                          std::min(255.f, qBlue(pix[j]) + f * R));
+        }
+    }
+}
+
 template <bool Saturate, bool Inverted>
 void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image,  cv::Mat& bias, QImage& toPix, int rows, int cols, bool binarize)
 {
@@ -821,37 +854,6 @@ void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image,  cv::Mat& bias, QIma
     }
 }
 
-template <bool Saturate, bool Inverted>
-void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols, bool binarize)
-{
-    const float mi = imifo->getDispMin(),
-            ma = imifo->getDispMax();
-    const int R = imifo->Red();
-    const int G = imifo->Green();
-    const int B = imifo->Blue();
-
-    float mami = ma - mi;
-    for (int i = 0; i < rows; ++i)
-    {
-        unsigned short* p = image.ptr<unsigned short>(i);
-
-        QRgb* pix = (QRgb*)toPix.scanLine(i);
-        for (int j = 0; j < cols; ++j, ++p)
-        {
-            unsigned short v = *p  ;
-            if (!Saturate)
-                v = v > ma ? mi : v;
-            if (binarize)
-                v = v > mi ? ma : mi;
-            float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
-            if (Inverted) f = 1 - f;
-
-            pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + f * B),
-                          std::min(255.f, qGreen(pix[j]) + f * G),
-                          std::min(255.f, qBlue(pix[j]) + f * R));
-        }
-    }
-}
 
 #include <colormap/color.hpp>
 #include <colormap/grid.hpp>
@@ -861,6 +863,7 @@ void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
 
 void randomMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols)
 {
+    Q_UNUSED(imifo);
 
     for (int i = 0; i < rows; ++i)
     {
@@ -873,7 +876,7 @@ void randomMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, 
             std::minstd_rand0 nb(v);
             int r = nb(), g = nb(), b = nb(); // get a random value
 
-            pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + (float)r),
+            pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + (float)(r&0xFF)),
                           std::min(255.f, qGreen(pix[j])+ (float)(g&0xFF)),
                           std::min(255.f, qBlue(pix[j]) + (float)(b&0xFF)));
         }
@@ -1021,6 +1024,8 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
 
 QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed, bool bias)
 {
+    Q_UNUSED(bias);
+
     QList<unsigned> res;
     if (packed)
     {
@@ -1065,5 +1070,241 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
 
     }
     return res;
+}
+
+
+int findY(QStringList list, QString x)
+{
+    x = x.replace("_X", "_Y");
+    for (int i = 0; i < list.size(); ++i)
+    {
+        if (x == list[i])
+            return i;
+    }
+    return 0;
+}
+
+
+QColor randCol(float v)
+{
+    std::minstd_rand0 nb(v);
+    int r = nb(), g = nb(), b = nb(); // get a random value
+    return qRgb((float)(r&0xFF),(float)(g&0xFF),(float)(b&0xFF));
+}
+
+
+void getMinMax(cv::Mat &ob, int f, float& cmin, float& cmax)
+{
+    cmin = std::numeric_limits<float>::max();
+    cmax = -std::numeric_limits<float>::max();
+
+    for (int r = 0; r < ob.rows; ++r)
+    {
+        float v = ob.at<float>(r,f);
+        if (v < cmin) cmin = v;
+        else if (v > cmax) cmax = v;
+    }
+
+}
+
+
+QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
+{
+
+    //qDebug() << "GET METAAAAAAhhhhh";
+    // The interactor will filter / scale & analyse the meta data to be generated
+    QList<QGraphicsItem*> res;
+
+    //    SequenceFileModel::Channel& chans = _mdl->getChannelsFiles(_timepoint, _field, _zpos);
+
+    int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
+    qDebug() << _timepoint << _field << _zpos << cns;
+    for (int c = 1; c <= cns;++c)
+    {
+        QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
+        // We can add some selectors
+
+        for (auto k: data)
+        {
+            //        StructuredMetaData& k = data.first();
+
+            QString cols = k.property("ChannelNames");
+            qDebug() << cols;
+
+            if (cols.contains("_Top") && cols.contains("_Left")
+                    && cols.contains("_Width") && cols.contains("_Height"))
+            {
+                // This is a Top Left Corner rectangle setting !
+
+                // Find item pos:
+                cv::Mat& feat = k.content();
+
+                int t,l,w,h, f;
+                QStringList lcols = cols.split(";").mid(0, feat.cols);
+                QList<int> feats;
+
+                for (int i = 0; i < lcols.size(); ++i)
+                {
+                    QString s = lcols[i];
+                    if (s.contains("_Top"))   t = i;
+                    else if (s.contains("_Left"))  l = i;
+                    else if (s.contains("_Width")) w = i;
+                    else if (s.contains("_Height")) h = i;
+                    else { feats << i;  }
+                }
+
+                float cmin, cmax;
+                f = feats.first();
+                getMinMax(feat, f, cmin, cmax);
+
+
+                using namespace colormap ;
+
+                auto pal = palettes.at("jet");
+                pal.rescale(cmin, cmax);
+
+
+                auto group = new QGraphicsItemGroup(parent);
+                for (int r = 0; r < feat.rows; ++r)
+                {
+
+                    auto item = new QGraphicsRectItem(group);
+                    float y = feat.at<float>(r, t),
+                            x = feat.at<float>(r, l),
+                            width= feat.at<float>(r, w),
+                            height= feat.at<float>(r, h);
+                    item->setRect(QRectF(x,y,width,height));
+                    //qDebug() << r << x << y << width << height;
+                    QString tip;
+                    for (auto p : feats)
+                    {
+                        float fea = feat.at<float>(r,p);
+                        tip += QString("%1: %2\r\n").arg(lcols[p]).arg(fea);
+                    }
+                    item->setToolTip(tip.trimmed());
+                    float fea = feat.at<float>(r,f);
+                    auto colo = pal(fea);
+                    item->setPen(QPen(qRgb(colo[0], colo[1], colo[2])));
+                    //                item->setBrush(); // FIXME: Add color feature
+                }
+                res << group;
+            }
+            if (cols.contains("_X") && cols.contains("_Y"))
+            {
+                // There is a X & Y coordinate
+                if (cols.count("_X") >= 2 && cols.count("_Y") >= 2)
+                {
+                    // Should be a vector
+                    cv::Mat& feat = k.content();
+
+                    int x1,y1, x2, y2;
+                    QStringList lcols = cols.split(";").mid(0, feat.cols);
+
+                    for (int i = 0; i < lcols.size(); ++i)
+                    {
+                        QString s = lcols[i];
+                        if (s.contains("_X"))  {
+                            x1 = i;
+                            y1 = findY(lcols, s);
+                            for (int j = i+1; j < lcols.size(); ++j)
+                                if (lcols[j].contains("_X"))
+                                {
+                                    x2 = j;
+                                    y2 = findY(lcols, lcols[j]);
+                                    break;
+                                }
+                            break;
+                        }
+                    }
+                    auto group = new QGraphicsItemGroup(parent);
+                    for (int r = 0; r < feat.rows; ++r)
+                    {
+
+                        auto item = new QGraphicsLineItem (group);
+                        float x = feat.at<float>(r, x1),
+                                y = feat.at<float>(r, y1),
+                                w= feat.at<float>(r, x2),
+                                h= feat.at<float>(r, y2);
+                        item->setLine(x,y,w,h);
+                        float len = sqrt(pow(x-w,2)+pow(y-h,2));
+                        //qDebug() << r << x << y << width << height;
+                        item->setPen(QPen(randCol(r))); // Random coloring !
+                        item->setToolTip(QString("Length %1").arg(len));
+                    }
+                    res << group;
+
+
+                }
+                else
+                {
+                    // This is a 2d point
+
+                    cv::Mat& feat = k.content();
+
+                    int t,l,  f;
+                    QStringList lcols = cols.split(";").mid(0, feat.cols);
+
+                    for (int i = 0; i < lcols.size(); ++i)
+                    {
+                        QString s = lcols[i];
+                        if (s.contains("_X"))   t = i;
+                        else if (s.contains("_Y"))  l = i;
+                        else f = i;
+                    }
+
+                    float cmin, cmax;
+                    getMinMax(feat, f, cmin, cmax);
+
+
+                    using namespace colormap ;
+
+                    auto pal = palettes.at("jet");
+                    pal.rescale(cmin, cmax);
+
+
+
+
+                    auto group = new QGraphicsItemGroup(parent);
+                    for (int r = 0; r < feat.rows; ++r)
+                    {
+                        auto item = new QGraphicsEllipseItem(group);
+                        // Radius of 1.5 px :)
+                        float x = feat.at<float>(r, t-1),
+                                y= feat.at<float>(r, l-1),
+                                width= feat.at<float>(r, t+1),
+                                height= feat.at<float>(r, l+1);
+
+                        item->setRect(QRectF(x,y,width,height));
+                        float fea = feat.at<float>(r,f);
+                        item->setToolTip(QString("%1 %2").arg(lcols[f]).arg(fea));
+                        auto colo = pal(fea);
+                        item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
+                    }
+                    res << group;
+
+
+                }
+
+            }
+        }
+
+
+    }
+    return res;
+}
+
+void SequenceInteractor::getResolution(float &x, float &y)
+{
+    static float _x = 0, _y = 0;
+    if (_x == 0)
+    {
+        _x = _mdl->property(QString("HorizontalPixelDimension_ch%1").arg(_channel)).toDouble();
+        _y = _mdl->property(QString("VerticalPixelDimension_ch%1").arg(_channel)).toDouble();
+    }
+    x = _x;
+    y = _y;
+//    qDebug() << x << y;
+    //     "HorizontalPixelDimension" << "VerticalPixelDimension"
+    //_mdl->
 }
 

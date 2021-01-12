@@ -538,19 +538,19 @@ void ExperimentFileModel::reloadDatabaseData()
 
     for (auto file: dbs.first)
     {
-          QString t = file;
-          QStringList spl = t.split("/");
-          t=spl[spl.size() -2];
+        QString t = file;
+        QStringList spl = t.split("/");
+        t=spl[spl.size() -2];
 
 
         reloadDatabaseData(file, t, false);
     }
     for (auto file: dbs.first)
     {
-          QString t = file;
-          QStringList spl = t.split("/");
-          t=spl[spl.size() -2];
-          reloadDatabaseData(file, t, true);
+        QString t = file;
+        QStringList spl = t.split("/");
+        t=spl[spl.size() -2];
+        reloadDatabaseData(file, t, true);
     }
 }
 
@@ -655,7 +655,7 @@ QPair<QStringList, QStringList> ExperimentFileModel::databases()
     QStringList raw, ag;
 
 
-     { // older legacy ..
+    { // older legacy ..
         getOLegacyDB(set.value("databaseDir").toString(), _hash, raw, ag);
     }
 
@@ -840,30 +840,44 @@ QStringList SequenceFileModel::getAllFiles()
 
 StructuredMetaData &SequenceFileModel::getMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name)
 {
-    Q_UNUSED(timePoint  );
-    Q_UNUSED(fieldIdx);
-
-    Q_UNUSED(Zindex);
-    Q_UNUSED(channel);
-    Q_UNUSED(name);
-
-
     static StructuredMetaData r;
+    if (_sdata.contains(fieldIdx))
+        if (_sdata[fieldIdx].contains(Zindex))
+            if (_sdata[fieldIdx][Zindex].contains(timePoint))
+                if (_sdata[fieldIdx][Zindex][timePoint].contains(channel))
+                    if (_sdata[fieldIdx][Zindex][timePoint][channel].contains(name))
+                        return _sdata[fieldIdx][Zindex][timePoint][channel][name];
 
     return r;
+}
+
+int SequenceFileModel::getMetaChannels(int timePoint, int fieldIdx, int Zindex)
+{
+    if (_sdata.contains(fieldIdx))
+        if (_sdata[fieldIdx].contains(Zindex))
+            if (_sdata[fieldIdx][Zindex].contains(timePoint))
+                return _sdata[fieldIdx][Zindex][timePoint].size();
+    return 0;
 }
 
 QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, int fieldIdx, int Zindex, int channel)
 {
-    Q_UNUSED(timePoint  );
-    Q_UNUSED(fieldIdx);
 
-    Q_UNUSED(Zindex);
-    Q_UNUSED(channel);
 
     static QMap<QString, StructuredMetaData> r;
+
+    if (_sdata.contains(fieldIdx))
+        if (_sdata[fieldIdx].contains(Zindex))
+            if (_sdata[fieldIdx][Zindex].contains(timePoint))
+                if (_sdata[fieldIdx][Zindex][timePoint].contains(channel))
+                    return _sdata[fieldIdx][Zindex][timePoint][channel];
+
+
     return r;
 }
+
+
+
 
 //QStringList SequenceFileModel::getMetaNames(int timePoint, int fieldIdx, int Zindex, int channel)
 //{
@@ -1820,6 +1834,8 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
     }
 
 
+    qDebug() << "Handling response object:" << ob;
+
     if (ob["isImage"].toBool())
     {
         // Find whats is the content type & store it accordingly
@@ -1861,122 +1877,215 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
             int col, row;
             stringToPos(meta["Pos"].toString(), row, col);
             // qDebug() << ob;
-            SequenceFileModel& seq = (*mdl)(row, col);
-            seq.setOwner(mdl);
-            seq.setProcessResult(true);
-            seq.setDisplayStatus(ob["shallDisplay"].toBool());
-            (*_mscreens[hash])(row, col).addSibling(&seq);
 
-            ExperimentFileModel* sr = (*_mscreens[hash])(row, col).getOwner();
-            if (!sr) return 0;
-            for (int i = 1; i < 10; ++i)
+
+            if (ob["ContentType"].toString() == "Image")
             {
-                QString prop = QString("ChannelsColors%1").arg(i);
-                if (sr->hasProperty(prop))        {
-                    qDebug() << "Property : " << sr->property(prop);
-                    mdl->setProperties(prop, sr->property(prop));
-                }
-            }
 
-            QJsonArray res = ob["Payload"].toArray();
+                SequenceFileModel& seq = (*mdl)(row, col);
+                seq.setOwner(mdl);
+                seq.setProcessResult(true);
+                seq.setDisplayStatus(ob["shallDisplay"].toBool());
+                (*_mscreens[hash])(row, col).addSibling(&seq);
 
-            for (int item = 0; item < res.count(); ++item)
-            {
-                QString hash = QString("%1%2").arg( ob["DataHash"].toString(), item == 0 ? "" : QString("%1").arg(item));
-                std::vector<unsigned char> data = CheckoutProcess::handler().detachPayload(hash);
-                if (data.size() == 0) {
-                    qDebug() << "Data" << hash << " not fetched yet, awaiting";
-                    continue;
-                }
-
-                QJsonObject payload = res.at(item).toObject();
-
-                QJsonArray datasizes =  payload["DataSizes"].toArray();
-                unsigned size = 0;
-                for (int i = 0; i < datasizes.size(); ++i)
-                    size += datasizes.at(i).toInt();
-
-                if (size == 0)
+                ExperimentFileModel* sr = (*_mscreens[hash])(row, col).getOwner();
+                if (!sr) return 0;
+                for (int i = 1; i < 10; ++i)
                 {
-                    if (data.size() != size)
-                    {
-                        qDebug() << "Error while gathering data (expected" << size << "received" << data.size() << ")";
-                        return rmdl;
+                    QString prop = QString("ChannelsColors%1").arg(i);
+                    if (sr->hasProperty(prop))        {
+                        qDebug() << "Property : " << sr->property(prop);
+                        mdl->setProperties(prop, sr->property(prop));
                     }
-                    else
-                        return rmdl;
                 }
 
-                unsigned long long chans = 0;
-                for (int i = 0; i < datasizes.size(); ++i)
+                QJsonArray res = ob["Payload"].toArray();
+
+                for (int item = 0; item < res.count(); ++item)
                 {
-
-                    int r = payload["Rows"].toInt(), c = payload["Cols"].toInt();
-                    int cvtype = payload["cvType"].toInt();
-
-                    unsigned long long len = r * c * payload["DataTypeSize"].toInt() ;
-                    cv::Mat im(r, c, cvtype, &(data.data()[chans]));
-
-
-                    //   cv::imwrite(QString("c:/temp/im%1.jpg").arg(hash).toStdString(), im*255);
-
-                    cv::Mat* m = new cv::Mat();
-
-                    (*m) = im.clone();
-
-                    chans += len;
-                    if (!m)
-                    {
-                        qDebug() << "Memory error, Image not created !";
-                        return rmdl;
+                    QString hash = QString("%1%2").arg( ob["DataHash"].toString(), item == 0 ? "" : QString("%1").arg(item));
+                    std::vector<unsigned char> data = CheckoutProcess::handler().detachPayload(hash);
+                    if (data.size() == 0) {
+                        qDebug() << "Data" << hash << " not fetched yet, awaiting";
+                        continue;
                     }
-                    int t = payload.contains("Time") ? payload["Time"].toInt() : meta["TimePos"].toInt(),
-                            f = meta["FieldId"].toInt(),
-                            z = meta["zPos"].toInt(),
-                            ch = meta["channel"].toInt();
 
-                    int cc = datasizes.size() > 1  ? i+1 : ch;
+                    QJsonObject payload = res.at(item).toObject();
 
-                    QString fname =  QString(":/mem/%1_%2_%3_%4_T%5F%6Z%7C%8.png")
-                            .arg(hash)
-                            .arg(ob["Tag"].toString())
-                            .arg(processHash)
-                            .arg(meta["Pos"].toString())
-                            .arg(t)
-                            .arg(f)
-                            .arg(z)
-                            .arg(cc)
-                            ;
+                    QJsonArray datasizes =  payload["DataSizes"].toArray();
+                    unsigned size = 0;
+                    for (int i = 0; i < datasizes.size(); ++i)
+                        size += datasizes.at(i).toInt();
 
-                    MemoryHandler::handler().addData(fname, m);
-                    seq.addFile(t, f, z, cc, fname);
-
-                    rmdl = &seq;
-                    _result_images << fname;
-
-                    if (ob.contains("Colormap"))
+                    if (size == 0)
                     {
-                        QMap<unsigned, QColor> color;
-
-                        QJsonObject obj = ob["Colormap"].toObject();
-                        for (auto it = obj.begin(); it != obj.end(); ++it)
+                        if (data.size() != size)
                         {
-                            QColor col;
-                            col.setNamedColor(it.value().toString());
-                            color[it.key().toInt()] = col;
+                            qDebug() << "Error while gathering data (expected" << size << "received" << data.size() << ")";
+                            return rmdl;
                         }
-                        MemoryHandler::handler().addColor(fname, color);
+                        else
+                            return rmdl;
                     }
-                    if (ob.contains("ChannelNames"))
+
+                    unsigned long long chans = 0;
+                    for (int i = 0; i < datasizes.size(); ++i)
                     {
-                        QStringList names;
-                        QJsonArray ar = ob["ChannelNames"].toArray();
-                        for (int n = 0; n < ar.size(); ++n)
-                            names << ar[n].toString();
-                        mdl->setChannelNames(names);
+
+                        int r = payload["Rows"].toInt(), c = payload["Cols"].toInt();
+                        int cvtype = payload["cvType"].toInt();
+
+                        unsigned long long len = r * c * payload["DataTypeSize"].toInt() ;
+                        cv::Mat im(r, c, cvtype, &(data.data()[chans]));
+
+
+                        //   cv::imwrite(QString("c:/temp/im%1.jpg").arg(hash).toStdString(), im*255);
+
+                        cv::Mat* m = new cv::Mat();
+
+                        (*m) = im.clone();
+
+                        chans += len;
+                        if (!m)
+                        {
+                            qDebug() << "Memory error, Image not created !";
+                            return rmdl;
+                        }
+                        int t = payload.contains("Time") ? payload["Time"].toInt() : meta["TimePos"].toInt(),
+                                f = meta["FieldId"].toInt(),
+                                z = meta["zPos"].toInt(),
+                                ch = meta["channel"].toInt();
+
+                        int cc = datasizes.size() > 1  ? i+1 : ch;
+
+                        QString fname =  QString(":/mem/%1_%2_%3_%4_T%5F%6Z%7C%8.png")
+                                .arg(hash)
+                                .arg(ob["Tag"].toString())
+                                .arg(processHash)
+                                .arg(meta["Pos"].toString())
+                                .arg(t)
+                                .arg(f)
+                                .arg(z)
+                                .arg(cc)
+                                ;
+
+                        MemoryHandler::handler().addData(fname, m);
+                        seq.addFile(t, f, z, cc, fname);
+
+                        rmdl = &seq;
+                        _result_images << fname;
+
+                        if (ob.contains("Colormap"))
+                        {
+                            QMap<unsigned, QColor> color;
+
+                            QJsonObject obj = ob["Colormap"].toObject();
+                            for (auto it = obj.begin(); it != obj.end(); ++it)
+                            {
+                                QColor col;
+                                col.setNamedColor(it.value().toString());
+                                color[it.key().toInt()] = col;
+                            }
+                            MemoryHandler::handler().addColor(fname, color);
+                        }
+                        if (ob.contains("ChannelNames"))
+                        {
+                            QStringList names;
+                            QJsonArray ar = ob["ChannelNames"].toArray();
+                            for (int n = 0; n < ar.size(); ++n)
+                                names << ar[n].toString();
+                            mdl->setChannelNames(names);
+                        }
                     }
                 }
             }
+            else
+            { // Handle other types of results, points + features & Box + features expected here
+                qDebug() << "Need to handle overlay content Type";
+                SequenceFileModel& seq = (*_mscreens[hash])(row, col);
+
+                QJsonArray res = ob["Payload"].toArray();
+
+                for (int item = 0; item < res.count(); ++item)
+                {
+                    QString hash = QString("%1%2").arg( ob["DataHash"].toString(), item == 0 ? "" : QString("%1").arg(item));
+                    std::vector<unsigned char> data = CheckoutProcess::handler().detachPayload(hash);
+                    if (data.size() == 0) {
+                        qDebug() << "Data" << hash << " not fetched yet, awaiting";
+                        continue;
+                    }
+
+                    QJsonObject payload = res.at(item).toObject();
+
+                    QJsonArray datasizes =  payload["DataSizes"].toArray();
+                    unsigned size = 0;
+                    for (int i = 0; i < datasizes.size(); ++i)
+                        size += datasizes.at(i).toInt();
+
+                    if (size == 0)
+                    {
+                        if (data.size() != size)
+                        {
+                            qDebug() << "Error while gathering data (expected" << size << "received" << data.size() << ")";
+                            return rmdl;
+                        }
+                        else
+                            return rmdl;
+                    }
+
+                    unsigned long long chans = 0;
+                    for (int i = 0; i < datasizes.size(); ++i)
+                    {
+
+                        int r = payload["Rows"].toInt(), c = payload["Cols"].toInt();
+                        int cvtype = payload["cvType"].toInt();
+
+                        unsigned long long len = r * c * payload["DataTypeSize"].toInt() ;
+                        cv::Mat im(r, c, cvtype, &(data.data()[chans]));
+
+                        chans += len;
+
+                        int t = payload.contains("Time") ? payload["Time"].toInt() : meta["TimePos"].toInt(),
+                                f = meta["FieldId"].toInt(),
+                                z = meta["zPos"].toInt(),
+                                ch = meta["channel"].toInt();
+
+                        int cc = datasizes.size() > 1  ? i+1 : ch;
+
+                        QString fname =  QString(":/mem/%1_%2_%3_%4_T%5F%6Z%7C%8.png")
+                                .arg(hash)
+                                .arg(ob["Tag"].toString())
+                                .arg(processHash)
+                                .arg(meta["Pos"].toString())
+                                .arg(t)
+                                .arg(f)
+                                .arg(z)
+                                .arg(cc)
+                                ;
+
+
+                        StructuredMetaData data;
+                        data.setContent(im.clone());
+                        if (ob.contains("ChannelNames"))
+                        {
+                            QStringList names;
+                            QJsonArray ar = ob["ChannelNames"].toArray();
+                            for (int n = 0; n < ar.size(); ++n)
+                                names << ar[n].toString();
+                            QString tt = names.join(";");
+                            data.setProperties("ChannelNames", tt);
+                        }
+
+                        seq.addMeta(t < 1 ? 1 : t, f < 1 ? 1 : f, z < 1 ? 1 : z, cc < 0 ? 1 : cc, ob["Tag"].toString(), data);
+        
+                    }
+
+                }
+
+
+                rmdl = &seq;
+            }
+
         }
     }
 
@@ -2003,9 +2112,9 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QJsonObject& dat
     //  qDebug() << data["CommitName"];
 
     QJsonArray ar = data["Data"].toArray();
-//    int procId = data["ProcessStartId"].toInt();
+    //    int procId = data["ProcessStartId"].toInt();
     QString processHash = data["Hash"].toString();
-//    bool displayed = data["shallDisplay"].toBool();
+    //    bool displayed = data["shallDisplay"].toBool();
     for (int i = 0; i < ar.size(); ++i)
     {
         QJsonObject ob = ar.at(i).toObject();
@@ -2401,7 +2510,7 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
         // dir + {tag.project} + Checkout_Results/ + prefix + / PlateName + .csv
         // If file exists move previous file with a post_fix info
         QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
-               ;
+                ;
         QString fname =  _owner->name() +".csv";
 
         dir.mkpath(writePath);
@@ -2773,4 +2882,11 @@ StructuredMetaData::StructuredMetaData(Dictionnary dict): DataProperty(dict)
 
 cv::Mat &StructuredMetaData::content() { return _content; }
 
-void StructuredMetaData::setContent(cv::Mat cont) { _content = cont; }
+void StructuredMetaData::setContent(cv::Mat cont)
+{
+    // Ensure datatype is CV_32F as later on we use it forced to float
+    if (cont.type() != CV_32F)
+        cont.convertTo(_content, CV_32F);
+    else
+        _content = cont;
+}

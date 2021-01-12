@@ -54,6 +54,7 @@ public:
 
     QStringList getChannelNames();
 
+    void updateDecorator(QList<QGraphicsItem *> decors);
 protected:
     virtual void resizeEvent(QResizeEvent * event) ;
     virtual void mousePressEvent(QMouseEvent *event);
@@ -147,6 +148,8 @@ private:
     bool _moving;
     QGraphicsLineItem* _ruler;
     int playTimerId;
+
+    QList<QGraphicsItem *> _decorators;
 
     // User Settings
     double scaleFactor, aspectRatio, currentScale;

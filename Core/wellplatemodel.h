@@ -132,6 +132,7 @@ public:
     QSet<int> getChannelsIds();
 
     StructuredMetaData& getMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name);
+    int getMetaChannels(int timePoint, int fieldIdx, int Zindex);
     QMap<QString, StructuredMetaData>& getMetas(int timePoint, int fieldIdx, int Zindex, int channel);
 
 //    QStringList getMetaNames(int timePoint, int fieldIdx, int Zindex, int channel);

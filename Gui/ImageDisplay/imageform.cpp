@@ -254,6 +254,9 @@ void ImageForm::redrawPixmap()
 void ImageForm::updateImage()
 {
     setPixmap(_interactor->getPixmap(packed, bias_correction));
+
+    updateDecorator(_interactor->getMeta(pixItem));
+
     scale(0);
 }
 
@@ -547,12 +550,24 @@ void ImageForm::plusClicked()
     scale(1);
 }
 
+void ImageForm::updateDecorator(QList<QGraphicsItem*> decors)
+{
+    for (auto d :    _decorators)
+    {
+        ui->graphicsView->scene()->removeItem(d);
+        delete d;
+    }
+    _decorators = decors;
+}
+
+
 void ImageForm::prevImClicked()
 {
     if (_interactor->getField() > 1)
     {
         _interactor->setField(_interactor->getField() - 1);
         setPixmap(_interactor->getPixmap(packed, bias_correction));
+        updateDecorator(_interactor->getMeta(pixItem));
     }
     changeCurrentSelection();
 }
@@ -563,6 +578,7 @@ void ImageForm::nextImClicked()
     {
         _interactor->setField(_interactor->getField() + 1);
         setPixmap(_interactor->getPixmap(packed, bias_correction));
+        updateDecorator(_interactor->getMeta(pixItem));
     }
     changeCurrentSelection();
 }
@@ -573,6 +589,7 @@ void ImageForm::sliceUpClicked()
     {
         _interactor->setZ(_interactor->getZ()+1);
         setPixmap(_interactor->getPixmap(packed, bias_correction));
+        updateDecorator(_interactor->getMeta(pixItem));
     }
     changeCurrentSelection();
 }
@@ -583,6 +600,7 @@ void ImageForm::sliceDownClicked()
     {
         _interactor->setZ(_interactor->getZ() - 1);
         setPixmap(_interactor->getPixmap(packed, bias_correction));
+        updateDecorator(_interactor->getMeta(pixItem));
     }
     changeCurrentSelection();
 }
@@ -593,6 +611,7 @@ void ImageForm::nextFrameClicked()
     {
         _interactor->setTimePoint(_interactor->getTimePoint()+1);
         setPixmap(_interactor->getPixmap(packed, bias_correction));
+        updateDecorator(_interactor->getMeta(pixItem));
     }
     changeCurrentSelection();
 }
@@ -603,6 +622,7 @@ void ImageForm::prevFrameClicked()
     {
         _interactor->setTimePoint(_interactor->getTimePoint() - 1);
         setPixmap(_interactor->getPixmap(packed, bias_correction));
+        updateDecorator(_interactor->getMeta(pixItem));
     }
     changeCurrentSelection();
 }
@@ -817,7 +837,7 @@ void ImageForm::imageClick(QPointF pos)
     //  qDebug() << pos;
     if (!_size_start.isNull() && _moving)
     {
-      //  qDebug() << "Line from" << _size_start << "to" << pos;
+        //  qDebug() << "Line from" << _size_start << "to" << pos;
         _moving = false;
         _size_end = pos;
     }
@@ -842,7 +862,7 @@ void ImageForm::imageDoubleClick(QPointF pos)
 
 void ImageForm::imageMouseMove(QPointF pos)
 {
-
+    Q_UNUSED(pos);
 }
 
 void ImageForm::mouseOverImage(QPointF pos)
@@ -863,18 +883,26 @@ void ImageForm::mouseOverImage(QPointF pos)
 
     if (!_size_start.isNull())
     {
+
+        float dx, dy;
+        _interactor->getResolution(dx, dy);
+
         if (_moving)
             _size_end = pos;
 
         _ruler->setVisible(true);
-       
+
         _ruler->setLine(_size_start.x(), _size_start.y(), _size_end.x(), _size_end.y());
 
         float s = sqrt(pow(_size_end.x() - _size_start.x(), 2) +
                        pow(_size_end.y() - _size_start.y(), 2));
         QString unit("px");
-
         str += QString(" - %1 %2").arg(s, 0, 'g', 2).arg(unit);
+
+        s = sqrt(pow((_size_end.x() - _size_start.x())*dx, 2) +
+                       pow((_size_end.y() - _size_start.y())*dy, 2));
+
+        str += QString(" / %1 µm").arg(s, 0, 'g', 2);
     }
 
     imagePosInfo = str;

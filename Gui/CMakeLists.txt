@@ -9,7 +9,7 @@ set(CheckoutGui_SRC
                 experimentworkbenchcontrol.cpp experimentworkbenchcontrol.h
 
                 optioneditor.cpp optioneditor.h
-                dashoptions.cpp dashoptions.h
+                dashoptions.cpp dashoptions.h dashoptions.ui
 
                 ImageDisplay/graphicssignitem.cpp ImageDisplay/graphicssignitem.h
                 ImageDisplay/imageform.cpp ImageDisplay/imageform.h ImageDisplay/imageform.ui

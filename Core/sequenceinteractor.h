@@ -10,6 +10,7 @@
 #include <QColor>
 
 #include <QPixmap>
+#include <QGraphicsItem>
 #include "imageinfos.h"
 
 class ImageForm;
@@ -32,6 +33,7 @@ public:
   unsigned getChannel();
 
 
+
   double getFps();
 
   QString getFileName();
@@ -43,6 +45,10 @@ public:
   QPixmap getPixmap(bool packed = true, bool bias_correction = false, float scale = 1.);
   QImage getPixmapChannels(int field, bool bias_correction = false, float scale = 1.);
   QList<unsigned> getData(QPointF d, int& field, bool packed = true, bool bias = false);
+
+   QList<QGraphicsItem*> getMeta(QGraphicsItem* parent);
+
+   void getResolution(float& x, float &y);
 
 
   // Return all channels file for current selection
