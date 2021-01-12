@@ -1918,7 +1918,7 @@ void MainWindow::exportToCellProfiler()
             basePath = basePath.left(longestMatch(basePath, path));
 
         QStringList cname = xp->getChannelNames();
-        for (auto a: cname) chans.insert(a.replace(" ", "_"));
+        for (auto a: cname) chans.insert(a.trimmed().replace(" ", "_"));
 
         for (auto seq: xp->getValidSequenceFiles())
         {
@@ -1951,8 +1951,8 @@ void MainWindow::exportToCellProfiler()
             meta.insert(c);
     }
 
-    for (auto c : meta) values[QString("Metadata_%1").arg(c.replace(" ", "_"))]=QString("0");
-    for (auto c : titration) values[QString("Titration_%1").arg(c.replace(" ", "_"))]=QString("0");
+    for (auto c : meta) values[QString("Metadata_%1").arg(c.trimmed().replace(" ", "_"))]=QString("0");
+    for (auto c : titration) values[QString("Titration_%1").arg(c.trimmed().replace(" ", "_"))]=QString("0");
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
@@ -1965,7 +1965,7 @@ void MainWindow::exportToCellProfiler()
         return ;
 
     QTextStream resFile(&file);
-	auto l = values.end()--;
+	auto l = --values.end();
     for (auto c: values )      resFile << c.first << (c.first == l->first ? "" : ",");
     resFile << Qt::endl;
 
@@ -1980,13 +1980,14 @@ void MainWindow::exportToCellProfiler()
         QStringList p = path.split('/'); p.pop_back();
         path = p.join('\\');
         QStringList cname = xp->getChannelNames();
-        for (auto a: cname)  values[QString("Image_PathName_%1").arg(a)]=path;
 
         for (auto seq: xp->getValidSequenceFiles())
         {
-			for (auto c : values)  c.second = QString("0");
             QStringList t = seq->getTags();
-            for (auto c: values )  c.second=QString();
+
+            for (auto a: cname)  values[QString("Image_PathName_%1").arg(a.trimmed().replace(" ", "_"))]=path;
+            for (auto c : meta) values[QString("Metadata_%1").arg(c.trimmed().replace(" ", "_"))] = QString("0");
+            for (auto c : titration) values[QString("Titration_%1").arg(c.trimmed().replace(" ", "_"))] = QString("0");
 
             for (auto c : t)
             {
@@ -2012,7 +2013,7 @@ void MainWindow::exportToCellProfiler()
                             values["Field"]=QString("%1").arg(f);
                             values["Time"]=QString("%1").arg(t);
                             values["Z"]=QString("%1").arg(z);
-                            values[QString("Image_FileName_%1").arg(cname[c])]=fi.split('/').back();
+                            values[QString("Image_FileName_%1").arg(cname[c].trimmed().replace(" ", "_"))]=fi.split('/').back();
                         }
 
                         for (auto c: values )      resFile << c.second << (c.first == l->first ? "" : ",");
