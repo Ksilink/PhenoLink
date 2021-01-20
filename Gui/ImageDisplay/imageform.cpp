@@ -204,6 +204,23 @@ void ImageForm::watcherPixmap()
     delete wa;
 }
 
+void ImageForm::updateImageInfos()
+{
+    //  Well Name C1 (Z: z, t: t, F: f)
+    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
+            .arg(_interactor->getSequenceFileModel()->Pos())
+            .arg(_interactor->getZ())
+            .arg(_interactor->getTimePoint())
+            .arg(_interactor->getField())
+            ;
+
+    QString tags = _view->getTags().join(" ");
+    if (!tags.isEmpty())
+        imageInfos += " " + tags;
+
+    textItem->setPlainText(imageInfos);
+}
+
 
 void ImageForm::redrawPixmap(QPixmap img)
 {
@@ -391,14 +408,8 @@ void ImageForm::setModelView(SequenceFileModel *view, SequenceInteractor* intera
     this->_interactor->setCurrent(_interactor);
 
 
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
-            .arg(_interactor->getSequenceFileModel()->Pos())
-            .arg(_interactor->getZ())
-            .arg(_interactor->getTimePoint())
-            .arg(_interactor->getField())
-            ;
 
-
+    updateImageInfos();
     updateButtonVisibility();
 
 
@@ -907,12 +918,7 @@ void ImageForm::mouseOverImage(QPointF pos)
 
     imagePosInfo = str;
 
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
-            .arg(_interactor->getSequenceFileModel()->Pos())
-            .arg(_interactor->getZ())
-            .arg(_interactor->getTimePoint())
-            .arg(field);
-    textItem->setPlainText(imageInfos);
+    updateImageInfos();
     textItem2->setPlainText(imagePosInfo);
     // Need to fetch image infos...
     //  qDebug() << pos <<
@@ -921,14 +927,9 @@ void ImageForm::mouseOverImage(QPointF pos)
 
 void ImageForm::changeCurrentSelection()
 {
-    //  Well Name C1 (Z: z, t: t, F: f)
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
-            .arg(_interactor->getSequenceFileModel()->Pos())
-            .arg(_interactor->getZ())
-            .arg(_interactor->getTimePoint())
-            .arg(_interactor->getField())
-            ;
-    textItem->setPlainText(imageInfos);
+
+    updateImageInfos();
+
     if (sz)
     {
         QList<ImageForm*> l = sz->currentSelection();
@@ -1026,13 +1027,7 @@ void ImageForm::timerEvent(QTimerEvent *event)
 
     setPixmap(_interactor->getPixmap(packed, bias_correction));
     //        changeCurrentSelection();
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
-            .arg(_interactor->getSequenceFileModel()->Pos())
-            .arg(_interactor->getZ())
-            .arg(_interactor->getTimePoint())
-            .arg(_interactor->getField())
-            ;
-    textItem->setPlainText(imageInfos);
+    updateImageInfos();
     this->repaint();
 }
 
@@ -1199,19 +1194,13 @@ void ImageForm::saveVideo()
     //    writer.open(filename.toStdString(),  fourcc, (int)_interactor->getFps(), s);
 
     QString pos = _interactor->getSequenceFileModel()->Pos();
-    int z = _interactor->getZ(), f = _interactor->getField();
     for (unsigned i = 1; i <= _interactor->getTimePointCount(); i++) {
         progress.setValue(i);
         _interactor->setTimePoint(i);
 
         setPixmap(_interactor->getPixmap(packed, bias_correction));
         //        changeCurrentSelection();
-        imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
-                .arg(pos)
-                .arg(z)
-                .arg(i)
-                .arg(f);
-        textItem->setPlainText(imageInfos);
+        updateImageInfos();
         // repaint();
         QPixmap pixmap(this->size());
         this->render(&pixmap);
@@ -1227,13 +1216,7 @@ void ImageForm::saveVideo()
     progress.setValue( _interactor->getTimePointCount());
 
     _interactor->setTimePoint(currentTime);
-    imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
-            .arg(_interactor->getSequenceFileModel()->Pos())
-            .arg(_interactor->getZ())
-            .arg(_interactor->getTimePoint())
-            .arg(_interactor->getField())
-            ;
-    textItem->setPlainText(imageInfos);
+    updateImageInfos();
     repaint();
 
 

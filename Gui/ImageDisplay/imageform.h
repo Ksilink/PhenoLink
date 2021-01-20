@@ -91,6 +91,8 @@ protected slots:
 protected:
 
 
+    void updateImageInfos();
+
     qreal gsiWidth(GraphicsSignItem::Signs sign);
     qreal gsiHeight(GraphicsSignItem::Signs sign);
 
