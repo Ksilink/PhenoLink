@@ -96,15 +96,15 @@ void MainWindow::on_dashDisplay_clicked()
     //       opt->activateWindow();
 
 
-    //    QWebEngineView* view = new QWebEngineView();
+//    QWebEngineView* view = new QWebEngineView();
 
-    //    QStringList dbs, agdbs;
-    //    for (auto s: data)
-    //    {
-    //        QPair<QStringList, QStringList> db = s->databases();
-    //        dbs.append(db.first);
-    //        agdbs.append(db.second);
-    //    }
+    QStringList dbs, agdbs;
+    for (auto s: data)
+    {
+        QPair<QStringList, QStringList> db = s->databases();
+        dbs.append(db.first);
+        agdbs.append(db.second);
+    }
 
     // Need to load first line of each file & accomodate with plate tags
     // Also add a other csv input :) (like cellprofiler or other stuffs;
@@ -115,19 +115,19 @@ void MainWindow::on_dashDisplay_clicked()
 
 
     //    int tab = ui->tabWidget->addTab(view, "Dash View");
-    //    QSettings set;
-    //    QWebEngineView *view = new QWebEngineView(this);
-    //    QUrl url(QString("http://%1:%2?dbs=%3&agdbs=%4")
-    //             .arg(set.value("DashServer", "127.0.0.1").toString())
-    //             .arg("8050")
-    //             .arg(dbs.join(";"))
-    //             .arg(agdbs.join(";"))
-    //             );
-    //    qDebug() << url;
-    //    view->load(url);
-    //    int tab = ui->tabWidget->addTab(view, "Dash View");
+    QSettings set;
+    QWebEngineView *view = new QWebEngineView(this);
+    QUrl url(QString("http://%1:%2?dbs=%3&agdbs=%4")
+             .arg(set.value("DashServer", "127.0.0.1").toString())
+             .arg("8050")
+             .arg(dbs.join(";"))
+             .arg(agdbs.join(";"))
+             );
+    qDebug() << url;
+    view->load(url);
+    int tab = ui->tabWidget->addTab(view, "Dash View");
 
-    //    Q_UNUSED(tab);
+        Q_UNUSED(tab);
 }
 
 #include <QProgressDialog>
