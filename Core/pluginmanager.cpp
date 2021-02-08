@@ -21,6 +21,7 @@ void loadPlugins(bool isServer)
     QDir pluginsDir(qApp->applicationDirPath());
     bool isDebug = false;
     bool isRelease = false;
+    bool isRelDeb = false;
 #if defined(Q_OS_WIN)
     if (pluginsDir.dirName().toLower() == "debug")
     {
@@ -32,6 +33,12 @@ void loadPlugins(bool isServer)
         pluginsDir.cdUp();
         isRelease = true;
     }
+    if (  pluginsDir.dirName().toLower() == "relwithdebinfo")
+    {
+        pluginsDir.cdUp();
+        isRelDeb = true;
+    }
+
 
 #elif defined(Q_OS_MAC)
     if (pluginsDir.dirName() == "MacOS") {
@@ -45,7 +52,7 @@ void loadPlugins(bool isServer)
 
     if (isDebug) pluginsDir.cd("Debug");
     if (isRelease) pluginsDir.cd("Release");
-
+    if (isRelDeb) pluginsDir.cd("RelWithDebInfo");
 
     CheckoutDataLoader& loader = CheckoutDataLoader::handler();
     CheckoutProcess & process = CheckoutProcess::handler();
