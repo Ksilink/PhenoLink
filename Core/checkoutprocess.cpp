@@ -353,6 +353,11 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
 
             // - 1) clone the plugin: call the clone() function
             plugin = plugin->clone();
+			if (!plugin)
+			{
+				qDebug() << "Plugin cannot be cloned";
+				break;
+			}
             //params["StartTime"] = QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz");
 
             QString hash = params["Process_hash"].toString();
@@ -367,10 +372,20 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
 
             //           qDebug() << "Starting process";
             PluginRunner* runner = new PluginRunner(plugin, hash);
-
-            QString key = params["Username"].toString()+ "@" +  params["Computer"].toString();
-            _peruser_runners[key].push_back((void*)runner);
-            QThreadPool::globalInstance()->start(runner);
+			if (runner)
+			{
+				QString key = params["Username"].toString() + "@" + params["Computer"].toString();
+				_peruser_runners[key].push_back((void*)runner);
+				auto th_instance = QThreadPool::globalInstance();
+				if (th_instance)
+					th_instance->start(runner);
+				else
+					qDebug() << "Error with launching threads";
+			}
+			else
+			{
+				qDebug() << "Unable to start runner";
+			}
         }
     }
     else
