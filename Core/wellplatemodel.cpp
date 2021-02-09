@@ -2546,7 +2546,7 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
         }
         resFile.flush();
         file.close();
-        qDebug() << "Writing " << linecounter << "Data from" << _owner->name() << "to" << hash + "_" + prefix + ".csv";
+        qDebug() << "Writing " << linecounter << "Data from" << _owner->name() << "to" << fname;
     }
 
 
