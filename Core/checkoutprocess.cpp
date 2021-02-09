@@ -171,17 +171,18 @@ public:
             timer.start();
             p=4;
             plugin->exec();
+			p = 5;
             CheckoutProcess::handler().removeRunner(plugin->user(), (void*)this);
-            p=5;
-            plugin->finished();
             p=6;
+            plugin->finished();
+            p=7;
             // - 4) Do the gathering of processes data
             //        qDebug() << "Gathering data";
             QJsonObject result = plugin->gatherData(timer.elapsed());
-            p=7;
+            p=8;
             qDebug() << timer.elapsed() << "(ms) done";
             CheckoutProcess::handler().finishedProcess(_hash, result);
-            p=8;
+            p=9;
         }
         catch (...)
         {
