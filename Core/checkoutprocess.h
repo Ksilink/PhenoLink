@@ -67,7 +67,7 @@ public:
   void removeRunner(QString user, void* run);
 
   void cancelUser(QString user);
-  void finishedProcess(QString dhash);
+  void finishedProcess(QStringList dhash);
 
 protected slots:
 
@@ -89,7 +89,7 @@ signals:
   void processStarted(QString hash);
   void updateProcessStatus(QJsonArray);
   void updateDatabase();
-  void processFinished(QJsonObject ob);
+  void processFinished(QJsonArray ob);
 
   void emptyProcessList();
   void payloadAvailable(QString hash);

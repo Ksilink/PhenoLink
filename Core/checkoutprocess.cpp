@@ -171,17 +171,18 @@ public:
             timer.start();
             p=4;
             plugin->exec();
-            CheckoutProcess::handler().removeRunner(plugin->user(), (void*)this);
             p=5;
             plugin->finished();
             p=6;
+             CheckoutProcess::handler().removeRunner(plugin->user(), (void*)this);
+            p=7;
             // - 4) Do the gathering of processes data
             //        qDebug() << "Gathering data";
             QJsonObject result = plugin->gatherData(timer.elapsed());
-            p=7;
+            p=8;
             qDebug() << timer.elapsed() << "(ms) done";
             CheckoutProcess::handler().finishedProcess(_hash, result);
-            p=8;
+            p=9;
         }
         catch (...)
         {
@@ -356,7 +357,7 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
             // - 1) clone the plugin: call the clone() function
             plugin = plugin->clone();
 			if (!plugin)
-			{
+            {
 				qDebug() << "Plugin cannot be cloned";
 				break;
 			}
@@ -378,7 +379,9 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
 			if (runner)
 			{
 				QString key = params["Username"].toString() + "@" + params["Computer"].toString();
+                status_protect.lock();
 				_peruser_runners[key].push_back((void*)runner);
+                status_protect.unlock();
 				auto th_instance = QThreadPool::globalInstance();
 				if (th_instance)
 					th_instance->start(runner);
@@ -640,8 +643,12 @@ void CheckoutProcess::addToComputedDataModel(QJsonObject ob)
 
 void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
 {
+    QJsonArray finished, unfinished;
+//    qDebug() << "Finished Processes" << obj.size();
+
     for (int i = 0; i < obj.size(); ++i)
     {
+        qDebug() << obj[i].toObject();
         if (!obj[i].isObject()) continue;
         QJsonObject ob = obj[i].toObject();
 
@@ -651,12 +658,11 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
             addToComputedDataModel(ob);
 
             QString hash=ob["Hash"].toString();
-            status_protect.lock();
+            hash_to_save_mtx.lock();
             _status.remove(hash);
-            status_protect.unlock();
             //            qDebug() << "GUI Finished Hash" << hash << _hash_to_save.contains(hash);
 
-            hash_to_save_mtx.lock();
+           
 
             if (_hash_to_save[hash])
             {
@@ -668,12 +674,8 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
                 {
                     qDebug() << "GUI Hash finished" << hash;
                     //                    qDebug() << ob;
-
-
-
                     // Last object of the running process, check for the field CommitName in ob & commit to the database if not empty
-
-                    _hash_to_save.remove(hash);
+                   _hash_to_save.remove(hash);
 
                 }
             }
@@ -682,19 +684,23 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
             status_protect.lock();
             if (_status.isEmpty())
             {
-                status_protect.unlock();
                 qDebug() << NetworkProcessHandler::handler().remainingProcess();
                 emit emptyProcessList();
             }
-            else
-            {
-                status_protect.unlock();
-                emit processFinished(ob);
-            }
+            status_protect.unlock();
+//            qDebug() << "Adding object" << ob;
+            finished.append(ob);
+
         }
+        else
+            unfinished.append(ob);
 
     }
-    emit updateProcessStatus(obj);
+     qDebug() <<"Clearing finished process: " << finished.size();
+
+    emit processFinished(finished);
+
+    emit updateProcessStatus(unfinished);
 }
 
 void CheckoutProcess::refreshProcessStatus()
@@ -868,13 +874,16 @@ unsigned CheckoutProcess::errors()
 QStringList CheckoutProcess::users() { return _peruser_runners.keys(); }
 
 void CheckoutProcess::removeRunner(QString user, void *run) {
+    status_protect.lock();
     _peruser_runners[user].removeOne(run);
     if (_peruser_runners.empty())
         _peruser_runners.remove(user);
+    status_protect.unlock();
 }
 
 void CheckoutProcess::cancelUser(QString user)
 {
+    status_protect.lock();
     for (auto q : _peruser_runners[user])
     {
         auto res = QThreadPool::globalInstance()->tryTake(static_cast<PluginRunner*>(q));
@@ -882,9 +891,10 @@ void CheckoutProcess::cancelUser(QString user)
     }
     _peruser_runners[user].clear();
     _peruser_runners.remove(user);
+    status_protect.unlock();
 }
 
-void CheckoutProcess::finishedProcess(QString dhash)
+void CheckoutProcess::finishedProcess(QStringList dhash)
 {
     NetworkProcessHandler::handler().processFinished(dhash);
 }

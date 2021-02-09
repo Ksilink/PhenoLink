@@ -186,7 +186,7 @@ public slots:
     void wellplateClose(int tabId);
     void removeWorkbench(int idx);
 
-    void networkProcessFinished(QJsonObject ob);
+    void networkProcessFinished(QJsonArray ob);
     void future_networkRetrieveImageFinished();
 
     void networkRetrievedImage(QList<SequenceFileModel*> lsfm);

@@ -170,7 +170,7 @@ void MainWindow::exportData()
 {
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/export.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                               | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                          | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -406,90 +406,97 @@ void MainWindow::retrievedPayload(QString hash)
     QFuture<QList<SequenceFileModel*> > future = QtConcurrent::run(addResultImage, _waitingForImages[hash]);
     watcher->setFuture(future);
     _waitingForImages.remove(hash);
-   // msg = QString("Finished with image %1 / remaining %2").arg(hash).arg(CheckoutProcess::handler().numberOfRunningProcess());
-  //  ui->statusBar->showMessage(msg);
+    // msg = QString("Finished with image %1 / remaining %2").arg(hash).arg(CheckoutProcess::handler().numberOfRunningProcess());
+    //  ui->statusBar->showMessage(msg);
 }
 
 
-void MainWindow::networkProcessFinished(QJsonObject data)
+void MainWindow::networkProcessFinished(QJsonArray dat)
 {
+    QStringList finished_hash;
+    QString msg;
+
+    qDebug() << "Network Finished" << dat.size();
     //QCoreApplication::processEvents();
-
-    QStringList vals = QStringList() << "Hash" << "ElapsedTime" << "ProcessStartId" << "Data";
-    foreach (QString v, vals)
-        if (!data.contains(v))
-            return;
-
-    QString msg = QString("Process Finished %1 in %2 ms, retrieving network data").arg(data["Hash"].toString()).arg(data["ElapsedTime"].toString());
-   // ui->statusBar->showMessage(msg);
-
-
-    if (_StatusProgress)
+    for (int i = 0; i < dat.size(); i++)
     {
-        _StatusProgress->setValue(_StatusProgress->value()+1);
-    }
+        QJsonObject data = dat[i].toObject();
+
+        QStringList vals = QStringList() << "Hash" << "ElapsedTime" << "ProcessStartId" << "Data";
+        foreach (QString v, vals)
+            if (!data.contains(v))
+                return;
+
+        msg += QString("Process Finished %1 in %2 ms, retrieving network data").arg(data["Hash"].toString()).arg(data["ElapsedTime"].toString());
+        // ui->statusBar->showMessage(msg);
 
 
-
-    int procId = data["ProcessStartId"].toInt();
-    QString processHash = data["Hash"].toString();
-
-//    qDebug() << "Object to finalize: " << data;
-
-    QJsonArray ar = data["Data"].toArray();
-    for (int i = 0; i < ar.size(); ++i)
-    {
-        //        QCoreApplication::processEvents();
-
-        QJsonObject ob = ar.at(i).toObject();
-
-        if (ob["isImage"].toBool() && ob.contains("DataHash") && !ob["DataHash"].toString().isEmpty())
+        if (_StatusProgress)
         {
-            QString dhash = ob["DataHash"].toString();
-            // Store the current object for further usage
-            ob["ProcessHash"] = processHash;
-            ob["ProcessStartId"] = procId;
-            ob["shallDisplay"] = data["shallDisplay"].toBool();
-
-
-            // Query the server for the data if available
-            bool should_delete = ob.contains("isOptional") && !ob["optionalState"].toBool();
-
-            //                                qDebug() << "Query payload" << dhash;
-            QList<QString> hashes; //hashes << dhash;
-            if (!should_delete) _waitingForImages[dhash] = ob;
-            if (ob.contains("Payload"))
-            {
-                QJsonArray ar = ob["Payload"].toArray();
-                for (size_t i = 0; i < (size_t)ar.size(); ++i)
-                 {
-                    
-                    QString hh = ar[(int)i].toObject()["DataHash"].toString(); //QString("%1%2").arg(dhash).arg(i);
-
-//                    qDebug() << hh;
-                    if (!should_delete)  _waitingForImages[hh] = ob;
-
-                    hashes << hh;
-                }
-            }
-
-            foreach (QString h, hashes)
-                if (should_delete)
-                {
-                    //removeHash=false;
-                    CheckoutProcess::handler().deletePayload(h);
-                }
-                else
-                {
-                    //removeHash = false;
-                    CheckoutProcess::handler().queryPayload(h);
-                }
+            _StatusProgress->setValue(_StatusProgress->value()+1);
         }
+
+
+
+        int procId = data["ProcessStartId"].toInt();
+        QString processHash = data["Hash"].toString();
+
+        //    qDebug() << "Object to finalize: " << data;
+
+        QJsonArray ar = data["Data"].toArray();
+        for (int i = 0; i < ar.size(); ++i)
+        {
+            //        QCoreApplication::processEvents();
+
+            QJsonObject ob = ar.at(i).toObject();
+
+            if (ob["isImage"].toBool() && ob.contains("DataHash") && !ob["DataHash"].toString().isEmpty())
+            {
+                QString dhash = ob["DataHash"].toString();
+                // Store the current object for further usage
+                ob["ProcessHash"] = processHash;
+                ob["ProcessStartId"] = procId;
+                ob["shallDisplay"] = data["shallDisplay"].toBool();
+
+
+                // Query the server for the data if available
+                bool should_delete = ob.contains("isOptional") && !ob["optionalState"].toBool();
+
+                //                                qDebug() << "Query payload" << dhash;
+                QList<QString> hashes; //hashes << dhash;
+                if (!should_delete) _waitingForImages[dhash] = ob;
+                if (ob.contains("Payload"))
+                {
+                    QJsonArray ar = ob["Payload"].toArray();
+                    for (size_t i = 0; i < (size_t)ar.size(); ++i)
+                    {
+
+                        QString hh = ar[(int)i].toObject()["DataHash"].toString(); //QString("%1%2").arg(dhash).arg(i);
+
+                        //                    qDebug() << hh;
+                        if (!should_delete)  _waitingForImages[hh] = ob;
+
+                        hashes << hh;
+                    }
+                }
+
+                foreach (QString h, hashes)
+                    if (should_delete)
+                    {
+                        //removeHash=false;
+                        CheckoutProcess::handler().deletePayload(h);
+                    }
+                    else
+                    {
+                        //removeHash = false;
+                        CheckoutProcess::handler().queryPayload(h);
+                    }
+            }
+        }
+        finished_hash << processHash;
     }
-    CheckoutProcess::handler().finishedProcess(processHash);
 
-   
-
+    CheckoutProcess::handler().finishedProcess(finished_hash);
     foreach (ExperimentFileModel* mdl, ScreensHandler::getHandler().getScreens())
         if (ui->wellPlateViewTab->tabText(ui->wellPlateViewTab->currentIndex()) == mdl->name())
         {
@@ -613,13 +620,13 @@ void MainWindow::clearTable()
 
 void MainWindow::setProgressBar()
 {
-//    qDebug() << "Threaded finished";
+    //    qDebug() << "Threaded finished";
     CheckoutProcess& handler = CheckoutProcess::handler();
 
     if (handler.errors() > 0)
     {
         qDebug() << "Network starting errors!" << handler.errors();
-       // QMessageBox::warning(this, "Network error", QString("%1 processes where not properly started, check network config").arg(handler.errors()));
+        // QMessageBox::warning(this, "Network error", QString("%1 processes where not properly started, check network config").arg(handler.errors()));
         ui->statusBar->showMessage(QString("Network error: %1 processes where not properly started, check network config").arg(handler.errors()));
     }
 

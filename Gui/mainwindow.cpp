@@ -202,8 +202,8 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
             this, SLOT(updateProcessStatusMessage(QJsonArray)));
 
 
-    connect(&CheckoutProcess::handler(), SIGNAL(processFinished(QJsonObject)),
-            this, SLOT(networkProcessFinished(QJsonObject)));
+    connect(&CheckoutProcess::handler(), SIGNAL(processFinished(QJsonArray)),
+            this, SLOT(networkProcessFinished(QJsonArray)));
 
     connect(&CheckoutProcess::handler(), SIGNAL(emptyProcessList()),
             this, SLOT(processFinished()));

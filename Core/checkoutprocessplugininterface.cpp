@@ -200,6 +200,7 @@ void CheckoutProcessPluginInterface::finished()
 {
     QMutexLocker locker(&mutex);
 
+    _state = Finished;
     QString hash = _meta.front().hash;
     _hashtoBiasCount[hash]--;
     if (_hashtoBiasCount[hash] == 0)
@@ -210,7 +211,6 @@ void CheckoutProcessPluginInterface::finished()
         _hashtoBiasCount.remove(hash);
     }
 
-    _state = Finished;
 }
 
 void CheckoutProcessPluginInterface::started(qint64 time)
