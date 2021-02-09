@@ -171,17 +171,10 @@ public:
             timer.start();
             p=4;
             plugin->exec();
-<<<<<<< HEAD
-			p = 5;
-            CheckoutProcess::handler().removeRunner(plugin->user(), (void*)this);
-            p=6;
-            plugin->finished();
-=======
             p=5;
             plugin->finished();
             p=6;
              CheckoutProcess::handler().removeRunner(plugin->user(), (void*)this);
->>>>>>> 327444a60662a12ca9601ada3251ac24ab728548
             p=7;
             // - 4) Do the gathering of processes data
             //        qDebug() << "Gathering data";
