@@ -769,10 +769,10 @@ void MainWindow::processFinished()
     Screens& screens = ScreensHandler::getHandler().getScreens();
     qDebug() << "Saving data for screens #" << screens.size();
     foreach (ExperimentFileModel* mdl, screens)
-         {
+    {
         qDebug() <<  mdl->hasComputedDataModel();
         if ( mdl->hasComputedDataModel())
-           qDebug() <<  mdl->computedDataModel()->getCommitName();
+            qDebug() <<  mdl->computedDataModel()->getCommitName();
 
         if (mdl->hasComputedDataModel() && !mdl->computedDataModel()->getCommitName().isEmpty())
         {
@@ -786,7 +786,7 @@ void MainWindow::processFinished()
             mdl->reloadDatabaseData();
             mdl->computedDataModel()->setCommitName(QString());
         }
- }
+    }
 
 }
 
@@ -1509,7 +1509,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                          | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                        | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -1956,7 +1956,7 @@ void MainWindow::exportToCellProfiler()
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                           | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -1965,7 +1965,7 @@ void MainWindow::exportToCellProfiler()
         return ;
 
     QTextStream resFile(&file);
-	auto l = --values.end();
+    auto l = --values.end();
     for (auto c: values )      resFile << c.first << (c.first == l->first ? "" : ",");
     resFile << Qt::endl;
 
@@ -1974,7 +1974,7 @@ void MainWindow::exportToCellProfiler()
         // Empty all the configs
         for (auto c: values )  c.second=QString("0");
 
-		values["Metadata_Plate"] = xp->name();
+        values["Metadata_Plate"] = xp->name();
         // Set the basepath for all files:
         QString path = xp->fileName().split(":").last();
         QStringList p = path.split('/'); p.pop_back();
@@ -2081,7 +2081,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
                                                       set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                              |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;

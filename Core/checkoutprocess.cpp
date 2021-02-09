@@ -679,16 +679,13 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
                 qDebug() << NetworkProcessHandler::handler().remainingProcess();
                 emit emptyProcessList();
             }
-            //            else
-            //          {
-            //            NetworkProcessHandler::handler().processFinished(ob["Hash"].toString());
-            emit processFinished(ob);
-            //        }
-
+            else
+            {
+                emit processFinished(ob);
+            }
         }
 
     }
-
     emit updateProcessStatus(obj);
 }
 
