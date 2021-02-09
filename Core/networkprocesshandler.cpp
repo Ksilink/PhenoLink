@@ -545,12 +545,15 @@ void NetworkProcessHandler::deletePayload(QString hash)
 
 }
 
-void NetworkProcessHandler::processFinished(QString hash)
+void NetworkProcessHandler::processFinished(QStringList hashes)
 {
-    if (runningProcs.contains(hash))
-        runningProcs.remove(hash);
 
-    qDebug() << "Process finished : "<< hash << "Network Stack remaining hash" << runningProcs.size();
+    foreach(QString hash, hashes)
+    {
+        if (runningProcs.contains(hash))
+            runningProcs.remove(hash);
+    }
+     qDebug() << "Process finished : "<< hashes << "Network Stack remaining hash" << runningProcs.size();
 //	if (hash_logfile)
 	//	(*hash_logfile) << "Finished " << hash << Qt::endl;
     //    qDebug() << "Query clear mem" << hash;
