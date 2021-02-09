@@ -337,6 +337,8 @@ void CheckoutProcess::restartProcessOnErrors()
 
 }
 
+QMutex status_protect;
+
 
 void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
 {
@@ -363,8 +365,9 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
 
             QString hash = params["Process_hash"].toString();
             // qDebug() << "Process hash" << hash;
-
+            status_protect.lock();
             _status[hash] = plugin;
+            status_protect.unlock();
 
             // - 2) Set parameters
             // - 2.a) load json prepared data
@@ -459,8 +462,9 @@ void CheckoutProcess::networkProcessStarted(QString core, QString hash)
 
     holder->description(ob["Path"].toString(), QStringList(), "");
     holder->setPosition(ob["Pos"].toString());
-
+    status_protect.lock();
     _status[hash] = holder;
+    status_protect.unlock();
     hash_to_save_mtx.lock();
     _hash_to_save[hash]=_counter;
     if (_counter)    (*_counter)++;
@@ -648,7 +652,9 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
             addToComputedDataModel(ob);
 
             QString hash=ob["Hash"].toString();
+            status_protect.lock();
             _status.remove(hash);
+            status_protect.unlock();
             //            qDebug() << "GUI Finished Hash" << hash << _hash_to_save.contains(hash);
 
             hash_to_save_mtx.lock();
@@ -674,14 +680,16 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
             }
 
             hash_to_save_mtx.unlock();
-
+            status_protect.lock();
             if (_status.isEmpty())
             {
+                status_protect.unlock();
                 qDebug() << NetworkProcessHandler::handler().remainingProcess();
                 emit emptyProcessList();
             }
             else
             {
+                status_protect.unlock();
                 emit processFinished(ob);
             }
         }
@@ -723,6 +731,7 @@ QJsonObject CheckoutProcess::refreshProcessStatus(QString hash)
     // Do nothing still not started...
     if (_process_to_start.contains(hash))
         return QJsonObject();
+
 
     CheckoutProcessPluginInterface* intf = _status[hash];
 
