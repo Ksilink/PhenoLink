@@ -12,9 +12,11 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     _modified(true),
     _name(fname),
     _plate(platename),
+    _lockImage(QMutex::NonRecursive),
     bias_correction(false),
     _saturate(true), _uninverted(true),
-    _channel(channel), _binarized(false), _lockImage(QMutex::NonRecursive)
+
+    _channel(channel), _binarized(false)
 {
     QMutexLocker lock(&_lockImage);
     loadedWithkey = key();
@@ -79,7 +81,7 @@ ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QStr
         ifo = new ImageInfos(*data, par, fname, platename+k, channel);
         stored[fname+k] = ifo;
         exists = false;
-        qDebug() << "New Image Info instance" << ifo << fname << ImageInfos::key() << k << platename << par->getSequenceFileModel()->getOwner()->name();
+//        qDebug() << "New Image Info instance" << ifo << fname << ImageInfos::key() << k << platename << par->getSequenceFileModel()->getOwner()->name();
     }
     else
         exists = true;
@@ -219,7 +221,7 @@ cv::Mat ImageInfos::image(float scale, bool reload)
     return _image;
 }
 
-cv::Mat ImageInfos::bias(int channel, float scale)
+cv::Mat ImageInfos::bias(int channel, float )
 {
     if (_ifo.bias_field[_plate].contains(channel))
         return _ifo.bias_field[_plate][channel];
@@ -235,7 +237,7 @@ cv::Mat ImageInfos::bias(int channel, float scale)
     else
     {
         qDebug() << "Loading bias file" << bias_file;
-         
+
         bias = cv::imread(bias_file.toStdString(), 2);
         _ifo.bias_single_loader[bias_file] = bias;
     }
@@ -268,7 +270,7 @@ void ImageInfos::toggleBiasCorrection()
 }
 
 void ImageInfos::toggleSaturate(){
-   _saturate = !_saturate;
+    _saturate = !_saturate;
 
 
     propagate();
@@ -368,6 +370,31 @@ QString ImageInfos::getChannelName()
     return channelName;
 }
 
+void ImageInfos::setTile(int tile)
+{
+    //qDebug() << "Set Tile " << tile;
+    _parent->setTile(tile);
+    Update();
+}
+
+void ImageInfos::displayTile(bool disp)
+{
+    //qDebug() << "Toggling Tile disp:" << disp;
+    _parent->displayTile(disp);
+    Update();
+}
+
+bool ImageInfos::tileDisplayed()
+{
+
+    return _parent->tileDisplayed();
+}
+
+int ImageInfos::getTile()
+{
+    return _parent->getTile();
+}
+
 
 void ImageInfos::setColor(unsigned char r, unsigned char g, unsigned char b)
 {
@@ -439,7 +466,7 @@ QColor ImageInfos::getColor()
     return QColor::fromRgb(_ifo._platename_to_colorCode[_plate]._r, _ifo._platename_to_colorCode[_plate]._g, _ifo._platename_to_colorCode[_plate]._b);
 }
 
-void ImageInfos::setDefaultColor(int channel, bool refresh)
+void ImageInfos::setDefaultColor(int channel, bool )
 {
     channel --;
     _modified = true;
@@ -460,7 +487,7 @@ void ImageInfos::changeColorState(int chan)
         _ifo._platename_palette_state[_plate].resize(chan);
     _ifo._platename_palette_state[_plate][chan] = !_ifo._platename_palette_state[_plate][chan];
 
-  Update();
+    Update();
 }
 
 void ImageInfos::rangeChanged(double mi, double ma)
@@ -470,7 +497,7 @@ void ImageInfos::rangeChanged(double mi, double ma)
     _ifo._platename_to_colorCode[_plate]._dispMin = mi;
     _ifo._platename_to_colorCode[_plate]._dispMax = ma;
 
-   Update(); 
+    Update();
 }
 
 // Changing the ranges max/min value does not need to update the image, also no need to set modified flag
@@ -480,18 +507,18 @@ void ImageInfos::forceMinValue(double val)
     //  qDebug() << "Image min " << _platename_to_colorCode[_plate].min << _platename_to_colorCode[_plate].max << val;
     _ifo._platename_to_colorCode[_plate].min = val;
     //  _platename_to_colorCode[_plate]._dispMin = val;
-   
-//   Update();
+
+    //   Update();
 }
 
 void ImageInfos::forceMaxValue(double val)
 {
-   // _modified = true;
+    // _modified = true;
     // s qDebug() << "Image max " << _platename_to_colorCode[_plate].min << _platename_to_colorCode[_plate].max << val;
     _ifo._platename_to_colorCode[_plate].max = val;
     //  _platename_to_colorCode[_plate]._dispMax = val;
 
-  //  Update();
+    //  Update();
 }
 
 void ImageInfos::changeFps(double fps)

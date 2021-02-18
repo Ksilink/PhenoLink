@@ -77,20 +77,21 @@
 #include "Core/pluginmanager.h"
 #include "Core/networkprocesshandler.h"
 
+#include <QErrorMessage>
 
 DllGuiExport QFile _logFile;
 
 MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     QMainWindow(parent),
+    server(serverProc),
     networking(true),
     ui(new Ui::MainWindow),
-    server(serverProc),
     _typeOfprocessing(0),
-    _shareTags(0),
     //    _numberOfChannels(0),
     //	_startingProcesses(false),
-    _python_interface(0),
     _commitName(0),
+    _shareTags(0),
+    _python_interface(0),
     //    _progress(0),
     _StatusProgress(0),
     StartId(0)
@@ -98,7 +99,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     ui->setupUi(this);
 
     ui->logWindow->hide(); // Hide the log window, since the content display is hidden now
-
+    //QErrorMessage::qtHandler();
 
 #ifndef CheckoutCoreWithPython
     ui->menuScripts->setVisible(false);
@@ -195,9 +196,6 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     connect(&CheckoutProcess::handler(), SIGNAL(parametersReady(QJsonObject)),
             this, SLOT(setupProcessCall(QJsonObject)));
 
-    connect(&CheckoutProcess::handler(), SIGNAL(processStarted(QString)),
-            this, SLOT(processStarted(QString)));
-
     connect(&CheckoutProcess::handler(), SIGNAL(updateProcessStatus(QJsonArray)),
             this, SLOT(updateProcessStatusMessage(QJsonArray)));
 
@@ -261,6 +259,9 @@ void MainWindow::on_tabWidget_customContextMenuRequested(const QPoint &pos)
 
     QAction* addWflw = menu.addAction(tr("Add a &Workflow tab"));
     QAction* addExpWb = menu.addAction(tr("Add an &Experiment Workbench tab"), this, SLOT(addExperimentWorkbench()));
+
+    Q_UNUSED(addWb);
+    Q_UNUSED(addExpWb);
 
     //    addWb->setDisabled(true);
     addWflw->setDisabled(true);
@@ -462,6 +463,45 @@ QDoubleSpinBox* MainWindow::setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* 
 
 
 
+QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, ImageInfos *inter, bool reconnect)
+{
+   if (!reconnect)
+    {
+        box->setObjectName(QString("TileDisplay"));
+        box->setAttribute(Qt::WA_DeleteOnClose);
+        box->setChecked(inter->tileDisplayed());
+
+        //        box->setContextMenuPolicy(Qt::CustomContextMenu);
+        //        connect(box, SIGNAL(customContextMenuRequested(const QPoint&)),
+        //                this, SLOT(channelCheckboxMenu(const QPoint&)));
+
+    }
+    box->setToolTip("Display Tile Overlay");
+
+    connect(box, SIGNAL(toggled(bool)), inter, SLOT(displayTile(bool)), Qt::UniqueConnection);
+    //connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
+
+    return box;
+}
+
+QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, ImageInfos *inter, bool reconnect)
+{
+    if (!reconnect)
+    {
+        extr->setObjectName("TileSelector");
+        extr->setMinimum(0);
+        extr->setMaximum(361);
+    }
+
+    extr->setToolTip("Pick tile to be overlayed");
+    extr->setValue(inter->getTile());
+    connect(extr, SIGNAL(valueChanged(int)), inter, SLOT(setTile(int)), Qt::UniqueConnection);
+
+    return extr;
+}
+
+
+
 void MainWindow::updateCurrentSelection()
 {
     SequenceInteractor* inter = _sinteractor.current();
@@ -473,11 +513,12 @@ void MainWindow::updateCurrentSelection()
 
     QList<QWidget*> toDel;
 
-    foreach(QWidget* wid, _imageControls.values())
-    {
-        if (wid) wid->hide(); // hide everything
-        toDel << wid;
-    }
+    foreach(QList<QWidget*> widl, _imageControls.values())
+        foreach(QWidget* wid, widl)
+        {
+            if (wid) wid->hide(); // hide everything
+            toDel << wid;
+        }
 
     unsigned channels = inter->getChannels();
     // qDebug() << "#of Channels" << channels;
@@ -546,7 +587,7 @@ void MainWindow::updateCurrentSelection()
 
 
         bvl->addWidget(wid);
-        _imageControls[inter->getExperimentName()] = wwid;
+        _imageControls[inter->getExperimentName()].append(wwid);
     }
 
     // Add FrameRate control if it makes sense
@@ -555,6 +596,28 @@ void MainWindow::updateCurrentSelection()
     }
 
     ui->imageControl->layout()->addWidget(wwid);
+
+    // Addind overlay control shall start here
+    {
+        ImageInfos* fo = inter->getChannelImageInfos(1);
+
+        auto wwid = new QWidget;
+        QVBoxLayout* bvl = new QVBoxLayout(wwid);
+        bvl->setSpacing(1);
+
+        QWidget* wid = new QWidget;
+        //            wid->setAttribute();
+        QHBoxLayout* lay = new QHBoxLayout(wid);
+        lay->setContentsMargins(0, 0, 0, 0);
+        lay->setSpacing(2);
+        lay->addWidget(setupOverlayBox(new QCheckBox(wid), fo));
+        lay->addWidget(setupTilePosition(new QSpinBox(wid), fo));
+        bvl->addWidget(wid);
+
+        ui->overlayControl->layout()->addWidget(wwid);
+        _imageControls[inter->getExperimentName()].append(wwid);
+        wwid->show();
+    }
 
     // Cosmetics... Set the width of spinbox to a fixed largest value, to fit the screen evenly for all channels
     // Find largest vMin & vMax...
@@ -726,9 +789,10 @@ void MainWindow::conditionChanged(int val)
 
 }
 
-void MainWindow::processStarted(QString hash)
-{
-}
+//void MainWindow::processStarted(QString hash)
+//{
+//}
+
 
 void MainWindow::server_processFinished(int exitCode, QProcess::ExitStatus status)
 {
@@ -777,6 +841,7 @@ void MainWindow::processFinished()
         if (mdl->hasComputedDataModel() && !mdl->computedDataModel()->getCommitName().isEmpty())
         {
             int vals = mdl->computedDataModel()->commitToDatabase(mdl->hash(), mdl->computedDataModel()->getCommitName());
+            Q_UNUSED(vals);
             //            if (vals != mapValues[mdl->name()])
             //                QMessageBox::warning(this, "Finished processes",
             //                                     QString("Warning %1 is missing values").arg(mdl->name())
@@ -1010,6 +1075,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
         qDebug() << "Not handled" << par;
     return wid;
 }
+
 
 QJsonArray MainWindow::sortParameters(QJsonArray & arr)
 {
@@ -1509,7 +1575,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                        | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                    | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -1615,37 +1681,37 @@ void MainWindow::rangeChange(double mi, double ma)
 
     SequenceInteractor* inter = _sinteractor.current();
 
-    QWidget* wwid = 0;
-    wwid = _imageControls[inter->getExperimentName()];
-    QString name = sender()->objectName().replace("Channel", "");
-    //sender()
-    //ctkDoubleRangeSlider* range = qobject_cast<ctkDoubleRangeSlider*>(sender());
-    //qDebug() << "Value Range!!!" << mi << ma << name << range->minimum() << range->maximum();
+    foreach(QWidget* wwid, _imageControls[inter->getExperimentName()])
+    {
+        QString name = sender()->objectName().replace("Channel", "");
+        //sender()
+        //ctkDoubleRangeSlider* range = qobject_cast<ctkDoubleRangeSlider*>(sender());
+        //qDebug() << "Value Range!!!" << mi << ma << name << range->minimum() << range->maximum();
 
-    //if (range)
-    //{
-    //    int th = 0; // abs(ma - mi) > 1000 ? 100 : 10;
-    //    if (mi == range.setMin)
-    //    range->setMinimum(mi-th);
-    //    range->setMaximum(ma+th);
-    //}
+        //if (range)
+        //{
+        //    int th = 0; // abs(ma - mi) > 1000 ? 100 : 10;
+        //    if (mi == range.setMin)
+        //    range->setMinimum(mi-th);
+        //    range->setMaximum(ma+th);
+        //}
 
 
-    if (!wwid) return;
+        if (!wwid) return;
 
-    QList<QDoubleSpinBox*> vmi = wwid->findChildren<QDoubleSpinBox*>(QString("vMin%1").arg(name));
+        QList<QDoubleSpinBox*> vmi = wwid->findChildren<QDoubleSpinBox*>(QString("vMin%1").arg(name));
 
-    if (vmi.size()) {
-        lockedChangeValue(vmi.first(), mi);
+        if (vmi.size()) {
+            lockedChangeValue(vmi.first(), mi);
+        }
+
+        QList<QDoubleSpinBox*> vma = wwid->findChildren<QDoubleSpinBox*>(QString("vMax%1").arg(name));
+        if (vma.size()) lockedChangeValue(vma.first(), ma);
+
+
+        ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
+        fo->rangeChanged(mi, ma);
     }
-
-    QList<QDoubleSpinBox*> vma = wwid->findChildren<QDoubleSpinBox*>(QString("vMax%1").arg(name));
-    if (vma.size()) lockedChangeValue(vma.first(), ma);
-
-
-    ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
-    fo->rangeChanged(mi, ma);
-
 
 }
 
@@ -1653,20 +1719,20 @@ void MainWindow::changeRangeValueMax(double val)
 {
     SequenceInteractor* inter = _sinteractor.current();
 
-    QWidget* wwid = 0;
-    wwid = _imageControls[inter->getExperimentName()];
-    QString name = sender()->objectName().replace("vMax", "");
-    //  qDebug() << "Value Max!!!" << val << name;
-    //    qDebug() << "Interactor: changeRangeValue " << sender()->objectName();// << fo;
+    foreach (QWidget* wwid, _imageControls[inter->getExperimentName()])
+    {
+        QString name = sender()->objectName().replace("vMax", "");
+        //  qDebug() << "Value Max!!!" << val << name;
+        //    qDebug() << "Interactor: changeRangeValue " << sender()->objectName();// << fo;
 
-    if (!wwid) return;
-    QList<ctkDoubleRangeSlider*> crs = wwid->findChildren<ctkDoubleRangeSlider*>(QString("Channel%1").arg(name));
-    if (crs.size()) crs.first()->setMaximumValue(val);
-    if (crs.size() && crs.first()->maximum() < val) crs.first()->setMaximum(val);
+        if (!wwid) return;
+        QList<ctkDoubleRangeSlider*> crs = wwid->findChildren<ctkDoubleRangeSlider*>(QString("Channel%1").arg(name));
+        if (crs.size()) crs.first()->setMaximumValue(val);
+        if (crs.size() && crs.first()->maximum() < val) crs.first()->setMaximum(val);
 
-    ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
-    fo->forceMaxValue(val);
-    //    qDebug() << "Interactor: changeRangeValue " << sender()->objectName() << fo;
+        ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
+        fo->forceMaxValue(val);
+    }
 
 }
 
@@ -1674,19 +1740,19 @@ void MainWindow::changeRangeValueMin(double val)
 {
     SequenceInteractor* inter = _sinteractor.current();
 
-    QWidget* wwid = 0;
-    wwid = _imageControls[inter->getExperimentName()];
-    QString name = sender()->objectName().replace("vMin", "");
-    //  qDebug() << "Value Min !!!" << val << name;
-    
-    if (!wwid) return;
-    QList<ctkDoubleRangeSlider*> crs = wwid->findChildren<ctkDoubleRangeSlider*>(QString("Channel%1").arg(name));
-    if (crs.size()) crs.first()->setMinimumValue(val);
-    if (crs.size() && crs.first()->minimum() > val) crs.first()->setMinimum(val);
+    foreach (QWidget* wwid, _imageControls[inter->getExperimentName()])
+    {
+        QString name = sender()->objectName().replace("vMin", "");
+        //  qDebug() << "Value Min !!!" << val << name;
 
-    ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
-    fo->forceMinValue(val);
+        if (!wwid) return;
+        QList<ctkDoubleRangeSlider*> crs = wwid->findChildren<ctkDoubleRangeSlider*>(QString("Channel%1").arg(name));
+        if (crs.size()) crs.first()->setMinimumValue(val);
+        if (crs.size() && crs.first()->minimum() > val) crs.first()->setMinimum(val);
 
+        ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
+        fo->forceMinValue(val);
+    }
 }
 
 void MainWindow::changeFpsValue(double val)
@@ -1744,7 +1810,7 @@ void MainWindow::changeColorState(QString link)
 
 
 
-void MainWindow::on_actionPick_Intensities_toggled(bool arg1)
+void MainWindow::on_actionPick_Intensities_toggled(bool )
 {
 
     // Change Cursor in current view!
@@ -1956,7 +2022,7 @@ void MainWindow::exportToCellProfiler()
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                           | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                 | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -2081,7 +2147,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
                                                       set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                    |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;
@@ -2164,3 +2230,5 @@ void MainWindow::on_sync_zstack_toggled(bool arg1)
 
     set.setValue("SyncZstack", arg1);
 }
+
+

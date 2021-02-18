@@ -253,6 +253,7 @@ GlobalOptions::GlobalOptions(QWidget *parent): QWidget(parent)
 
     mainLayout->addWidget(networkOptions());
     mainLayout->addWidget(dashOptions());
+    mainLayout->addWidget(notebooksOptions());
     mainLayout->addWidget(features());
     mainLayout->addWidget(screensPaths());
     mainLayout->addWidget(appDirectory());
@@ -445,12 +446,48 @@ QWidget *GlobalOptions::dashOptions()
 
 
 
-    serverhost = new QLineEdit(set.value("DashServer","192.168.2.127").toString());
-    serverhost->setObjectName("DashServer");
-    serverhost->setToolTip("Address of the dash server to render the graphics (192.168.2.127)");
-    connect(serverhost, SIGNAL(textChanged(QString)), this, SLOT(updatePaths()));
+    dashhost = new QLineEdit(set.value("DashServer","192.168.2.127").toString());
+    dashhost->setObjectName("DashServer");
+    dashhost->setToolTip("Address of the dash server to render the graphics (192.168.2.127)");
+    connect(dashhost, SIGNAL(textChanged(QString)), this, SLOT(updatePaths()));
     serv_layout->addWidget(new QLabel("Dash Server Host"), 0, 0);
-    serv_layout->addWidget(serverhost, 0, 1);
+    serv_layout->addWidget(dashhost, 0, 1);
+    ppython->setLayout(serv_layout);
+
+    return ppython;
+}
+
+QWidget *GlobalOptions::notebooksOptions()
+{
+    QSettings set;
+    QFileIconProvider icp;
+
+    ctkCollapsibleGroupBox* ppython = new ctkCollapsibleGroupBox("Jupyter Notebooks options");
+
+    ppython->setObjectName("notebookOps");
+
+    QGridLayout* serv_layout = new QGridLayout;
+    serv_layout->setObjectName("nbksLayout");
+    //mainLayout->addRow(serv_layout);
+
+
+
+    jupyterhost = new QLineEdit(set.value("JupyterNotebook","192.168.2.127").toString());
+    jupyterhost->setObjectName("JupyterNotebookServer");
+    jupyterhost->setToolTip("Address of the Jupyter Notebook server to post process the data (192.168.2.127)");
+    connect(jupyterhost, SIGNAL(textChanged(QString)), this, SLOT(updatePaths()));
+
+    serv_layout->addWidget(new QLabel("Jupyter Notebook Server Host"), 0, 0);
+    serv_layout->addWidget(jupyterhost, 0, 1);
+
+    jupyterToken = new QLineEdit(set.value("JupyterToken","").toString());
+    jupyterToken->setObjectName("JupyterNotebookToken");
+    jupyterToken->setToolTip("Token to access the jupyter notebook");
+    connect(jupyterToken, SIGNAL(textChanged(QString)), this, SLOT(updatePaths()));
+
+    serv_layout->addWidget(new QLabel("Jupyter's Notebook Token"), 1, 0);
+    serv_layout->addWidget(jupyterToken, 1, 1);
+
     ppython->setLayout(serv_layout);
 
     return ppython;
@@ -600,10 +637,17 @@ void GlobalOptions::updatePaths()
     set.setValue("Server", var);
     set.setValue("ServerP", ports);
 
-    QLineEdit* dash = findChild<QLineEdit*>(("DashServer"));
 
-    if (dash)
-        set.setValue("DashServer", dash->text());
+    if (dashhost)
+        set.setValue("DashServer", dashhost->text());
+
+
+    if (jupyterhost)
+        set.setValue("JupyterNotebook", jupyterhost->text());
+
+    if (jupyterToken)
+        set.setValue("JupyterToken", jupyterToken->text());
+
 
 
     set.setValue("ScreensDirectory", screensPath->paths());

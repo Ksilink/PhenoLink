@@ -22,6 +22,7 @@ protected:
     QWidget* networkOptions();
     QWidget* screensPaths();
     QWidget *dashOptions();
+    QWidget *notebooksOptions();
 
     QWidget* appDirectory();
     QLayout *buildPaths(QString fname);
@@ -43,6 +44,11 @@ public slots:
 protected:
     QLineEdit* username;
     QLineEdit* serverhost;
+
+    QLineEdit* dashhost;
+    QLineEdit* jupyterhost;
+    QLineEdit* jupyterToken;
+
 
     QSpinBox* refreshRate;
     QSpinBox* maxRefreshQuery;

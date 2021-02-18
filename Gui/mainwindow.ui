@@ -24,7 +24,7 @@
     <normaloff>:/Icon.png</normaloff>:/Icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QGridLayout" name="gridLayout_2">
+   <layout class="QVBoxLayout" name="verticalLayout_14">
     <property name="leftMargin">
      <number>1</number>
     </property>
@@ -37,7 +37,7 @@
     <property name="bottomMargin">
      <number>0</number>
     </property>
-    <item row="0" column="0">
+    <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="contextMenuPolicy">
        <enum>Qt::CustomContextMenu</enum>
@@ -83,7 +83,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -348,7 +348,7 @@
           <x>0</x>
           <y>0</y>
           <width>262</width>
-          <height>262</height>
+          <height>291</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -373,6 +373,30 @@
             <string>Image Control</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_6">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="ctkCollapsibleGroupBox" name="overlayControl">
+           <property name="title">
+            <string>Overlay Control</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_16">
             <property name="spacing">
              <number>0</number>
             </property>
@@ -498,7 +522,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>256</width>
-                 <height>83</height>
+                 <height>68</height>
                 </rect>
                </property>
                <layout class="QFormLayout" name="formLayout">
@@ -530,7 +554,7 @@
           <x>0</x>
           <y>0</y>
           <width>262</width>
-          <height>83</height>
+          <height>68</height>
          </rect>
         </property>
        </widget>

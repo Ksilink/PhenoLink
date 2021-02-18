@@ -104,12 +104,20 @@ protected:
     QWidget *widgetFromJSON(QJsonObject &par);
 
 
+    QCheckBox *setupOverlayBox(QCheckBox* box, ImageInfos* inter, bool reconnect = false);
+    QSpinBox *setupTilePosition(QSpinBox* box, ImageInfos* inter, bool reconnect = false);
+
+
 	void conditionChanged(QWidget* sen, int val);
 
 private slots:
     void deleteDirectoryPath();
     void on_loadSelection_clicked();
+
     void on_dashDisplay_clicked();
+    void on_notebookDisplay_clicked();
+
+
     void addDirectory();
     void clearDirectories();
     void deleteDirPath(QString dir);
@@ -175,7 +183,7 @@ public slots:
     void conditionChanged(int val);
 
 
-    void processStarted(QString hash);
+//    void processStarted(QString hash);
 
     void server_processError(QProcess::ProcessError error);
     void server_processFinished(int exitCode, QProcess::ExitStatus status);
@@ -229,7 +237,7 @@ private:
 
     QMap<QWidget*, ExperimentFileModel* > assoc_WellPlateWidget;
 
-    QMap<QString, QWidget*> _imageControls;
+    QMap<QString, QList<QWidget*> > _imageControls;
 
     QMap<QString, int> mapValues;
 

@@ -32,21 +32,30 @@ class DashOptions : public QDialog
     Q_OBJECT
 
 public:
-    explicit DashOptions(Screens screens, QWidget *parent = nullptr);
+    explicit DashOptions(Screens screens, bool notebook, QWidget *parent = nullptr);
     ~DashOptions();
 
+private:
+    void populateDataset();
+    void notebookAdapt();
+
 private slots:
+
     void on_pushButton_2_clicked();
 
     void on_next_clicked();
 
     void on_toolBox_currentChanged(int index);
 
-private:
+private: // result data
     QMap<QString, DataHolder> filemapper;
+    QStringList projects; // List of project for post-processing selection
+
+private: // class init options
 
     Ui::DashOptions *ui;
     Screens _screens;
+    bool _notebook;
 };
 
 #endif // DASHOPTIONS_H

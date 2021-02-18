@@ -13,13 +13,17 @@
 
 QMutex sequence_interactorMutex(QMutex::NonRecursive);
 
-SequenceInteractor::SequenceInteractor(): _mdl(0), _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),last_scale(-1.), _updating(false)
+SequenceInteractor::SequenceInteractor():
+    _mdl(0),
+    _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),
+    disp_tile(false), tile_id(0),
+    last_scale(-1.), _updating(false)
 {
 }
 
 SequenceInteractor::SequenceInteractor(SequenceFileModel *mdl, QString key):
     _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),
-    _fps(25.), loadkey(key), last_scale(-1.), _updating(false)
+    _fps(25.), disp_tile(false), tile_id(0), loadkey(key), last_scale(-1.), _updating(false)
 {
 }
 
@@ -111,6 +115,31 @@ void SequenceInteractor::setFps(double fps)
 
 
 
+}
+
+void SequenceInteractor::setTile(int tile)
+{
+    qDebug() << "Changing Tile" << tile;
+    tile_id = tile;
+    if (disp_tile) // only update if disp is on!
+        modifiedImage();
+}
+
+void SequenceInteractor::displayTile(bool disp)
+{
+    qDebug() << "Toggling Tile disp:" << disp;
+    disp_tile = disp;
+    modifiedImage();
+}
+
+bool SequenceInteractor::tileDisplayed()
+{
+    return disp_tile;
+}
+
+int SequenceInteractor::getTile()
+{
+    return tile_id;
 }
 
 QStringList SequenceInteractor::getChannelNames()
@@ -1110,10 +1139,34 @@ void getMinMax(cv::Mat &ob, int f, float& cmin, float& cmax)
 
 QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
 {
-
-    //qDebug() << "GET METAAAAAAhhhhh";
     // The interactor will filter / scale & analyse the meta data to be generated
     QList<QGraphicsItem*> res;
+
+    qDebug() << "Get Meta Called, " << disp_tile << tile_id;
+    if (disp_tile)
+    { // Specific code to display tile with respect to position !!!
+        QSettings set;
+
+        int rx = set.value("TileSizeX", 256).toInt() / 2,
+                ry = set.value("TileSizeX", 216).toInt() / 2;
+
+
+        auto item = new QGraphicsRectItem(parent);
+
+        float x = rx * rint(tile_id % 19);
+        float l = (tile_id-(tile_id % 19));
+        float y = ry * rint(l / 19);
+
+        float  width = rx,
+                height= ry;
+
+
+        item->setRect(QRectF(x,y,width,height));        
+        item->setPen(QPen(Qt::yellow));
+        qDebug() << item->rect();
+        res << item;
+    }
+
 
     //    SequenceFileModel::Channel& chans = _mdl->getChannelsFiles(_timepoint, _field, _zpos);
 

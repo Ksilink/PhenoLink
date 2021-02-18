@@ -81,6 +81,75 @@ void MainWindow::on_loadSelection_clicked()
     loadSelection(checked);
 }
 
+void MainWindow::on_notebookDisplay_clicked()
+{
+
+    QSettings set;
+
+
+    ScreensHandler& handler = ScreensHandler::getHandler();
+    QStringList checked = mdl->getCheckedDirectories(false);
+    handler.loadScreens(checked, false);
+    Screens data = handler.getScreens();
+    // First fire the dashoption object with the Screens :)
+
+
+    DashOptions opt(data, true, this);
+    opt.exec();
+//        opt->raise();
+//           opt->activateWindow()
+
+    QSet<QString> projs;
+
+//    QWebEngineView* view = new QWebEngineView();
+
+    QStringList dbs, agdbs;
+    for (auto s: data)
+    {
+        projs.insert(s->property("project"));
+        QPair<QStringList, QStringList> db = s->databases();
+        QStringList t; for (auto i : db.first) { t << "'" + i +"'"; }
+        dbs.append(t);
+        t.clear(); for (auto i : db.second) { t << "'" + i +"'"; }
+        agdbs.append(t);
+    }
+    qDebug() << projs;
+
+
+
+
+
+    // now we have the list of
+
+    // Need to load first line of each file & accomodate with plate tags
+    // Also add a other csv input :) (like cellprofiler or other stuffs;
+    // allow linking with plates & plates tags then :)
+
+
+
+
+
+    // also we can see if we can introduce some "post processing in python..."
+
+
+
+    //    int tab = ui->tabWidget->addTab(view, "Dash View");
+    QWebEngineView *view = new QWebEngineView(this);
+    QUrl url(QString("http://%1:%2/notebooks/%6?token=%3&dbs=[%4]&agdbs=[%5]")
+             .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
+             .arg("8888")
+             .arg(set.value("JupyterToken", "").toString())
+             .arg(dbs.join(","))
+             .arg(agdbs.join(","))
+             .arg("Untitled.ipynb")
+             );
+    qDebug() << url;
+    view->load(url);
+    int tab = ui->tabWidget->addTab(view, "Notebook View");
+
+        Q_UNUSED(tab);
+}
+
 void MainWindow::on_dashDisplay_clicked()
 {
     ScreensHandler& handler = ScreensHandler::getHandler();
@@ -90,7 +159,7 @@ void MainWindow::on_dashDisplay_clicked()
     // First fire the dashoption object with the Screens :)
 
 
-    DashOptions opt(data, this);
+    DashOptions opt(data, false, this);
     opt.exec();
     //    opt->raise();
     //       opt->activateWindow();

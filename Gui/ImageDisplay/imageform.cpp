@@ -224,8 +224,10 @@ void ImageForm::updateImageInfos()
 
 void ImageForm::redrawPixmap(QPixmap img)
 {
-    //    qDebug() << "redrawPixmap";
+    //    qDebug() << "redrawPixmap"; 
     setPixmap(img);
+    updateDecorator(_interactor->getMeta(pixItem));
+
     pixItem->update();
 }
 
@@ -1057,8 +1059,11 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
     QMenu menu(this);
 
 
-    QAction *copy = menu.addAction("Copy Image to clipboard", this, SLOT(copyToClipboard()));
-    copy->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
+    menu.addAction("Copy Image to clipboard", this, SLOT(copyToClipboard()));
+
+    QAction *capture = menu.addAction("Capture Image to clipboard", this, SLOT(captureToClipboard()));
+    capture->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
+
     //    copy->setDisabled(true);
     if (this->_interactor->getTimePointCount() > 1)
     {
@@ -1113,6 +1118,16 @@ void ImageForm::copyToClipboard()
 {
     QApplication::clipboard()->setPixmap(_interactor->getPixmap(packed, bias_correction));
 }
+
+void ImageForm::captureToClipboard()
+{
+    QPixmap pixmap(this->size());
+    this->render(&pixmap);
+    QApplication::clipboard()->setPixmap(pixmap);
+}
+
+
+
 
 void ImageForm::copyCurrentImagePath()
 {

@@ -142,6 +142,9 @@ public:
     void Update();
     QSize imSize();
 
+    bool tileDisplayed();
+    int getTile();
+
 public slots:
     void changeColorState(int chan);
 
@@ -156,11 +159,16 @@ public slots:
     void rangeMaxValueChanged(double ma) ;
 
     void setActive(bool value);
-
     void setColor(QColor c, bool refresh=true);
 
     void setChannelName(QString name);
     QString getChannelName();
+
+
+    void setTile( int tile);
+    void displayTile(bool disp);
+
+
 
 protected:
 

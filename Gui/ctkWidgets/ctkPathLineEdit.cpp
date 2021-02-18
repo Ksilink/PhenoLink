@@ -33,6 +33,7 @@
 #include <QSettings>
 #include <QStyleOptionComboBox>
 #include <QToolButton>
+#include <QFileSystemModel>
 
 // CTK includes
 #include "ctkPathLineEdit.h"
@@ -323,10 +324,14 @@ void ctkPathLineEditPrivate::updateFilter()
   Q_Q(ctkPathLineEdit);
   // help completion for the QComboBox::QLineEdit
   QCompleter *newCompleter = new QCompleter(q);
-  newCompleter->setModel(new QDirModel(
-                           nameFiltersToExtensions(this->NameFilters),
-                           this->Filters | QDir::NoDotAndDotDot | QDir::AllDirs,
-                           QDir::Name|QDir::DirsLast, newCompleter));
+
+  auto fsm = new QFileSystemModel(newCompleter);
+
+  fsm->setNameFilters(this->NameFilters);
+  fsm->setFilter(this->Filters | QDir::NoDotAndDotDot | QDir::AllDirs );
+
+  newCompleter->setModel(fsm);
+
   this->LineEdit->setCompleter(newCompleter);
 
   QObject::connect(this->LineEdit->completer()->completionModel(), SIGNAL(layoutChanged()),

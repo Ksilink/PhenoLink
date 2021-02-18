@@ -41,8 +41,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>750</width>
-        <height>360</height>
+        <width>754</width>
+        <height>366</height>
        </rect>
       </property>
       <attribute name="label">
@@ -73,6 +73,9 @@
           <bool>false</bool>
          </property>
          <attribute name="headerVisible">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="headerStretchLastSection">
           <bool>false</bool>
          </attribute>
          <column>
@@ -99,8 +102,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>750</width>
-        <height>360</height>
+        <width>754</width>
+        <height>366</height>
        </rect>
       </property>
       <attribute name="label">
@@ -128,8 +131,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>750</width>
-        <height>360</height>
+        <width>754</width>
+        <height>366</height>
        </rect>
       </property>
       <attribute name="label">
@@ -141,8 +144,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>750</width>
-        <height>360</height>
+        <width>754</width>
+        <height>366</height>
        </rect>
       </property>
       <attribute name="label">
@@ -154,8 +157,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>750</width>
-        <height>360</height>
+        <width>754</width>
+        <height>366</height>
        </rect>
       </property>
       <attribute name="label">

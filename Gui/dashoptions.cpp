@@ -8,19 +8,41 @@
 #include <QFileInfo>
 #include <QDateTime>
 
-DashOptions::DashOptions(Screens screens, QWidget *parent) :
+#include <QSettings>
+#include <QDir>
+
+
+DashOptions::DashOptions(Screens screens, bool notebook, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::DashOptions),
-    _screens(screens)
+    _screens(screens),
+    _notebook(notebook)
 {
     ui->setupUi(this);
 
+    notebookAdapt();
+    populateDataset();
+
+
+}
+
+DashOptions::~DashOptions()
+{
+    delete ui;
+}
+
+void DashOptions::populateDataset()
+{
+
     ui->datasets->setColumnCount(3);
+    ui->datasets->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
     QList<QTreeWidgetItem *> items;
 
-    for (auto it : screens)
+    QSet<QString> projs;
 
+    for (auto it : _screens)
     {
+        projs.insert(it->property("project"));
         auto dbs = it->databases();
 
         auto parent = new QTreeWidgetItem(static_cast<QTreeWidget *>(nullptr), QStringList() << it->name() << "" << "");
@@ -65,20 +87,54 @@ DashOptions::DashOptions(Screens screens, QWidget *parent) :
         //      for (int i = 0; i < 10; ++i)
         //         items.append(new QTreeWidgetItem(static_cast<QTreeWidget *>(nullptr), QStringList(QString("item: %1").arg(i))));
 
-
-
-
         //      ;
     }
 
     ui->datasets->insertTopLevelItems(0, items);
+    this->projects = QStringList(projs.begin(), projs.end());
 
-    //
 }
 
-DashOptions::~DashOptions()
-{
-    delete ui;
+void DashOptions::notebookAdapt()
+{ // Adapt the Gui in notebook call mode
+
+    if (!_notebook) return;
+
+    QSettings set;
+
+    QString db=set.value("databaseDir", "").toString();
+
+    if (db.isEmpty())
+    {
+        //FIXME: !!!!!
+        qDebug() << "Gently tell the user to set the database dir in the options !";
+    }
+
+    // Let's seek for ipnb files lying along side the
+
+    // Notebook shall be here:
+    QString notebooksPaths = db +  "/Code/KsilinkNotebooks/";
+
+    // now let's got for
+    QDir iter(notebooksPaths);
+
+    QStringList files = iter.entryList(QStringList() << "*.ipynb", QDir::Files | QDir::NoSymLinks);
+    QStringList subd = iter.entryList(QDir::Dirs | QDir::NoSymLinks);
+    // recurse
+
+
+    // project name & plugin name as well !
+
+
+
+
+    // Need to add a Pick Processing panel
+
+    ui->toolBox->insertItem(1, new QWidget(), "Select Post Processing");
+
+
+
+
 }
 
 void DashOptions::on_pushButton_2_clicked()

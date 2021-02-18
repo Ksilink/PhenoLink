@@ -80,6 +80,8 @@ public:
   ImageInfos *imageInfos(QString file, int channel = -1, QString key = QString());
   void refinePacking();
 
+  bool tileDisplayed();
+  int getTile();
 public slots:
 
   void setTimePoint(unsigned t);
@@ -88,6 +90,8 @@ public slots:
   void setChannel(unsigned c);
   void setFps(double fps);
 
+  void setTile( int tile);
+  void displayTile(bool disp);
 
     QStringList getChannelNames();
 
@@ -103,6 +107,9 @@ protected:
   SequenceFileModel* _mdl;
   unsigned _timepoint, _field, _zpos, _channel;
   double _fps;
+
+  bool disp_tile;
+  int tile_id;
 
   QString loadkey;
   QStringList channel_names;
