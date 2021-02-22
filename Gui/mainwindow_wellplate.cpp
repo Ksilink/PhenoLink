@@ -96,30 +96,19 @@ void MainWindow::on_notebookDisplay_clicked()
 
     DashOptions opt(data, true, this);
     opt.exec();
-//        opt->raise();
-//           opt->activateWindow()
 
-    QSet<QString> projs;
+    QPair<QStringList, QStringList> datasets = opt.getDatasets();
+    QString procs = opt.getProcessing();
 
-//    QWebEngineView* view = new QWebEngineView();
-
-    QStringList dbs, agdbs;
-    for (auto s: data)
+    QString dbopts;
+    if (!datasets.first.isEmpty())
     {
-        projs.insert(s->property("project"));
-        QPair<QStringList, QStringList> db = s->databases();
-        QStringList t; for (auto i : db.first) { t << "'" + i +"'"; }
-        dbs.append(t);
-        t.clear(); for (auto i : db.second) { t << "'" + i +"'"; }
-        agdbs.append(t);
+        dbopts = QString("dbs=[%1]").arg(datasets.first.join(","));
+        if (!datasets.second.isEmpty())
+            dbopts += "&";
     }
-    qDebug() << projs;
-
-
-
-
-
-    // now we have the list of
+    if (!datasets.second.isEmpty())
+        dbopts += QString("agdbs=[%1]").arg(datasets.second.join(","));
 
     // Need to load first line of each file & accomodate with plate tags
     // Also add a other csv input :) (like cellprofiler or other stuffs;
@@ -135,15 +124,15 @@ void MainWindow::on_notebookDisplay_clicked()
 
     //    int tab = ui->tabWidget->addTab(view, "Dash View");
     QWebEngineView *view = new QWebEngineView(this);
-    QUrl url(QString("http://%1:%2/notebooks/%6?token=%3&dbs=[%4]&agdbs=[%5]")
+    QUrl url(QString("http://%1:%2/notebooks/%5?token=%3&%4")
              .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
              .arg("8888")
              .arg(set.value("JupyterToken", "").toString())
-             .arg(dbs.join(","))
-             .arg(agdbs.join(","))
-             .arg("Untitled.ipynb")
+             .arg(dbopts)
+             .arg(procs)
              );
     qDebug() << url;
+    QApplication::clipboard()->setText(url.toString());
     view->load(url);
     int tab = ui->tabWidget->addTab(view, "Notebook View");
 
@@ -193,6 +182,7 @@ void MainWindow::on_dashDisplay_clicked()
              .arg(agdbs.join(";"))
              );
     qDebug() << url;
+    QApplication::clipboard()->setText(url.toString());
     view->load(url);
     int tab = ui->tabWidget->addTab(view, "Dash View");
 

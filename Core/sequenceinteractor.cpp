@@ -121,15 +121,15 @@ void SequenceInteractor::setTile(int tile)
 {
     qDebug() << "Changing Tile" << tile;
     tile_id = tile;
-    if (disp_tile) // only update if disp is on!
-        modifiedImage();
+    //if (disp_tile) // only update if disp is on!
+    //    modifiedImage();
 }
 
 void SequenceInteractor::displayTile(bool disp)
 {
     qDebug() << "Toggling Tile disp:" << disp;
     disp_tile = disp;
-    modifiedImage();
+   // modifiedImage();
 }
 
 bool SequenceInteractor::tileDisplayed()
@@ -420,12 +420,8 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
             QString name = _mdl->getChannelNames()[ii-1];
             info->setChannelName(name);
         }
-        qDebug() << "Set with color"<< exp << ii << file << info->getColor().name();
+//        qDebug() << "Set with color"<< exp << ii << file << info->getColor().name();
     }
-    /*    lock_infos.lock();ta
-        _infos[file] = info;
-        lock_infos.unlock();*/
-    //}
 
     return info;
 }
@@ -1157,8 +1153,8 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
         float l = (tile_id-(tile_id % 19));
         float y = ry * rint(l / 19);
 
-        float  width = rx,
-                height= ry;
+        float  width = rx * 2,
+                height= ry * 2;
 
 
         item->setRect(QRectF(x,y,width,height));        

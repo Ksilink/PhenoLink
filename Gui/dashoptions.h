@@ -4,6 +4,7 @@
 #include <QWidget>
 
 #include <QDialog>
+#include <QComboBox>
 
 #include <Core/wellplatemodel.h>
 
@@ -35,9 +36,15 @@ public:
     explicit DashOptions(Screens screens, bool notebook, QWidget *parent = nullptr);
     ~DashOptions();
 
+    QPair<QStringList, QStringList> getDatasets();
+    QString getProcessing();
+
+
 private:
     void populateDataset();
     void notebookAdapt();
+
+    QStringList recurseNotebooks(QString path, QStringList projects = QStringList());
 
 private slots:
 
@@ -54,6 +61,7 @@ private: // result data
 private: // class init options
 
     Ui::DashOptions *ui;
+    QComboBox* qtw;
     Screens _screens;
     bool _notebook;
 };

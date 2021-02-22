@@ -10,18 +10,25 @@
 
 #include <QSettings>
 #include <QDir>
+#include <QComboBox>
 
 
 DashOptions::DashOptions(Screens screens, bool notebook, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::DashOptions),
+    qtw(nullptr),
     _screens(screens),
     _notebook(notebook)
 {
     ui->setupUi(this);
+//    for (int i = ui->toolBox->count()-1; i > 1 ; --i)
+//    {
+//        ui->toolBox->removeItem(i);
+//    }
 
-    notebookAdapt();
+
     populateDataset();
+    notebookAdapt();
 
 
 }
@@ -29,6 +36,75 @@ DashOptions::DashOptions(Screens screens, bool notebook, QWidget *parent) :
 DashOptions::~DashOptions()
 {
     delete ui;
+}
+
+typedef enum
+{
+    Unset,
+    Raw,
+    Aggregated
+} eRecState;
+
+QPair<QStringList, QStringList> recurseTree(QTreeWidgetItem* item, eRecState state = Unset)
+{
+    QPair<QStringList, QStringList> res;
+
+    for (int i = 0; i < item->childCount(); ++i)
+    {
+        QTreeWidgetItem *ch = item->child(i);
+        qDebug() << ch->text(0) << ch->checkState(0) << state;
+        if (state==eRecState::Unset)
+        {
+            if (ch->text(0)=="Raw")
+                state = eRecState::Raw;
+            else if (ch->text(0)=="Aggregated")
+                state = eRecState::Aggregated;
+        }
+        else
+        {
+            if (ch->checkState(0)==Qt::Checked)
+            {
+                QVariant v = ch->data(0, Qt::UserRole);
+                if (v.isValid())
+                {
+                    QString file = "'" + v.toString() + "'";
+                    if (state==eRecState::Raw)
+                        res.first += file;
+                    else
+                        res.second += file;
+                    continue;
+                }
+            }
+        }
+        QPair<QStringList, QStringList> t = recurseTree(ch, state);
+        res.first += t.first;
+        res.second += t.second;
+    }
+    return res;
+}
+
+QPair<QStringList, QStringList> DashOptions::getDatasets()
+{
+    // Iterates through the dataset to get the checked data
+    QPair<QStringList, QStringList> res;
+
+
+    for (int i = 0; i < ui->datasets->topLevelItemCount(); ++i)
+    {
+        QTreeWidgetItem* it = ui->datasets->topLevelItem(i);
+        QPair<QStringList, QStringList> t= recurseTree(it);
+        res.first += t.first;
+        res.second += t.second;
+    }
+    return res;
+}
+
+QString DashOptions::getProcessing()
+{
+    if (qtw)
+        return qtw->currentData().toString();
+
+    return QString();
 }
 
 void DashOptions::populateDataset()
@@ -116,25 +192,59 @@ void DashOptions::notebookAdapt()
     QString notebooksPaths = db +  "/Code/KsilinkNotebooks/";
 
     // now let's got for
-    QDir iter(notebooksPaths);
-
-    QStringList files = iter.entryList(QStringList() << "*.ipynb", QDir::Files | QDir::NoSymLinks);
-    QStringList subd = iter.entryList(QDir::Dirs | QDir::NoSymLinks);
-    // recurse
 
 
-    // project name & plugin name as well !
+    // project name & plugin name  !
 
-
-
-
+    QStringList nbs = recurseNotebooks(notebooksPaths, projects );
+//    print(nbs);
+    //qDebug() << nbs;
     // Need to add a Pick Processing panel
 
-    ui->toolBox->insertItem(1, new QWidget(), "Select Post Processing");
+    qtw = new QComboBox();
+
+    for (auto item : nbs)
+    {
+        item = item.replace("//", "/").replace(notebooksPaths, "");
+        qtw->addItem(item.replace(".ipynb",""), item);
+    }
 
 
+    ui->toolBox->insertItem(1, qtw, "Select Post Processing");
+}
+
+QStringList DashOptions::recurseNotebooks(QString path, QStringList projects)
+{
+
+    QDir iter(path);
+
+    QStringList files = iter.entryList(QStringList() << "*.ipynb", QDir::Files | QDir::NoSymLinks );
+    // recurse
+
+    if (projects.isEmpty())
+    { // simply recurse all subdirs
+        for (int i = 0; i < files.size(); ++i)  files[i] = path + "/"  + files[i];
+
+        QStringList subd = iter.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+        for (auto p: subd)
+        {
+            QStringList tmps = recurseNotebooks(path + "/" + p);
+            //for (int i = 0; i < tmps.size(); ++i)  tmps[i] = path + "/" + tmps[i];
+            files += tmps;
+        }
+    }
+    else
+    {
+        for (auto p: projects)
+        {
+            QStringList tmps = recurseNotebooks(path + "/" + p);
+            //for (int i = 0; i < tmps.size(); ++i)  tmps[i] = path + "/" + tmps[i];
+            files += tmps;
+        }
+    }
 
 
+    return files;
 }
 
 void DashOptions::on_pushButton_2_clicked()
@@ -158,32 +268,31 @@ void DashOptions::on_toolBox_currentChanged(int index)
 {
     if (index != 0)
     { // Check for data to be loaded ?
-        QStringList csv_files;
+//        QStringList csv_files;
 
-        for (int ch = 0; ch < ui->datasets->topLevelItemCount() ;++ch)
-        {
-            auto plate = ui->datasets->topLevelItem(ch);
+//        for (int ch = 0; ch < ui->datasets->topLevelItemCount() ;++ch)
+//        {
+//            auto plate = ui->datasets->topLevelItem(ch);
 
-            for (int t = 0; t < plate->childCount(); ++t)
-            {
-                auto ag_rw = plate->child(t);
+//            for (int t = 0; t < plate->childCount(); ++t)
+//            {
+//                auto ag_rw = plate->child(t);
 
-                for (int dsi = 0; dsi < ag_rw->childCount(); ++dsi)
-                {
-                    auto ds = ag_rw->child(dsi);
+//                for (int dsi = 0; dsi < ag_rw->childCount(); ++dsi)
+//                {
+//                    auto ds = ag_rw->child(dsi);
 
-                    if (ds->checkState(0) == Qt::Checked)
-                    {
-                        qDebug() << ds->text(0) << ds->data(0, Qt::UserRole);
-                        csv_files << ds->data(0, Qt::UserRole).toString();
-                    }
-                }
+//                    if (ds->checkState(0) == Qt::Checked)
+//                    {
+//                        qDebug() << ds->text(0) << ds->data(0, Qt::UserRole);
+//                        csv_files << ds->data(0, Qt::UserRole).toString();
+//                    }
+//                }
 
-            }
-        // Load or unload files
+//            }
+//        // Load or unload files
 
-
-        }
+//        }
 
 
 

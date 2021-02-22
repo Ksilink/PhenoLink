@@ -99,7 +99,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     ui->setupUi(this);
 
     ui->logWindow->hide(); // Hide the log window, since the content display is hidden now
-    //QErrorMessage::qtHandler();
+   // QErrorMessage::qtHandler();
 
 #ifndef CheckoutCoreWithPython
     ui->menuScripts->setVisible(false);
@@ -477,9 +477,8 @@ QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, ImageInfos *inter, bool r
 
     }
     box->setToolTip("Display Tile Overlay");
-
     connect(box, SIGNAL(toggled(bool)), inter, SLOT(displayTile(bool)), Qt::UniqueConnection);
-    //connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
+//    connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
 
     return box;
 }
@@ -598,6 +597,7 @@ void MainWindow::updateCurrentSelection()
     ui->imageControl->layout()->addWidget(wwid);
 
     // Addind overlay control shall start here
+    if (false) // Wait for further checking on this topic
     {
         ImageInfos* fo = inter->getChannelImageInfos(1);
 
@@ -609,8 +609,9 @@ void MainWindow::updateCurrentSelection()
         //            wid->setAttribute();
         QHBoxLayout* lay = new QHBoxLayout(wid);
         lay->setContentsMargins(0, 0, 0, 0);
-        lay->setSpacing(2);
+        lay->setSpacing(1);
         lay->addWidget(setupOverlayBox(new QCheckBox(wid), fo));
+        lay->addWidget(new QLabel("Tile: "));
         lay->addWidget(setupTilePosition(new QSpinBox(wid), fo));
         bvl->addWidget(wid);
 
@@ -1906,6 +1907,7 @@ void MainWindow::loadPlateFirst()
 
     ScreensHandler& h = ScreensHandler::getHandler();
     Screens& s = h.getScreens();
+    if (!s.size()) return;
     if (s.front())
     {
         auto l = s.front()->getValidSequenceFiles();
@@ -2082,7 +2084,7 @@ void MainWindow::exportToCellProfiler()
                             values[QString("Image_FileName_%1").arg(cname[c].trimmed().replace(" ", "_"))]=fi.split('/').back();
                         }
 
-                        for (auto c: values )      resFile << c.second << (c.first == l->first ? "" : ",");
+                        for (auto & c: values )      resFile << c.second << (c.first == l->first ? "" : ",");
                         resFile << Qt::endl;
                     }
         }

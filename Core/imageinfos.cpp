@@ -81,7 +81,6 @@ ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QStr
         ifo = new ImageInfos(*data, par, fname, platename+k, channel);
         stored[fname+k] = ifo;
         exists = false;
-//        qDebug() << "New Image Info instance" << ifo << fname << ImageInfos::key() << k << platename << par->getSequenceFileModel()->getOwner()->name();
     }
     else
         exists = true;
@@ -372,14 +371,14 @@ QString ImageInfos::getChannelName()
 
 void ImageInfos::setTile(int tile)
 {
-    //qDebug() << "Set Tile " << tile;
+    qDebug() << "Set Tile " << tile;
     _parent->setTile(tile);
     Update();
 }
 
 void ImageInfos::displayTile(bool disp)
 {
-    //qDebug() << "Toggling Tile disp:" << disp;
+    qDebug() << "Toggling Tile disp:" << disp;
     _parent->displayTile(disp);
     Update();
 }
