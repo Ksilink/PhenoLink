@@ -338,8 +338,10 @@ ImageInfos *SequenceInteractor::getChannelImageInfos(unsigned channel)
     //if (!_infos.contains(nm))
     //    _infos[nm] =
 
-    return imageInfos(nm, channel, loadkey);
+    ImageInfos* res = imageInfos(nm, channel, loadkey);
 
+    qDebug() << "Channel info" << res << channel;
+    return res;
     //return _infos[nm];
 }
 

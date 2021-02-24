@@ -124,7 +124,7 @@ void MainWindow::on_notebookDisplay_clicked()
 
     //    int tab = ui->tabWidget->addTab(view, "Dash View");
     QWebEngineView *view = new QWebEngineView(this);
-    QUrl url(QString("http://%1:%2/notebooks/%5?token=%3&%4")
+    QUrl url(QString("http://%1:%2/notebooks/%5?token=%3&%4&autorun=true")
              .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
              .arg("8888")
              .arg(set.value("JupyterToken", "").toString())
@@ -153,16 +153,14 @@ void MainWindow::on_dashDisplay_clicked()
     //    opt->raise();
     //       opt->activateWindow();
 
+    QPair<QStringList, QStringList> datasets = opt.getDatasets();
 
-//    QWebEngineView* view = new QWebEngineView();
+    QString dbopts = QString("dbs=[%1]").arg(datasets.first.join(","))
+            + "&" +
+            QString("agdbs=[%1]").arg(datasets.second.join(","));
 
-    QStringList dbs, agdbs;
-    for (auto s: data)
-    {
-        QPair<QStringList, QStringList> db = s->databases();
-        dbs.append(db.first);
-        agdbs.append(db.second);
-    }
+
+
 
     // Need to load first line of each file & accomodate with plate tags
     // Also add a other csv input :) (like cellprofiler or other stuffs;
@@ -175,11 +173,10 @@ void MainWindow::on_dashDisplay_clicked()
     //    int tab = ui->tabWidget->addTab(view, "Dash View");
     QSettings set;
     QWebEngineView *view = new QWebEngineView(this);
-    QUrl url(QString("http://%1:%2?dbs=%3&agdbs=%4")
+    QUrl url(QString("http://%1:%2?%3")
              .arg(set.value("DashServer", "127.0.0.1").toString())
              .arg("8050")
-             .arg(dbs.join(";"))
-             .arg(agdbs.join(";"))
+             .arg(dbopts)
              );
     qDebug() << url;
     QApplication::clipboard()->setText(url.toString());

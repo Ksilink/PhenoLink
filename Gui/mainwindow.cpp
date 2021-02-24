@@ -465,6 +465,7 @@ QDoubleSpinBox* MainWindow::setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* 
 
 QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, ImageInfos *inter, bool reconnect)
 {
+
    if (!reconnect)
     {
         box->setObjectName(QString("TileDisplay"));
@@ -478,13 +479,14 @@ QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, ImageInfos *inter, bool r
     }
     box->setToolTip("Display Tile Overlay");
     connect(box, SIGNAL(toggled(bool)), inter, SLOT(displayTile(bool)), Qt::UniqueConnection);
-//    connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
+    connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
 
     return box;
 }
 
 QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, ImageInfos *inter, bool reconnect)
 {
+    qDebug() << "Setup Tile pos" << inter;
     if (!reconnect)
     {
         extr->setObjectName("TileSelector");
@@ -597,7 +599,7 @@ void MainWindow::updateCurrentSelection()
     ui->imageControl->layout()->addWidget(wwid);
 
     // Addind overlay control shall start here
-    if (false) // Wait for further checking on this topic
+    if (true) // Wait for further checking on this topic
     {
         ImageInfos* fo = inter->getChannelImageInfos(1);
 
