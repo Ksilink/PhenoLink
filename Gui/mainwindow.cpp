@@ -505,6 +505,9 @@ QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, ImageInfos *inter, bool 
 
 void MainWindow::updateCurrentSelection()
 {
+//    if (!_sinteractor.currentChanged())
+//        return;
+
     SequenceInteractor* inter = _sinteractor.current();
 
     SequenceViewContainer & container = SequenceViewContainer::getHandler();
@@ -599,7 +602,7 @@ void MainWindow::updateCurrentSelection()
     ui->imageControl->layout()->addWidget(wwid);
 
     // Addind overlay control shall start here
-    if (true) // Wait for further checking on this topic
+    if (false) // Wait for further checking on this topic
     {
         ImageInfos* fo = inter->getChannelImageInfos(1);
 

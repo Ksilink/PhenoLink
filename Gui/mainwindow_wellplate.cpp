@@ -155,9 +155,11 @@ void MainWindow::on_dashDisplay_clicked()
 
     QPair<QStringList, QStringList> datasets = opt.getDatasets();
 
-    QString dbopts = QString("dbs=[%1]").arg(datasets.first.join(","))
+    QString dbopts = QString("dbs=%1").arg(datasets.first.join(";"))
             + "&" +
-            QString("agdbs=[%1]").arg(datasets.second.join(","));
+            QString("agdbs=%1").arg(datasets.second.join(";"));
+
+    dbopts= dbopts.replace("'","");
 
 
 
@@ -199,6 +201,8 @@ void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
         pairs.first->setInvalid();
         mx.unlock();
     }
+
+
 }
 
 

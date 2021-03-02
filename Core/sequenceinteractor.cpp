@@ -17,13 +17,13 @@ SequenceInteractor::SequenceInteractor():
     _mdl(0),
     _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),
     disp_tile(false), tile_id(0),
-    last_scale(-1.), _updating(false)
+    last_scale(-1.), _updating(false), _changed(true)
 {
 }
 
 SequenceInteractor::SequenceInteractor(SequenceFileModel *mdl, QString key):
     _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),
-    _fps(25.), disp_tile(false), tile_id(0), loadkey(key), last_scale(-1.), _updating(false)
+    _fps(25.), disp_tile(false), tile_id(0), loadkey(key), last_scale(-1.), _updating(false), _changed(true)
 {
 }
 
@@ -340,7 +340,7 @@ ImageInfos *SequenceInteractor::getChannelImageInfos(unsigned channel)
 
     ImageInfos* res = imageInfos(nm, channel, loadkey);
 
-    qDebug() << "Channel info" << res << channel;
+ //   qDebug() << "Channel info" << res << channel;
     return res;
     //return _infos[nm];
 }
@@ -349,9 +349,17 @@ ImageInfos *SequenceInteractor::getChannelImageInfos(unsigned channel)
 void SequenceInteractor::setCurrent(SequenceInteractor *i)
 {
     _current = i;
+    _changed = true;
     //    qDebug() << "Setting images as current: " << _mdl->pos() << _mdl->Pos();
     if (_mdl && _mdl->getOwner())
         _mdl->getOwner()->setCurrent(_mdl->pos(), true);
+}
+
+bool SequenceInteractor::currentChanged()
+{
+    bool res = _changed;
+    _changed = false;
+    return res;
 }
 
 SequenceFileModel *SequenceInteractor::getSequenceFileModel()

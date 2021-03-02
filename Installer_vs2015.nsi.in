@@ -29,12 +29,16 @@ SectionEnd
 # default section start; every NSIS script has at least one section.
 Section "Main Installer Section"
 
+# First step remove all !! to avoid mixing version and clear view on install error
+RMDir /r $INSTDIR
+
 # define output path
 SetOutPath $INSTDIR\bin
 
 # specify file to go in output path
-File "@CMAKE_BINARY_DIR@\bin\Checkout.exe"
-File "@CMAKE_BINARY_DIR@\bin\CheckoutProcessServer.exe"
+File "@CMAKE_BINARY_DIR@\bin\Release\Checkout.exe"
+File "@CMAKE_BINARY_DIR@\bin\Release\CheckoutProcessServer.exe"
+File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
 File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
 File "@CMAKE_BINARY_DIR@\bin\resources\*.pak"
@@ -58,7 +62,7 @@ Section "Plugin Installer Section"
 
 # define output path
 SetOutPath $INSTDIR\bin\plugins
-File "@CMAKE_BINARY_DIR@\bin\plugins\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll"
 
 ;SetOutPath $INSTDIR\bin\Release\accessible
 ;File "@CMAKE_BINARY_DIR@\bin\accessible\*.dll"

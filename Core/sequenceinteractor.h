@@ -82,6 +82,7 @@ public:
 
   bool tileDisplayed();
   int getTile();
+  bool currentChanged();
 public slots:
 
   void setTimePoint(unsigned t);
@@ -122,7 +123,7 @@ protected:
   QPixmap           _cachePixmap; // Cache temporary image, pixmap are implicitly shared
   static SequenceInteractor* _current;
   float last_scale;
-  bool _updating;
+  bool _updating, _changed;
  };
 
 
