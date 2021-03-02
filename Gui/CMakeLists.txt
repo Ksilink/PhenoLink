@@ -79,5 +79,13 @@ QT5_WRAP_UI(mainwindow.ui ctkWidgets/ctkPathListButtonsWidget.ui)
 
 target_include_directories(CheckoutGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} Qt5::OpenGL Qt5::Widgets Qt5::Sql  Qt5::WinExtras Qt5::Charts Qt5::WebEngineWidgets  ${OpenCV_LIBS} )
+
+IF(WIN32)
+    target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} Qt5::OpenGL Qt5::Widgets Qt5::Sql  Qt5::WinExtras Qt5::Charts Qt5::WebEngineWidgets  ${OpenCV_LIBS} )
+ELSE()
+target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} Qt5::OpenGL Qt5::Widgets Qt5::Sql ${OpenCV_LIBS} )
+ENDIF(WIN32)
+
+
+
 install(TARGETS CheckoutGui COMPONENT applications DESTINATION bin)

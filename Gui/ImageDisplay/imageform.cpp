@@ -29,8 +29,9 @@
 
 #include <QFileDialog>
 #include <QProgressDialog>
+#if WIN32
 #include <QtCharts>
-
+#endif
 #include <opencv2/opencv.hpp>
 //ImageForm* ImageForm::_selectedForm = 0;
 

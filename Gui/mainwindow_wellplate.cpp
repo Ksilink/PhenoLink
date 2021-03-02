@@ -3,6 +3,11 @@
 
 #include "screensmodel.h"
 
+#ifndef WIN32
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 
 #include <algorithm>
 
@@ -195,13 +200,26 @@ QMutex mx;
 void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
 {
 
+#ifdef WIN32
+
     if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(pairs.second.toStdWString().c_str()))
     {
         mx.lock();
         pairs.first->setInvalid();
         mx.unlock();
     }
+#else
+    
 
+    struct stat buf;
+    int exist = stat(pairs.second.toStdString().c_str(), &buf);
+    if (exist != 0)
+    {
+        mx.lock();
+        pairs.first->setInvalid();
+        mx.unlock();
+    }
+#endif
 
 }
 

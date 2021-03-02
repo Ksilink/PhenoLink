@@ -19,10 +19,10 @@
 
 #include "Core/config.h"
 
-
+#ifdef WIN32
 #include <windows.h>
 #include <wincon.h>
-
+#endif
 std::ofstream outfile("c:/temp/CheckoutServer_log.txt");
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
@@ -51,7 +51,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
     outfile.flush();
 }
 
-
+#if WIN32
 
 void show_console() {
     AllocConsole();
@@ -89,6 +89,8 @@ int forceNumaAll(int node)
       
     return success;
 }
+
+#endif
 
 void startup_execute(QString file)
 {
@@ -154,14 +156,15 @@ int main(int ac,  char* av[])
 
     }
 
-#endif
     if (data.contains("-d"))
         show_console();
+
+#endif
 
 
     if (data.contains("-s"))
     {
-        int idx = data.indexOf("-ns")+1;
+        int idx = data.indexOf("-s")+1;
         QString file;
         if (data.size() > idx) file = data.at(idx);
         qDebug() << "Loading startup script :" << file;
@@ -171,6 +174,18 @@ int main(int ac,  char* av[])
     PluginManager::loadPlugins(true);
 
     ProcessServer server;
+#ifndef WIN32
+    if (data.contains("-m")) // to override the default path mapping !
+    {
+        int idx = data.indexOf("-m")+1;
+        QString map_path = data.at(idx);
+        server.setDriveMap(map_path);
+    }
+    else
+    { // We ain't on a windows system, so let's default the mapping to a default value
+        server.setDriveMap("/mnt/shares");
+    }
+#endif
     //    QThreadPool::globalInstance()->setMaxThreadCount(  QThreadPool::globalInstance()->maxThreadCount()/2);
 
     int nb_Threads = QThreadPool::globalInstance()->maxThreadCount() - 1;

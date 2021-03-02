@@ -90,6 +90,13 @@ QStringList CheckoutProcess::networkPaths()
 #endif  /* CheckoutPluginInCore */
 }
 
+
+  QString CheckoutProcess::setDriveMap(QString map)
+   {
+    drive_map = map;
+    return drive_map;
+   }
+
 void CheckoutProcess::setProcessCounter(int *count)
 {
     _counter = count;
@@ -339,6 +346,49 @@ void CheckoutProcess::restartProcessOnErrors()
 
 QMutex status_protect;
 
+QJsonObject remap(QJsonObject , QString );
+
+QJsonValue remap(QJsonValue v, QString map)
+{
+
+    if (v.isString())
+    {
+        QString value = v.toString();
+        if (value[1]==":")
+        {
+            QJsonValue res = map + value.remove(1,1);
+//            qDebug() << "Remap" << v << res;
+            return res;
+        }
+    }
+    else if (v.isArray())
+    {
+        QJsonArray res;
+        for (auto item: v.toArray())
+        {
+            res.append(remap(item, map));
+        }
+        return res;
+    }
+    else if (v.isObject())
+        return remap(v.toObject(), map);
+
+    return v;
+}
+
+
+QJsonObject remap(QJsonObject ob, QString map)
+{
+    QJsonObject res;
+
+    for (QJsonObject::iterator it = ob.begin(); it != ob.end(); ++it)
+    {
+        res[it.key()]=remap(it.value(), map);
+    }
+
+    return res;    
+}
+
 
 void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
 {
@@ -352,6 +402,12 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
         for (int i = 0; i < array.size(); ++i)
         {
             QJsonObject params = array.at(i).toObject();
+            if (!this->drive_map.isEmpty())
+            { // Iterate in each params data to remap drives !
+                params = remap(params, drive_map);
+            }
+
+
             //  qDebug() << "Starting process" << process << params;
 
             // - 1) clone the plugin: call the clone() function

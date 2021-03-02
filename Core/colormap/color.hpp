@@ -63,7 +63,9 @@ namespace colormap {
 
     template <typename T, size_t N>
     struct basic_color {
-        static T depth () { return std::numeric_limits<T>::max(); }
+        typedef T return_type;
+
+        static return_type depth () { return std::numeric_limits<T>::max(); }
         static space color_space () { return space::rgb; }
 
         basic_color () : channels {{}} {}
@@ -86,7 +88,7 @@ namespace colormap {
             return os;
         }
 
-        typename T operator[](unsigned p)  {assert(p < 3); return channels[p](); }
+        return_type operator[](unsigned p)  {assert(p < 3); return channels[p](); }
 
         friend std::ostream & operator<< (std::ostream & os, basic_color const& c) {
             for (auto const& ch : c.channels)

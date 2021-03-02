@@ -7,6 +7,7 @@
 #include "processthread.h"
 #endif
 
+#include <Core/config.h>
 #include <Core/checkoutprocess.h>
 #include <Core/networkmessages.h>
 
@@ -184,6 +185,12 @@ protected:
 
 #include <processserver.moc>
 
+#else
+
+void ProcessServer::setDriveMap(QString map)
+{
+   CheckoutProcess::handler().setDriveMap(map);
+}
 
 #endif
 

@@ -15,7 +15,9 @@
 #include <QSettings>
 
 #include <QProgressBar>
+#if WIN32
 #include <QtWinExtras/QWinTaskbarProgress>
+#endif
 
 #include <QScrollBar>
 

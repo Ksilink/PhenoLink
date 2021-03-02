@@ -779,6 +779,7 @@ void GlobalOptions::showInGraphicalShell(QWidget *parent, const QString &pathIn)
                << QLatin1String("tell application \"Finder\" to activate");
     QProcess::execute("/usr/bin/osascript", scriptArgs);
 #else
+#if FALSE
     // we cannot select a file here, because no file browser really supports it...
     const QFileInfo fileInfo(pathIn);
     const QString folder = fileInfo.absoluteFilePath();
@@ -792,5 +793,6 @@ void GlobalOptions::showInGraphicalShell(QWidget *parent, const QString &pathIn)
     success = success && error.isEmpty();
     if (!success)
         showGraphicalShellError(parent, app, error);
+#endif
 #endif
 }
