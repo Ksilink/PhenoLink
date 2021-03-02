@@ -28,6 +28,8 @@ public:
   QStringList pluginPaths();
   QStringList networkPaths();
 
+  QString setDriveMap(QString map);
+  
   void setProcessCounter(int* count);
   int getProcessCounter(QString hash);
 
@@ -120,6 +122,7 @@ signals:
 
    int* _counter;
    QMutex mutex_dataupdate;
+   QString drive_map;
 
 };
 

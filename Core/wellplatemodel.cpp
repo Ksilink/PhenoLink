@@ -10,6 +10,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <QFile>
 #include <QtConcurrent>
+#include <QTextStream>
 
 
 void stringToPos(QString pos, int& row, int& col);

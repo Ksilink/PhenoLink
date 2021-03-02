@@ -16,6 +16,11 @@ project(Checkout)
 
 find_package(Git)
 
+if(WIN32)
+else()
+set(CMAKE_CXX_FLAGS "-Wno-deprecated")
+set(CMAKE_C_FLAGS "-Wno-deprecated")
+endif(WIN32)
 
 set(Checkout_VERSION_MAJOR 1)
 set(Checkout_VERSION_MINOR 8)
@@ -95,10 +100,18 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Update to CMake
+if (WIN32)
 find_package(Qt5 REQUIRED COMPONENTS
     Widgets Xml XmlPatterns
     OpenGL Concurrent Sql WinExtras Charts WebView WebEngineWidgets
     )
+ELSE()
+find_package(Qt5 REQUIRED COMPONENTS
+    Widgets Xml XmlPatterns
+    OpenGL Concurrent Sql WebView 
+    )
+
+ENDIF(WIN32)
 
 
 find_package(OpenCV REQUIRED )

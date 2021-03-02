@@ -267,6 +267,55 @@ inline QString tostr(std::vector<int>& val)
     return r;
 }
 
+
+namespace RegPair_details {
+
+    template <class T> inline
+    void setValue(T* val, QString v, const QJsonObject& json)
+    {
+        if (json[v].isArray())
+            *val = json[v].toArray().at(0).toInt();
+        else
+            *val = json[v].toInt();
+    }
+
+    template <> inline 
+    void setValue(std::vector<int>* val, QString v,const QJsonObject& json)
+    {
+        (*val).clear();
+        if (!json.contains(v)) return;
+        if (json[v].isArray())
+        { // Might need magick c++ tricks for type dispatch :(
+            QJsonArray ar = json[v].toArray();
+            for (int i = 0; i < ar.size(); ++i)
+                (*val).push_back(ar.at(i).toInt());
+        }
+        else
+            (*val).push_back(json[v].toInt());
+    }
+
+
+ template <typename T> inline QJsonValue tojson(const T& def)  
+     {  
+         static_assert(sizeof(T) == -1, "You have to have a specialization for to json"); 
+         return QJsonValue(); 
+         }
+    template <> inline QJsonValue tojson(const int& def)  { return  QJsonValue((int)def); }
+    template <> inline QJsonValue tojson(const double& def)  { return  QJsonValue((double)def); }
+    template <> inline QJsonValue tojson(const float& def)  { return  QJsonValue((double)def); }
+
+    template <>
+    inline QJsonValue tojson(const std::vector<int>& vals) 
+    {
+        QJsonArray res;
+        for (int i = 0; i < vals.size(); ++i)
+            res.push_back(vals[i]);
+        return res;
+    }
+
+
+}
+
 template <class Type>
 class RegistrablePair: public RegistrableParent
 {
@@ -319,27 +368,10 @@ public:
 
     template <class T>
     void setValue(T* val, QString v, const QJsonObject& json)
-    {
-        if (json[v].isArray())
-            *val = json[v].toArray().at(0).toInt();
-        else
-            *val = json[v].toInt();
-    }
+     {
+         RegPair_details::setValue(val, v, json);
+     }
 
-    template <>
-    void setValue(std::vector<int>* val, QString v,const QJsonObject& json)
-    {
-        (*val).clear();
-        if (!json.contains(v)) return;
-        if (json[v].isArray())
-        { // Might need magick c++ tricks for type dispatch :(
-            QJsonArray ar = json[v].toArray();
-            for (int i = 0; i < ar.size(); ++i)
-                (*val).push_back(ar.at(i).toInt());
-        }
-        else
-            (*val).push_back(json[v].toInt());
-    }
 
     virtual void read(const QJsonObject &json)
     {
@@ -367,19 +399,10 @@ public:
         return s;
     }
 
-    template <typename T> inline QJsonValue tojson(const T& def) const {  static_assert(sizeof(T) == -1, "You have to have a specialization for to json");  }
-    template <> inline QJsonValue tojson(const int& def) const { return  QJsonValue((int)def); }
-    template <> inline QJsonValue tojson(const double& def) const { return  QJsonValue((double)def); }
-    template <> inline QJsonValue tojson(const float& def) const { return  QJsonValue((double)def); }
+    template <typename T> inline QJsonValue tojson(const T& def) const {  
+        return RegPair_details::tojson(def);
+        }
 
-    template <>
-    inline QJsonValue tojson(const std::vector<int>& vals) const
-    {
-        QJsonArray res;
-        for (int i = 0; i < vals.size(); ++i)
-            res.push_back(vals[i]);
-        return res;
-    }
     
 
     virtual void write(QJsonObject &json) const

@@ -53,9 +53,15 @@ protected:
    Control* _control;
 public:
    Control* getControl() { return _control; }
+#else
+public:
+
+   void setDriveMap(QString map);   
+
 #endif
 
    QMap<QTcpSocket*, uint> clients;
+
 
 #ifdef CheckoutServerWithPython
    CheckoutPythonPluginsHandler _python;
