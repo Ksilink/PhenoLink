@@ -228,6 +228,8 @@ QStringList DashOptions::recurseNotebooks(QString path, QStringList projects)
         QStringList subd = iter.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
         for (auto p: subd)
         {
+            if (p == "Run") continue;
+
             QStringList tmps = recurseNotebooks(path + "/" + p);
             //for (int i = 0; i < tmps.size(); ++i)  tmps[i] = path + "/" + tmps[i];
             files += tmps;

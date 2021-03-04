@@ -105,6 +105,28 @@ void MainWindow::on_notebookDisplay_clicked()
     QPair<QStringList, QStringList> datasets = opt.getDatasets();
     QString procs = opt.getProcessing();
 
+    // Let's copy the ipynb file to some other location for better integration
+    // =>
+
+#ifdef WIN32
+    QString username = qgetenv("USERNAME");
+#else
+    QString username = qgetenv("USER");
+#endif
+
+    username =   set.value("UserName", username).toString();
+
+    QString db=set.value("databaseDir", "").toString() + "/Code/KsilinkNotebooks/";
+
+    QString ts = QDateTime::currentDateTime().toString("_yyyyMMdd_hhmmss");
+
+    QString tgt = procs; tgt.replace(".ipynb", "_" + username + ts + ".ipynb");
+    QFile::copy(db + procs , db + "/Run/" + tgt);
+    qDebug() << "Copy" << db + procs << db + "/Run/" + tgt;
+
+    QStringList its = tgt.split('/'); its.pop_back();
+    QDir dir;  dir.mkpath(db+"/Run/"+its.join("/"));
+
     QString dbopts;
     if (!datasets.first.isEmpty())
     {
@@ -129,12 +151,12 @@ void MainWindow::on_notebookDisplay_clicked()
 
     //    int tab = ui->tabWidget->addTab(view, "Dash View");
     QWebEngineView *view = new QWebEngineView(this);
-    QUrl url(QString("http://%1:%2/notebooks/%5?token=%3&%4&autorun=true")
+    QUrl url(QString("http://%1:%2/notebooks/Run/%5?token=%3&%4&autorun=true")
              .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
              .arg("8888")
              .arg(set.value("JupyterToken", "").toString())
              .arg(dbopts)
-             .arg(procs)
+             .arg(tgt)
              );
     qDebug() << url;
     QApplication::clipboard()->setText(url.toString());
