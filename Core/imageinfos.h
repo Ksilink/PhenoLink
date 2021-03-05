@@ -42,15 +42,15 @@ class ImageInfos;
 
 struct ImageInfosShared
 {
-     QMap<QString, CommonColorCode> _platename_to_colorCode;
-     QMap<QString, QList<ImageInfos*> > _platename_to_infos;
-     QMap<ImageInfos*, QList<CoreImage* > > _infos_to_coreimage;
-     QMap<QString, QMap<int, cv::Mat> > bias_field; // Per plate bias field, channel
-     QMap<QString, cv::Mat> bias_single_loader; // Use this to only load once the file!
+    QMap<QString, CommonColorCode> _platename_to_colorCode;
+    QMap<QString, QList<ImageInfos*> > _platename_to_infos;
+    QMap<ImageInfos*, QList<CoreImage* > > _infos_to_coreimage;
+    QMap<QString, QMap<int, cv::Mat> > bias_field; // Per plate bias field, channel
+    QMap<QString, cv::Mat> bias_single_loader; // Use this to only load once the file!
 
-     QMap<QString, QVector<QColor> > _platename_palette_color;
-     QMap<QString, QVector<int> > _platename_palette_state;
-     QMap<QString, int> _per_plateid;
+    QMap<QString, QVector<QColor> > _platename_palette_color;
+    QMap<QString, QVector<int> > _platename_palette_state;
+    QMap<QString, int> _per_plateid;
 };
 
 
@@ -58,7 +58,7 @@ class DllCoreExport ImageInfos: public QObject
 {
     Q_OBJECT
 public:
-        
+
     ImageInfos(ImageInfosShared& ifo, SequenceInteractor* par, QString fname, QString platename, int channel);
     ~ImageInfos();
 
@@ -165,9 +165,8 @@ public slots:
     QString getChannelName();
 
 
-    void setTile( int tile);
     void displayTile(bool disp);
-
+    void setTile( int tile);
 
 
 protected:
@@ -181,7 +180,7 @@ protected:
     bool _modified;
     int _nbcolors;
     QString _name, _plate;
- 
+
     cv::Mat _image;
     QMutex _lockImage;
     double _fps;

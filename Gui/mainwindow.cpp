@@ -368,7 +368,7 @@ QDoubleSpinBox *MainWindow::setupVideoFrameRate(QDoubleSpinBox *extr, QString te
 
     extr->setToolTip(text);
 
-    extr->disconnect();
+//    extr->disconnect();
 
     //      connect(extr, SIGNAL(valueChanged(double)), fo, SLOT(forceMaxValue(double)),  Qt::UniqueConnection);
     connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeFpsValue(double)), Qt::UniqueConnection);
@@ -453,7 +453,7 @@ QDoubleSpinBox* MainWindow::setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* 
 
     extr->setToolTip(text);
 
-    extr->disconnect();
+//    extr->disconnect();
     if (isMin)
     {
         connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeRangeValueMin(double)), Qt::UniqueConnection);
@@ -467,14 +467,15 @@ QDoubleSpinBox* MainWindow::setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* 
 
 
 
-QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, ImageInfos *inter, bool reconnect)
+QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, ImageInfos *ifo, bool reconnect)
 {
+    qDebug() << "Setup Overlay Tile" << ifo;
 
    if (!reconnect)
     {
         box->setObjectName(QString("TileDisplay"));
         box->setAttribute(Qt::WA_DeleteOnClose);
-        box->setChecked(inter->tileDisplayed());
+        box->setChecked(ifo->tileDisplayed());
 
         //        box->setContextMenuPolicy(Qt::CustomContextMenu);
         //        connect(box, SIGNAL(customContextMenuRequested(const QPoint&)),
@@ -482,15 +483,15 @@ QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, ImageInfos *inter, bool r
 
     }
     box->setToolTip("Display Tile Overlay");
-    connect(box, SIGNAL(toggled(bool)), inter, SLOT(displayTile(bool)), Qt::UniqueConnection);
-    connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
+    connect(box, SIGNAL(toggled(bool)), ifo, SLOT(displayTile(bool)), Qt::UniqueConnection);
+  //  connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
 
     return box;
 }
 
-QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, ImageInfos *inter, bool reconnect)
+QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, ImageInfos *ifo, bool reconnect)
 {
-    qDebug() << "Setup Tile pos" << inter;
+    qDebug() << "Setup Tile pos" << ifo;
     if (!reconnect)
     {
         extr->setObjectName("TileSelector");
@@ -499,8 +500,8 @@ QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, ImageInfos *inter, bool 
     }
 
     extr->setToolTip("Pick tile to be overlayed");
-    extr->setValue(inter->getTile());
-    connect(extr, SIGNAL(valueChanged(int)), inter, SLOT(setTile(int)), Qt::UniqueConnection);
+    extr->setValue(ifo->getTile());
+    connect(extr, SIGNAL(valueChanged(int)), ifo, SLOT(setTile(int)), Qt::UniqueConnection);
 
     return extr;
 }
@@ -509,10 +510,10 @@ QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, ImageInfos *inter, bool 
 
 void MainWindow::updateCurrentSelection()
 {
-//    if (!_sinteractor.currentChanged())
-//        return;
-
     SequenceInteractor* inter = _sinteractor.current();
+
+    if (!inter->currentChanged())
+        return;
 
     SequenceViewContainer & container = SequenceViewContainer::getHandler();
     container.setCurrent(inter->getSequenceFileModel());
@@ -606,7 +607,7 @@ void MainWindow::updateCurrentSelection()
     ui->imageControl->layout()->addWidget(wwid);
 
     // Addind overlay control shall start here
-    if (false) // Wait for further checking on this topic
+    if (true) // Wait for further checking on this topic
     {
         ImageInfos* fo = inter->getChannelImageInfos(1);
 

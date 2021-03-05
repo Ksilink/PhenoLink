@@ -385,12 +385,14 @@ void ImageInfos::displayTile(bool disp)
 
 bool ImageInfos::tileDisplayed()
 {
+    qDebug() << "tile displayed";
 
     return _parent->tileDisplayed();
 }
 
 int ImageInfos::getTile()
 {
+    qDebug() << "get tile";
     return _parent->getTile();
 }
 

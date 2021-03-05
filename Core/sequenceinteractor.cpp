@@ -129,7 +129,7 @@ void SequenceInteractor::displayTile(bool disp)
 {
     qDebug() << "Toggling Tile disp:" << disp;
     disp_tile = disp;
-   // modifiedImage();
+    // modifiedImage();
 }
 
 bool SequenceInteractor::tileDisplayed()
@@ -340,7 +340,7 @@ ImageInfos *SequenceInteractor::getChannelImageInfos(unsigned channel)
 
     ImageInfos* res = imageInfos(nm, channel, loadkey);
 
- //   qDebug() << "Channel info" << res << channel;
+    //   qDebug() << "Channel info" << res << channel;
     return res;
     //return _infos[nm];
 }
@@ -348,11 +348,15 @@ ImageInfos *SequenceInteractor::getChannelImageInfos(unsigned channel)
 
 void SequenceInteractor::setCurrent(SequenceInteractor *i)
 {
-    _current = i;
-    _changed = true;
-    //    qDebug() << "Setting images as current: " << _mdl->pos() << _mdl->Pos();
-    if (_mdl && _mdl->getOwner())
-        _mdl->getOwner()->setCurrent(_mdl->pos(), true);
+    if (i != _current)
+    {
+        _current = i;
+        i->_changed = true;
+        _changed = true;
+        //    qDebug() << "Setting images as current: " << _mdl->pos() << _mdl->Pos();
+        if (_mdl && _mdl->getOwner())
+            _mdl->getOwner()->setCurrent(_mdl->pos(), true);
+    }
 }
 
 bool SequenceInteractor::currentChanged()
@@ -430,7 +434,7 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
             QString name = _mdl->getChannelNames()[ii-1];
             info->setChannelName(name);
         }
-//        qDebug() << "Set with color"<< exp << ii << file << info->getColor().name();
+        //        qDebug() << "Set with color"<< exp << ii << file << info->getColor().name();
     }
 
     return info;
@@ -1167,7 +1171,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                 height= ry * 2;
 
 
-        item->setRect(QRectF(x,y,width,height));        
+        item->setRect(QRectF(x,y,width,height));
         item->setPen(QPen(Qt::yellow));
         qDebug() << item->rect();
         res << item;
@@ -1362,7 +1366,7 @@ void SequenceInteractor::getResolution(float &x, float &y)
     }
     x = _x;
     y = _y;
-//    qDebug() << x << y;
+    //    qDebug() << x << y;
     //     "HorizontalPixelDimension" << "VerticalPixelDimension"
     //_mdl->
 }
