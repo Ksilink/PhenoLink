@@ -86,6 +86,67 @@ void MainWindow::on_loadSelection_clicked()
     loadSelection(checked);
 }
 
+
+QJsonObject loadAndCleanNotebook(QString file, int& cellid)
+{
+
+    cellid = -1;
+
+    QFile loadf(file);
+    if (!loadf.open(QIODevice::ReadOnly))
+    {
+        qDebug() << "Warning cannot open file " << file;
+        return QJsonObject();
+    }
+
+
+
+    QJsonDocument doc = QJsonDocument::fromJson((loadf.readAll()));
+
+    QJsonObject ob = doc.object();
+
+    if (ob.contains("cells"))
+    {
+        QJsonArray ar = ob["cells"].toArray();
+
+        for (int i = 0; i < ar.count(); ++i) // Clear outputs
+        {
+            QJsonObject ob = ar[i].toObject();
+
+            if (ob.contains("outputs"))
+                ob["outputs"]=QJsonArray();
+            if (ob.contains("source"))
+            {
+                QJsonArray ar = ob["source"].toArray();
+                if (ar[0] == "# Parameters:\n")
+                    cellid = i;
+            }
+            ar[i] = ob;
+        }
+
+        ob["cells"] = ar;
+    }
+    else
+    {
+        qDebug() << "Notebook cells not found !" << ob;
+    }
+
+    return ob;
+}
+
+bool saveJsonIpynb(QJsonObject ob, QString file)
+{
+    QFile sf(file);
+    if (!sf.open(QIODevice::WriteOnly))
+    {
+        qDebug() << "Notebook not writable !" << file;
+        return false;
+    }
+    sf.write(QJsonDocument(ob).toJson());
+
+    return true;
+}
+
 void MainWindow::on_notebookDisplay_clicked()
 {
 
@@ -121,21 +182,40 @@ void MainWindow::on_notebookDisplay_clicked()
     QString ts = QDateTime::currentDateTime().toString("_yyyyMMdd_hhmmss");
 
     QString tgt = procs; tgt.replace(".ipynb", "_" + username + ts + ".ipynb");
-    QFile::copy(db + procs , db + "/Run/" + tgt);
+    //QFile::copy(db + procs , db + "/Run/" + tgt);
+
+
+
+
     qDebug() << "Copy" << db + procs << db + "/Run/" + tgt;
 
     QStringList its = tgt.split('/'); its.pop_back();
     QDir dir;  dir.mkpath(db+"/Run/"+its.join("/"));
 
-    QString dbopts;
-    if (!datasets.first.isEmpty())
+    int params;
+    QJsonObject file = loadAndCleanNotebook(db+procs, params);
+    if (params >= 0)
     {
-        dbopts = QString("dbs=[%1]").arg(datasets.first.join(","));
-        if (!datasets.second.isEmpty())
-            dbopts += "&";
+        QJsonArray arc = file["cells"].toArray();
+        QJsonObject ob = arc[params].toObject();
+        QJsonArray ar =  ob["source"].toArray();
+
+         if (!datasets.first.isEmpty())
+            ar.append(QString("dbs=[%1]\n").arg(datasets.first.join(",")));
+         if (!datasets.second.isEmpty())
+             ar.append(QString("agdbs=[%1]\n").arg(datasets.first.join(",")));
+
+         ob["source"] = ar;
+         arc[params] = ob;
+        file["cells"] = arc;
     }
-    if (!datasets.second.isEmpty())
-        dbopts += QString("agdbs=[%1]").arg(datasets.second.join(","));
+    else
+    {
+        qDebug() << "Cell Parameter not found, aborting the display";
+        return;
+    }
+
+    saveJsonIpynb(file, db + "/Run/" + tgt);
 
     // Need to load first line of each file & accomodate with plate tags
     // Also add a other csv input :) (like cellprofiler or other stuffs;
@@ -151,11 +231,11 @@ void MainWindow::on_notebookDisplay_clicked()
 
     //    int tab = ui->tabWidget->addTab(view, "Dash View");
     QWebEngineView *view = new QWebEngineView(this);
-    QUrl url(QString("http://%1:%2/notebooks/Run/%5?token=%3&%4&autorun=true")
+    QUrl url(QString("http://%1:%2/notebooks/Run/%5?token=%3&autorun=true")
              .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
              .arg("8888")
              .arg(set.value("JupyterToken", "").toString())
-             .arg(dbopts)
+//             .arg(dbopts)
              .arg(tgt)
              );
     qDebug() << url;
