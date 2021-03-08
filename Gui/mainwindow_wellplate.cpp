@@ -3,7 +3,7 @@
 
 #include "screensmodel.h"
 
-#ifndef WIN32
+#ifndef _WIN64
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

@@ -1,7 +1,7 @@
 #ifndef DLL_H
 #define DLL_H
 
-#ifdef WIN32
+#ifdef _WIN64
 
 #undef DllPluginManagerExport
 #ifdef ExportPluginManagerSymbols
