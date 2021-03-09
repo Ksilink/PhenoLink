@@ -201,6 +201,8 @@ public slots:
 
 
     void rangeChange(double mi, double ma);
+
+    void udpateRange(double mi, double ma);
     void changeRangeValueMax(double val);
     void changeRangeValueMin(double val);
     void changeFpsValue(double val);
@@ -226,6 +228,12 @@ protected slots:
     void retrievedPayload(QString hash);
     void setColor(QColor c);
     void active_Channel(bool c);
+
+
+    void displayTile(bool disp);
+    void setTile( int tile);
+
+
 private:
 
     bool networking;

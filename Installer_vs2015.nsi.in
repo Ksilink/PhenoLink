@@ -40,16 +40,31 @@ File "@CMAKE_BINARY_DIR@\bin\Release\Checkout.exe"
 File "@CMAKE_BINARY_DIR@\bin\Release\CheckoutProcessServer.exe"
 File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
 File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
+
 File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
+File "@CMAKE_BINARY_DIR@\bin\*.dll"
+
+SetOutPath $INSTDIR\bin\resources
 File "@CMAKE_BINARY_DIR@\bin\resources\*.pak"
 File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
 
+SetOutPath $INSTDIR\bin\styles
+File "@CMAKE_BINARY_DIR@\bin\styles\*.dll"
+
+SetOutPath $INSTDIR\bin\bearer
+File "@CMAKE_BINARY_DIR@\bin\bearer\*.dll"
+
+SetOutPath $INSTDIR\bin\iconengines
+File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"
+
+SetOutPath $INSTDIR\bin\translations
 File "@CMAKE_BINARY_DIR@\bin\translations\*.qm"
+
+SetOutPath $INSTDIR\bin\qtwebengine_locales
 File "@CMAKE_BINARY_DIR@\bin\translations\qtwebengine_locales\*.pak"
 
-CreateDirectory $INSTDIR\bin\Cache
 
-File "@CMAKE_BINARY_DIR@\bin\*.dll"
+CreateDirectory $INSTDIR\bin\Cache
 ;File "@CMAKE_BINARY_DIR@\bin\*.manifest"
 
 # define uninstaller name
@@ -89,30 +104,27 @@ Section "Uninstall"
 
 # Always delete uninstaller first
 Delete $INSTDIR\uninstaller.exe
-Delete "$INSTDIR\bin\Release\Checkout.exe"
-Delete "$INSTDIR\bin\Release\CheckoutProcessServer.exe"
-Delete "$INSTDIR\bin\Release\CheckoutCore.dll"
-Delete "$INSTDIR\bin\Release\CheckoutGui.dll"
-Delete "$INSTDIR\bin\Release\CheckoutPluginManager.dll"
-Delete "$INSTDIR\bin\Release\CheckoutServer.dll"
-Delete "$INSTDIR\bin\Release\icudt52.dll"
-Delete "$INSTDIR\bin\Release\icuin52.dll"
-Delete "$INSTDIR\bin\Release\icuuc52.dll"
-Delete "$INSTDIR\bin\Release\opencv_ffmpeg300_64.dll"
-Delete "$INSTDIR\bin\Release\opencv_world300.dll"
-Delete "$INSTDIR\bin\Release\Qt5Core.dll"
-Delete "$INSTDIR\bin\Release\Qt5Gui.dll"
-Delete "$INSTDIR\bin\Release\Qt5Network.dll"
-Delete "$INSTDIR\bin\Release\Qt5OpenGL.dll"
-Delete "$INSTDIR\bin\Release\Qt5Sql.dll"
-Delete "$INSTDIR\bin\Release\Qt5Widgets.dll"
-Delete "$INSTDIR\bin\Release\Qt5Xml.dll"
-Delete "$INSTDIR\bin\Release\Qt5XmlPatterns.dll"
-Delete "$INSTDIR\bin\Release\Qt5Concurrent.dll"
+Delete "$INSTDIR\bin\Checkout.exe"
+Delete "$INSTDIR\bin\CheckoutProcessServer.exe"
+Delete "$INSTDIR\bin\CheckoutCore.dll"
+Delete "$INSTDIR\bin\CheckoutGui.dll"
+Delete "$INSTDIR\bin\CheckoutPluginManager.dll"
+Delete "$INSTDIR\bin\CheckoutServer.dll"
+Delete "$INSTDIR\bin\icudt52.dll"
+Delete "$INSTDIR\bin\icuin52.dll"
+Delete "$INSTDIR\bin\icuuc52.dll"
+Delete "$INSTDIR\bin\opencv_ffmpeg300_64.dll"
+Delete "$INSTDIR\bin\opencv_world300.dll"
+Delete "$INSTDIR\bin\Qt5Core.dll"
+Delete "$INSTDIR\bin\Qt5Gui.dll"
+Delete "$INSTDIR\bin\Qt5Network.dll"
+Delete "$INSTDIR\bin\Qt5OpenGL.dll"
+Delete "$INSTDIR\bin\Qt5Sql.dll"
+Delete "$INSTDIR\bin\Qt5Widgets.dll"
+Delete "$INSTDIR\bin\Qt5Xml.dll"
+Delete "$INSTDIR\bin\Qt5XmlPatterns.dll"
+Delete "$INSTDIR\bin\Qt5Concurrent.dll"
 
-# now delete installed file
-# Delete $INSTDIR\test.txt
-
-Delete "$INSTDIR\bin\Release\plugins\*.dll"
+Delete "$INSTDIR\bin\plugins\*.dll"
 
 SectionEnd

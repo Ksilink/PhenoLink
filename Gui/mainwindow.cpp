@@ -392,6 +392,17 @@ void MainWindow::active_Channel(bool c)
 }
 
 
+void MainWindow::displayTile(bool disp)
+{
+    _sinteractor.current()->displayTile(disp);
+}
+
+void MainWindow::setTile(int tile)
+{
+    _sinteractor.current()->setTile(tile);
+}
+
+
 ctkDoubleRangeSlider* MainWindow::RangeWidgetSetup(ctkDoubleRangeSlider* w, ImageInfos* fo, int channel, bool reconnect)
 {
     if (!reconnect)
@@ -405,6 +416,9 @@ ctkDoubleRangeSlider* MainWindow::RangeWidgetSetup(ctkDoubleRangeSlider* w, Imag
     }
     w->setSymmetricMoves(false);
     connect(w, SIGNAL(valuesChanged(double, double)), this, SLOT(rangeChange(double, double)), Qt::UniqueConnection);
+//    connect(fo, SIGNAL(updateminRange(double)), w, SLOT());
+
+
     return w;
 }
 
@@ -483,7 +497,7 @@ QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, ImageInfos *ifo, bool rec
 
     }
     box->setToolTip("Display Tile Overlay");
-    connect(box, SIGNAL(toggled(bool)), ifo, SLOT(displayTile(bool)), Qt::UniqueConnection);
+    connect(box, SIGNAL(toggled(bool)), this, SLOT(displayTile(bool)), Qt::UniqueConnection);
   //  connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
 
     return box;
@@ -501,7 +515,7 @@ QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, ImageInfos *ifo, bool re
 
     extr->setToolTip("Pick tile to be overlayed");
     extr->setValue(ifo->getTile());
-    connect(extr, SIGNAL(valueChanged(int)), ifo, SLOT(setTile(int)), Qt::UniqueConnection);
+    connect(extr, SIGNAL(valueChanged(int)), this, SLOT(setTile(int)), Qt::UniqueConnection);
 
     return extr;
 }
@@ -538,8 +552,14 @@ void MainWindow::updateCurrentSelection()
         toDel << _imageControls[inter->getExperimentName()];
 
     wwid = new QWidget;
-    QVBoxLayout* bvl = new QVBoxLayout(wwid);
+
+//    QVBoxLayout* bvl = new QVBoxLayout(wwid);
+    QGridLayout* bvl = new QGridLayout(wwid);
+
+
+
     bvl->setSpacing(1);
+    bvl->setContentsMargins(0,0,0,0);
     QSize pix;
     //  qDebug() << "Creating Controls" << channels;
     for (unsigned i = 0; i < channels; ++i)
@@ -550,18 +570,12 @@ void MainWindow::updateCurrentSelection()
         pix = fo->imSize();
         if (Q_UNLIKELY(!fo))        return;
 
-        QWidget* wid = new QWidget;
-        //            wid->setAttribute();
-        QHBoxLayout* lay = new QHBoxLayout(wid);
-        lay->setContentsMargins(0, 0, 0, 0);
-        lay->setSpacing(2);
-
         int ncolors = fo->getMax() - fo->getMin();
         int lastPal = 0;
 
         if (fo->getMin() >= 0 && fo->getMax() - fo->getMin() < 16)
         {
-            lay->addWidget(setupActiveBox(new QCheckBox(wid), fo, i));
+            bvl->addWidget(setupActiveBox(new QCheckBox(wwid), fo, i), i, 0);
 
             int count = fo->getMax() - fo->getMin() + 1;
             QVector<QColor> pal = fo->getPalette();
@@ -575,33 +589,31 @@ void MainWindow::updateCurrentSelection()
                                          .arg(act[l] ? pal[l == 0 ? 0 : ((l + lastPal) % 16)].red() : 128)
                                          .arg(act[l] ? pal[l == 0 ? 0 : ((l + lastPal) % 16)].green() : 128)
                                          .arg(act[l] ? pal[l == 0 ? 0 : ((l + lastPal) % 16)].blue() : 128)
-                                         , wid);
+                                         , wwid);
                 lbl->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
-
                 connect(lbl, SIGNAL(linkActivated(QString)), this, SLOT(changeColorState(QString)), Qt::UniqueConnection);
-                lay->addWidget(lbl);
+                bvl->addWidget(lbl, i, 1, 1, -1);
             }
-            lay->addStretch();
             lastPal += ncolors;
         }
         else
         {
-            lay->addWidget(setupActiveBox(new QCheckBox(wid), fo, i));
-            lay->addWidget(setupMinMaxRanges(new QDoubleSpinBox(wid), fo, QString("vMin%1").arg(i), true));
-            lay->addWidget(RangeWidgetSetup(new ctkDoubleRangeSlider(Qt::Horizontal, wid), fo, i));
-            lay->addWidget(setupMinMaxRanges(new QDoubleSpinBox(wid), fo, QString("vMax%1").arg(i), false));
-            lay->addWidget(colorWidgetSetup(new ctkColorPickerButton(wid), fo, i));
+            bvl->addWidget(setupActiveBox(new QCheckBox(wwid), fo, i), i, 0);
+            bvl->addWidget(setupMinMaxRanges(new QDoubleSpinBox(wwid), fo, QString("vMin%1").arg(i), true), i, 1);
+            bvl->addWidget(RangeWidgetSetup(new ctkDoubleRangeSlider(Qt::Horizontal, wwid), fo, i), i, 2);
+            bvl->addWidget(setupMinMaxRanges(new QDoubleSpinBox(wwid), fo, QString("vMax%1").arg(i), false), i, 3);
+            bvl->addWidget(colorWidgetSetup(new ctkColorPickerButton(wwid), fo, i), i, 4);
         }
 
 
 
-        bvl->addWidget(wid);
+//        bvl->addWidget(wid);
         _imageControls[inter->getExperimentName()].append(wwid);
     }
 
     // Add FrameRate control if it makes sense
     if (inter->getTimePointCount() > 1) {
-        bvl->addWidget(setupVideoFrameRate(new QDoubleSpinBox(wwid), QString("Video Frame Rate")));
+        bvl->addWidget(setupVideoFrameRate(new QDoubleSpinBox(wwid), QString("Video Frame Rate")), channels, 0, 1, -1);
     }
 
     ui->imageControl->layout()->addWidget(wwid);
@@ -628,23 +640,6 @@ void MainWindow::updateCurrentSelection()
         ui->overlayControl->layout()->addWidget(wwid);
         _imageControls[inter->getExperimentName()].append(wwid);
         wwid->show();
-    }
-
-    // Cosmetics... Set the width of spinbox to a fixed largest value, to fit the screen evenly for all channels
-    // Find largest vMin & vMax...
-    int width_vmin = 0, width_vmax = 0;
-    for (unsigned i = 0; i < channels; ++i)
-    {
-        width_vmin = std::max(width_vmin,
-                              getWidgetWidth<QDoubleSpinBox*>(QString("vMin%1").arg(i)));
-        width_vmax = std::max(width_vmax,
-                              getWidgetWidth<QDoubleSpinBox*>(QString("vMax%1").arg(i)));
-    }
-
-    for (unsigned i = 0; i < channels; ++i)
-    {
-        setWidgetWidth<QDoubleSpinBox*>(QString("vMin%1").arg(i), width_vmin);
-        setWidgetWidth<QDoubleSpinBox*>(QString("vMax%1").arg(i), width_vmax);
     }
 
     wwid->show();
@@ -1695,18 +1690,6 @@ void MainWindow::rangeChange(double mi, double ma)
     foreach(QWidget* wwid, _imageControls[inter->getExperimentName()])
     {
         QString name = sender()->objectName().replace("Channel", "");
-        //sender()
-        //ctkDoubleRangeSlider* range = qobject_cast<ctkDoubleRangeSlider*>(sender());
-        //qDebug() << "Value Range!!!" << mi << ma << name << range->minimum() << range->maximum();
-
-        //if (range)
-        //{
-        //    int th = 0; // abs(ma - mi) > 1000 ? 100 : 10;
-        //    if (mi == range.setMin)
-        //    range->setMinimum(mi-th);
-        //    range->setMaximum(ma+th);
-        //}
-
 
         if (!wwid) return;
 
@@ -1715,7 +1698,6 @@ void MainWindow::rangeChange(double mi, double ma)
         if (vmi.size()) {
             lockedChangeValue(vmi.first(), mi);
         }
-
         QList<QDoubleSpinBox*> vma = wwid->findChildren<QDoubleSpinBox*>(QString("vMax%1").arg(name));
         if (vma.size()) lockedChangeValue(vma.first(), ma);
 
@@ -1725,6 +1707,33 @@ void MainWindow::rangeChange(double mi, double ma)
     }
 
 }
+
+void MainWindow::udpateRange(double mi, double ma)
+{
+
+    SequenceInteractor* inter = _sinteractor.current();
+
+    foreach(QWidget* wwid, _imageControls[inter->getExperimentName()])
+    {
+        QString name = sender()->objectName().replace("Channel", "");
+        //sender()
+        QList<ctkDoubleRangeSlider*> ranges = wwid->findChildren<ctkDoubleRangeSlider*>(name);// qobject_cast<ctkDoubleRangeSlider*>(sender());
+//        //qDebug() << "Value Range!!!" << mi << ma << name << range->minimum() << range->maximum();
+        for (auto range: ranges)
+            if (range)
+            {
+                int th =0;// abs(ma - mi) > 1000 ? 100 : 10;
+                range->setMinimum(mi-th);
+                range->setMaximum(ma+th);
+            }
+    }
+
+}
+
+
+
+
+
 
 void MainWindow::changeRangeValueMax(double val)
 {

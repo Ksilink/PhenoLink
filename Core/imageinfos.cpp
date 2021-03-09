@@ -376,6 +376,14 @@ void ImageInfos::setTile(int tile)
     Update();
 }
 
+void ImageInfos::timerEvent(QTimerEvent *)
+{
+    double dv = .05 *(_ifo._platename_to_colorCode[_plate]._dispMax-_ifo._platename_to_colorCode[_plate]._dispMin);
+
+    emit rangeChanged(_ifo._platename_to_colorCode[_plate]._dispMin - dv,
+                _ifo._platename_to_colorCode[_plate]._dispMax + dv);
+}
+
 void ImageInfos::displayTile(bool disp)
 {
     qDebug() << "Toggling Tile disp:" << disp;
@@ -493,6 +501,9 @@ void ImageInfos::changeColorState(int chan)
 
 void ImageInfos::rangeChanged(double mi, double ma)
 {
+
+    startTimer(2000);
+
     _modified = true;
 
     _ifo._platename_to_colorCode[_plate]._dispMin = mi;

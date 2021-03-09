@@ -119,17 +119,17 @@ void SequenceInteractor::setFps(double fps)
 
 void SequenceInteractor::setTile(int tile)
 {
-    qDebug() << "Changing Tile" << tile;
+    //qDebug() << "Changing Tile" << tile;
     tile_id = tile;
-    //if (disp_tile) // only update if disp is on!
-    //    modifiedImage();
+    if (disp_tile) // only update if disp is on!
+        modifiedImage();
 }
 
 void SequenceInteractor::displayTile(bool disp)
 {
-    qDebug() << "Toggling Tile disp:" << disp;
+    //qDebug() << "Toggling Tile disp:" << disp;
     disp_tile = disp;
-    // modifiedImage();
+    modifiedImage();
 }
 
 bool SequenceInteractor::tileDisplayed()

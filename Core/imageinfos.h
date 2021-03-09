@@ -168,9 +168,12 @@ public slots:
     void displayTile(bool disp);
     void setTile( int tile);
 
+signals:
+    void updateRange(double, double);
 
 protected:
 
+    void timerEvent(QTimerEvent *event);
 
     QString loadedWithkey;
     QString channelName;
