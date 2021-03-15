@@ -1152,7 +1152,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
     // The interactor will filter / scale & analyse the meta data to be generated
     QList<QGraphicsItem*> res;
 
-    qDebug() << "Get Meta Called, " << disp_tile << tile_id;
+//    qDebug() << "Get Meta Called, " << disp_tile << tile_id;
     if (disp_tile)
     { // Specific code to display tile with respect to position !!!
         QSettings set;

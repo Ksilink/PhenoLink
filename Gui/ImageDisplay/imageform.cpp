@@ -406,7 +406,6 @@ QStringList ImageForm::getChannelNames()
 void ImageForm::setModelView(SequenceFileModel *view, SequenceInteractor* interactor)
 {
     this->_view = view;
-    //    this->_interactor = new SequenceInteractor(view);
     if (interactor) this->_interactor = interactor;
     this->_interactor->setCurrent(_interactor);
 

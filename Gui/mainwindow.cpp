@@ -414,10 +414,10 @@ ctkDoubleRangeSlider* MainWindow::RangeWidgetSetup(ctkDoubleRangeSlider* w, Imag
         w->setRange(fo->getMin(), fo->getMax());
         w->setPositions(fo->getDispMin(), fo->getDispMax());
     }
+
     w->setSymmetricMoves(false);
     connect(w, SIGNAL(valuesChanged(double, double)), this, SLOT(rangeChange(double, double)), Qt::UniqueConnection);
-//    connect(fo, SIGNAL(updateminRange(double)), w, SLOT());
-
+    connect(fo, SIGNAL(updateRange(double, double)), w, SLOT(setMinMax(double, double)));
 
     return w;
 }
@@ -566,6 +566,7 @@ void MainWindow::updateCurrentSelection()
     {
 
         ImageInfos* fo = inter->getChannelImageInfos(i + 1);
+
         //          qDebug() << "Adding " << i << QString("Channel%1").arg(i);
         pix = fo->imSize();
         if (Q_UNLIKELY(!fo))        return;

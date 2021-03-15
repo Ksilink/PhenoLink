@@ -7,6 +7,7 @@
 
 
 ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString fname, QString platename, int channel):
+    QObject(par),
     _ifo(ifo),
     _parent(par),
     _modified(true),
@@ -16,10 +17,12 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     bias_correction(false),
     _saturate(true), _uninverted(true),
 
-    _channel(channel), _binarized(false)
+    _channel(channel), _binarized(false),
+    range_timer(NULL), range_timerId(-1)
 {
     QMutexLocker lock(&_lockImage);
     loadedWithkey = key();
+    qDebug() << "ImageInfos" << this << thread();
     //qDebug() << "Imageinfos" << this << fname << platename << par;
     _ifo._platename_to_infos[_plate].append(this);
 }
@@ -376,32 +379,64 @@ void ImageInfos::setTile(int tile)
     Update();
 }
 
+//void ImageInfos::update_range_ontime()
+//{
+//    range_timer->stop();
+//    qDebug() << "Intensity Scale shall change";
+//    double dv = .05 *(_ifo._platename_to_colorCode[_plate]._dispMax-_ifo._platename_to_colorCode[_plate]._dispMin);
+
+
+//    qDebug() << _ifo._platename_to_colorCode[_plate]._dispMin - dv << _ifo._platename_to_colorCode[_plate]._dispMin + dv;
+//    emit rangeChanged(_ifo._platename_to_colorCode[_plate]._dispMin - dv,
+//                      _ifo._platename_to_colorCode[_plate]._dispMax + dv);
+//}
+
 void ImageInfos::timerEvent(QTimerEvent *)
 {
+//    qDebug() << "Intensity Scale shall change";
     double dv = .05 *(_ifo._platename_to_colorCode[_plate]._dispMax-_ifo._platename_to_colorCode[_plate]._dispMin);
 
-    emit rangeChanged(_ifo._platename_to_colorCode[_plate]._dispMin - dv,
-                _ifo._platename_to_colorCode[_plate]._dispMax + dv);
+
+//    qDebug() << _ifo._platename_to_colorCode[_plate]._dispMin - dv << _ifo._platename_to_colorCode[_plate]._dispMin + dv;
+
+    emit updateRange(_ifo._platename_to_colorCode[_plate]._dispMin - dv,
+                      _ifo._platename_to_colorCode[_plate]._dispMax + dv);
 }
 
 void ImageInfos::displayTile(bool disp)
 {
-    qDebug() << "Toggling Tile disp:" << disp;
+    //    qDebug() << "Toggling Tile disp:" << disp;
     _parent->displayTile(disp);
     Update();
 }
 
 bool ImageInfos::tileDisplayed()
 {
-    qDebug() << "tile displayed";
+    //    qDebug() << "tile displayed";
 
     return _parent->tileDisplayed();
 }
 
 int ImageInfos::getTile()
 {
-    qDebug() << "get tile";
+//    qDebug() << "get tile";
     return _parent->getTile();
+}
+
+void ImageInfos::setRangeTimer()
+{
+    if (!range_timer)
+    {
+        range_timer = new QTimer(this);
+        range_timer->connect(range_timer, SIGNAL(timeout()), this, SLOT(update_range_ontime()));
+        range_timer->start(200);
+        qDebug() << "Timer started";
+    }
+    else
+    { // R
+        range_timer->start(200);
+        qDebug() << "Timer restarted";
+    }
 }
 
 
@@ -501,14 +536,17 @@ void ImageInfos::changeColorState(int chan)
 
 void ImageInfos::rangeChanged(double mi, double ma)
 {
+    //    setRangeTimer();
+//    qDebug() << "Range Changed" << mi << ma << thread();
+    if (range_timerId>=0)
+        killTimer(range_timerId);
 
-    startTimer(2000);
+    range_timerId = startTimer(500);
 
     _modified = true;
 
     _ifo._platename_to_colorCode[_plate]._dispMin = mi;
     _ifo._platename_to_colorCode[_plate]._dispMax = ma;
-
     Update();
 }
 

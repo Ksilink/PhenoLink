@@ -144,6 +144,7 @@ public:
 
     bool tileDisplayed();
     int getTile();
+    void setRangeTimer();
 
 public slots:
     void changeColorState(int chan);
@@ -167,6 +168,8 @@ public slots:
 
     void displayTile(bool disp);
     void setTile( int tile);
+
+//    void update_range_ontime();
 
 signals:
     void updateRange(double, double);
@@ -193,6 +196,10 @@ protected:
     QString _colormap;
     bool _binarized;
     QSize _size;
+
+    QTimer* range_timer;
+    int range_timerId;
+
 };
 
 

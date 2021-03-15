@@ -21,7 +21,7 @@
 
 ScrollZone::ScrollZone(QWidget *parent) :
     QScrollArea(parent)/*,
-    _progDiag(0x0)*/
+      _progDiag(0x0)*/
 {
 
     QWidget* wid = new QWidget(this);
@@ -144,7 +144,7 @@ void ScrollZone::addSelectedWells()
         InsertFctor(ScrollZone* s) : sz(s)
         {
 
-       }
+        }
         ScrollZone* sz;
 
         typedef SequenceInteractor* result_type;
@@ -152,15 +152,17 @@ void ScrollZone::addSelectedWells()
         SequenceInteractor* operator()(SequenceFileModel* sfm) {
             SequenceInteractor* intr = new SequenceInteractor(sfm, ImageInfos::key());
             intr->preloadImage();
+            intr->moveToThread(sz->thread());
             return intr;
         }
     };
 
     QList< SequenceInteractor*> all =  QtConcurrent::blockingMapped(sfm_list, InsertFctor(this));
 
-	foreach(SequenceInteractor* m, all)
+    foreach(SequenceInteractor* m, all)
+    {
         insertImage(m->getSequenceFileModel(), m);
-
+    }
     //  _progDiag->close();
     //  delete _progDiag;
     //  _progDiag = 0;
@@ -168,7 +170,7 @@ void ScrollZone::addSelectedWells()
 
 int ScrollZone::items()
 {
-  return  findChildren<ImageForm*>().size();
+    return  findChildren<ImageForm*>().size();
 }
 
 

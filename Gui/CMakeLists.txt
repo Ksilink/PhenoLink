@@ -81,9 +81,9 @@ target_include_directories(CheckoutGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 
 IF(WIN32)
-    target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} Qt5::OpenGL Qt5::Widgets Qt5::Sql  Qt5::WinExtras Qt5::Charts Qt5::WebEngineWidgets  ${OpenCV_LIBS} )
+    target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} Qt::OpenGL Qt::Widgets Qt::Sql  Qt::WinExtras Qt::Charts Qt::WebEngineWidgets  ${OpenCV_LIBS} )
 ELSE()
-target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} Qt5::OpenGL Qt5::Widgets Qt5::Sql ${OpenCV_LIBS} )
+target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} Qt::OpenGL Qt::Widgets Qt::Sql ${OpenCV_LIBS} )
 ENDIF(WIN32)
 
 

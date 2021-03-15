@@ -557,7 +557,14 @@ void ctkDoubleRangeSlider::setValues(double newMinVal, double newMaxVal)
         emit this->maximumValueChanged(this->maximumValue());
         }
       }
-    }
+  }
+}
+
+void ctkDoubleRangeSlider::setMinMax(double min, double max)
+{
+//    qDebug() << "ctk slider: Min Max" <<min << max;
+    setMinimum(min);
+    setMaximum(max);
 }
 
 // --------------------------------------------------------------------------

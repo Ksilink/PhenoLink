@@ -254,13 +254,17 @@ public Q_SLOTS:
   /// Utility function that set the minimum value and maximum value at once.
   void setValues(double minVal, double maxVal);
 
+  void setMinMax(double min, double max);
+
 protected Q_SLOTS:
+  void onRangeChanged(int newIntMin, int newIntMax);
+
+
   void onValuesChanged(int min, int max);
 
   void onMinPosChanged(int value);
   void onMaxPosChanged(int value);
   void onPositionsChanged(int min, int max);
-  void onRangeChanged(int min, int max);
 
   void onValueProxyAboutToBeModified();
   void onValueProxyModified();
