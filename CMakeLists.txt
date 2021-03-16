@@ -101,24 +101,13 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Update to CMake
 if (WIN32)
-#    find_package(Qt6 COMPONENTS WidgetsTools Widgets  Xml XmlPatterns
-#        OpenGL Concurrent Sql WinExtras  WebView WebEngineWidgets QUIET)
-#    if (NOT Qt6_FOUND)
         find_package(Qt5 5.15 COMPONENTS  Widgets Charts Xml XmlPatterns
             OpenGL Concurrent Sql WinExtras  WebView WebEngineWidgets REQUIRED)
-#    endif()
-
 ELSE()
-#find_package(Qt6 COMPONENTS Widgets Xml XmlPatterns
-#    OpenGL Concurrent Sql WebView
-#    )
-#if (NOT Qt6_FOUND)
     find_package(Qt5 5.15 COMPONENTS
         Widgets Xml XmlPatterns
         OpenGL Concurrent Sql WebView
         REQUIRED)
-#endif()
-
 ENDIF(WIN32)
 
 

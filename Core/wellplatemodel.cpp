@@ -852,6 +852,7 @@ StructuredMetaData &SequenceFileModel::getMeta(int timePoint, int fieldIdx, int 
     return r;
 }
 
+
 int SequenceFileModel::getMetaChannels(int timePoint, int fieldIdx, int Zindex)
 {
     if (_sdata.contains(fieldIdx))

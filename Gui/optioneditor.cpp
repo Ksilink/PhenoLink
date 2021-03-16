@@ -338,6 +338,30 @@ QWidget *GlobalOptions::features()
 
     mainLayout->setObjectName("Global Option Layout");
 
+
+
+    intensity_waitRate = new QSpinBox();
+    intensity_waitRate->setMinimum(200);
+    intensity_waitRate->setMaximum(10000);
+    intensity_waitRate->setValue(set.value("RefreshSliderRate", 2000).toInt());
+    intensity_waitRate->setToolTip("Default: 2000 (ms)");
+    connect(intensity_waitRate, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
+
+    mainLayout->addRow("Intensity Rescale wait duration ", intensity_waitRate);
+
+
+
+    intensity_refreshRatio = new QDoubleSpinBox();
+    intensity_refreshRatio->setDecimals(2);
+    intensity_refreshRatio->setMinimum(0.0);
+    intensity_refreshRatio->setMaximum(0.5);
+    intensity_refreshRatio->setValue(set.value("RefreshSliderRatio", 0.05).toDouble());
+    intensity_refreshRatio->setToolTip("Default: 0.05 (* 100 %))");
+    connect(intensity_refreshRatio, SIGNAL(valueChanged(double)), this, SLOT(updatePaths()));
+
+    mainLayout->addRow("Intensity Margin (% of range intensity) ", intensity_refreshRatio);
+
+
     refreshRate = new QSpinBox();
     refreshRate->setMinimum(0);
     refreshRate->setMaximum(60000);
@@ -346,7 +370,6 @@ QWidget *GlobalOptions::features()
     connect(refreshRate, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
 
     mainLayout->addRow("Process Query Refressh Rate ", refreshRate);
-
 
 
     minServerProcs = new QSpinBox();
@@ -619,6 +642,11 @@ void GlobalOptions::updatePaths()
     set.setValue("RefreshRate", refreshRate->value());
     set.setValue("maxRefreshQuery", maxRefreshQuery->value());
     set.setValue("unpackScaling", unpackScaling->value());
+
+
+    set.setValue("RefreshSliderRate", intensity_waitRate->value());
+    set.setValue("RefreshSliderRatio", intensity_refreshRatio->value());
+
 
     this->parentWidget()->startTimer(refreshRate->value());
 

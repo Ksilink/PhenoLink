@@ -394,12 +394,29 @@ void MainWindow::active_Channel(bool c)
 
 void MainWindow::displayTile(bool disp)
 {
-    _sinteractor.current()->displayTile(disp);
+   if (sender())
+   {
+        QString name = sender()->objectName();
+        _sinteractor.current()->toggleOverlay(name, disp);
+   }
+}
+
+void MainWindow::overlayChanged(QString id)
+{
+    if (sender())
+    {
+        QString name = sender()->objectName();
+        _sinteractor.current()->overlayChange(name, id);
+    }
 }
 
 void MainWindow::setTile(int tile)
 {
-    _sinteractor.current()->setTile(tile);
+    if (sender())
+    {
+        QString name = sender()->objectName();
+        _sinteractor.current()->setOverlayId(name, tile);
+    }
 }
 
 
@@ -481,43 +498,54 @@ QDoubleSpinBox* MainWindow::setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* 
 
 
 
-QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, ImageInfos *ifo, bool reconnect)
+QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, QString itemName, ImageInfos *ifo, bool reconnect)
 {
-    qDebug() << "Setup Overlay Tile" << ifo;
+//    qDebug() << "Setup Overlay Tile" << ifo;
 
    if (!reconnect)
     {
-        box->setObjectName(QString("TileDisplay"));
+        box->setObjectName(QString(itemName));
         box->setAttribute(Qt::WA_DeleteOnClose);
-        box->setChecked(ifo->tileDisplayed());
-
-        //        box->setContextMenuPolicy(Qt::CustomContextMenu);
-        //        connect(box, SIGNAL(customContextMenuRequested(const QPoint&)),
-        //                this, SLOT(channelCheckboxMenu(const QPoint&)));
-
+        box->setChecked(ifo->overlayDisplayed(itemName));
     }
-    box->setToolTip("Display Tile Overlay");
+    box->setToolTip(QString("Display %1 Overlay").arg(itemName));
     connect(box, SIGNAL(toggled(bool)), this, SLOT(displayTile(bool)), Qt::UniqueConnection);
   //  connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
 
     return box;
 }
 
-QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, ImageInfos *ifo, bool reconnect)
+QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, QString itemName, ImageInfos *ifo, bool reconnect)
 {
-    qDebug() << "Setup Tile pos" << ifo;
+//    qDebug() << "Setup Tile pos" << ifo;
     if (!reconnect)
     {
-        extr->setObjectName("TileSelector");
-        extr->setMinimum(0);
-        extr->setMaximum(361);
+        extr->setObjectName(itemName);
+
+        extr->setMinimum(ifo->getOverlayMin(itemName));
+        extr->setMaximum(ifo->getOverlayMax(itemName));
     }
 
-    extr->setToolTip("Pick tile to be overlayed");
-    extr->setValue(ifo->getTile());
+    extr->setToolTip(QString("Pick %1 to be overlayed").arg(itemName));
+    extr->setValue(ifo->getOverlayId(itemName));
     connect(extr, SIGNAL(valueChanged(int)), this, SLOT(setTile(int)), Qt::UniqueConnection);
 
     return extr;
+}
+
+QComboBox *MainWindow::setupOverlaySelection(QComboBox *box, QString itemName,ImageInfos *ifo, bool reconnect)
+{
+    if (!reconnect)
+    {
+        box->setObjectName(itemName);
+        box->addItems(ifo->getInteractor()->getMetaOptionsList(itemName));
+    }
+
+    box->setToolTip(QString("Select Colorcoding"));
+    box->setCurrentText(ifo->getInteractor()->getOverlayCode(itemName));
+    connect(box, SIGNAL(currentTextChanged(QString)), this, SLOT(overlayChanged(QString)));
+
+    return box;
 }
 
 
@@ -625,21 +653,29 @@ void MainWindow::updateCurrentSelection()
         ImageInfos* fo = inter->getChannelImageInfos(1);
 
         auto wwid = new QWidget;
-        QVBoxLayout* bvl = new QVBoxLayout(wwid);
-        bvl->setSpacing(1);
 
-        QWidget* wid = new QWidget;
-        //            wid->setAttribute();
-        QHBoxLayout* lay = new QHBoxLayout(wid);
-        lay->setContentsMargins(0, 0, 0, 0);
-        lay->setSpacing(1);
-        lay->addWidget(setupOverlayBox(new QCheckBox(wid), fo));
-        lay->addWidget(new QLabel("Tile: "));
-        lay->addWidget(setupTilePosition(new QSpinBox(wid), fo));
-        bvl->addWidget(wid);
+        QGridLayout* bvl = new QGridLayout(wwid);
+        bvl->setSpacing(1);
+        bvl->setContentsMargins(0, 0, 0, 0);
+        bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), "Tile", fo), 0, 0);
+        bvl->addWidget(new QLabel("Tile: ", wwid), 0, 1);
+        bvl->addWidget(setupTilePosition(new QSpinBox(wwid), "Tile", fo), 0, 2, 1, -1);
 
         ui->overlayControl->layout()->addWidget(wwid);
         _imageControls[inter->getExperimentName()].append(wwid);
+
+        QStringList overlays = inter->getMetaList();
+        int itms = 1;
+        for (auto ov : overlays)
+        {
+            bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), ov, fo), itms, 0);
+            bvl->addWidget(new QLabel(ov, wwid), itms, 1);
+            bvl->addWidget(setupTilePosition(new QSpinBox(wwid), ov, fo), itms, 2);
+            bvl->addWidget(setupOverlaySelection(new QComboBox(wwid), ov, fo), itms, 3);
+            itms++;
+        }
+
+
         wwid->show();
     }
 

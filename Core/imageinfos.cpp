@@ -22,7 +22,7 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
 {
     QMutexLocker lock(&_lockImage);
     loadedWithkey = key();
-    qDebug() << "ImageInfos" << this << thread();
+    //    qDebug() << "ImageInfos" << this << thread();
     //qDebug() << "Imageinfos" << this << fname << platename << par;
     _ifo._platename_to_infos[_plate].append(this);
 }
@@ -374,9 +374,13 @@ QString ImageInfos::getChannelName()
 
 void ImageInfos::setTile(int tile)
 {
-    qDebug() << "Set Tile " << tile;
-    _parent->setTile(tile);
-    Update();
+    //qDebug() << "Set Tile " << tile;
+    if (sender())
+    {
+        QString name = sender()->objectName();
+        _parent->setOverlayId(name, tile);
+        Update();
+    }
 }
 
 //void ImageInfos::update_range_ontime()
@@ -393,49 +397,67 @@ void ImageInfos::setTile(int tile)
 
 void ImageInfos::timerEvent(QTimerEvent *)
 {
-//    qDebug() << "Intensity Scale shall change";
-    double dv = .05 *(_ifo._platename_to_colorCode[_plate]._dispMax-_ifo._platename_to_colorCode[_plate]._dispMin);
+    //    qDebug() << "Intensity Scale shall change";
+    QSettings set;
+
+    double rat = set.value("RefreshSliderRatio", 0.05).toDouble();
+
+    double dv = rat *(_ifo._platename_to_colorCode[_plate]._dispMax-_ifo._platename_to_colorCode[_plate]._dispMin);
 
 
-//    qDebug() << _ifo._platename_to_colorCode[_plate]._dispMin - dv << _ifo._platename_to_colorCode[_plate]._dispMin + dv;
+    //    qDebug() << _ifo._platename_to_colorCode[_plate]._dispMin - dv << _ifo._platename_to_colorCode[_plate]._dispMin + dv;
 
     emit updateRange(_ifo._platename_to_colorCode[_plate]._dispMin - dv,
-                      _ifo._platename_to_colorCode[_plate]._dispMax + dv);
+                     _ifo._platename_to_colorCode[_plate]._dispMax + dv);
 }
 
 void ImageInfos::displayTile(bool disp)
 {
-    //    qDebug() << "Toggling Tile disp:" << disp;
-    _parent->displayTile(disp);
-    Update();
+    if (sender())
+    {
+        QString name = sender()->objectName();
+        _parent->toggleOverlay(name, disp);
+        Update();
+    }
 }
 
-bool ImageInfos::tileDisplayed()
+bool ImageInfos::overlayDisplayed(QString name)
 {
-    //    qDebug() << "tile displayed";
-
-    return _parent->tileDisplayed();
+    return _parent->overlayDisplayed(name);
 }
 
-int ImageInfos::getTile()
+int ImageInfos::getOverlayId(QString name)
 {
-//    qDebug() << "get tile";
-    return _parent->getTile();
+    return _parent->getOverlayId(name);
+}
+
+int ImageInfos::getOverlayMin(QString name)
+{
+    if (name == "Tile")
+        return 0;
+    else return -1;
+}
+
+int ImageInfos::getOverlayMax(QString name)
+{
+    if (name == "Tile")
+        return 361;
+    else return _parent->getOverlayMax(name);
 }
 
 void ImageInfos::setRangeTimer()
 {
+    QSettings set;
+
     if (!range_timer)
     {
         range_timer = new QTimer(this);
         range_timer->connect(range_timer, SIGNAL(timeout()), this, SLOT(update_range_ontime()));
-        range_timer->start(200);
-        qDebug() << "Timer started";
+        range_timer->start(set.value("RefreshSliderRate", 2000).toInt());
     }
     else
     { // R
-        range_timer->start(200);
-        qDebug() << "Timer restarted";
+        range_timer->start(set.value("RefreshSliderRate", 2000).toInt());
     }
 }
 
@@ -537,7 +559,7 @@ void ImageInfos::changeColorState(int chan)
 void ImageInfos::rangeChanged(double mi, double ma)
 {
     //    setRangeTimer();
-//    qDebug() << "Range Changed" << mi << ma << thread();
+    //    qDebug() << "Range Changed" << mi << ma << thread();
     if (range_timerId>=0)
         killTimer(range_timerId);
 

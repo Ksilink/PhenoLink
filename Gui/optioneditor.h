@@ -50,6 +50,10 @@ protected:
     QLineEdit* jupyterToken;
 
 
+    QSpinBox*    intensity_waitRate;
+    QDoubleSpinBox* intensity_refreshRatio;
+
+
     QSpinBox* refreshRate;
     QSpinBox* maxRefreshQuery;
     QSpinBox* minServerProcs;

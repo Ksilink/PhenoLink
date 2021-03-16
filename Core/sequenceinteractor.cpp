@@ -16,14 +16,14 @@ QMutex sequence_interactorMutex(QMutex::NonRecursive);
 SequenceInteractor::SequenceInteractor():
     _mdl(0),
     _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),
-    disp_tile(false), tile_id(0),
+    //    disp_tile(false), tile_id(0),
     last_scale(-1.), _updating(false), _changed(true)
 {
 }
 
 SequenceInteractor::SequenceInteractor(SequenceFileModel *mdl, QString key):
     _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),
-    _fps(25.), disp_tile(false), tile_id(0), loadkey(key), last_scale(-1.), _updating(false), _changed(true)
+    _fps(25.), loadkey(key), last_scale(-1.), _updating(false), _changed(true)
 {
 }
 
@@ -113,34 +113,53 @@ void SequenceInteractor::setFps(double fps)
     foreach (CoreImage* im, _ImageList)
         im->changeFps(fps);
 
-
-
 }
 
-void SequenceInteractor::setTile(int tile)
+QString SequenceInteractor::getOverlayCode(QString name)
+{
+    return overlay_coding[name].first;
+}
+
+void SequenceInteractor::overlayChange(QString name, QString id)
+{
+    overlay_coding[name].first = id;
+}
+
+void SequenceInteractor::overlayChangeCmap(QString name, QString id)
+{
+    overlay_coding[name].second = id;
+}
+
+
+void SequenceInteractor::setOverlayId(QString name, int tile)
 {
     //qDebug() << "Changing Tile" << tile;
-    tile_id = tile;
-    if (disp_tile) // only update if disp is on!
+    disp_overlay[name].second = tile;
+    //    tile_id = tile;
+    if (disp_overlay[name].first) // only update if disp is on!
         modifiedImage();
 }
 
-void SequenceInteractor::displayTile(bool disp)
+void SequenceInteractor::toggleOverlay(QString name, bool disp)
 {
     //qDebug() << "Toggling Tile disp:" << disp;
-    disp_tile = disp;
+    disp_overlay[name].first = disp;
+    //    disp_tile = disp;
     modifiedImage();
 }
 
-bool SequenceInteractor::tileDisplayed()
+bool SequenceInteractor::overlayDisplayed(QString name)
 {
-    return disp_tile;
+    return disp_overlay[name].first;
 }
 
-int SequenceInteractor::getTile()
+int SequenceInteractor::getOverlayId(QString name)
 {
-    return tile_id;
+    if (disp_overlay.contains(name))
+        return disp_overlay[name].second;
+    return -1;
 }
+
 
 QStringList SequenceInteractor::getChannelNames()
 {
@@ -1147,15 +1166,94 @@ void getMinMax(cv::Mat &ob, int f, float& cmin, float& cmax)
 }
 
 
+// Return the list of overlays
+QList<QString> SequenceInteractor::getMetaList()
+{
+    QStringList l;
+    int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
+
+    for (int c = 1; c <= cns;++c)
+    {
+        QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
+        // We can add some selectors
+        l += data.keys();
+    }
+
+    return std::move(l);
+}
+
+int SequenceInteractor::getOverlayMax(QString name)
+{
+    int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
+    //qDebug() << _timepoint << _field << _zpos << cns;
+    for (int c = 1; c <= cns;++c)
+    {
+        QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
+        if (data.contains(name))
+        {
+            StructuredMetaData& k = data[name];
+
+            cv::Mat& feat = k.content();
+            return feat.rows;
+        }
+    }
+    return -1;
+}
+
+
+// Return selectable color coded displays
+
+QList<QString> SequenceInteractor::getMetaOptionsList(QString meta)
+{ // Returns list of displayable options
+    int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
+    QStringList l;
+
+    auto sub = QStringList() << "_X" << "_Y" << "_Top" << "_Left" << "_Width"<< "_Height";
+
+    for (int c = 1; c <= cns;++c)
+    {
+        QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
+        // We can add some selectors
+        if (data.contains(meta))
+        {
+            auto k= data[meta];
+
+            QString cols = k.property("ChannelNames");
+
+            QStringList sp = cols.split(";");
+
+            for (auto s : sp)
+            {
+                bool add = true;
+                for (auto ss : sub)
+                {
+                    if (s.contains(ss))
+                    {
+                        add = false;
+                        break;
+                    }
+                }
+                if (add)  l << s;
+            }
+        }
+    }
+
+    return std::move(l);
+}
+
+
+
+
 QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
 {
     // The interactor will filter / scale & analyse the meta data to be generated
     QList<QGraphicsItem*> res;
 
-//    qDebug() << "Get Meta Called, " << disp_tile << tile_id;
-    if (disp_tile)
+    //    qDebug() << "Get Meta Called, " << disp_tile << tile_id;
+    if (disp_overlay["Tile"].first)
     { // Specific code to display tile with respect to position !!!
         QSettings set;
+        int tile_id = disp_overlay["Tile"].second;
 
         int rx = set.value("TileSizeX", 256).toInt() / 2,
                 ry = set.value("TileSizeX", 216).toInt() / 2;
@@ -1173,7 +1271,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
 
         item->setRect(QRectF(x,y,width,height));
         item->setPen(QPen(Qt::yellow));
-        qDebug() << item->rect();
+        //        qDebug() << item->rect();
         res << item;
     }
 
@@ -1181,141 +1279,45 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
     //    SequenceFileModel::Channel& chans = _mdl->getChannelsFiles(_timepoint, _field, _zpos);
 
     int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
-    qDebug() << _timepoint << _field << _zpos << cns;
+    //qDebug() << _timepoint << _field << _zpos << cns;
     for (int c = 1; c <= cns;++c)
     {
         QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
         // We can add some selectors
 
-        for (auto k: data)
-        {
-            //        StructuredMetaData& k = data.first();
-
-            QString cols = k.property("ChannelNames");
-            qDebug() << cols;
-
-            if (cols.contains("_Top") && cols.contains("_Left")
-                    && cols.contains("_Width") && cols.contains("_Height"))
+        //        for (auto & [k: data)
+        for (QMap<QString, StructuredMetaData>::iterator it = data.begin(), e = data.end(); it != e; ++it)
+            if (disp_overlay[it.key()].first)
             {
-                // This is a Top Left Corner rectangle setting !
+                StructuredMetaData& k = it.value();
 
-                // Find item pos:
-                cv::Mat& feat = k.content();
+                QString cols = k.property("ChannelNames");
+                //            qDebug() << cols;
 
-                int t,l,w,h, f;
-                QStringList lcols = cols.split(";").mid(0, feat.cols);
-                QList<int> feats;
-
-                for (int i = 0; i < lcols.size(); ++i)
+                if (cols.contains("_Top") && cols.contains("_Left")
+                        && cols.contains("_Width") && cols.contains("_Height"))
                 {
-                    QString s = lcols[i];
-                    if (s.contains("_Top"))   t = i;
-                    else if (s.contains("_Left"))  l = i;
-                    else if (s.contains("_Width")) w = i;
-                    else if (s.contains("_Height")) h = i;
-                    else { feats << i;  }
-                }
+                    // This is a Top Left Corner rectangle setting !
 
-                float cmin, cmax;
-                f = feats.first();
-                getMinMax(feat, f, cmin, cmax);
-
-
-                using namespace colormap ;
-
-                auto pal = palettes.at("jet");
-                pal.rescale(cmin, cmax);
-
-
-                auto group = new QGraphicsItemGroup(parent);
-                for (int r = 0; r < feat.rows; ++r)
-                {
-
-                    auto item = new QGraphicsRectItem(group);
-                    float y = feat.at<float>(r, t),
-                            x = feat.at<float>(r, l),
-                            width= feat.at<float>(r, w),
-                            height= feat.at<float>(r, h);
-                    item->setRect(QRectF(x,y,width,height));
-                    //qDebug() << r << x << y << width << height;
-                    QString tip;
-                    for (auto p : feats)
-                    {
-                        float fea = feat.at<float>(r,p);
-                        tip += QString("%1: %2\r\n").arg(lcols[p]).arg(fea);
-                    }
-                    item->setToolTip(tip.trimmed());
-                    float fea = feat.at<float>(r,f);
-                    auto colo = pal(fea);
-                    item->setPen(QPen(qRgb(colo[0], colo[1], colo[2])));
-                    //                item->setBrush(); // FIXME: Add color feature
-                }
-                res << group;
-            }
-            if (cols.contains("_X") && cols.contains("_Y"))
-            {
-                // There is a X & Y coordinate
-                if (cols.count("_X") >= 2 && cols.count("_Y") >= 2)
-                {
-                    // Should be a vector
+                    // Find item pos:
                     cv::Mat& feat = k.content();
 
-                    int x1,y1, x2, y2;
+                    int t,l,w,h, f;
                     QStringList lcols = cols.split(";").mid(0, feat.cols);
+                    QList<int> feats;
 
                     for (int i = 0; i < lcols.size(); ++i)
                     {
                         QString s = lcols[i];
-                        if (s.contains("_X"))  {
-                            x1 = i;
-                            y1 = findY(lcols, s);
-                            for (int j = i+1; j < lcols.size(); ++j)
-                                if (lcols[j].contains("_X"))
-                                {
-                                    x2 = j;
-                                    y2 = findY(lcols, lcols[j]);
-                                    break;
-                                }
-                            break;
-                        }
-                    }
-                    auto group = new QGraphicsItemGroup(parent);
-                    for (int r = 0; r < feat.rows; ++r)
-                    {
-
-                        auto item = new QGraphicsLineItem (group);
-                        float x = feat.at<float>(r, x1),
-                                y = feat.at<float>(r, y1),
-                                w= feat.at<float>(r, x2),
-                                h= feat.at<float>(r, y2);
-                        item->setLine(x,y,w,h);
-                        float len = sqrt(pow(x-w,2)+pow(y-h,2));
-                        //qDebug() << r << x << y << width << height;
-                        item->setPen(QPen(randCol(r))); // Random coloring !
-                        item->setToolTip(QString("Length %1").arg(len));
-                    }
-                    res << group;
-
-
-                }
-                else
-                {
-                    // This is a 2d point
-
-                    cv::Mat& feat = k.content();
-
-                    int t,l,  f;
-                    QStringList lcols = cols.split(";").mid(0, feat.cols);
-
-                    for (int i = 0; i < lcols.size(); ++i)
-                    {
-                        QString s = lcols[i];
-                        if (s.contains("_X"))   t = i;
-                        else if (s.contains("_Y"))  l = i;
-                        else f = i;
+                        if (s.contains("_Top"))   t = i;
+                        else if (s.contains("_Left"))  l = i;
+                        else if (s.contains("_Width")) w = i;
+                        else if (s.contains("_Height")) h = i;
+                        else { feats << i;  }
                     }
 
                     float cmin, cmax;
+                    f = feats.first();
                     getMinMax(feat, f, cmin, cmax);
 
 
@@ -1325,31 +1327,178 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                     pal.rescale(cmin, cmax);
 
 
-
-
                     auto group = new QGraphicsItemGroup(parent);
-                    for (int r = 0; r < feat.rows; ++r)
+                    if (disp_overlay[it.key()].second >= 0)
                     {
-                        auto item = new QGraphicsEllipseItem(group);
-                        // Radius of 1.5 px :)
-                        float x = feat.at<float>(r, t-1),
-                                y= feat.at<float>(r, l-1),
-                                width= feat.at<float>(r, t+1),
-                                height= feat.at<float>(r, l+1);
-
-                        item->setRect(QRectF(x,y,width,height));
-                        float fea = feat.at<float>(r,f);
-                        item->setToolTip(QString("%1 %2").arg(lcols[f]).arg(fea));
-                        auto colo = pal(fea);
-                        item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
+                        int r = disp_overlay[it.key()].second;
+                        if (r < feat.rows)
+                        {
+                            auto item = new QGraphicsRectItem(group);
+                            float y = feat.at<float>(r, t),
+                                    x = feat.at<float>(r, l),
+                                    width= feat.at<float>(r, w),
+                                    height= feat.at<float>(r, h);
+                            item->setRect(QRectF(x,y,width,height));
+                            //qDebug() << r << x << y << width << height;
+                            QString tip;
+                            for (auto p : feats)
+                            {
+                                float fea = feat.at<float>(r,p);
+                                tip += QString("%1: %2\r\n").arg(lcols[p]).arg(fea);
+                            }
+                            item->setToolTip(tip.trimmed());
+                            float fea = feat.at<float>(r,f);
+                            auto colo = pal(fea);
+                            item->setPen(QPen(qRgb(colo[0], colo[1], colo[2])));
+                        }
                     }
-                    res << group;
+                    else
 
+                        for (int r = 0; r < feat.rows; ++r)
+                        {
+
+                            auto item = new QGraphicsRectItem(group);
+                            float y = feat.at<float>(r, t),
+                                    x = feat.at<float>(r, l),
+                                    width= feat.at<float>(r, w),
+                                    height= feat.at<float>(r, h);
+                            item->setRect(QRectF(x,y,width,height));
+                            //qDebug() << r << x << y << width << height;
+                            QString tip;
+                            for (auto p : feats)
+                            {
+                                float fea = feat.at<float>(r,p);
+                                tip += QString("%1: %2\r\n").arg(lcols[p]).arg(fea);
+                            }
+                            item->setToolTip(tip.trimmed());
+                            float fea = feat.at<float>(r,f);
+                            auto colo = pal(fea);
+                            item->setPen(QPen(qRgb(colo[0], colo[1], colo[2])));
+                            //                item->setBrush(); // FIXME: Add color feature
+                        }
+                    res << group;
+                }
+                if (cols.contains("_X") && cols.contains("_Y"))
+                {
+                    // There is a X & Y coordinate
+                    if (cols.count("_X") >= 2 && cols.count("_Y") >= 2)
+                    {
+                        // Should be a vector
+                        cv::Mat& feat = k.content();
+
+                        int x1,y1, x2, y2;
+                        QStringList lcols = cols.split(";").mid(0, feat.cols);
+
+                        for (int i = 0; i < lcols.size(); ++i)
+                        {
+                            QString s = lcols[i];
+                            if (s.contains("_X"))  {
+                                x1 = i;
+                                y1 = findY(lcols, s);
+                                for (int j = i+1; j < lcols.size(); ++j)
+                                    if (lcols[j].contains("_X"))
+                                    {
+                                        x2 = j;
+                                        y2 = findY(lcols, lcols[j]);
+                                        break;
+                                    }
+                                break;
+                            }
+                        }
+                        auto group = new QGraphicsItemGroup(parent);
+                        for (int r = 0; r < feat.rows; ++r)
+                        {
+
+                            auto item = new QGraphicsLineItem (group);
+                            float x = feat.at<float>(r, x1),
+                                    y = feat.at<float>(r, y1),
+                                    w= feat.at<float>(r, x2),
+                                    h= feat.at<float>(r, y2);
+                            item->setLine(x,y,w,h);
+                            float len = sqrt(pow(x-w,2)+pow(y-h,2));
+                            //qDebug() << r << x << y << width << height;
+                            item->setPen(QPen(randCol(r))); // Random coloring !
+                            item->setToolTip(QString("Length %1").arg(len));
+                        }
+                        res << group;
+
+
+                    }
+                    else
+                    {
+                        // This is a 2d point
+
+                        cv::Mat& feat = k.content();
+
+                        int t,l,  f;
+                        QStringList lcols = cols.split(";").mid(0, feat.cols);
+
+                        for (int i = 0; i < lcols.size(); ++i)
+                        {
+                            QString s = lcols[i];
+                            if (s.contains("_X"))   t = i;
+                            else if (s.contains("_Y"))  l = i;
+                            else f = i;
+                        }
+                        // f should be the position of overlay_coding[name].first
+
+                        float cmin, cmax;
+                        getMinMax(feat, f, cmin, cmax);
+
+
+                        using namespace colormap ;
+                        // "jet" should be replaced by: overlay_coding[name].second :)
+                        auto pal = palettes.at("jet");
+                        pal.rescale(cmin, cmax);
+
+
+
+
+                        auto group = new QGraphicsItemGroup(parent);
+
+                        if (disp_overlay[it.key()].second >= 0)
+                        {
+                            int r =    disp_overlay[it.key()].second;
+                            if (r < feat.rows)
+                            {
+                                auto item = new QGraphicsEllipseItem(group);
+                                // Radius of 1.5 px :)
+                                float x = feat.at<float>(r, t-1),
+                                        y= feat.at<float>(r, l-1),
+                                        width= feat.at<float>(r, t+1),
+                                        height= feat.at<float>(r, l+1);
+
+                                item->setRect(QRectF(x,y,width,height));
+                                float fea = feat.at<float>(r,f);
+                                item->setToolTip(QString("%1 %2").arg(lcols[f]).arg(fea));
+                                auto colo = pal(fea);
+                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
+                            }
+                        }
+                        else
+
+                            for (int r = 0; r < feat.rows; ++r)
+                            {
+                                auto item = new QGraphicsEllipseItem(group);
+                                // Radius of 1.5 px :)
+                                float x = feat.at<float>(r, t-1),
+                                        y= feat.at<float>(r, l-1),
+                                        width= feat.at<float>(r, t+1),
+                                        height= feat.at<float>(r, l+1);
+
+                                item->setRect(QRectF(x,y,width,height));
+                                float fea = feat.at<float>(r,f);
+                                item->setToolTip(QString("%1 %2").arg(lcols[f]).arg(fea));
+                                auto colo = pal(fea);
+                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
+                            }
+                        res << group;
+
+
+                    }
 
                 }
-
             }
-        }
 
 
     }

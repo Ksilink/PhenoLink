@@ -104,8 +104,10 @@ protected:
     QWidget *widgetFromJSON(QJsonObject &par);
 
 
-    QCheckBox *setupOverlayBox(QCheckBox* box, ImageInfos* inter, bool reconnect = false);
-    QSpinBox *setupTilePosition(QSpinBox* box, ImageInfos* inter, bool reconnect = false);
+    QCheckBox *setupOverlayBox(QCheckBox* box, QString itemName, ImageInfos* inter, bool reconnect = false);
+    QSpinBox *setupTilePosition(QSpinBox* box, QString itemName, ImageInfos* inter, bool reconnect = false);
+
+    QComboBox *setupOverlaySelection(QComboBox* box, QString itemName, ImageInfos *ifo, bool reconnect = false);
 
 
 	void conditionChanged(QWidget* sen, int val);
@@ -213,6 +215,7 @@ public slots:
     void setProgressBar();
     void on_actionNo_network_toggled(bool arg1);
 
+    void overlayChanged(QString id);
 protected slots:
     void updateProcessStatusMessage(QJsonArray ob);
 

@@ -80,9 +80,15 @@ public:
   ImageInfos *imageInfos(QString file, int channel = -1, QString key = QString());
   void refinePacking();
 
-  bool tileDisplayed();
-  int getTile();
+  bool overlayDisplayed(QString name);
+  int getOverlayId(QString name);
+  int getOverlayMax(QString name);
+
   bool currentChanged();
+  QList<QString> getMetaList();
+  QList<QString> getMetaOptionsList(QString meta);
+  void overlayChange(QString name, QString id);
+  QString getOverlayCode(QString name);
 public slots:
 
   void setTimePoint(unsigned t);
@@ -91,8 +97,8 @@ public slots:
   void setChannel(unsigned c);
   void setFps(double fps);
 
-  void setTile( int tile);
-  void displayTile(bool disp);
+  void setOverlayId(QString name,  int tile);
+  void toggleOverlay(QString name, bool disp);
 
     QStringList getChannelNames();
 
@@ -103,14 +109,18 @@ public slots:
         return _updating
             ;
     }
+    void overlayChangeCmap(QString name, QString id);
 protected:
 
   SequenceFileModel* _mdl;
   unsigned _timepoint, _field, _zpos, _channel;
   double _fps;
 
-  bool disp_tile;
-  int tile_id;
+  QMap<QString, QPair<bool, int> > disp_overlay; // Toggle / tile id
+  QMap<QString, QPair<QString, QString> > overlay_coding; // Feature / Colormap
+
+//  bool disp_tile;
+//x  int tile_id;
 
   QString loadkey;
   QStringList channel_names;

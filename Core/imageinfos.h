@@ -142,8 +142,11 @@ public:
     void Update();
     QSize imSize();
 
-    bool tileDisplayed();
-    int getTile();
+    bool overlayDisplayed(QString name);
+    int getOverlayId(QString name);
+    int getOverlayMin(QString name);
+    int getOverlayMax(QString name);
+
     void setRangeTimer();
 
 public slots:
@@ -170,6 +173,7 @@ public slots:
     void setTile( int tile);
 
 //    void update_range_ontime();
+
 
 signals:
     void updateRange(double, double);
