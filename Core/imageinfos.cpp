@@ -445,22 +445,6 @@ int ImageInfos::getOverlayMax(QString name)
     else return _parent->getOverlayMax(name);
 }
 
-void ImageInfos::setRangeTimer()
-{
-    QSettings set;
-
-    if (!range_timer)
-    {
-        range_timer = new QTimer(this);
-        range_timer->connect(range_timer, SIGNAL(timeout()), this, SLOT(update_range_ontime()));
-        range_timer->start(set.value("RefreshSliderRate", 2000).toInt());
-    }
-    else
-    { // R
-        range_timer->start(set.value("RefreshSliderRate", 2000).toInt());
-    }
-}
-
 
 void ImageInfos::setColor(unsigned char r, unsigned char g, unsigned char b)
 {
@@ -558,12 +542,11 @@ void ImageInfos::changeColorState(int chan)
 
 void ImageInfos::rangeChanged(double mi, double ma)
 {
-    //    setRangeTimer();
-    //    qDebug() << "Range Changed" << mi << ma << thread();
+    QSettings set;
     if (range_timerId>=0)
         killTimer(range_timerId);
 
-    range_timerId = startTimer(500);
+    range_timerId = startTimer(set.value("RefreshSliderRate", 2000).toInt());
 
     _modified = true;
 

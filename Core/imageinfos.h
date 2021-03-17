@@ -147,7 +147,6 @@ public:
     int getOverlayMin(QString name);
     int getOverlayMax(QString name);
 
-    void setRangeTimer();
 
 public slots:
     void changeColorState(int chan);
