@@ -558,22 +558,12 @@ void ImageInfos::rangeChanged(double mi, double ma)
 // Changing the ranges max/min value does not need to update the image, also no need to set modified flag
 void ImageInfos::forceMinValue(double val)
 {
-    // _modified = true;
-    //  qDebug() << "Image min " << _platename_to_colorCode[_plate].min << _platename_to_colorCode[_plate].max << val;
     _ifo._platename_to_colorCode[_plate].min = val;
-    //  _platename_to_colorCode[_plate]._dispMin = val;
-
-    //   Update();
 }
 
 void ImageInfos::forceMaxValue(double val)
 {
-    // _modified = true;
-    // s qDebug() << "Image max " << _platename_to_colorCode[_plate].min << _platename_to_colorCode[_plate].max << val;
     _ifo._platename_to_colorCode[_plate].max = val;
-    //  _platename_to_colorCode[_plate]._dispMax = val;
-
-    //  Update();
 }
 
 void ImageInfos::changeFps(double fps)
