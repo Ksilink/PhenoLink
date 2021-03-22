@@ -13,6 +13,9 @@ cmake_minimum_required(VERSION 3.12.0 FATAL_ERROR)
 
 project(Checkout)
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 
 find_package(Git)
 
@@ -195,6 +198,7 @@ endif(PLUGIN_IN_CORE)
 
 #add_subdirectory(PluginManager)
 add_subdirectory(Core)
+add_subdirectory(qhttp)
 add_subdirectory(Gui)
 
 if(BUILD_PYTHON_SCRIPTING)

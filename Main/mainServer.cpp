@@ -25,11 +25,15 @@
 #endif
 std::ofstream outfile("c:/temp/CheckoutServer_log.txt");
 
-void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+void myMessageOutput(QtMsgType type, const QMessageLogContext &, const QString &msg)
 {
     QByteArray localMsg = msg.toLocal8Bit();
     QByteArray date = QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz").toLocal8Bit();
     switch (type) {
+    case QtInfoMsg:
+        outfile << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        std::cerr << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        break;
     case QtDebugMsg:
         outfile << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
@@ -46,6 +50,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
         outfile  << date.constData() << " Fatal    : "<< localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr  << date.constData() << " Fatal    : "<< localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         abort();
+
     }
 
     outfile.flush();

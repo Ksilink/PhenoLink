@@ -31,3 +31,13 @@ else()
 endif(WIN32)
 #install_qt5_executable(CheckoutProcessServer)
 install(TARGETS CheckoutProcessServer COMPONENT applications DESTINATION bin)
+
+
+add_executable(CheckoutHttpServer mainHttpServer.cpp)
+target_include_directories(CheckoutHttpServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries( CheckoutHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Sql Qt::WinExtras ${OpenCV_LIBS})
+install(TARGETS CheckoutHttpServer COMPONENT applications DESTINATION bin)
+
+
+# Let's add a "Data storage server" prototype
+

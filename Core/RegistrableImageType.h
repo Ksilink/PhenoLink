@@ -647,7 +647,7 @@ public:
         RegistrableImageParent::write(json);
         json["ImageType"]  = QString("TimeImage");
 
-        qDebug() << "Should store TimeImage" << _value->count();
+//        qDebug() << "Should store TimeImage" << _value->count();
 
         if (!_value || _value->count() == 0 )
         { //qDebug() << "Empty image !!!!";
