@@ -7,6 +7,78 @@
 #include <Core/checkoutprocess.h>
 #include <Core/config.h>
 
+#include "qhttp/qhttpclient.hpp"
+#include "qhttp/qhttpclientrequest.hpp"
+#include "qhttp/qhttpclientresponse.hpp"
+#include "qhttp/qhttpserver.hpp"
+#include "qhttp/qhttpserverconnection.hpp"
+#include "qhttp/qhttpserverrequest.hpp"
+#include "qhttp/qhttpserverresponse.hpp"
+
+using namespace qhttp::client;
+
+
+
+CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port)
+{
+    QObject::connect(&iclient, &QHttpClient::disconnected, [this]() {
+        finalize();
+    });
+
+    iurl.setScheme("http");
+    iurl.setHost(host);
+    iurl.setPort(port);
+}
+
+void CheckoutHttpClient::send() {
+    iclient.request(
+                qhttp::EHTTP_POST,
+                iurl,
+                [this](QHttpRequest* req){
+        QJsonObject root{
+            {"name", "add"},
+            //    {"stan", ++istan},
+            {"args", QJsonArray{10, 14, -12}} // server computes sum of these values
+        };
+
+        auto body = QJsonDocument(root).toJson();
+        req->addHeader("connection", "keep-alive");
+        req->addHeaderValue("content-length", body.length());
+        req->end(body);
+    },
+    [this](QHttpResponse* res) {
+        res->collectData();
+
+        res->onEnd([this, res](){
+            onIncomingData(res->collectedData());
+        });
+    });
+}
+
+void CheckoutHttpClient::onIncomingData(const QByteArray& data) {
+    auto root = QJsonDocument::fromJson(data).object();
+    if ( root.isEmpty() ) {
+        qDebug("the result is an invalid json\n");
+        finalize();
+        return;
+    }
+
+    //        if ( root.value("stan").toInt() != istan ) {
+    //            qDebug("invalid stan number, %d != %d\n", istan, root.value("stan").toInt());
+    //        }
+
+    //        if ( istan >= icount )
+    //            finalize();
+    //        else
+    send();
+}
+
+void CheckoutHttpClient::finalize() {
+    //        qDebug("totally %d request/response pairs have been transmitted in %lld [mSec].\n",
+    ////               istan, itick.tock()
+    //               );
+}
+
 
 
 QTextStream *hash_logfile = nullptr;
@@ -73,7 +145,7 @@ void NetworkProcessHandler::establishNetworkAvailability()
     QJsonArray data;
 
     QStringList var = sets.value("Server", QStringList() << "127.0.0.1").toStringList();
-    QList<QVariant> ports = sets.value("ServerP", QList<QVariant>() << QVariant((int)13378)).toList();
+    QList<QVariant> ports = sets.value("ServerP", QList<QVariant>() << QVariant((int)10022)).toList();
 
     for (int i = 0; i < var.size(); ++i)
     {
@@ -87,27 +159,16 @@ void NetworkProcessHandler::establishNetworkAvailability()
     foreach (QJsonValue ss, data)
     {
         QJsonObject o = ss.toObject();
-        CheckoutHost* h = new CheckoutHost;
-        h->address = QHostAddress(o["Host"].toString());
-        h->port = o["Port"].toInt();
+        auto h = new CheckoutHttpClient(o["Host"].toString(), o["Port"].toInt());
 
-        QTcpSocket* soc = getNewSocket(h);
-        if (soc->state() != QAbstractSocket::ConnectedState)
-        {
-            qDebug() << "Network connection to " << h->address << h->port << " impossible";
-            qDebug() << soc->errorString();
-            soc->close();
-            delete soc;
-            continue;
-        }
 
         activeHosts << h;
 
-        writeInitialQuery(soc);
+        //        writeInitialQuery(soc);
 
 
-        activeProcess << soc;
-        qDebug() <<"Process from server"<< h->address << h->port << soc;
+//        activeProcess << soc;
+        qDebug() <<"Process from server"<< h->iurl;
     }
 
 
@@ -553,9 +614,9 @@ void NetworkProcessHandler::processFinished(QStringList hashes)
         if (runningProcs.contains(hash))
             runningProcs.remove(hash);
     }
-     qDebug() << "Process finished : "<< hashes << "Network Stack remaining hash" << runningProcs.size();
-//	if (hash_logfile)
-	//	(*hash_logfile) << "Finished " << hash << Qt::endl;
+    qDebug() << "Process finished : "<< hashes << "Network Stack remaining hash" << runningProcs.size();
+    //	if (hash_logfile)
+    //	(*hash_logfile) << "Finished " << hash << Qt::endl;
     //    qDebug() << "Query clear mem" << hash;
     //    CheckoutProcess::handler().deletePayload(hash);
 

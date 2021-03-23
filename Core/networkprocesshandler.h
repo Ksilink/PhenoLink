@@ -11,11 +11,38 @@
 
 extern  QTextStream *hash_logfile;
 
-struct CheckoutHost
+//struct CheckoutHost
+//{
+//    QHostAddress address;
+//    quint16      port;
+//};
+#include "qhttp/qhttpclient.hpp"
+#include "qhttp/qhttpclientrequest.hpp"
+#include "qhttp/qhttpclientresponse.hpp"
+
+using namespace qhttp::client;
+
+
+
+struct DllCoreExport CheckoutHttpClient: public QObject
 {
-    QHostAddress address;
-    quint16      port;
+    Q_OBJECT
+
+public:
+    CheckoutHttpClient(QString host, quint16 port);
+    void send() ;
+    void onIncomingData(const QByteArray& data) ;
+    void finalize();
+
+public:
+    QUrl         iurl;
+    QHttpClient  iclient;
 };
+
+
+// faking :)
+typedef CheckoutHttpClient CheckoutHost;
+
 
 class DllCoreExport NetworkProcessHandler: public QObject
 {
@@ -78,16 +105,17 @@ signals:
 
 protected:
     // Allows to link a process with a network connection
-    QList<CheckoutHost*> activeHosts;
+    QList<CheckoutHttpClient*> activeHosts;
 
-    QMap<QString, QList<CheckoutHost*> > procMapper;
+    QMap<QString, QList<CheckoutHttpClient*> > procMapper;
 
-    QMap<QString, CheckoutHost*> runningProcs;
+    QMap<QString, CheckoutHttpClient*> runningProcs;
 
-    QList<QTcpSocket*> activeProcess;
-    QMap<QTcpSocket*, uint > _blockSize;
 
-    QList<QPair<CheckoutHost* , QPair<QString, QJsonArray> > > _error_list; // Keep track of the errors from start process
+//    QList<QTcpSocket*> activeProcess;
+//    QMap<QTcpSocket*, uint > _blockSize;
+
+    QList<QPair<CheckoutHttpClient* , QPair<QString, QJsonArray> > > _error_list; // Keep track of the errors from start process
 
     bool _waiting_Update;
 

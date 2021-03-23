@@ -10,7 +10,7 @@ add_executable(Checkout ${GUI_TYPE} main.cpp ${AppRCFILE} )
 
 target_include_directories(Checkout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(Checkout CheckoutGui  ${CheckoutLibs} Qt::Widgets Qt::Sql Qt::Concurrent Qt::WinExtras Qt::WebView ${OpenCV_LIBS} )
+target_link_libraries(Checkout CheckoutGui  ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network Qt::Sql Qt::Concurrent Qt::WinExtras Qt::WebView ${OpenCV_LIBS} )
 #install_qt5_executable(Checkout)
 install(TARGETS Checkout COMPONENT applications DESTINATION bin)
 
@@ -19,7 +19,10 @@ ENDIF(WIN32)
 
 #add_custom_command(TARGET Checkout  PRE_BUILD
 #    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
- #   )
+#   )
+
+add_definitions(-DQHTTP_MEMORY_LOG=0)
+add_definitions(-DQHTTP_HAS_CLIENT)
 
 add_definitions(-DCheckoutServer)
 add_executable(CheckoutProcessServer ${GUI_TYPE} mainServer.cpp   ${SrvRCFILE} )

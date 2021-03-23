@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
          server.setProcessChannelMode(QProcess::MergedChannels);
         server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() +"/CheckoutServer_log.txt");
         server.setWorkingDirectory(a.applicationDirPath());
-        QString r = "CheckoutProcessServer.exe";
+        QString r = "CheckoutHttpServer.exe";
 
         server.setProgram(r);
         if (set.value("UserMode/Debug", false).toBool())
