@@ -516,6 +516,7 @@ public:
     ExperimentFileModel *loadScreen(QString scr);
     void addScreen(ExperimentFileModel* xp);
     QList<SequenceFileModel *> addProcessResultImage(QCborValue &data);
+    void addDataToDb(QString hash, QString commit, QJsonObject &data, bool finished);
 protected:
     Screens _screens;
     QMap<QString, ExperimentFileModel*> _mscreens;

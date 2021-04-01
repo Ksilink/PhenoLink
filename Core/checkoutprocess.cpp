@@ -258,7 +258,7 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
         }
 
         pp["Parameters"] = rra;
-        auto l = QStringList() << "Comment" << "ProcessStartId" << "ReturnData" << "State" << "authors" << "shallDisplay";
+        auto l = QStringList() << "Comment" << "ProcessStartId" << "State" << "authors" << "shallDisplay";
         for (auto key: l)
             pp.remove(key);
 
@@ -861,7 +861,8 @@ bool CheckoutProcess::shallDisplay(QString hash)
     return _display.contains(_hash_to_core[hash]);
 }
 
-void CheckoutProcess::attachPayload(QString hash, std::vector<unsigned char> data, bool mem, size_t pos)
+void CheckoutProcess::attachPayload(QString hash, std::vector<unsigned char> data,
+                                    bool mem, size_t pos)
 {
 //    qDebug() << "Attaching payload" << hash << data.size() << mem << pos;
     if (pos != 0)

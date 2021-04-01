@@ -2110,6 +2110,62 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
 
 //}
 
+void ScreensHandler::addDataToDb(QString hash, QString commit, QJsonObject& data, bool finished)
+{
+    if (!_mscreens.contains(hash))
+    {
+        qDebug() << "Cannot find original XP for hash" << hash;
+        qDebug() << "#### NOT ADDING Data ##########";
+        qDebug() << data;
+        return ;
+    }
+
+    ExperimentFileModel* mdl =  _mscreens[hash];
+    ExperimentDataModel* datamdl = 0;
+
+    datamdl = mdl->computedDataModel();
+
+    if (!datamdl) {
+        qDebug() << "Experiment data not found, could not store data...." << hash;
+        return;
+    }
+    datamdl->setCommitName(commit);
+    QString id = data.take("Pos").toString();
+    int fieldId = data.take("FieldId").toInt(),
+            timepoint = data.take("TimePos").toInt(),
+            sliceId = data.take("zPos").toInt(),
+            channel = data.take("channel").toInt();
+    data.take("hash");
+    data.take("DataHash");
+
+
+    for (QJsonObject::iterator it = data.begin(), e = data.end(); it != e; ++it)
+        if (!it.key().endsWith("_Agg"))
+        {
+            QString tag = it.key();
+            QString val = it.value().toString();
+            qDebug() << "Adding data" << tag << val;
+            datamdl->setAggregationMethod(tag, data[QString("%1_Agg").arg(tag)].toString() );
+
+            if (val.contains(','))
+            {
+                QStringList t = val.split(",", Qt::SkipEmptyParts);
+                for (int i = 0; i < t.size(); ++i)
+                    datamdl->addData(QString("%1#%2").arg(tag).arg(i, 4, 10, QLatin1Char('0')), fieldId, sliceId, timepoint, channel, id, t[i].toDouble());
+            }
+            else
+                datamdl->addData(tag, fieldId, sliceId, timepoint, channel, id, val.toDouble());
+        }
+
+
+
+    if (finished)
+        datamdl->commitToDatabase(hash, commit);
+
+}
+
+
+
 QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue &data)
 {
     auto ob = data.toMap();
@@ -2251,8 +2307,8 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue &data
     }
     else // this an overlay info !
     {
-//        qDebug() << "Need to handle overlay content Type";
-//        qDebug() << "Handling data for Tag" << hash << pos <<  tag;
+        //        qDebug() << "Need to handle overlay content Type";
+        //        qDebug() << "Handling data for Tag" << hash << pos <<  tag;
         SequenceFileModel& seq = (*_mscreens[hash])(row, col);
 
         QCborArray ar = ob.take(QCborValue("Payload")).toArray();
@@ -2262,7 +2318,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue &data
 
             QByteArray data = payload.take(QCborValue("BinaryData")).toByteArray();
 
-//            qDebug() << payload.toJsonObject();
+            //            qDebug() << payload.toJsonObject();
             auto datasizes =  payload.value("DataSizes").toArray();
             int size = 0;
             for (int i = 0; i < datasizes.size(); ++i)
@@ -2314,10 +2370,10 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue &data
                     for (int n = 0; n < ar.size(); ++n)
                         names << ar[n].toString();
                     QString tt = names.join(";");
-//                    qDebug()  << "Channel Names" << tt;
+                    //                    qDebug()  << "Channel Names" << tt;
                     data.setProperties("ChannelNames", tt);
                 }
-//                qDebug() << "Adding Meta" << t << f << z << cc << tag ;//<< data.size();
+                //                qDebug() << "Adding Meta" << t << f << z << cc << tag ;//<< data.size();
                 seq.addMeta(t < 1 ? 1 : t, f < 1 ? 1 : f, z < 1 ? 1 : z, cc < 0 ? 1 : cc, tag, data);
             }
         }
@@ -2769,7 +2825,7 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
         }
         resFile.flush();
         file.close();
-        qDebug() << "Writing " << linecounter << "Data from" << _owner->name() << "to" << fname;
+        qDebug() << "Writing " << linecounter << "Data from" << _owner->name() << "to" << writePath+fname;
     }
 
 

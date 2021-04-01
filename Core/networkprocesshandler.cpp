@@ -632,12 +632,20 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
             auto obj = itd.toObject();
             if (obj["Data"].toString() != "Image results" )
             {
+//                if (obj.contains("isOptional") && !obj["optionalState"].toBool())
+//                    continue;
+
+                //qDebug() << obj;
+
+
                 ob[obj["Tag"].toString()] = obj["Data"];
+                ob[QString("%1_Agg").arg(obj["Tag"].toString())] = obj["Aggregation"];
+
                 if (obj.contains("Meta"))
                 {
                     auto met = obj["Meta"].toArray()[0].toObject();
 
-                    auto txt = QStringList() << "FieldId" << "Pos" << "TimePos" << "channel" << "zPos";
+                    auto txt = QStringList() << "FieldId" << "Pos" << "TimePos" << "channel" << "zPos" << "DataHash";
                     for (auto s: txt)
                         if (met.contains(s))
                         {
@@ -666,8 +674,6 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
     QCborArray res;
 
 
-//    ob.insert("bli", QCborValue(""));
-
     if (ds.contains("Data"))
     {
         auto arr = ds["Data"].toArray();
@@ -676,6 +682,9 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
             auto obj = itd.toObject();
             if (obj["Data"].toString() == "Image results" && obj.contains("Payload"))
             {
+                if (obj.contains("isOptional") && !obj["optionalState"].toBool())
+                    continue;
+
                 QCborMap ob;
                 auto txt = QStringList() << "ContentType" << "ImageType" << "ChannelNames"
                                          << "Tag";
@@ -726,7 +735,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                     {
                         QString dhash = pay["DataHash"].toString();
                         auto buf = CheckoutProcess::handler().detachPayload(dhash);
-                        auto data = QByteArray(reinterpret_cast<const char*>(buf.data()), buf.size());
+                        auto data = QByteArray(reinterpret_cast<const char*>(buf.data()), (int)buf.size());
                  //       qDebug() << "Got binary data: " << buf.size() << data.size();
                         mm.insert(QCborValue("BinaryData"), QCborValue(data));
                     }
@@ -769,7 +778,7 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
     for (auto b: bin)
     {
 //        qDebug() << b.toJsonValue();
-        qDebug() << "AddImage";
+//        qDebug() << "AddImage";
         client->send(QString("/addImage/"), QString(), b.toCbor());
     }
 

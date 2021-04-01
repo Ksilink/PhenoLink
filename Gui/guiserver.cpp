@@ -68,16 +68,20 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
     if (urlpath.startsWith("/addData/"))
     { // Now let's do the fun part :)
         auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
+
+        QString commit=urlpath.mid((int)strlen("/addData/"));
+
+        qDebug() << "Adding data" << commit;
         for (auto item: ob)
         {
             auto oj = item.toObject();
+
             NetworkProcessHandler::handler().removeHash(oj["hash"].toString());
 
-
-
+            bool finished = (0 == NetworkProcessHandler::handler().remainingProcess().size());
+            auto hash = oj["DataHash"].toString();
+            ScreensHandler::getHandler().addDataToDb(hash, commit, oj, finished);
         }
-    // should set the value to the proper
-      //  qDebug() << urlpath << ob;
     }
 
 
