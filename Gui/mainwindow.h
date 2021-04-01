@@ -8,6 +8,7 @@
 
 #include "Core/Dll.h"
 #include <QComboBox>
+#include <guiserver.h>
 
 namespace Ui {
 class MainWindow;
@@ -55,6 +56,7 @@ public:
 
     QString workbenchKey();
 
+
 protected:
     template <typename WType>
     int getWidgetWidth(QString name)
@@ -95,7 +97,7 @@ protected:
 
     void setupPython();
 
-
+    QDoubleSpinBox *setupOverlayWidth(QDoubleSpinBox *box, QString itemName, ImageInfos *ifo, bool reconnect = false);
     ctkDoubleRangeSlider *RangeWidgetSetup(ctkDoubleRangeSlider *w, ImageInfos *fo, int channel, bool reconnect = false);
     ctkColorPickerButton * colorWidgetSetup(ctkColorPickerButton *w, ImageInfos *fo, int channel, bool reconnect = false);
     QDoubleSpinBox *setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* fo, QString text, bool isMin, bool reconnect = false);
@@ -216,6 +218,9 @@ public slots:
     void on_actionNo_network_toggled(bool arg1);
 
     void overlayChanged(QString id);
+    void finishedJob();
+
+    void setOverlayWidth(double w);
 protected slots:
     void updateProcessStatusMessage(QJsonArray ob);
 
@@ -289,6 +294,9 @@ private:
 
     QSet<QFutureWatcher<void>*> _watchers;
 
+    GuiServer _gui_server;
+
+    QElapsedTimer run_time;
 };
 
 

@@ -57,6 +57,8 @@ void CheckoutProcessPluginInterface::write(QJsonObject &json) const
     json["ProcessStartId"] =  _callParams["ProcessStartId"];
     json["StartTime"] = _callParams["StartTime"];
 
+    json["ReplyTo"] = _callParams["ReplyTo"];
+
     //  qDebug() << "###### StartTime" << json["StartTime"];
     if (_state == Finished)
         json["Result"] = _result;
@@ -128,7 +130,7 @@ void CheckoutProcessPluginInterface::prepareData()
                         if (im->shallUnbias())
                         {
 
-//                            this->getBiasField(0);
+                            //                            this->getBiasField(0);
 
                         }
                     }
@@ -155,7 +157,14 @@ void CheckoutProcessPluginInterface::prepareData()
     }
     {
         QMutexLocker locker(&mutex);
-        _hashtoBiasCount[_meta.first().hash]++;
+        if (_meta.size())
+        {
+//            qDebug() << "Expected to find data as input Please debug" << getPath();
+            _hashtoBiasCount[_meta.first().hash]++;
+        }
+        else
+            qDebug() << "Expected to find data as input Please debug" << getPath();
+
     }
 
     foreach ( RegistrableParent* regs, _results)
@@ -293,7 +302,7 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     foreach (InputImageMetaData meta, _meta)
         metaArr.append(meta.toJSON());
 
-    qDebug() <<"Writing" << _results.size();
+//    qDebug() <<"Writing" << _results.size();
 
     bool mem = _callParams["LocalRun"].toBool();
 
@@ -309,16 +318,11 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
 
         p->write(cobj);
 
-       // qDebug() << "Payload" << cobj["Payload"];
+        // qDebug() << "Payload" << cobj["Payload"];
 
         cobj.remove("Comment");
         cobj.remove("CoreProcess_hash");
         arr.append(cobj);
-        //      if (CheckoutProcess::handler().hasPayload(p->getHash()))
-        //        {
-        //          CheckoutProcess::handler().attachPlugin(p->getHash(), this);
-        //        }
-
     }
 
     ob["Infos"] = QJsonArray::fromStringList(_infos);
@@ -334,6 +338,7 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     ob["shallDisplay"] = _shallDisplay;
     ob["ProcessStartId"] = processStartId;
     ob["CommitName"] = _callParams["CommitName"].toString();
+    ob["ReplyTo"] = _callParams["ReplyTo"].toString();
 
     if (_state == Finished)
         ob["Result"] = _result;

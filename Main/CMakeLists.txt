@@ -36,10 +36,16 @@ endif(WIN32)
 install(TARGETS CheckoutProcessServer COMPONENT applications DESTINATION bin)
 
 
-add_executable(CheckoutHttpServer mainHttpServer.cpp)
+add_executable(CheckoutHttpServer mainHttpServer.cpp checkouthttpserver.h )
 target_include_directories(CheckoutHttpServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries( CheckoutHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Sql Qt::WinExtras ${OpenCV_LIBS})
 install(TARGETS CheckoutHttpServer COMPONENT applications DESTINATION bin)
+
+
+add_executable(CheckoutHttpServerT mainHttpServerTests.cpp)
+target_include_directories(CheckoutHttpServerT PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries( CheckoutHttpServerT ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Sql Qt::WinExtras ${OpenCV_LIBS})
+install(TARGETS CheckoutHttpServerT COMPONENT applications DESTINATION bin)
 
 
 # Let's add a "Data storage server" prototype

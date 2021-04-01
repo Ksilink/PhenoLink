@@ -1,10 +1,12 @@
 add_definitions(-DExportGuiSymbols)
-
+add_definitions(-DQHTTP_MEMORY_LOG=0)
+add_definitions(-DQHTTP_HAS_CLIENT)
 
 set(CheckoutGui_SRC
                 mainwindow.cpp mainwindow_wellplate.cpp
                 mainwindow_datatables.cpp mainwindow_startprocesses.cpp
                 mainwindow.h  mainwindow.ui
+                guiserver.cpp guiserver.h
                 screensmodel.cpp  screensmodel.h
                 experimentworkbenchcontrol.cpp experimentworkbenchcontrol.h
 
@@ -81,9 +83,9 @@ target_include_directories(CheckoutGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 
 IF(WIN32)
-    target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} Qt::OpenGL Qt::Widgets Qt::Sql  Qt::WinExtras Qt::Charts Qt::WebEngineWidgets  ${OpenCV_LIBS} )
+    target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt::Sql  Qt::WinExtras Qt::Charts Qt::WebEngineWidgets  ${OpenCV_LIBS} )
 ELSE()
-target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} Qt::OpenGL Qt::Widgets Qt::Sql ${OpenCV_LIBS} )
+target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt::Sql ${OpenCV_LIBS} )
 ENDIF(WIN32)
 
 

@@ -46,7 +46,7 @@ void loadPlugins(bool isServer)
         pluginsDir.cdUp();
         pluginsDir.cdUp();
     }
-#endif
+#endif    
 
     pluginsDir.cd("plugins");
 
@@ -99,13 +99,19 @@ void loadPlugins(bool isServer)
                 CheckoutProcessPluginInterface* pr = qobject_cast<CheckoutProcessPluginInterface*>(plugin);
                 if (isServer && pr)
                 {
-                    qDebug() << "Plugin" << pr->getPath() << pr->getComments() << "(" << pr->getAuthors() << ")" << pr->plugin_version();
                     if (pr->plugin_version().isEmpty())
-                        qDebug() << "WARNING empty versionned plugin will soon not be loaded anymore !!";
-                    mutx.lock();
-                    process.addProcess(pr);
-                    mutx.unlock();
-                    added = true;
+                    {
+                        qDebug() << "WARNING empty versionned plugin are not be loaded anymore !!";
+                        qDebug() << "Fix:"<< pr->getPath();
+                    }
+                    else
+                    {
+                        qDebug() << "Plugin" << pr->getPath() << pr->getComments() << "(" << pr->getAuthors() << ")" << pr->plugin_version();
+                        mutx.lock();
+                        process.addProcess(pr);
+                        mutx.unlock();
+                        added = true;
+                    }
                 }
 
                 if (!added)

@@ -445,6 +445,11 @@ int ImageInfos::getOverlayMax(QString name)
     else return _parent->getOverlayMax(name);
 }
 
+double ImageInfos::getOverlayWidth()
+{
+  return _parent->getOverlayWidth();
+}
+
 
 void ImageInfos::setColor(unsigned char r, unsigned char g, unsigned char b)
 {

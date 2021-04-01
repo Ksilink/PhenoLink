@@ -17,13 +17,13 @@ SequenceInteractor::SequenceInteractor():
     _mdl(0),
     _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),
     //    disp_tile(false), tile_id(0),
-    last_scale(-1.), _updating(false), _changed(true)
+    last_scale(-1.), _updating(false), _changed(true), _overlay_width(1)
 {
 }
 
 SequenceInteractor::SequenceInteractor(SequenceFileModel *mdl, QString key):
     _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),
-    _fps(25.), loadkey(key), last_scale(-1.), _updating(false), _changed(true)
+    _fps(25.), loadkey(key), last_scale(-1.), _updating(false), _changed(true), _overlay_width(1)
 {
 }
 
@@ -1200,6 +1200,17 @@ int SequenceInteractor::getOverlayMax(QString name)
     return -1;
 }
 
+double SequenceInteractor::getOverlayWidth()
+{
+    return _overlay_width;
+}
+
+void SequenceInteractor::setOverlayWidth(double v)
+{
+    _overlay_width = v;
+    modifiedImage();
+}
+
 
 // Return selectable color coded displays
 
@@ -1249,6 +1260,8 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
     // The interactor will filter / scale & analyse the meta data to be generated
     QList<QGraphicsItem*> res;
 
+
+
     //    qDebug() << "Get Meta Called, " << disp_tile << tile_id;
     if (disp_overlay["Tile"].first)
     { // Specific code to display tile with respect to position !!!
@@ -1268,9 +1281,11 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
         float  width = rx * 2,
                 height= ry * 2;
 
-
+        item->setBrush(QBrush());
         item->setRect(QRectF(x,y,width,height));
-        item->setPen(QPen(Qt::yellow));
+        QPen p(Qt::yellow);
+        p.setWidthF(_overlay_width);
+        item->setPen(p);
         //        qDebug() << item->rect();
         res << item;
     }
@@ -1279,7 +1294,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
     //    SequenceFileModel::Channel& chans = _mdl->getChannelsFiles(_timepoint, _field, _zpos);
 
     int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
-    //qDebug() << _timepoint << _field << _zpos << cns;
+//    qDebug() << "Overlays :" << _timepoint << _field << _zpos << cns;
     for (int c = 1; c <= cns;++c)
     {
         QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
@@ -1349,7 +1364,11 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                             item->setToolTip(tip.trimmed());
                             float fea = feat.at<float>(r,f);
                             auto colo = pal(fea);
-                            item->setPen(QPen(qRgb(colo[0], colo[1], colo[2])));
+                            QPen p(qRgb(colo[0], colo[1], colo[2]));
+                            p.setWidthF(_overlay_width);
+                            item->setPen(p);
+
+
                         }
                     }
                     else
@@ -1373,7 +1392,9 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                             item->setToolTip(tip.trimmed());
                             float fea = feat.at<float>(r,f);
                             auto colo = pal(fea);
-                            item->setPen(QPen(qRgb(colo[0], colo[1], colo[2])));
+                            QPen p(qRgb(colo[0], colo[1], colo[2]));
+                            p.setWidthF(_overlay_width);
+                            item->setPen(p);
                             //                item->setBrush(); // FIXME: Add color feature
                         }
                     res << group;
@@ -1417,7 +1438,9 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                             item->setLine(x,y,w,h);
                             float len = sqrt(pow(x-w,2)+pow(y-h,2));
                             //qDebug() << r << x << y << width << height;
-                            item->setPen(QPen(randCol(r))); // Random coloring !
+                            QPen p(randCol(r));
+                            p.setWidthF(_overlay_width);
+                            item->setPen(p); // Random coloring !
                             item->setToolTip(QString("Length %1").arg(len));
                         }
                         res << group;
@@ -1472,7 +1495,10 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                                 float fea = feat.at<float>(r,f);
                                 item->setToolTip(QString("%1 %2").arg(lcols[f]).arg(fea));
                                 auto colo = pal(fea);
-                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
+                                QPen p(qRgb(colo[0], colo[1], colo[2]));
+                                p.setWidthF(_overlay_width);
+                                item->setPen(p);
+//                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
                             }
                         }
                         else
@@ -1490,7 +1516,10 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                                 float fea = feat.at<float>(r,f);
                                 item->setToolTip(QString("%1 %2").arg(lcols[f]).arg(fea));
                                 auto colo = pal(fea);
-                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
+                                QPen p(qRgb(colo[0], colo[1], colo[2]));
+                                p.setWidthF(_overlay_width);
+                                item->setPen(p);
+//                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
                             }
                         res << group;
 

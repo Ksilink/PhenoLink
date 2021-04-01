@@ -6,8 +6,9 @@
 #include <QtNetwork>
 
 #include "Dll.h"
-
-
+#ifndef QHTTP_HAS_CLIENT
+#define QHTTP_HAS_CLIENT
+#endif
 
 extern  QTextStream *hash_logfile;
 
@@ -16,11 +17,29 @@ extern  QTextStream *hash_logfile;
 //    QHostAddress address;
 //    quint16      port;
 //};
+
+#include "qhttp/qhttpserver.hpp"
+#include "qhttp/qhttpserverconnection.hpp"
+#include "qhttp/qhttpserverrequest.hpp"
+#include "qhttp/qhttpserverresponse.hpp"
 #include "qhttp/qhttpclient.hpp"
 #include "qhttp/qhttpclientrequest.hpp"
 #include "qhttp/qhttpclientresponse.hpp"
 
 using namespace qhttp::client;
+
+struct Req
+{
+    QUrl url;
+    QByteArray data;
+    bool keepalive;
+
+    Req(QUrl u, QByteArray d, bool ka = true):
+        url(u), data(d), keepalive(ka)
+    {
+
+    }
+};
 
 
 
@@ -29,14 +48,24 @@ struct DllCoreExport CheckoutHttpClient: public QObject
     Q_OBJECT
 
 public:
+
     CheckoutHttpClient(QString host, quint16 port);
-    void send() ;
+    ~CheckoutHttpClient();
+    void send(QString path, QString query=QString());
+    void send(QString path, QString query, QJsonArray ob = QJsonArray(), bool keepalive = true) ;
+    void send(QString path, QString query, QByteArray ob = QByteArray(), bool keepalive = true) ;
     void onIncomingData(const QByteArray& data) ;
     void finalize();
 
+    void sendQueue();
+
 public:
+    QQueue<Req> reqs;
     QUrl         iurl;
     QHttpClient  iclient;
+    bool         awaiting;
+    int          icpus;
+    int          procs_counter;
 };
 
 
@@ -56,15 +85,20 @@ public:
 
     QStringList getProcesses();
     void getParameters(QString process);
+    void setParameters(QJsonObject ob);
+
     void startProcess(QString process, QJsonArray ob);
-    void startProcess(CheckoutHost* h, QString process, QJsonArray ob);
+    void startProcess(CheckoutHttpClient *h, QString process, QJsonArray ob);
 
     void getProcessMessageStatus(QString process, QList<QString> hash);
 
     void queryPayload(QString hash);
 
     void deletePayload(QString hash);
-    void processFinished(QStringList);
+    void processFinished(QStringList hashes);
+
+    void finishedProcess(QString hash, QJsonObject res);
+
     void removeHash(QString hash);
 
     void exitServer();
@@ -73,16 +107,12 @@ public:
 
     QList<QPair<QString, QJsonArray> > erroneousProcesses();
 
-    void readResponse(QTcpSocket *tcpSocket);
 
     QStringList remainingProcess();
+    void setProcesses(QJsonArray ar, CheckoutHttpClient* cl);
+    void handleHashMapping(QJsonArray Core, QJsonArray Run);
 protected:
-    void writeInitialQuery(QTcpSocket *soc);
 
-    QTcpSocket* getNewSocket(CheckoutHost *h, bool with_sig=true);
-
-    void handleMessageProcesses(QString& keyword, QDataStream& in, QTcpSocket *tcpSocket);
-    void handleMessageProcessDetails(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket);
     void handleMessageProcessStart(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket);
     void handleMessageProcessStatus(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket);
     void handleMessageProcessPayload(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket);
@@ -91,7 +121,6 @@ protected:
 
 
 private slots:
-    void readResponse();
     void displayError(QAbstractSocket::SocketError socketError);
     void watcherProcessStatusFinished();
 
@@ -101,7 +130,7 @@ signals:
     void processStarted(QString, QString);
     void updateProcessStatusMessage(QJsonArray);
     void payloadAvailable(QString hash);
-
+    void finishedJob();
 
 protected:
     // Allows to link a process with a network connection
@@ -111,6 +140,7 @@ protected:
 
     QMap<QString, CheckoutHttpClient*> runningProcs;
 
+    QList<CheckoutHttpClient*> alive_replies;
 
 //    QList<QTcpSocket*> activeProcess;
 //    QMap<QTcpSocket*, uint > _blockSize;
@@ -118,7 +148,6 @@ protected:
     QList<QPair<CheckoutHttpClient* , QPair<QString, QJsonArray> > > _error_list; // Keep track of the errors from start process
 
     bool _waiting_Update;
-
 
     int last_serv_pos;
     QFile* data;

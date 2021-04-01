@@ -71,19 +71,16 @@ public:
   void cancelUser(QString user);
   void finishedProcess(QStringList dhash);
 
-protected slots:
+public slots:
 
   void updatePath();
   void receivedParameters(QJsonObject obj);
   void networkProcessStarted(QString core, QString hash);
   void networkupdateProcessStatus(QJsonArray obj);
-//  void clearFinishedProcesses();
 
 protected:
-
   void addToComputedDataModel(QJsonObject ob);
 
-//  void timerEvent(QTimerEvent *event);
 signals:
 
   void newPaths();
@@ -96,6 +93,7 @@ signals:
   void emptyProcessList();
   void payloadAvailable(QString hash);
 
+  void finishedJob(QString hash, QJsonObject ob);
 
 
  protected:

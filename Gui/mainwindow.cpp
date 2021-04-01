@@ -82,6 +82,7 @@
 #include "Core/networkprocesshandler.h"
 
 #include <QErrorMessage>
+#include <guiserver.h>
 
 DllGuiExport QFile _logFile;
 
@@ -98,7 +99,8 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     _python_interface(0),
     //    _progress(0),
     _StatusProgress(0),
-    StartId(0)
+    StartId(0),
+    _gui_server(this)
 {
     ui->setupUi(this);
 
@@ -206,6 +208,9 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
 
     connect(&CheckoutProcess::handler(), SIGNAL(processFinished(QJsonArray)),
             this, SLOT(networkProcessFinished(QJsonArray)));
+
+    connect(&NetworkProcessHandler::handler(), SIGNAL(finishedJob()),
+            this, SLOT(finishedJob()));
 
     connect(&CheckoutProcess::handler(), SIGNAL(emptyProcessList()),
             this, SLOT(processFinished()));
@@ -401,6 +406,12 @@ void MainWindow::displayTile(bool disp)
    }
 }
 
+void MainWindow::setOverlayWidth(double w)
+{
+    _sinteractor.current()->setOverlayWidth(w);
+}
+
+
 void MainWindow::overlayChanged(QString id)
 {
     if (sender())
@@ -515,6 +526,25 @@ QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, QString itemName, ImageIn
     return box;
 }
 
+
+
+QDoubleSpinBox *MainWindow::setupOverlayWidth(QDoubleSpinBox *box, QString itemName, ImageInfos *ifo, bool reconnect)
+{
+   if (!reconnect)
+    {
+        box->setObjectName(QString(itemName));
+        box->setAttribute(Qt::WA_DeleteOnClose);
+        box->setMinimum(0);
+        box->setMaximum(10);
+        box->setValue(ifo->getOverlayWidth());
+    }
+    box->setToolTip(QString("Overlay Width %1 Overlay").arg(itemName));
+    connect(box, SIGNAL(valueChanged(double)), this, SLOT(setOverlayWidth(double)), Qt::UniqueConnection);
+
+    return box;
+}
+
+
 QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, QString itemName, ImageInfos *ifo, bool reconnect)
 {
 //    qDebug() << "Setup Tile pos" << ifo;
@@ -605,6 +635,8 @@ void MainWindow::updateCurrentSelection()
         if (fo->getMin() >= 0 && fo->getMax() - fo->getMin() < 16)
         {
             bvl->addWidget(setupActiveBox(new QCheckBox(wwid), fo, i), i, 0);
+            auto tw = new QWidget(wwid);
+            tw->setLayout(new QHBoxLayout());
 
             int count = fo->getMax() - fo->getMin() + 1;
             QVector<QColor> pal = fo->getPalette();
@@ -621,8 +653,9 @@ void MainWindow::updateCurrentSelection()
                                          , wwid);
                 lbl->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
                 connect(lbl, SIGNAL(linkActivated(QString)), this, SLOT(changeColorState(QString)), Qt::UniqueConnection);
-                bvl->addWidget(lbl, i, 1, 1, -1);
+                tw->layout()->addWidget(lbl);
             }
+            bvl->addWidget(tw, i, 1, 1, -1);
             lastPal += ncolors;
         }
         else
@@ -657,15 +690,19 @@ void MainWindow::updateCurrentSelection()
         QGridLayout* bvl = new QGridLayout(wwid);
         bvl->setSpacing(1);
         bvl->setContentsMargins(0, 0, 0, 0);
-        bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), "Tile", fo), 0, 0);
-        bvl->addWidget(new QLabel("Tile: ", wwid), 0, 1);
-        bvl->addWidget(setupTilePosition(new QSpinBox(wwid), "Tile", fo), 0, 2, 1, -1);
+        bvl->addWidget(new QLabel("Overlay width", wwid), 0, 1);
+        bvl->addWidget(setupOverlayWidth(new QDoubleSpinBox(wwid), "OverlayWidth", fo), 0, 2, 1, -1);
+
+
+        bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), "Tile", fo), 1, 0);
+        bvl->addWidget(new QLabel("Tile: ", wwid), 1, 1);
+        bvl->addWidget(setupTilePosition(new QSpinBox(wwid), "Tile", fo), 1, 2, 1, -1);
 
         ui->overlayControl->layout()->addWidget(wwid);
         _imageControls[inter->getExperimentName()].append(wwid);
 
         QStringList overlays = inter->getMetaList();
-        int itms = 1;
+        int itms = 2;
         for (auto ov : overlays)
         {
             bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), ov, fo), itms, 0);

@@ -157,6 +157,7 @@ void CheckoutProcess::getParameters(QString process, QJsonObject &params)
 
 class PluginRunner : public QRunnable
 {
+
 public:
     PluginRunner(CheckoutProcessPluginInterface* plu, QString hash): plugin(plu), _hash(hash)
     {
@@ -186,10 +187,11 @@ public:
             // - 4) Do the gathering of processes data
             //        qDebug() << "Gathering data";
             QJsonObject result = plugin->gatherData(timer.elapsed());
+
             p=8;
             qDebug() << timer.elapsed() << "(ms) done";
             CheckoutProcess::handler().finishedProcess(_hash, result);
-            p=9;
+            p=9;            
         }
         catch (...)
         {
@@ -197,7 +199,7 @@ public:
             plugin->finished();
         }
         // Plugin should be deletable now, should not be saved anywhere
-        //delete plugin;
+             //delete plugin;
     }
 
     ~PluginRunner()
@@ -233,59 +235,39 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
 
         //  QSqlQuery q;
         QJsonObject pp(params);
-        pp.remove("Comment");
-        pp.remove("CommitName");
-        pp.remove("CoreProcess_hash");
+//        pp.remove("CommitName");
+  //      pp.remove("CoreProcess_hash");
 
         QJsonArray arr = pp["Parameters"].toArray(), rra;
 
         for (int i = 0; i < arr.size(); ++i)
         {
             QJsonObject ob = arr.at(i).toObject();
+            if (ob.contains("Value") || ob.contains("Data"))
+            {
+                QJsonObject r;
+                    auto l = QStringList() << "Tag" << "Value" << "Value2" << "Channels" << "Data" << "isOptional" << "optionalState"
+                                           << "ContentType" << "ImageType" << "PlateName" << "DataHash" << "Properties" << "PlateName"
+                                            << "Pos" << "Channel" << "asVectorImage" << "tiled" << "unbias" << "isImage" ;
+                    for (auto key : l)
+                        if (ob.contains(key))
+                            r[key] = ob[key];
 
-            QJsonObject r;
-
-            if (ob.contains("Tag"))
-                r["Tag"] = ob["Tag"];
-            if (ob.contains("Value"))
-                r["Value"] = ob["Value"];
-            if (ob.contains("Channels"))
-                r["Channels"] = ob["Channels"];
-            if (ob.contains("Data"))
-                r["Data"] = ob["Data"];
-
-            if (ob.contains("isOptional"))
-                r["isOptional"] = ob["isOptional"];
-            if (ob.contains("optionalState"))
-                r["optionalState"] = ob["optionalState"];
-
-
-            //			arr.at(i) = r;
-
-            rra.push_back(r);
+                    rra.push_back(r);
+            }
         }
 
         pp["Parameters"] = rra;
-        pp.remove("ProcessStartId");
-        pp.remove("ReturnData");
-        pp.remove("State");
-        pp.remove("authors");
-        pp.remove("shallDisplay");
-
+        auto l = QStringList() << "Comment" << "ProcessStartId" << "ReturnData" << "State" << "authors" << "shallDisplay";
+        for (auto key: l)
+            pp.remove(key);
 
         QJsonDocument doc(pp);
-        /*  if (! q.exec(QString("insert into Processes (process_tag, process_json, lastload) values ('%1', '%2', '%3');")
-                     .arg(process)
-                     .arg(QString(doc.toJson()).replace("'", " "))
-                     .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss")))
-                )
-            qDebug() << q.lastQuery() << q.lastError();*/
-        params["Username"] = username;
-        params["Computer"] = QHostInfo::localHostName();
-        params["StartTime"] = QDateTime::currentDateTime().toMSecsSinceEpoch();
-        array.replace(i, params);
 
-
+        pp["Username"] = username;
+        pp["Computer"] = QHostInfo::localHostName();
+        pp["StartTime"] = QDateTime::currentDateTime().toMSecsSinceEpoch();
+        array.replace(i, pp);
     }
 
 #ifdef CheckoutPluginInCore
@@ -818,13 +800,12 @@ void CheckoutProcess::finishedProcess(QString hash, QJsonObject result)
     CheckoutProcessPluginInterface* intf = _status[hash];
     if (dynamic_cast<ProcessDataHolder*>(intf))  return ;
 
-    delete intf;
-
+//    qDebug() << "Process finished " << hash << "emiting signal";
+    emit finishedJob(hash, result);
     qDebug() << "process finished, remaining" << _status.size();
-    qDebug() << "Removing" << hash;
+//    qDebug() << "Removing" << hash;
     _status.remove(hash);
     _finished[hash] = result;
-    //NetworkProcessHandler::handler().processFinished(hash);
 }
 
 unsigned CheckoutProcess::numberOfRunningProcess()
@@ -882,31 +863,31 @@ bool CheckoutProcess::shallDisplay(QString hash)
 
 void CheckoutProcess::attachPayload(QString hash, std::vector<unsigned char> data, bool mem, size_t pos)
 {
-    qDebug() << "Attaching payload" << hash << data.size() << mem << pos;
+//    qDebug() << "Attaching payload" << hash << data.size() << mem << pos;
     if (pos != 0)
         hash += QString("%1").arg(pos);
 
     _payloads_vectors[hash] = data;
 
-    if (mem)
-    {
-        QSharedMemory*  memory  = new QSharedMemory(hash);
-        if (!memory) return;
+//    if (mem)
+//    {
+//        QSharedMemory*  memory  = new QSharedMemory(hash);
+//        if (!memory) return;
 
-        if (!memory->create((int)(data.size()+sizeof(size_t))))
-        {
-            qDebug() << memory->errorString();
-            return;
-        }
+//        if (!memory->create((int)(data.size()+sizeof(size_t))))
+//        {
+//            qDebug() << memory->errorString();
+//            return;
+//        }
 
-        memory->lock();
+//        memory->lock();
 
-        *(size_t*)memory->data() = (size_t)data.size();
-        memcpy((char*)memory->data()+sizeof(size_t), data.data(), data.size());
+//        *(size_t*)memory->data() = (size_t)data.size();
+//        memcpy((char*)memory->data()+sizeof(size_t), data.data(), data.size());
 
-        memory->unlock();
-        this->_inmems[hash] = memory;
-    }
+//        memory->unlock();
+//        this->_inmems[hash] = memory;
+//    }
 
     emit payloadAvailable(hash);
 }
@@ -960,7 +941,7 @@ std::vector<unsigned char> CheckoutProcess::detachPayload(QString hash)
     std::vector<unsigned char> r;
     if (_payloads_vectors.contains(hash))
     {
-        qDebug() << "Searched hash" << hash;
+//        qDebug() << "Searched hash" << hash;
         r = std::move(_payloads_vectors[hash]);
         _payloads_vectors.remove(hash);
         if (_stored.contains(hash))

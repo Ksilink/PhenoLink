@@ -386,7 +386,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
 
         //            qDebug() << "Image" << obj;
 
-        QByteArray arr;    arr += QJsonDocument(obj).toBinaryData();
+        QByteArray arr;    arr += QCborValue::fromJsonValue(obj).toByteArray();//QJsonDocument(obj).toBinaryData();
         arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
         QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
 
@@ -468,7 +468,9 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         }
         adapt[sfm->getOwner()->name()] += tmp.size();
         count += tmp.size();
+        _StatusProgress->setMinimum(0);
         _StatusProgress->setMaximum(count);
+        _StatusProgress->setValue(0);
 
         for (int i = 0; i < tmp.size(); ++i)
             procArray.append(tmp[i]);
@@ -724,10 +726,13 @@ void MainWindow::startProcessRun()
     }
     _StatusProgress->setRange(0,0);
 
-    QFuture<void> future = QtConcurrent::run(this, &MainWindow::startProcessOtherStates,
-                                             selectedChanns, lsfm, started, tags_map);
-    watcher->setFuture(future);
-    _watchers.insert(watcher);
+    run_time.start();
+    startProcessOtherStates(selectedChanns, lsfm, started, tags_map);
+
+//    QFuture<void> future = QtConcurrent::run(this, &MainWindow::startProcessOtherStates,
+//                                             selectedChanns, lsfm, started, tags_map);
+//    watcher->setFuture(future);
+//    _watchers.insert(watcher);
 
 
     QPushButton* s = qobject_cast<QPushButton*>(sender());
