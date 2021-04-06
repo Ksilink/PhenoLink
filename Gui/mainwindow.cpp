@@ -1039,13 +1039,36 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
         QWidget* wid = new QWidget();
         QHBoxLayout * lay = new QHBoxLayout();
         wid->setLayout(lay);
-        QSpinBox* t1 = setupProcessParameterInt(new QSpinBox(), par, "Default");
+        QDoubleSpinBox* t1 = setupProcessParameterDouble(new QDoubleSpinBox(), par, "Default");
         t1->setObjectName(par["Tag"].toString());
         t1->setToolTip(par["Comment"].toString());
 
-        QSpinBox* t2 = setupProcessParameterInt(new QSpinBox(), par, "Default2");
+        QDoubleSpinBox* t2 = setupProcessParameterDouble(new QDoubleSpinBox(), par, "Default2");
         t2->setObjectName(par["Tag"].toString() + "2");
         t2->setToolTip(par["Comment2"].toString());
+
+
+        if (par.contains("IsSync") && par["IsSync"].toBool())
+        {
+             int chan = par["guiChan"].toInt();
+
+             auto miname = QString("vMin%1").arg(chan),
+                     maname = QString("vMax%1").arg(chan);
+            // need to sync t1 & t2 with the displayed intensity
+             QDoubleSpinBox* wimin = findChild<QDoubleSpinBox*>(miname);
+             if (wimin)
+             {
+                 t1->setValue(wimin->value());
+                 connect( wimin, SIGNAL(valueChanged(double)), t1, SLOT(setValue(double)));
+             }
+
+             QDoubleSpinBox* wima = findChild<QDoubleSpinBox*>(miname);
+             if (wima)
+             {
+                 t2->setValue(wima->value());
+                 connect( wima, SIGNAL(valueChanged(double)), t2, SLOT(setValue(double)));
+             }
+        }
 
         lay->setSpacing(1);
         lay->addWidget(t1);
@@ -1335,6 +1358,8 @@ void MainWindow::setupProcessCall(QJsonObject obj)
                         par["Default"] = c_def; // increment the default value for each channel.
                         c_def++;
                     }
+                    par["guiChan"] = c;
+
                     QWidget* w = widgetFromJSON(par);
 
                     if (w)

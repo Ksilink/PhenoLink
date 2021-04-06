@@ -199,7 +199,7 @@ public:
             plugin->finished();
         }
         // Plugin should be deletable now, should not be saved anywhere
-             //delete plugin;
+        delete plugin;
     }
 
     ~PluginRunner()
@@ -862,7 +862,7 @@ bool CheckoutProcess::shallDisplay(QString hash)
 }
 
 void CheckoutProcess::attachPayload(QString hash, std::vector<unsigned char> data,
-                                    bool mem, size_t pos)
+                                    bool , size_t pos)
 {
 //    qDebug() << "Attaching payload" << hash << data.size() << mem << pos;
     if (pos != 0)
