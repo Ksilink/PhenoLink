@@ -2144,7 +2144,7 @@ void ScreensHandler::addDataToDb(QString hash, QString commit, QJsonObject& data
         {
             QString tag = it.key();
             QString val = it.value().toString();
-            qDebug() << "Adding data" << tag << val;
+//            qDebug() << "Adding data" << tag << val;
             datamdl->setAggregationMethod(tag, data[QString("%1_Agg").arg(tag)].toString() );
 
             if (val.contains(','))

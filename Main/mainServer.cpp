@@ -191,6 +191,7 @@ int main(int ac,  char* av[])
         server.setDriveMap("/mnt/shares");
     }
 #endif
+
     //    QThreadPool::globalInstance()->setMaxThreadCount(  QThreadPool::globalInstance()->maxThreadCount()/2);
 
     int nb_Threads = QThreadPool::globalInstance()->maxThreadCount() - 1;

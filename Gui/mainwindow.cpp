@@ -903,7 +903,7 @@ void MainWindow::processFinished()
     }
     //	if (_startingProcesses) return;
 
-    this->statusBar()->showMessage("Processing finished: All queued process are finished");
+//    this->statusBar()->showMessage("Processing finished: All queued process are finished");
 
     QList<QPushButton*> list = ui->processingArea->findChildren<QPushButton*>();
     foreach(QPushButton* b, list)

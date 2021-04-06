@@ -36,15 +36,98 @@ using namespace qhttp::server;
 #include "checkouthttpserver.h"
 #include <Core/networkprocesshandler.h>
 
-// addData/<project>/<CommitName>/<Plate> <= POST data as CBOR
-// CBOR data should look alike:
-// [ { "hash": "process hash value", "Well": "","timepoint":"","fieldId":"","sliceId":"","channel":"","tags":"", "res names": "", ... },
-// all rows that are ready for this push
-//   {} ]
-// When all "hash" is finished
-// ListProcesses
-// Process/<ProcPath>
-//
+
+std::ofstream outfile("c:/temp/CheckoutServer_log.txt");
+
+void myMessageOutput(QtMsgType type, const QMessageLogContext &, const QString &msg)
+{
+    QByteArray localMsg = msg.toLocal8Bit();
+    QByteArray date = QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz").toLocal8Bit();
+    switch (type) {
+    case QtInfoMsg:
+        outfile << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        std::cerr << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        break;
+    case QtDebugMsg:
+        outfile << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        std::cerr << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        break;
+    case QtWarningMsg:
+        outfile  << date.constData() << " Warning  : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        std::cerr  << date.constData() << " Warning  : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        break;
+    case QtCriticalMsg:
+        outfile   << date.constData()  << " Critical : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        std::cerr   << date.constData()  << " Critical : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        break;
+    case QtFatalMsg:
+        outfile  << date.constData() << " Fatal    : "<< localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        std::cerr  << date.constData() << " Fatal    : "<< localMsg.constData() << std::endl;//, context.file, context.line, context.function);
+        abort();
+
+    }
+
+    outfile.flush();
+}
+
+#if WIN32
+
+void show_console() {
+    AllocConsole();
+
+    FILE *newstdin = nullptr;
+    FILE *newstdout = nullptr;
+    FILE *newstderr = nullptr;
+
+    freopen_s(&newstdin, "conin$", "r", stdin);
+    freopen_s(&newstdout, "conout$", "w", stdout);
+    freopen_s(&newstderr, "conout$", "w", stderr);
+}
+
+
+
+int forceNumaAll(int node)
+{
+
+    HANDLE process = GetCurrentProcess();
+
+    DWORD_PTR processAffinityMask;
+    DWORD_PTR systemAffinityMask;
+    ULONGLONG  processorMask;
+
+    if (!GetProcessAffinityMask(process, &processAffinityMask, &systemAffinityMask))
+        return -1;
+
+    GetNumaNodeProcessorMask(node, &processorMask);
+
+    processAffinityMask = processAffinityMask & processorMask;
+
+    BOOL success = SetProcessAffinityMask(process, processAffinityMask);
+
+    qDebug() << success << GetLastError();
+
+    return success;
+}
+
+#endif
+
+void startup_execute(QString file)
+{
+    QFile f(file);
+
+    QString ex=QString(f.readLine());
+    while (!ex.isEmpty())
+    {
+        QStringList line = ex.split(" ");
+        QString prog = line.front();
+        line.pop_front();
+        QProcess::execute(prog, line);
+
+
+        ex = QString(f.readLine());
+    }
+
+}
 
 int main(int ac, char** av)
 {
@@ -60,18 +143,82 @@ int main(int ac, char** av)
     app.setOrganizationName("WD");
 
 
+
+    QSettings sets;
+    uint port = sets.value("ServerPort", 13378).toUInt();
+    if (!sets.contains("ServerPort")) sets.setValue("ServerPort", 13378);
+
+
+    QStringList data;
+    for (int i = 1; i < ac; ++i) { data << av[i];  }
+    if (data.contains("-p"))
+    {
+        int idx = data.indexOf("-p")+1;
+        if (data.size() > idx) port = data.at(idx).toInt();
+        qDebug() << "Changing server port to :" << port;
+    }
+
+#if WIN32
+    if (data.contains("-n"))
+    {
+        int idx = data.indexOf("-n")+1;
+        int node = 0;
+        if (data.size() > idx) node = data.at(idx).toInt();
+        qDebug() << "Forcing node :" << node;
+        forceNumaAll(node);
+
+    }
+
+    if (data.contains("-d"))
+        show_console();
+
+#endif
+    if (data.contains("-s"))
+    {
+        int idx = data.indexOf("-s")+1;
+        QString file;
+        if (data.size() > idx) file = data.at(idx);
+        qDebug() << "Loading startup script :" << file;
+        startup_execute(file);
+    }
+
     PluginManager::loadPlugins(true);
 
 
-    QString portOrUnixSocket("13378"); // default: TCP port 10022
-    if ( ac > 1 )
-        portOrUnixSocket = av[1];
-
     Server server;
 
+#ifndef WIN32
+    if (data.contains("-m")) // to override the default path mapping !
+    {
+        int idx = data.indexOf("-m")+1;
+        QString map_path = data.at(idx);
+        server.setDriveMap(map_path);
+    }
+    else
+    { // We ain't on a windows system, so let's default the mapping to a default value
+        server.setDriveMap("/mnt/shares");
+    }
+#endif
 
-    return server.start(portOrUnixSocket.toUInt());
+
+
+    return server.start(port);
+
+
+
 }
+
+
+
+#ifndef WIN32
+
+void Server::setDriveMap(QString map)
+{
+   CheckoutProcess::handler().setDriveMap(map);
+}
+
+#endif
+
 
 QString stringIP(quint32 ip)
 {
@@ -244,9 +391,105 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     }
 }
 
+uint Server::serverPort()
+{
+    return this->tcpServer()->serverPort();
+}
+
 void Server::finished(QString hash, QJsonObject ob)
 {
 //    qDebug() << "Finishing on server side";
     NetworkProcessHandler::handler().finishedProcess(hash, ob);
 }
+
+
+
+
+
+#ifdef WIN32
+
+Control::Control(Server* serv): QWidget(), _serv(serv), lastNpro(0)
+{
+    hide();
+
+    quitAction = new QAction("Quit Checkout Server", this);
+    connect(quitAction, SIGNAL(triggered()), this, SLOT(quit()));
+    QSettings sets;
+
+
+    trayIconMenu = new QMenu(this);
+    //       trayIconMenu->addAction(minimizeAction);
+    //       trayIconMenu->addAction(maximizeAction);
+    //       trayIconMenu->addAction(restoreAction);
+    //       trayIconMenu->addSeparator();
+    _cancelMenu = trayIconMenu->addMenu("Cancel Processes:");
+    trayIconMenu->addAction(quitAction);
+
+    trayIcon = new QSystemTrayIcon(this);
+    trayIcon->setContextMenu(trayIconMenu);
+    trayIcon->setIcon(QIcon(":/ServerIcon.png"));
+    trayIcon->setToolTip(QString("Checkout Server listenning on port %1").arg(sets.value("ServerPort", 13378).toUInt()));
+    trayIcon->show();
+
+    startTimer(2000);
+
+}
+
+void Control::timerEvent(QTimerEvent * event)
+{
+    Q_UNUSED(event); // No need for the event timer object in this function
+
+    QSettings sets;
+
+    CheckoutProcess& procs = CheckoutProcess::handler();
+    int npro = procs.numberOfRunningProcess();
+    QString tooltip;
+    if (npro != 0)
+        tooltip = QString("Checkout Server processing %1 requests").arg(npro);
+    else
+        tooltip = QString("Checkout Server listenning on port %1").arg(_serv->serverPort());
+
+    QStringList missing_users;
+    for (auto user : procs.users())
+    {
+        tooltip = QString("%1\r\n%2").arg(tooltip).arg(user);
+        bool missing = true;
+        for (auto me: _users)
+            if (me->text() == user)
+            {
+                missing = false;
+                break;
+            }
+        if (missing) missing_users << user;
+    }
+
+    for (auto old: _users)
+    {
+        bool rem = true;
+        for (auto ne: procs.users())
+        {
+            if (ne == old->text())
+                rem = false;
+        }
+        if (rem)
+            _users.removeOne(old);
+    }
+    trayIcon->setToolTip(tooltip);
+
+    if (lastNpro != npro && npro == 0)
+        trayIcon->showMessage("Checkout Server", "Checkout server has finished all his process");
+
+    lastNpro = npro;
+
+    for (auto user: missing_users)
+        _users.append(_cancelMenu->addAction(user));
+
+
+
+}
+
+
+
+#endif
+
 
