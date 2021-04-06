@@ -2792,7 +2792,7 @@ double Aggregate(QList<double>& f, QString& ag)
 
 int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 {
-    qDebug() << "Should save to " << prefix << "state" << modified;
+//    qDebug() << "Should save to " << prefix << "state" << modified;
     if (prefix.isEmpty()) return 0;
     if (!modified) return 0;
 
