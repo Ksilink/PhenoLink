@@ -333,6 +333,8 @@ protected:
 
     void bindValue(QSqlQuery& select, DataHolder& h, QString key = QString());
 
+    bool modified;
+
 public:
 
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
@@ -517,6 +519,7 @@ public:
     void addScreen(ExperimentFileModel* xp);
     QList<SequenceFileModel *> addProcessResultImage(QCborValue &data);
     void addDataToDb(QString hash, QString commit, QJsonObject &data, bool finished);
+    void commitAll();
 protected:
     Screens _screens;
     QMap<QString, ExperimentFileModel*> _mscreens;

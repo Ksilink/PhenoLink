@@ -24,16 +24,16 @@ ENDIF(WIN32)
 add_definitions(-DQHTTP_MEMORY_LOG=0)
 add_definitions(-DQHTTP_HAS_CLIENT)
 
-add_definitions(-DCheckoutServer)
-add_executable(CheckoutProcessServer ${GUI_TYPE} mainServer.cpp   ${SrvRCFILE} )
+#add_definitions(-DCheckoutServer)
+#add_executable(CheckoutProcessServer ${GUI_TYPE} mainServer.cpp   ${SrvRCFILE} )
 
-if (WIN32)
-    target_link_libraries(CheckoutProcessServer  CheckoutServer ${CheckoutLibs} Qt::Core Qt::Network Qt::Widgets Qt::Sql Qt::WinExtras ${OpenCV_LIBS})
-else()
-    target_link_libraries(CheckoutProcessServer  CheckoutServer ${CheckoutLibs} Qt::Core Qt::Network Qt::Widgets Qt::Sql ${OpenCV_LIBS})
-endif(WIN32)
-#install_qt5_executable(CheckoutProcessServer)
-install(TARGETS CheckoutProcessServer COMPONENT applications DESTINATION bin)
+#if (WIN32)
+#    target_link_libraries(CheckoutProcessServer  CheckoutServer ${CheckoutLibs} Qt::Core Qt::Network Qt::Widgets Qt::Sql Qt::WinExtras ${OpenCV_LIBS})
+#else()
+#    target_link_libraries(CheckoutProcessServer  CheckoutServer ${CheckoutLibs} Qt::Core Qt::Network Qt::Widgets Qt::Sql ${OpenCV_LIBS})
+#endif(WIN32)
+##install_qt5_executable(CheckoutProcessServer)
+#install(TARGETS CheckoutProcessServer COMPONENT applications DESTINATION bin)
 
 
 add_executable(CheckoutHttpServer mainHttpServer.cpp checkouthttpserver.h )
@@ -42,10 +42,10 @@ target_link_libraries( CheckoutHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Net
 install(TARGETS CheckoutHttpServer COMPONENT applications DESTINATION bin)
 
 
-add_executable(CheckoutHttpServerT mainHttpServerTests.cpp)
-target_include_directories(CheckoutHttpServerT PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries( CheckoutHttpServerT ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Sql Qt::WinExtras ${OpenCV_LIBS})
-install(TARGETS CheckoutHttpServerT COMPONENT applications DESTINATION bin)
+#add_executable(CheckoutHttpServerT mainHttpServerTests.cpp)
+#target_include_directories(CheckoutHttpServerT PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+#target_link_libraries( CheckoutHttpServerT ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Sql Qt::WinExtras ${OpenCV_LIBS})
+#install(TARGETS CheckoutHttpServerT COMPONENT applications DESTINATION bin)
 
 
 # Let's add a "Data storage server" prototype

@@ -228,6 +228,15 @@ QString stringIP(quint32 ip)
             .arg((ip >> 24) & 0xFF);
 }
 
+Server::Server(): QHttpServer()
+{
+#ifdef WIN32
+
+    _control = new Control(this);
+
+#endif
+}
+
 int Server::start(quint16 port)
 {
     connect(this, &QHttpServer::newConnection, [this](QHttpConnection*){
@@ -403,6 +412,15 @@ void Server::finished(QString hash, QJsonObject ob)
 }
 
 
+void Server::exit_func()
+{
+#ifdef WIN32
+    _control->quit();
+#endif
+    //  qApp->quit();
+}
+
+
 
 
 
@@ -483,9 +501,6 @@ void Control::timerEvent(QTimerEvent * event)
 
     for (auto user: missing_users)
         _users.append(_cancelMenu->addAction(user));
-
-
-
 }
 
 

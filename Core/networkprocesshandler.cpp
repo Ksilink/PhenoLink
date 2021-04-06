@@ -683,7 +683,21 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
             if (obj["Data"].toString() == "Image results" && obj.contains("Payload"))
             {
                 if (obj.contains("isOptional") && !obj["optionalState"].toBool())
+                {
+                    auto ps = obj["Payload"].toArray();
+                    QCborArray cbar;
+                    for (auto pp : ps)
+                    {
+                        auto pay = pp.toObject();
+                        if (pay.contains("DataHash"))
+                        {
+                            QString dhash = pay["DataHash"].toString();
+                            auto buf = CheckoutProcess::handler().detachPayload(dhash);
+                            buf.clear();
+                        }
+                    }
                     continue;
+                }
 
                 QCborMap ob;
                 auto txt = QStringList() << "ContentType" << "ImageType" << "ChannelNames"

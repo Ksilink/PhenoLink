@@ -206,7 +206,7 @@ if(BUILD_PYTHON_SCRIPTING)
 #else(BUILD_PYTHON_SCRIPTING)
 endif(BUILD_PYTHON_SCRIPTING)
 
-add_subdirectory(Server)
+#add_subdirectory(Server)
 add_subdirectory(Main)
 
 if(BUILD_PLUGINS)

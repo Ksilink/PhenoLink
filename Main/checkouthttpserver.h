@@ -72,6 +72,8 @@ struct Server : public QHttpServer
 public:
     using QHttpServer::QHttpServer;
 
+    Server();
+
     int start(quint16 port) ;
     void setHttpResponse(QJsonObject& ob, QHttpResponse* res, bool binary = true);
     void process(QHttpRequest* req, QHttpResponse* res);
@@ -79,6 +81,7 @@ public:
 
 public slots:
     void finished(QString hash, QJsonObject ob);
+    void exit_func();
 
 #ifdef WIN32
 protected:

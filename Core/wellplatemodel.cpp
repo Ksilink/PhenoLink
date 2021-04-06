@@ -2110,6 +2110,24 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
 
 //}
 
+void ScreensHandler::commitAll()
+{
+ for (auto scr: _mscreens)
+ {
+     if (scr)
+     {
+         auto dtmdl = scr->computedDataModel();
+         if (dtmdl)
+         {
+             QString commit = dtmdl->getCommitName();
+             dtmdl->commitToDatabase(QString(), commit);
+         }
+     }
+
+ }
+}
+
+
 void ScreensHandler::addDataToDb(QString hash, QString commit, QJsonObject& data, bool finished)
 {
     if (!_mscreens.contains(hash))
@@ -2466,7 +2484,7 @@ void SequenceViewContainer::setCurrent(SequenceFileModel *mdl)
 
 QMutex ExperimentDataModel::_lock(QMutex::NonRecursive);
 
-ExperimentDataTableModel::ExperimentDataTableModel(ExperimentFileModel *parent, int nX, int nY): _owner(parent), nbX(nX), nbY(nY)
+ExperimentDataTableModel::ExperimentDataTableModel(ExperimentFileModel *parent, int nX, int nY): _owner(parent), nbX(nX), nbY(nY), modified(false)
 {
 
 }
@@ -2628,6 +2646,8 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
 
     endInsertRows();
     if (newCol)  endInsertColumns();
+
+    modified = true;
 }
 
 
@@ -2772,7 +2792,10 @@ double Aggregate(QList<double>& f, QString& ag)
 
 int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 {
+    qDebug() << "Should save to " << prefix << "state" << modified;
     if (prefix.isEmpty()) return 0;
+    if (!modified) return 0;
+
     int linecounter = 0;
 
     QSettings set;
@@ -2872,6 +2895,8 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
         meta.copy(writePath + "/"+ _owner->name() + "_tags.json");
     }
+
+    modified = false;
 
     return linecounter;
 }
