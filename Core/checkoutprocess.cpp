@@ -93,6 +93,7 @@ QStringList CheckoutProcess::networkPaths()
 
   QString CheckoutProcess::setDriveMap(QString map)
    {
+      qDebug() << "Setting the drive mapping to " << map;
     drive_map = map;
     return drive_map;
    }
