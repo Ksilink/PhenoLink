@@ -297,6 +297,9 @@ private:
     GuiServer _gui_server;
 
     QElapsedTimer run_time;
+
+    QMap<QString , QDoubleSpinBox*> _syncmapper;
+
 };
 
 

@@ -39,7 +39,7 @@
 
 #ifdef WIN32
 #include <QtWinExtras/QWinTaskbarProgress>
-#endif 
+#endif
 
 
 #include <ctkWidgets/ctkDoubleRangeSlider.h>
@@ -105,7 +105,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     ui->setupUi(this);
 
     ui->logWindow->hide(); // Hide the log window, since the content display is hidden now
-   // QErrorMessage::qtHandler();
+    // QErrorMessage::qtHandler();
 
 #ifndef CheckoutCoreWithPython
     ui->menuScripts->setVisible(false);
@@ -373,7 +373,7 @@ QDoubleSpinBox *MainWindow::setupVideoFrameRate(QDoubleSpinBox *extr, QString te
 
     extr->setToolTip(text);
 
-//    extr->disconnect();
+    //    extr->disconnect();
 
     //      connect(extr, SIGNAL(valueChanged(double)), fo, SLOT(forceMaxValue(double)),  Qt::UniqueConnection);
     connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeFpsValue(double)), Qt::UniqueConnection);
@@ -399,11 +399,11 @@ void MainWindow::active_Channel(bool c)
 
 void MainWindow::displayTile(bool disp)
 {
-   if (sender())
-   {
+    if (sender())
+    {
         QString name = sender()->objectName();
         _sinteractor.current()->toggleOverlay(name, disp);
-   }
+    }
 }
 
 void MainWindow::setOverlayWidth(double w)
@@ -495,7 +495,7 @@ QDoubleSpinBox* MainWindow::setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* 
 
     extr->setToolTip(text);
 
-//    extr->disconnect();
+    //    extr->disconnect();
     if (isMin)
     {
         connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeRangeValueMin(double)), Qt::UniqueConnection);
@@ -511,9 +511,9 @@ QDoubleSpinBox* MainWindow::setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* 
 
 QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, QString itemName, ImageInfos *ifo, bool reconnect)
 {
-//    qDebug() << "Setup Overlay Tile" << ifo;
+    //    qDebug() << "Setup Overlay Tile" << ifo;
 
-   if (!reconnect)
+    if (!reconnect)
     {
         box->setObjectName(QString(itemName));
         box->setAttribute(Qt::WA_DeleteOnClose);
@@ -521,7 +521,7 @@ QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, QString itemName, ImageIn
     }
     box->setToolTip(QString("Display %1 Overlay").arg(itemName));
     connect(box, SIGNAL(toggled(bool)), this, SLOT(displayTile(bool)), Qt::UniqueConnection);
-  //  connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
+    //  connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
 
     return box;
 }
@@ -530,7 +530,7 @@ QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, QString itemName, ImageIn
 
 QDoubleSpinBox *MainWindow::setupOverlayWidth(QDoubleSpinBox *box, QString itemName, ImageInfos *ifo, bool reconnect)
 {
-   if (!reconnect)
+    if (!reconnect)
     {
         box->setObjectName(QString(itemName));
         box->setAttribute(Qt::WA_DeleteOnClose);
@@ -547,7 +547,7 @@ QDoubleSpinBox *MainWindow::setupOverlayWidth(QDoubleSpinBox *box, QString itemN
 
 QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, QString itemName, ImageInfos *ifo, bool reconnect)
 {
-//    qDebug() << "Setup Tile pos" << ifo;
+    //    qDebug() << "Setup Tile pos" << ifo;
     if (!reconnect)
     {
         extr->setObjectName(itemName);
@@ -611,7 +611,7 @@ void MainWindow::updateCurrentSelection()
 
     wwid = new QWidget;
 
-//    QVBoxLayout* bvl = new QVBoxLayout(wwid);
+    //    QVBoxLayout* bvl = new QVBoxLayout(wwid);
     QGridLayout* bvl = new QGridLayout(wwid);
 
 
@@ -669,7 +669,7 @@ void MainWindow::updateCurrentSelection()
 
 
 
-//        bvl->addWidget(wid);
+        //        bvl->addWidget(wid);
         _imageControls[inter->getExperimentName()].append(wwid);
     }
 
@@ -903,7 +903,7 @@ void MainWindow::processFinished()
     }
     //	if (_startingProcesses) return;
 
-//    this->statusBar()->showMessage("Processing finished: All queued process are finished");
+    //    this->statusBar()->showMessage("Processing finished: All queued process are finished");
 
     QList<QPushButton*> list = ui->processingArea->findChildren<QPushButton*>();
     foreach(QPushButton* b, list)
@@ -1050,24 +1050,18 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
 
         if (par.contains("IsSync") && par["IsSync"].toBool())
         {
-             int chan = par["guiChan"].toInt();
+            int chan = par["guiChan"].toInt();
 
-             auto miname = QString("vMin%1").arg(chan),
-                     maname = QString("vMax%1").arg(chan);
-            // need to sync t1 & t2 with the displayed intensity
-             QDoubleSpinBox* wimin = findChild<QDoubleSpinBox*>(miname);
-             if (wimin)
-             {
-                 t1->setValue(wimin->value());
-                 connect( wimin, SIGNAL(valueChanged(double)), t1, SLOT(setValue(double)));
-             }
+            auto miname = QString("vMin%1").arg(chan),
+                    maname = QString("vMax%1").arg(chan);
 
-             QDoubleSpinBox* wima = findChild<QDoubleSpinBox*>(miname);
-             if (wima)
-             {
-                 t2->setValue(wima->value());
-                 connect( wima, SIGNAL(valueChanged(double)), t2, SLOT(setValue(double)));
-             }
+
+
+            auto wi = findChild<QDoubleSpinBox*>(miname), wa = findChild<QDoubleSpinBox*>(maname);
+            t1->setValue(wi->value());
+            t2->setValue(wa->value());
+            _syncmapper[miname] = t1;
+            _syncmapper[maname] = t2;
         }
 
         lay->setSpacing(1);
@@ -1132,10 +1126,9 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
                 box->setCurrentIndex(par["Default"].toInt() - 1);
 
             wid = box;
-
-        }
-        else
-            qDebug() << "Not handled" << par ;
+        }        
+//        else
+//            qDebug() << "Not handled" << par ;
         /// FIXME: Add GUI for Containers & complex datatypes
     }
     if (par.contains("isString"))
@@ -1174,8 +1167,10 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
             wid = le;
         }
     }
+
     if (wid == nullptr)
         qDebug() << "Not handled" << par;
+
     return wid;
 }
 
@@ -1209,6 +1204,7 @@ QJsonArray MainWindow::sortParameters(QJsonArray & arr)
 
 void MainWindow::setupProcessCall(QJsonObject obj)
 {
+    _syncmapper.clear();
 
     QString process = obj["Path"].toString();
     //    qDebug() << obj;
@@ -1223,9 +1219,6 @@ void MainWindow::setupProcessCall(QJsonObject obj)
         wid->close();
         ui->processingArea->layout()->removeWidget(wid);
     }
-
-
-
 
     QFormLayout* layo = dynamic_cast<QFormLayout*>(ui->processingArea->layout());
     if (!layo) {
@@ -1285,11 +1278,9 @@ void MainWindow::setupProcessCall(QJsonObject obj)
         }
 
 
-
-
         QWidget* wid = 0;
 
-        if (par["PerChannelParameter"].toBool() && _channelsIds.size() > 1)
+        if (par["PerChannelParameter"].toBool() && _channelsIds.size() > 1 && !par.contains("Type") )
         {
             wid = new QWidget();
             QFormLayout* l = new QFormLayout(wid);
@@ -1302,25 +1293,32 @@ void MainWindow::setupProcessCall(QJsonObject obj)
             foreach(int channels, list)
             {
 
+                par["guiChan"] = channels-1;
 
                 QWidget* w = widgetFromJSON(par);
-                QString nm;
+                   if (w)
+                    {
+                    QString nm;
 
-                if (_channelsNames.size() == _channelsIds.size())
-                    nm = QString(_channelsNames[list.at(channels-1)]);
-                else
-                    nm = QString("Channel %1").arg(p++);
+                    if (_channelsNames.size() == _channelsIds.size())
+                        nm = QString(_channelsNames[list.at(channels-1)]);
+                    else
+                        nm = QString("Channel %1").arg(p++);             
 
-                l->addRow(nm, w);
+                    l->addRow(nm, w);
 
-                w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(channels));
+                    w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(channels));
+//                    qDebug() << "Created Widget:" << w << w->objectName();
+
+                }
 
             }
         }
         else  if (par.contains("Type") && par["Type"].toString() == "Container")
         {
-            if (par.contains("perChannel") && par["perChannel"].toBool())
+            if (par.contains("PerChannelParameter") && par["PerChannelParameter"].toBool())
             {
+
                 QList<int> list = _channelsIds.values();
                 std::sort(list.begin(), list.end());
 
@@ -1329,7 +1327,7 @@ void MainWindow::setupProcessCall(QJsonObject obj)
                 int end = par["endChannel"].toInt();
                 end = end < 0 ? list.size() : end;
                 int c_def = par.contains("Default") ? par["Default"].toInt() : start;
-
+//                qDebug() << "Mapping data Per channel value";
                 foreach(int i, list)
                 {
 
@@ -1358,20 +1356,22 @@ void MainWindow::setupProcessCall(QJsonObject obj)
                         par["Default"] = c_def; // increment the default value for each channel.
                         c_def++;
                     }
-                    par["guiChan"] = c;
+                    //                    qDebug() << c;
 
                     QWidget* w = widgetFromJSON(par);
-
                     if (w)
                     {
                         w->setAttribute(Qt::WA_DeleteOnClose, true);
-                        w->setObjectName(par["Tag"].toString());
-                        if (par["PerChannelParameter"].toBool())
-                            lay->addRow(w);
-                        else
-                            lay->addRow(par["Tag"].toString(), w);
+                        w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(c));
+//                        if (par["PerChannelParameter"].toBool())
+//                            lay->addRow(w);
+//                        else
+                        lay->addRow(par["Tag"].toString(), w);
                         w->setToolTip(par["Comment"].toString());
+//                        qDebug() << "Created Widget:" << w;
+
                     }
+                    c++;
 
                 }
 
@@ -1418,6 +1418,9 @@ void MainWindow::setupProcessCall(QJsonObject obj)
 
         if (wid)
         {
+            if (!wid->objectName().isEmpty())
+                qDebug() << "Created Widget:" << wid << wid->objectName();
+
             if (par.contains("Level"))
             {
                 //            qDebug() << par["Level"];
@@ -1518,7 +1521,6 @@ void MainWindow::setupProcessCall(QJsonObject obj)
                         conditionChanged(cds, cds->value());
                     }
                 }
-
 
 
 
@@ -1680,7 +1682,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                    | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                  | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -1805,6 +1807,17 @@ void MainWindow::rangeChange(double mi, double ma)
         fo->rangeChanged(mi, ma);
     }
 
+    QString pos=sender()->objectName().replace("Channel", "");
+
+    if (_syncmapper.contains(QString("vMin%1").arg(pos)))
+    {
+        _syncmapper[QString("vMin%1").arg(pos)]->setValue(mi);
+    }
+    if (_syncmapper.contains(QString("vMax%1").arg(pos)))
+    {
+        _syncmapper[QString("vMax%1").arg(pos)]->setValue(ma);
+    }
+
 }
 
 void MainWindow::udpateRange(double mi, double ma)
@@ -1817,7 +1830,7 @@ void MainWindow::udpateRange(double mi, double ma)
         QString name = sender()->objectName().replace("Channel", "");
         //sender()
         QList<ctkDoubleRangeSlider*> ranges = wwid->findChildren<ctkDoubleRangeSlider*>(name);// qobject_cast<ctkDoubleRangeSlider*>(sender());
-//        //qDebug() << "Value Range!!!" << mi << ma << name << range->minimum() << range->maximum();
+        //        //qDebug() << "Value Range!!!" << mi << ma << name << range->minimum() << range->maximum();
         for (auto range: ranges)
             if (range)
             {
@@ -1825,13 +1838,20 @@ void MainWindow::udpateRange(double mi, double ma)
                 range->setMinimum(mi-th);
                 range->setMaximum(ma+th);
             }
+
+    }
+    QString pos=sender()->objectName().replace("Channel", "");
+
+    if (_syncmapper.contains(QString("vMin%1").arg(pos)))
+    {
+        _syncmapper[QString("vMin%1").arg(pos)]->setValue(mi);
+    }
+    if (_syncmapper.contains(QString("vMax%1").arg(pos)))
+    {
+        _syncmapper[QString("vMax%1").arg(pos)]->setValue(ma);
     }
 
 }
-
-
-
-
 
 
 void MainWindow::changeRangeValueMax(double val)
@@ -1852,6 +1872,10 @@ void MainWindow::changeRangeValueMax(double val)
         ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
         fo->forceMaxValue(val);
     }
+    if (_syncmapper.contains(sender()->objectName()))
+    {
+        _syncmapper[sender()->objectName()]->setValue(val);
+    }
 
 }
 
@@ -1871,6 +1895,11 @@ void MainWindow::changeRangeValueMin(double val)
 
         ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
         fo->forceMinValue(val);
+    }
+
+    if (_syncmapper.contains(sender()->objectName()))
+    {
+        _syncmapper[sender()->objectName()]->setValue(val);
     }
 }
 
@@ -2142,7 +2171,7 @@ void MainWindow::exportToCellProfiler()
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                 | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                            | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -2267,7 +2296,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
                                                       set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                    |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;

@@ -310,21 +310,38 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                 cchans = par["Channels"].toArray();
             }
         }
-        //        qDebug() << "Found channels:" << cchans;
+//         qDebug() << "Found channels:" << cchans;
         for (int i = 0; i < params.size(); ++i )
         {
             QJsonObject par = params[i].toObject();
 
             QString tag = par["Tag"].toString();
             //            qDebug() << par["Channels"].toArray().size() << par["PerChannelParameter"].toBool();
+            QList<QWidget*> wids = ui->processingArea->findChildren<QWidget*>(tag);
+
             if (cchans.size() &&  par["PerChannelParameter"].toBool())
             {
                 tag = QString("%1_%2").arg(par["Tag"].toString()).arg(cchans.first().toInt());
+//                qDebug() << "Searching Tag" << tag << cchans.size() << cchans;
+                wids = ui->processingArea->findChildren<QWidget*>(tag);
             }
-            //            qDebug() << "Searching widget" << tag;
-            QList<QWidget*> wids = ui->processingArea->findChildren<QWidget*>(tag);
+            if (wids.isEmpty() && par["PerChannelParameter"].toBool())
+            {
+               // qDebug() << cchans.size() << _channelsIds.values();
+                for (int i = 0; i < _channelsIds.size(); ++i)
+                {
+                    tag = QString("%1_%2").arg(par["Tag"].toString()).arg(i+1);
+                    auto l = ui->processingArea->findChildren<QWidget*>(tag);
+//                    qDebug() << "Searching Tag:" << tag << l.size();
+
+                    for (auto item: l)
+                        wids.append(item);
+                }
+                qDebug() << wids;
+            }
 
             if (wids.empty()) {
+                qDebug() << "Searching " << tag << "Params not found";
                 continue;
             }
 
@@ -332,7 +349,10 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
 
 
             foreach (QWidget* wid, wids)
+            {
+//                qDebug() << par << wids;
                 getValue(wid, par, "Value", wids.size() > 1);
+            }
             params.replace(i, par);
 
             if (par.contains("Comment2"))
@@ -499,7 +519,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
 
     QDir dir(set.value("databaseDir").toString());
-  //  dir.mkpath(set.value("databaseDir").toString() +st);
+    //  dir.mkpath(set.value("databaseDir").toString() +st);
 
     // 20201210: Large behaviour change
     // Now: Assuming the following reordering:
@@ -729,10 +749,10 @@ void MainWindow::startProcessRun()
     run_time.start();
     startProcessOtherStates(selectedChanns, lsfm, started, tags_map);
 
-//    QFuture<void> future = QtConcurrent::run(this, &MainWindow::startProcessOtherStates,
-//                                             selectedChanns, lsfm, started, tags_map);
-//    watcher->setFuture(future);
-//    _watchers.insert(watcher);
+    //    QFuture<void> future = QtConcurrent::run(this, &MainWindow::startProcessOtherStates,
+    //                                             selectedChanns, lsfm, started, tags_map);
+    //    watcher->setFuture(future);
+    //    _watchers.insert(watcher);
 
 
     QPushButton* s = qobject_cast<QPushButton*>(sender());

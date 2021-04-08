@@ -107,7 +107,7 @@ public:
                                                   _level == Advanced ? "Advanced" :
                                                                        _level == VeryAdvanced ? "VeryAdvanced" : "Debug");
 
-
+        json["isSlider"] = false;
         if (!_enableIf.isEmpty())
         {
             QJsonArray en;
@@ -166,6 +166,12 @@ public:
     Self& setPerChannel(bool val = true)
     {
         _isPerChannel = val;
+        return *this;
+    }
+
+    Self& perChannels()
+    {
+        _isPerChannel = true;
         return *this;
     }
 
