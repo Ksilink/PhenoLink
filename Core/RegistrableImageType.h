@@ -322,7 +322,7 @@ public:
             }
             //          qDebug() << "Writing image data to done" ;
             //          ob["Data"]=arr;
-            RegistrableParent::attachPayload(r);
+            RegistrableParent::attachPayload(getHash(), r);
             //          CheckoutProcess::handler().attachPayload(getHash(), r);
             ob["DataSizes"] = d;
             //qDebug() << d;
@@ -475,8 +475,9 @@ public:
                 ob["cvType"]=split[0].type();
                 ob["Rows"] = split[0].rows;
                 ob["Cols"] = split[0].cols;
+                QString local_hash = getHash()+QString("%1").arg(item);
                 if (item != 0)
-                    ob["DataHash"]=getHash()+QString("%1").arg(item);
+                    ob["DataHash"]=local_hash;
                 //          qDebug() << ob;
 
                 unsigned long long len = split[0].elemSize()* split[0].rows * split[0].cols;
@@ -501,10 +502,8 @@ public:
                         *iter = *p;
                     d.append(QJsonValue((int)len));//a.size());
                 }
-                //          qDebug() << "Writing image data to done" ;
-                //          ob["Data"]=arr;
-                RegistrableParent::attachPayload(r, item);
-                //          CheckoutProcess::handler().attachPayload(getHash(), r);
+
+                RegistrableParent::attachPayload(local_hash, r, item);
                 ob["DataSizes"] = d;
                 //qDebug() << d;
                 ar.push_back(ob);

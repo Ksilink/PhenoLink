@@ -1450,9 +1450,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                     else
                     {
                         // This is a 2d point
-
                         cv::Mat& feat = k.content();
-
                         int t,l,  f;
                         QStringList lcols = cols.split(";").mid(0, feat.cols);
 
@@ -1473,9 +1471,6 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                         // "jet" should be replaced by: overlay_coding[name].second :)
                         auto pal = palettes.at("jet");
                         pal.rescale(cmin, cmax);
-
-
-
 
                         auto group = new QGraphicsItemGroup(parent);
 

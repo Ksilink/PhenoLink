@@ -750,7 +750,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                         QString dhash = pay["DataHash"].toString();
                         auto buf = CheckoutProcess::handler().detachPayload(dhash);
                         auto data = QByteArray(reinterpret_cast<const char*>(buf.data()), (int)buf.size());
-                 //       qDebug() << "Got binary data: " << buf.size() << data.size();
+                        qDebug() << "Got binary data: " << dhash << buf.size() << data.size();
                         mm.insert(QCborValue("BinaryData"), QCborValue(data));
                     }
                     else
@@ -784,6 +784,7 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
     // now we can setup the reply !
 
     QJsonArray data = FilterObject(hash, res);
+    qDebug() << "Sending dataset" << data;
     client->send(QString("/addData/%1").arg(commitname), QString(), data);
 
 

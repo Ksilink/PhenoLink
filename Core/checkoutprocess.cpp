@@ -823,21 +823,21 @@ void CheckoutProcess::queryPayload(QString hash)
     //qDebug() << "get payload" << hash;
 
     QSharedMemory mem(hash);
-    if (mem.attach())
-    {
-        mem.lock();
-        size_t s = *(size_t*)mem.data();
-        std::vector<unsigned char> data(s);
-        std::memcpy(data.data(), ( char*)(mem.data())+sizeof(size_t), s);
+//    if (mem.attach())
+//    {
+//        mem.lock();
+//        size_t s = *(size_t*)mem.data();
+//        std::vector<unsigned char> data(s);
+//        std::memcpy(data.data(), ( char*)(mem.data())+sizeof(size_t), s);
 
-        attachPayload(hash, data);
-        mem.unlock();
-        mem.detach();
+//        attachPayload(hash, data);
+//        mem.unlock();
+//        mem.detach();
 
-        NetworkProcessHandler::handler().deletePayload(hash);
+//        NetworkProcessHandler::handler().deletePayload(hash);
 
-    }
-    else
+//    }
+//    else
         if (!_payloads_vectors.contains(hash))
             NetworkProcessHandler::handler().queryPayload(hash);
 }
@@ -864,31 +864,11 @@ bool CheckoutProcess::shallDisplay(QString hash)
 void CheckoutProcess::attachPayload(QString hash, std::vector<unsigned char> data,
                                     bool , size_t pos)
 {
-//    qDebug() << "Attaching payload" << hash << data.size() << mem << pos;
+//    qDebug() << "Attaching payload" << hash << data.size() <<  pos;
     if (pos != 0)
         hash += QString("%1").arg(pos);
 
     _payloads_vectors[hash] = data;
-
-//    if (mem)
-//    {
-//        QSharedMemory*  memory  = new QSharedMemory(hash);
-//        if (!memory) return;
-
-//        if (!memory->create((int)(data.size()+sizeof(size_t))))
-//        {
-//            qDebug() << memory->errorString();
-//            return;
-//        }
-
-//        memory->lock();
-
-//        *(size_t*)memory->data() = (size_t)data.size();
-//        memcpy((char*)memory->data()+sizeof(size_t), data.data(), data.size());
-
-//        memory->unlock();
-//        this->_inmems[hash] = memory;
-//    }
 
     emit payloadAvailable(hash);
 }

@@ -306,12 +306,15 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
 
     bool mem = _callParams["LocalRun"].toBool();
 
+     QString hash = _callParams["Process_hash"].toString();
 
+    int c=0;
     foreach (RegistrableParent* p, _results)
     {
         QJsonObject cobj;
         p->setFinished();
         p->keepInMem(mem);
+        p->setHash(QString("%1%2").arg(hash).arg(c++));  // Set hash for results when live set result maps
         cobj["Process"] = path;
         cobj["Meta"] = metaArr;
         cobj["Data"] = p->toString();
