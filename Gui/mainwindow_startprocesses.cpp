@@ -389,8 +389,11 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
 
                 if (!wid) continue;
                 if (_typeOfprocessing->currentText() == "Selected Screens")
+                 {
                     // Do not reclaim images if we are running heavy duty informations!!!
                     par["optionalState"] = false;
+                    obj["BatchRun"]=true;
+                }
                 else
                     par["optionalState"] = (wid->checkState() == Qt::Checked);
                 //                qDebug() << "Setting optional state:" << wid->checkState();

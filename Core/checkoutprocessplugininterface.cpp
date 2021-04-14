@@ -307,6 +307,9 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     bool mem = _callParams["LocalRun"].toBool();
 
      QString hash = _callParams["Process_hash"].toString();
+     bool isBatch = false;
+     if (_callParams.contains("BatchRun"))
+         isBatch = true;
 
     int c=0;
     foreach (RegistrableParent* p, _results)
@@ -315,6 +318,10 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
         p->setFinished();
         p->keepInMem(mem);
         p->setHash(QString("%1%2").arg(hash).arg(c++));  // Set hash for results when live set result maps
+
+        if (isBatch) // correct results for dynamic generation
+            cobj["optionalState"]=false;
+
         cobj["Process"] = path;
         cobj["Meta"] = metaArr;
         cobj["Data"] = p->toString();
