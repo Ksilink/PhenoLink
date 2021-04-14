@@ -36,9 +36,15 @@ add_definitions(-DQHTTP_HAS_CLIENT)
 #install(TARGETS CheckoutProcessServer COMPONENT applications DESTINATION bin)
 
 
-add_executable(CheckoutHttpServer mainHttpServer.cpp checkouthttpserver.h )
+add_executable(CheckoutHttpServer ${GUI_TYPE} mainHttpServer.cpp checkouthttpserver.h ${SrvRCFILE} )
 target_include_directories(CheckoutHttpServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries( CheckoutHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Sql Qt::WinExtras ${OpenCV_LIBS})
+
+if (WIN32)
+    target_link_libraries( CheckoutHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Sql Qt::WinExtras ${OpenCV_LIBS})
+else()
+    target_link_libraries( CheckoutHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Sql ${OpenCV_LIBS})
+endif(WIN32)
+
 install(TARGETS CheckoutHttpServer COMPONENT applications DESTINATION bin)
 
 

@@ -315,16 +315,18 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     foreach (RegistrableParent* p, _results)
     {
         QJsonObject cobj;
+
         p->setFinished();
-        p->keepInMem(mem);
+//        p->keepInMem(mem);
         p->setHash(QString("%1%2").arg(hash).arg(c++));  // Set hash for results when live set result maps
 
-        if (isBatch) // correct results for dynamic generation
-            cobj["optionalState"]=false;
 
         cobj["Process"] = path;
         cobj["Meta"] = metaArr;
         cobj["Data"] = p->toString();
+
+        if (isBatch)// correct results for dynamic generation
+            p->setAsOptional(false);
 
         p->write(cobj);
 
