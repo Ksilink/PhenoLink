@@ -2581,6 +2581,7 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
     bool newCol = false;
     QModelIndex idx;
 
+    modified = true;
     if (!_datanames.contains(XP))
     {
 
@@ -2647,7 +2648,7 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
     endInsertRows();
     if (newCol)  endInsertColumns();
 
-    modified = true;
+
 }
 
 
