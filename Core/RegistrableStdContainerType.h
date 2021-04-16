@@ -97,7 +97,7 @@ public:
   typedef QList<unsigned> DataType;
   typedef Registrable<DataType> Self;
 
-  Registrable(): _isPerChannel(false), _startChannel(0), _endChannel(-1), _def(0),
+  Registrable():  _startChannel(0), _endChannel(-1), _def(0),
     _hasRange(false), _low(std::numeric_limits<int>::min()),
     _high(std::numeric_limits<int>::max())
   {
@@ -152,7 +152,6 @@ public:
     json["Value"] = toString();
     json["Type"] = QString("Container");
     json["InnerType"]= QString("unsigned");
-    json["perChannel"] = _isPerChannel;
     json["startChannel"] = _startChannel;
     json["endChannel"] = _endChannel;
 
@@ -185,11 +184,6 @@ public:
 
   }
 
-  Self& perChannels()
-  {
-    _isPerChannel = true;
-    return *this;
-  }
 
   Self& startChannel(int p)
   {
@@ -226,7 +220,6 @@ public:
 protected:
   DataType* _value;
 
-  bool _isPerChannel;
   int _startChannel, _endChannel;
   int _def;
   bool _hasRange;
@@ -243,7 +236,7 @@ public:
   typedef QList<double> DataType;
   typedef Registrable<DataType> Self;
 
-  Registrable(): _isPerChannel(false), _startChannel(0), _endChannel(-1), _def(0),
+  Registrable(): _startChannel(0), _endChannel(-1), _def(0),
     _hasRange(false), _low(-std::numeric_limits<double>::max()),
     _high(std::numeric_limits<double>::max())
   {
@@ -298,7 +291,6 @@ public:
     json["Value"] = toString();
     json["Type"] = QString("Container");
     json["InnerType"]= QString("double");
-    json["perChannel"] = _isPerChannel;
     json["startChannel"] = _startChannel;
     json["endChannel"] = _endChannel;
 
@@ -329,12 +321,6 @@ public:
         _value->push_back(it->toDouble());
       }
 
-  }
-
-  Self& perChannels()
-  {
-    _isPerChannel = true;
-    return *this;
   }
 
   Self& startChannel(int p)
@@ -372,7 +358,6 @@ public:
 protected:
   DataType* _value;
 
-  bool _isPerChannel;
   int _startChannel, _endChannel;
   double _def;
   bool _hasRange;
@@ -389,7 +374,7 @@ public:
   typedef QList<ChannelSelectionType> DataType;
   typedef Registrable<QList<ChannelSelectionType > > Self;
 
-  Registrable(): _isPerChannel(false), _startChannel(0), _endChannel(-1), _def(0)
+  Registrable():  _startChannel(0), _endChannel(-1), _def(0)
   {
 
   }
@@ -451,7 +436,6 @@ public:
     json["Value"] = toString();
     json["Type"] = QString("Container");
     json["InnerType"]= QString("ChannelSelector");
-    json["perChannel"] = _isPerChannel;
     json["startChannel"] = _startChannel;
     json["endChannel"] = _endChannel;
     json["DefaultValue"] = _def;
@@ -476,12 +460,6 @@ public:
         _value->push_back(ChannelSelectionType(it->toInt()));
       }
 
-  }
-
-  Self& perChannels()
-  {
-    _isPerChannel = true;
-    return *this;
   }
 
   Self& startChannel(int p)
@@ -518,8 +496,7 @@ public:
 
 protected:
   DataType* _value;
-
-  bool _isPerChannel;
+;
   int _startChannel, _endChannel;
   int _def;
 
@@ -533,7 +510,7 @@ public:
   typedef QList<unsigned> DataType;
   typedef RegistrableEnum<QList<unsigned > > Self;
 
-  RegistrableEnum(): _isPerChannel(false), _startChannel(0), _endChannel(-1), _def(0)
+  RegistrableEnum(): _startChannel(0), _endChannel(-1), _def(0)
   {
 
   }
@@ -607,8 +584,6 @@ public:
     RegistrableParent::write(json);
     json["Value"] = toString();
     json["Type"] = QString("Container");
-//    json["InnerType"]= QString("unsigned");
-    json["perChannel"] = _isPerChannel;
     json["startChannel"] = _startChannel;
     json["endChannel"] = _endChannel;
     json["DefaultValue"] = _def;
@@ -639,7 +614,6 @@ public:
 
   Self& perChannels()
   {
-    _isPerChannel = true;
     return *this;
   }
 
@@ -678,7 +652,6 @@ public:
 protected:
   DataType* _value;
 
-  bool _isPerChannel;
   int _startChannel, _endChannel;
   int _def;
   QStringList _enum;

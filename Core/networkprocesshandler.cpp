@@ -7,6 +7,143 @@
 #include <Core/checkoutprocess.h>
 #include <Core/config.h>
 
+#include "qhttp/qhttpclient.hpp"
+#include "qhttp/qhttpclientrequest.hpp"
+#include "qhttp/qhttpclientresponse.hpp"
+#include "qhttp/qhttpserver.hpp"
+#include "qhttp/qhttpserverconnection.hpp"
+#include "qhttp/qhttpserverrequest.hpp"
+#include "qhttp/qhttpserverresponse.hpp"
+
+using namespace qhttp::client;
+
+
+
+CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(false), icpus(0)
+{
+    QObject::connect(&iclient, &QHttpClient::disconnected, [this]() {
+        finalize();
+    });
+
+    iurl.setScheme("http");
+    iurl.setHost(host);
+    iurl.setPort(port);
+}
+
+CheckoutHttpClient::~CheckoutHttpClient()
+{
+    qDebug() << "CheckoutHttpClient : I've been killed ";
+}
+
+void CheckoutHttpClient::send(QString path, QString query)
+{
+    send(path, query, QByteArray(), true);
+}
+
+void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool keepalive)
+{
+     auto body = QCborValue::fromJsonValue(ob).toCbor();
+     QUrl url=iurl;
+     url.setPath(path);
+     url.setQuery(query);
+
+//     qDebug() << "Creating Query" << url.toString() << ob;
+     send(path, query, body, keepalive);
+}
+
+void CheckoutHttpClient::send(QString path, QString query, QByteArray ob, bool keepalive)
+{
+
+    QUrl url=iurl;
+    url.setPath(path);
+    url.setQuery(query);
+
+    reqs.append(Req(url, ob, keepalive));
+ //   if (reqs.isEmpty())
+    sendQueue();
+}
+void CheckoutHttpClient::sendQueue()
+{
+    if (reqs.isEmpty())
+        return;
+    if (awaiting)
+        return;
+
+
+    auto req = reqs.takeFirst();
+    QUrl url = req.url;
+    auto ob = req.data;
+    auto keepalive = req.keepalive;
+
+    qDebug() << "Sending Queued" << url;
+    awaiting = true;
+    iclient.request(
+                qhttp::EHTTP_POST,
+                req.url,
+                [ob, keepalive](QHttpRequest* req){
+        auto body = ob;
+        req->addHeader("connection", keepalive ? "keep-alive" : "close");
+        req->addHeader("Content-Type", "application/cbor");
+        req->addHeaderValue("content-length", body.length());
+        req->end(body);
+//        qDebug() << "Request" << req->connection()->tcpSocket()->peerAddress()
+//                 << req->connection()->tcpSocket()->peerPort() << (keepalive ? "keep-alive" : "close");
+//                    ;
+
+    },
+
+    [this](QHttpResponse* res) {
+        res->collectData();
+        res->onEnd([this, res](){
+            onIncomingData(res->collectedData());
+            awaiting = false; // finished current send
+            sendQueue(); // send next message
+        });
+    });
+
+    if (iclient.tcpSocket()->error() != QTcpSocket::UnknownSocketError)
+        qDebug() << "Send" << iclient.tcpSocket()->errorString();
+
+}
+
+void CheckoutHttpClient::onIncomingData(const QByteArray& data)
+{
+    auto val = QCborValue::fromCbor(data).toJsonValue();
+    auto ob = val.toObject();
+
+
+    if (ob.contains("CPU"))
+        icpus = ob["CPU"].toInt();
+
+    if (ob.contains("Processes"))
+    {
+        NetworkProcessHandler::handler().setProcesses(ob["Processes"].toArray(), this);
+        return;
+    }
+    if (ob.contains("authors"))
+    {
+        NetworkProcessHandler::handler().setParameters(ob);
+        return;
+    }
+    if (ob.contains("ArrayCoreProcess") &&
+            ob.contains("ArrayRunProcess"))
+    {
+        QJsonArray Core = ob["ArrayCoreProcess"].toArray();
+        QJsonArray Run = ob["ArrayRunProcess"].toArray();
+
+        NetworkProcessHandler::handler().handleHashMapping(Core, Run);
+        return;
+    }
+
+    qDebug()  << "HTTP Response" << val;
+}
+
+void CheckoutHttpClient::finalize() {
+    qDebug() << "Disconnected";    //        qDebug("totally %d request/response pairs have been transmitted in %lld [mSec].\n",
+    ////               istan, itick.tock()
+    //               );
+}
+
 
 
 QTextStream *hash_logfile = nullptr;
@@ -84,84 +221,48 @@ void NetworkProcessHandler::establishNetworkAvailability()
         data.append(localh);
     }
 
+    if (activeHosts.size() == data.size())
+        return;
     foreach (QJsonValue ss, data)
     {
         QJsonObject o = ss.toObject();
-        CheckoutHost* h = new CheckoutHost;
-        h->address = QHostAddress(o["Host"].toString());
-        h->port = o["Port"].toInt();
+        auto h = new CheckoutHttpClient(o["Host"].toString(), o["Port"].toInt());
 
-        QTcpSocket* soc = getNewSocket(h);
-        if (soc->state() != QAbstractSocket::ConnectedState)
-        {
-            qDebug() << "Network connection to " << h->address << h->port << " impossible";
-            qDebug() << soc->errorString();
-            soc->close();
-            delete soc;
-            continue;
-        }
-
+        h->send("/ListProcesses");
         activeHosts << h;
 
-        writeInitialQuery(soc);
-
-
-        activeProcess << soc;
-        qDebug() <<"Process from server"<< h->address << h->port << soc;
+        qDebug() <<"Process from server"<< h->iurl;
     }
 
 
 }
 
 
-void NetworkProcessHandler::writeInitialQuery(QTcpSocket* soc)
+void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient* cl)
 {
-    //    qDebug() << soc->error() << soc->errorString() << soc->state();
+//    qDebug() << "Settings Processes";
 
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_3);
-    out << (uint)0;
-    out << QString(getNetworkMessageString(Processes));
-    out.device()->seek(0);
-    out << (uint)(block.size() - sizeof(uint));
-
-    if (block.size())
+    for (int p = 0; p < ar.size(); ++p)
     {
-        soc->write(block);
-        soc->waitForBytesWritten();
+        QString pr=    ar[p].toString();
+        QList<CheckoutHttpClient*>& lp = procMapper[pr];
+        if (!lp.contains(cl))
+        {
+         //   qDebug() << pr;
+            procMapper[pr] << cl;
+        }
     }
-    // qDebug() << block.size();
+
+    CheckoutProcess::handler().updatePath();
 }
 
-QTcpSocket *NetworkProcessHandler::getNewSocket(CheckoutHost* h, bool with_sig)
-{
-    QTcpSocket* soc = new QTcpSocket;
-    if (!soc)
-    {
-        qDebug() << "Socket Allocation error";
-        return 0;
-    }
-    soc->abort();
-    soc->connectToHost(h->address, h->port);
-    if (with_sig)
-    {
-        connect(soc, SIGNAL(readyRead()), this, SLOT(readResponse()));
-        connect(soc, SIGNAL(error(QAbstractSocket::SocketError)),
-                this, SLOT(displayError(QAbstractSocket::SocketError)));
-    }
-    if (!soc->waitForConnected(800))
-        qDebug() << "socket error : " << soc->errorString();
-
-    return soc;
-}
 
 QStringList NetworkProcessHandler::getProcesses()
 {
     QStringList l;
 
     l =  procMapper.keys();
-    //  qDebug() << "Network Handler list: " << l;
+   // qDebug() << "Network Handler list: " << l;
     return l;
 }
 
@@ -173,38 +274,27 @@ void NetworkProcessHandler::getParameters(QString process)
         qDebug() << "Empty process List" << process;
         return;
     }
-    CheckoutHost* h = procMapper[process].first();
+    CheckoutHttpClient* h = procMapper[process].first();
     if (!h)
     {
         qDebug() << "getParameters: Get Network process handler";
         return;
     }
 
-    qDebug() << "Query Process details" << process;
+    qDebug() << "Query Process details" << process << h->iurl;
 
-    QTcpSocket* soc = getNewSocket(h);
+    h->send(QString("/Process/%1").arg(process));
+}
 
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_3);
-    out << (uint)0;
-    out << QString(getNetworkMessageString(Process_Details));
-    out << process;
-    out.device()->seek(0);
-    out << (uint)(block.size() - sizeof(uint));
 
-    if (block.size())
-    {
-        soc->write(block);
-        //       soc->waitForBytesWritten();
-    }
-
-    //   activeProcess << soc;
+void NetworkProcessHandler::setParameters(QJsonObject ob)
+{
+    emit parametersReady(ob);
 }
 
 void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
 {
-    QList<CheckoutHost*> procsList = procMapper[process];
+    QList<CheckoutHttpClient*> procsList = procMapper[process];
 
     // Try to connect to any host having the same process
     if (procsList.isEmpty())
@@ -217,9 +307,6 @@ void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
     qDebug() << "Need to dispatch: " << ob.size() << "item to process " << process << "found on "  << procsList.size() << "services";
     qDebug() << "Pushing " << itemsPerServ << "processes to each server";
     // Perform server order reorganisation to ensure proper dispatch among servers
-
-    //    qDebug() << "Starting with server" << last_serv_pos;
-
     last_serv_pos = last_serv_pos % procsList.size();
 
     qDebug() << "Starting with server" << last_serv_pos;
@@ -231,9 +318,8 @@ void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
     //        qDebug() << h->address << h->port;
 
     int lastItem = 0;
-    foreach(CheckoutHost* h, procsList)
+    foreach(CheckoutHttpClient* h, procsList)
     {
-        //      CheckoutHost* h = procMapper[process].first();
         QJsonArray ar;
         for (int i = 0; i < itemsPerServ && lastItem < ob.size(); ++i, ++lastItem)
         {
@@ -260,47 +346,9 @@ void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
 
 }
 
-void NetworkProcessHandler::startProcess(CheckoutHost *h, QString process, QJsonArray ob)
+void NetworkProcessHandler::startProcess(CheckoutHttpClient *h, QString process, QJsonArray ob)
 {
-    if (!h)
-    {
-        qDebug() << "Error cannot Get Network process handler";
-        return;
-    }
-
-    QTcpSocket* soc =  getNewSocket(h, false);
-
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_3);
-    out << (uint)0;
-    out << QString(getNetworkMessageString(Process_Start));
-    out << process;
-
-    QJsonDocument doc(ob);
-    QByteArray arr = doc.toBinaryData();
-    out << arr;
-
-    out.device()->seek(0);
-    out << (uint)(block.size() - sizeof(uint));
-
-    if (block.size())
-    {
-        soc->write(block);
-        soc->waitForBytesWritten();
-    }
-
-    bool ready = soc->waitForReadyRead(2000);
-
-    // If false this may be due to timeout, need to check
-    if (ready && soc->bytesAvailable())
-        readResponse(soc);
-    else // Need to modify signature of caller to handle return informations
-    {
-        qDebug() << "Error Starting process, no return from server request => " << h->address << h->port;
-
-        _error_list << qMakePair(h, qMakePair(process, ob));
-    }
+    h->send(QString("/Start/%1").arg(process), QString(), ob);
 }
 
 
@@ -308,6 +356,7 @@ void NetworkProcessHandler::startProcess(CheckoutHost *h, QString process, QJson
 // Large image sets are at risk for the handling of data this may lock the user interface with heavy processing
 QJsonArray ProcessMessageStatusFunctor(CheckoutHost* h, QList<QString > hash, NetworkProcessHandler* owner)
 {
+#if FIXME_HTTP
     // qDebug()  << "Status Query" << hash.size() << h->address << h->port;
     // First Create the socket
     QTcpSocket* soc = new QTcpSocket;
@@ -390,7 +439,8 @@ QJsonArray ProcessMessageStatusFunctor(CheckoutHost* h, QList<QString > hash, Ne
     // qDebug()  << "Status Query" << hash.size();
 
     return res;
-
+#endif
+    return QJsonArray();
 }
 
 
@@ -398,6 +448,7 @@ QJsonArray ProcessMessageStatusFunctor(CheckoutHost* h, QList<QString > hash, Ne
 // the message at threaded approach would be better of handling this network information
 void NetworkProcessHandler::getProcessMessageStatus(QString process, QList<QString > hash)
 {
+#if FIXME_HTTP
     QSettings set;
     int Server_query_max_hash = set.value("maxRefreshQuery", 2000).toInt();
     //    qDebug() << "Get States from server" << hash.size();
@@ -464,10 +515,12 @@ void NetworkProcessHandler::getProcessMessageStatus(QString process, QList<QStri
         }
     }
     _waiting_Update = true;
+#endif
 }
 
 void NetworkProcessHandler::queryPayload(QString ohash)
 {
+#if FALSE
     QString hash=ohash;
     hash.truncate(32);
     //    CheckoutHost* h = procMapper.first().first();
@@ -503,11 +556,12 @@ void NetworkProcessHandler::queryPayload(QString ohash)
         soc->write(block);
         soc->waitForBytesWritten();
     }
-
+#endif
 }
 
 void NetworkProcessHandler::deletePayload(QString hash)
 {
+#if FALSE
     //    CheckoutHost* h = procMapper.first().first();
     CheckoutHost* h = runningProcs[hash];
     runningProcs.remove(hash);
@@ -541,35 +595,224 @@ void NetworkProcessHandler::deletePayload(QString hash)
         soc->write(block);
         soc->waitForBytesWritten();
     }
-
+#endif
 
 }
 
 void NetworkProcessHandler::processFinished(QStringList hashes)
 {
 
+//runningProcs[hash]->send()
+
+#if FALSE
     foreach(QString hash, hashes)
     {
         if (runningProcs.contains(hash))
             runningProcs.remove(hash);
     }
-     qDebug() << "Process finished : "<< hashes << "Network Stack remaining hash" << runningProcs.size();
-//	if (hash_logfile)
-	//	(*hash_logfile) << "Finished " << hash << Qt::endl;
+    qDebug() << "Process finished : "<< hashes << "Network Stack remaining hash" << runningProcs.size();
+    //	if (hash_logfile)
+    //	(*hash_logfile) << "Finished " << hash << Qt::endl;
     //    qDebug() << "Query clear mem" << hash;
     //    CheckoutProcess::handler().deletePayload(hash);
+#endif
+}
+
+QJsonArray FilterObject(QString hash, QJsonObject ds)
+{
+    QJsonArray res;
+    QJsonObject ob;
+    ob["hash"] = hash;
+
+    if (ds.contains("Data"))
+    {
+        auto arr = ds["Data"].toArray();
+        for (auto itd : arr)
+        {
+            auto obj = itd.toObject();
+            if (obj["Data"].toString() != "Image results" )
+            {
+//                if (obj.contains("isOptional") && !obj["optionalState"].toBool())
+//                    continue;
+
+                //qDebug() << obj;
+
+
+                ob[obj["Tag"].toString()] = obj["Data"];
+                ob[QString("%1_Agg").arg(obj["Tag"].toString())] = obj["Aggregation"];
+
+                if (obj.contains("Meta"))
+                {
+                    auto met = obj["Meta"].toArray()[0].toObject();
+
+                    auto txt = QStringList() << "FieldId" << "Pos" << "TimePos" << "channel" << "zPos" << "DataHash";
+                    for (auto s: txt)
+                        if (met.contains(s))
+                        {
+
+                            ob[s] = met[s];
+                        }
+//                        else { qDebug() << s << "Not found"; }
+                }
+//                else
+//                {
+//                    qDebug() << "######################################" << Qt::endl
+//                             <<"No Meta" << Qt::endl
+//                            << obj;
+//                }
+            }
+        }
+
+    }
+    res << ob;
+    return res;
+}
+
+
+QCborArray filterBinary(QString hash, QJsonObject ds)
+{
+    QCborArray res;
+
+
+    if (ds.contains("Data"))
+    {
+        auto arr = ds["Data"].toArray();
+        for (auto itd : arr)
+        {
+            auto obj = itd.toObject();
+            if (obj["Data"].toString() == "Image results" && obj.contains("Payload"))
+            {
+                if (obj.contains("isOptional") && !obj["optionalState"].toBool())
+                {
+                    auto ps = obj["Payload"].toArray();
+                    QCborArray cbar;
+                    for (auto pp : ps)
+                    {
+                        auto pay = pp.toObject();
+                        if (pay.contains("DataHash"))
+                        {
+                            QString dhash = pay["DataHash"].toString();
+                            auto buf = CheckoutProcess::handler().detachPayload(dhash);
+                            buf.clear();
+                        }
+                    }
+                    continue;
+                }
+
+                QCborMap ob;
+                auto txt = QStringList() << "ContentType" << "ImageType" << "ChannelNames"
+                                         << "Tag";
+                for (auto s: txt)
+                    if (obj.contains(s))
+                    {
+                        ob.insert(QCborValue(s), QCborValue::fromJsonValue(obj[s]));
+                    }
+                QString dhash;
+
+                if (obj.contains("Meta"))
+                {
+                    auto met = obj["Meta"].toArray()[0].toObject();
+                    auto txt = QStringList() << "FieldId" << "Pos" << "TimePos"
+                            << "channel" << "zPos" << "DataHash" ;
+                    for (auto s: txt)
+                        if (met.contains(s))
+                        {
+                            ob.insert(QCborValue(s), QCborValue::fromJsonValue(met[s]));
+                        }
+                    dhash = met["DataHash"].toString();
+                }
+                else
+                {
+                    qDebug() << "######################################" << Qt::endl
+                             <<"No Meta" << Qt::endl
+                            << obj;
+                    continue;
+                }
+//                qDebug() << "Ready data" << ob.toJsonObject();
+                // Now add Image info:
+                auto ps = obj["Payload"].toArray();
+                QCborArray cbar;
+                for (auto pp : ps)
+                {
+                    QCborMap mm;
+
+                    auto pay = pp.toObject();
+                    auto ql = QStringList() << "Cols" << "Rows" << "DataSizes" << "cvType" << "DataTypeSize";
+                    for (auto s : ql)
+                    {
+                        if (pay.contains(s))
+                            mm.insert(QCborValue(s), QCborValue::fromJsonValue(pay[s]));
+                    }
+                    //                qDebug() << "Binary ob" << ob;
+
+                    if (pay.contains("DataHash"))
+                    {
+                        QString dhash = pay["DataHash"].toString();
+                        auto buf = CheckoutProcess::handler().detachPayload(dhash);
+                        auto data = QByteArray(reinterpret_cast<const char*>(buf.data()), (int)buf.size());
+                        qDebug() << "Got binary data: " << dhash << buf.size() << data.size();
+                        mm.insert(QCborValue("BinaryData"), QCborValue(data));
+                    }
+                    else
+                    {
+                        qDebug() << "Should search data:" << pay << Qt::endl
+                                 << "From " << obj;
+                    }
+                    cbar << mm;
+                }
+                ob.insert(QCborValue("Payload"), cbar);
+                ob.insert(QCborValue("DataHash"), dhash);
+                ob.insert(QCborValue("Hash"), hash);
+                res << ob;
+            }
+        }
+    }
+    return res;
+}
+
+
+void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
+{
+    QString address=res["ReplyTo"].toString();
+///    qDebug() << hash << res << address;
+    CheckoutHttpClient* client = NULL;
+    for (CheckoutHttpClient* cl : alive_replies)  if (address == cl->iurl.host())  client = cl;
+    if (!client) { client = new CheckoutHttpClient(address, 8020); alive_replies << client; }
+   // else { qDebug() << "Reusing Client"; }
+    QString commitname = res["CommitName"].toString();
+    if (commitname.isEmpty()) commitname = "Default";
+    // now we can setup the reply !
+
+    QJsonArray data = FilterObject(hash, res);
+    qDebug() << "Sending dataset" << data;
+    client->send(QString("/addData/%1").arg(commitname), QString(), data);
+
+
+
+    QCborArray bin = filterBinary(hash, res);
+    for (auto b: bin)
+    {
+//        qDebug() << b.toJsonValue();
+//        qDebug() << "AddImage";
+        client->send(QString("/addImage/"), QString(), b.toCbor());
+    }
+
 
 }
 
 void NetworkProcessHandler::removeHash(QString hash)
 {
+    // Just finished a item
+//    qDebug() << "Finished Job" << hash;
     runningProcs.remove(hash);
+    emit finishedJob();
 }
 
 
 
 void NetworkProcessHandler::exitServer()
 {
+#if FALSE
     // FIXME: Should only kill Owned server and not all the queued ones...
     CheckoutHost* h = procMapper.first().first();
 
@@ -590,13 +833,12 @@ void NetworkProcessHandler::exitServer()
         soc->write(block);
         soc->waitForBytesWritten();
     }
-
+#endif
 }
 
 QList<QPair<QString, QJsonArray> > NetworkProcessHandler::erroneousProcesses()
 {
     QList<QPair<QString, QJsonArray> > res;
-
 
     foreach(auto ev, _error_list)
     {
@@ -606,88 +848,31 @@ QList<QPair<QString, QJsonArray> > NetworkProcessHandler::erroneousProcesses()
 }
 
 
-
-void NetworkProcessHandler::handleMessageProcesses(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket)
+void NetworkProcessHandler::handleHashMapping(QJsonArray Core, QJsonArray Run)
 {
-    static const QString name = getNetworkMessageString(Processes);
 
-    if (keyword == name)
+    if (Core.size() != Run.size())  qDebug() << "Incoherent data size in starting processes...";
+
+    for (int i = 0; i < std::min(Core.size(), Run.size()); ++i)
     {
-        QHostAddress add = tcpSocket->peerAddress();
-        quint16 port = tcpSocket->peerPort();
-        CheckoutHost* host = 0;
-        foreach (CheckoutHost* h, activeHosts)
-            if (h->address == add && h->port == port)
-                host = h;
+        QString coreHash = Core.at(i).toString("");
+        QString hash = Run.at(i).toString("");
 
-        if (host == 0)
-        {
-            qDebug() << "Received answer from host, but not in active list..." << add << port;
-            host = new CheckoutHost;
-            host->address = add;
-            host->port = port;
-            activeHosts << host;
-        }
+        CheckoutHttpClient* h = runningProcs[coreHash];
+        runningProcs.remove(coreHash);
+        runningProcs[hash] = h;
 
+        if (hash_logfile)
+            (*hash_logfile) << coreHash << "->" << hash << Qt::endl;
 
-        QStringList l;
-        in >> l;
-
-
-        unsigned int processor_count = 0;
-        in >> processor_count;
-        qDebug() << host->address <<":"<< host->port << "Reports: " << processor_count << "CPU";
-
-        QString version;
-
-        in >> version;
-
-        if (version != CHECKOUT_VERSION)
-        {
-            qDebug() << "Server working with version: " << version << "but client is" << CHECKOUT_VERSION;
-        }
-
-
-
-        foreach (QString p, l)
-            if (p != "") { procMapper[p] << host; }
-        //        qDebug() << procMapper.keys();
-        emit newProcessList();
+        emit processStarted(coreHash, hash);
     }
-}
 
-void NetworkProcessHandler::handleMessageProcessDetails(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket)
-{
-    static const QString name = getNetworkMessageString(Process_Details);
-
-    if (keyword == name)
-    {
-        //        qDebug()  << "Answered!";
-        QHostAddress add = tcpSocket->peerAddress();
-        quint16 port = tcpSocket->peerPort();
-        CheckoutHost* host = 0;
-        foreach (CheckoutHost* h, activeHosts)
-            if (h->address == add && h->port == port)
-                host = h;
-        if (host == 0)
-        {
-            qDebug() << "Received answer from host, but not in active list..." << add << port;
-            host = new CheckoutHost;
-            host->address = add;
-            host->port = port;
-            activeHosts << host;
-        }
-
-        QByteArray data;
-        in >> data;
-        QJsonObject ob = QJsonDocument::fromBinaryData(data).object();
-
-        emit parametersReady(ob);
-    }
 }
 
 void NetworkProcessHandler::handleMessageProcessStart(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket)
 {
+#if FIXME_HTTP
     Q_UNUSED(tcpSocket);
 
     static const QString name = getNetworkMessageString(Process_Start);
@@ -719,10 +904,12 @@ void NetworkProcessHandler::handleMessageProcessStart(QString& keyword, QDataStr
             emit processStarted(coreHash, hash);
         }
     }
+#endif
 }
 
 void NetworkProcessHandler::handleMessageProcessStatus(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket)
 {
+#if FIXME_HTTP
     Q_UNUSED(tcpSocket);
 
     static const QString name = getNetworkMessageString(Process_Status);
@@ -743,10 +930,12 @@ void NetworkProcessHandler::handleMessageProcessStatus(QString& keyword, QDataSt
         }
         _waiting_Update = false;
     }
+#endif
 }
 
 void NetworkProcessHandler::handleMessageProcessPayload(QString &keyword, QDataStream &in, QTcpSocket *tcpSocket)
 {
+#if FIXME_HTTP
     Q_UNUSED(tcpSocket);
 
     static const QString name = getNetworkMessageString(Process_Payload);
@@ -760,14 +949,16 @@ void NetworkProcessHandler::handleMessageProcessPayload(QString &keyword, QDataS
         std::vector<unsigned char> arr;
         in >> arr;
 
-        // got the payload here
+        // got the payload here0
         CheckoutProcess::handler().attachPayload(hash, arr);
         emit payloadAvailable(hash);
     }
+#endif
 }
 
 void NetworkProcessHandler::handleMessageDeletePayload(QString &keyword, QDataStream &in, QTcpSocket *tcpSocket)
 {
+#if FIXME_HTTP
     Q_UNUSED(tcpSocket);
 
     static const QString name = getNetworkMessageString(Delete_Payload);
@@ -779,66 +970,9 @@ void NetworkProcessHandler::handleMessageDeletePayload(QString &keyword, QDataSt
         in >> hash;
 
     }
+#endif
 }
 
-void NetworkProcessHandler::readResponse()
-{
-    QTcpSocket* tcpSocket = qobject_cast<QTcpSocket*>(sender());
-    if (!tcpSocket) return;
-    readResponse(tcpSocket);
-}
-
-void NetworkProcessHandler::readResponse(QTcpSocket* tcpSocket)
-{
-    //    qDebug() << tcpSocket->errorString() << tcpSocket->state();
-    QDataStream in(tcpSocket);
-    in.setVersion(QDataStream::Qt_5_3);
-    uint blockSize = _blockSize[tcpSocket];
-    //    qDebug() << blockSize << tcpSocket->bytesAvailable() ;
-    if (blockSize == 0) {
-        if (tcpSocket->bytesAvailable() < (int)sizeof(uint))
-        {
-            //          qDebug() << "socket loop" << tcpSocket;
-            return;
-        }
-        in >> blockSize;
-        tcpSocket->setReadBufferSize(blockSize);
-        _blockSize[tcpSocket] = blockSize;
-    }
-
-    if (tcpSocket->bytesAvailable() < blockSize)
-    {
-        //      qDebug() << "socket loop" << tcpSocket;
-        return;
-    }
-
-    QString keyword;
-    in >> keyword;
-    //  qDebug() << "Block Size prior to read" << blockSize;
-    _blockSize.remove(tcpSocket);
-    //qDebug() << "Received command" << keyword << blockSize;
-    QElapsedTimer dtimer;       // Do the process timing
-    dtimer.start();
-
-
-
-    handleMessageProcesses(keyword, in, tcpSocket);
-    handleMessageProcessDetails(keyword, in, tcpSocket);
-    handleMessageProcessStart(keyword, in, tcpSocket);
-    handleMessageProcessStatus(keyword, in, tcpSocket);
-    handleMessageProcessPayload(keyword, in, tcpSocket);
-
-    //  qDebug() << "Message" << keyword << "handled in " <<   dtimer.elapsed() << "ms";
-
-
-    // Exchange is finished, close our socket
-    // Only keep connection when starting processes
-    tcpSocket->close();
-    activeProcess.removeAll(tcpSocket);
-    //    delete tcpSocket;
-    tcpSocket->deleteLater();
-    blockSize  = 0;
-}
 
 QStringList NetworkProcessHandler::remainingProcess()
 {

@@ -1160,12 +1160,12 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
     else
     {
         for(Channel::iterator it = channels.begin(), e = channels.end(); it != e; ++it, ++chann)
-        if (!it.value().startsWith(":/mem/"))
-        {
-            h.channel = it.key();
-            data.append(it.value());
-            chans.append(it.key());
-        }
+            if (!it.value().startsWith(":/mem/"))
+            {
+                h.channel = it.key();
+                data.append(it.value());
+                chans.append(it.key());
+            }
     }
 
 
@@ -1826,6 +1826,8 @@ void stringToPos(QString pos, int& row, int& col)
 }
 
 
+//SequenceFileModel*
+
 SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
 {
 
@@ -2081,7 +2083,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
                         }
 
                         seq.addMeta(t < 1 ? 1 : t, f < 1 ? 1 : f, z < 1 ? 1 : z, cc < 0 ? 1 : cc, ob["Tag"].toString(), data);
-        
+
                     }
 
                 }
@@ -2107,6 +2109,299 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
 //    return rmdl;
 
 //}
+
+void ScreensHandler::commitAll()
+{
+ for (auto scr: _mscreens)
+ {
+     if (scr)
+     {
+         auto dtmdl = scr->computedDataModel();
+         if (dtmdl)
+         {
+             QString commit = dtmdl->getCommitName();
+             dtmdl->commitToDatabase(QString(), commit);
+         }
+     }
+
+ }
+}
+
+
+void ScreensHandler::addDataToDb(QString hash, QString commit, QJsonObject& data, bool finished)
+{
+    if (!_mscreens.contains(hash))
+    {
+        qDebug() << "Cannot find original XP for hash" << hash;
+        qDebug() << "#### NOT ADDING Data ##########";
+        qDebug() << data;
+        return ;
+    }
+
+    ExperimentFileModel* mdl =  _mscreens[hash];
+    ExperimentDataModel* datamdl = 0;
+
+    datamdl = mdl->computedDataModel();
+
+    if (!datamdl) {
+        qDebug() << "Experiment data not found, could not store data...." << hash;
+        return;
+    }
+    datamdl->setCommitName(commit);
+    QString id = data.take("Pos").toString();
+    int fieldId = data.take("FieldId").toInt(),
+            timepoint = data.take("TimePos").toInt(),
+            sliceId = data.take("zPos").toInt(),
+            channel = data.take("channel").toInt();
+    data.take("hash");
+    data.take("DataHash");
+
+
+    for (QJsonObject::iterator it = data.begin(), e = data.end(); it != e; ++it)
+        if (!it.key().endsWith("_Agg"))
+        {
+            QString tag = it.key();
+            QString val = it.value().toString();
+//            qDebug() << "Adding data" << tag << val;
+            datamdl->setAggregationMethod(tag, data[QString("%1_Agg").arg(tag)].toString() );
+
+            if (val.contains(','))
+            {
+                QStringList t = val.split(",", Qt::SkipEmptyParts);
+                for (int i = 0; i < t.size(); ++i)
+                    datamdl->addData(QString("%1#%2").arg(tag).arg(i, 4, 10, QLatin1Char('0')), fieldId, sliceId, timepoint, channel, id, t[i].toDouble());
+            }
+            else
+                datamdl->addData(tag, fieldId, sliceId, timepoint, channel, id, val.toDouble());
+        }
+
+
+
+    if (finished)
+        datamdl->commitToDatabase(hash, commit);
+
+}
+
+
+
+QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue &data)
+{
+    auto ob = data.toMap();
+
+    QList<SequenceFileModel*> mdls;
+
+    SequenceFileModel* rmdl = 0;
+
+    QString hash = ob.take(QCborValue("DataHash")).toString();
+    QString tag = ob.take(QCborValue("Tag")).toString();
+
+    if (!_mscreens.contains(hash))
+    {
+        qDebug() << "Cannot find original XP for hash" << hash;
+        qDebug() << "#### NOT ADDING IMAGE ##########";
+        return mdls;
+    }
+
+
+    ExperimentFileModel* mdl =  _mscreens[hash]->getSibling( tag );
+    mdl->setProperties("hash", hash);
+    mdl->setName(_mscreens[hash]->name());
+
+    if (mdl->fileName().isEmpty())
+    {
+        mdl->setFileName(QString("%1_%3/%3_%2/dummyfile.mrf").arg(hash).arg(tag).arg(1));
+        mdl->setProperties("hash", hash);
+    }
+
+    int col, row;
+    QString pos = ob.take(QCborValue("Pos")).toString();
+    stringToPos(pos, row, col);
+
+
+
+    if (ob.value(QCborValue("ContentType")).toString() == "Image") // Generate a new image to be displayed
+    {
+        SequenceFileModel& seq = (*mdl)(row, col);
+        seq.setOwner(mdl);
+        seq.setProcessResult(true);
+        (*_mscreens[hash])(row, col).addSibling(&seq);
+
+        ExperimentFileModel* sr = (*_mscreens[hash])(row, col).getOwner();
+        if (!sr) return mdls;
+
+        for (int i = 1; i < 10; ++i) {
+            QString prop = QString("ChannelsColors%1").arg(i);
+            if (sr->hasProperty(prop)) mdl->setProperties(prop, sr->property(prop));
+        }
+
+
+
+        QCborArray ar = ob.take(QCborValue("Payload")).toArray();
+        for (int item = 0; item < ar.size(); ++item)
+        { //
+            auto payload = ar[item].toMap();
+
+            QByteArray data = payload.value(QCborValue("BinaryData")).toByteArray();
+
+            //            qDebug() << "Data handling object" << data.size();
+
+            auto datasizes =  payload.value("DataSizes").toArray();
+            int size = 0;
+            for (int i = 0; i < datasizes.size(); ++i)
+                size += datasizes.at(i).toInteger();
+            if (size == 0 || data.size() != size)
+            {
+                qDebug() << "Error while gathering data (expected" << size << "received" << data.size() << ")";
+                return mdls;
+            }
+            unsigned long long chans = 0;
+            for (int i = 0; i < datasizes.size(); ++i)
+            {
+
+                int r = payload.value(QCborValue("Rows")).toInteger(), c = payload.value(QCborValue("Cols")).toInteger();
+                int cvtype = payload.value(QCborValue("cvType")).toInteger();
+
+                unsigned long long len = r * c * payload.value(QCborValue("DataTypeSize")).toInteger() ;
+                cv::Mat im(r, c, cvtype, &(data.data()[chans]));
+                cv::Mat* m = new cv::Mat();
+
+                (*m) = im.clone();
+
+                chans += len;
+                if (!m)
+                {
+                    qDebug() << "Memory error, Image not created !";
+                    return mdls;
+                }
+
+                int t = ob.value(QCborValue("TimePos")).toInteger(),
+                        f = ob.value(QCborValue("FieldId")).toInteger(),
+                        z = ob.value(QCborValue("zPos")).toInteger(),
+                        ch = ob.value(QCborValue("channel")).toInteger();
+
+                int cc = datasizes.size() > 1  ? i+1 : ch;
+
+                QString fname =  QString(":/mem/%1_%2_%3_%4_T%5F%6Z%7C%8.png")
+                        .arg(hash)
+                        .arg(tag)
+                        .arg(ob.value(QCborValue("Hash")).toString())
+                        .arg(pos)
+                        .arg(t)
+                        .arg(f)
+                        .arg(z)
+                        .arg(cc)
+                        ;
+
+                MemoryHandler::handler().addData(fname, m);
+                seq.addFile(t, f, z, cc, fname);
+
+                rmdl = &seq;
+                _result_images << fname;
+
+                if (ob.contains(QCborValue("Colormap")))
+                {
+                    QMap<unsigned, QColor> color;
+
+                    auto obj = ob.value(QCborValue("Colormap")).toMap();
+                    for (auto it = obj.begin(); it != obj.end(); ++it)
+                    {
+                        QColor col;
+                        col.setNamedColor(it.value().toString());
+                        color[it.key().toInteger()] = col;
+                    }
+                    MemoryHandler::handler().addColor(fname, color);
+                }
+                if (ob.contains(QCborValue("ChannelNames")))
+                {
+                    QStringList names;
+                    auto ar = ob.value(QCborValue("ChannelNames")).toArray();
+                    for (int n = 0; n < ar.size(); ++n)
+                        names << ar[n].toString();
+                    mdl->setChannelNames(names);
+                }
+            }
+        }
+
+    }
+    else // this an overlay info !
+    {
+        //        qDebug() << "Need to handle overlay content Type";
+        //        qDebug() << "Handling data for Tag" << hash << pos <<  tag;
+        SequenceFileModel& seq = (*_mscreens[hash])(row, col);
+
+        QCborArray ar = ob.take(QCborValue("Payload")).toArray();
+        for (int item = 0; item < ar.size(); ++item)
+        {
+            auto payload = ar[item].toMap();
+
+            QByteArray data = payload.take(QCborValue("BinaryData")).toByteArray();
+
+            //            qDebug() << payload.toJsonObject();
+            auto datasizes =  payload.value("DataSizes").toArray();
+            int size = 0;
+            for (int i = 0; i < datasizes.size(); ++i)
+                size += datasizes.at(i).toInteger();
+
+            if (size == 0 || data.size() != size)
+            {
+                qDebug() << "Error while gathering data (expected" << size << "received" << data.size() << ")";
+                return mdls;
+            }
+
+            unsigned long long chans = 0;
+            for (int i = 0; i < datasizes.size(); ++i)
+            {
+
+                int r = payload.value(QCborValue("Rows")).toInteger(), c = payload.value(QCborValue("Cols")).toInteger();
+                int cvtype = payload.value(QCborValue("cvType")).toInteger();
+
+                unsigned long long len = r * c * payload.value(QCborValue("DataTypeSize")).toInteger() ;
+                cv::Mat im(r, c, cvtype, &(data.data()[chans]));
+
+                chans += len;
+
+                int t = ob.value(QCborValue("TimePos")).toInteger(),
+                        f = ob.value(QCborValue("FieldId")).toInteger(),
+                        z = ob.value(QCborValue("zPos")).toInteger(),
+                        ch = ob.value(QCborValue("channel")).toInteger();
+
+                int cc = datasizes.size() > 1  ? i+1 : ch;
+
+                QString fname =  QString(":/mem/%1_%2_%3_%4_T%5F%6Z%7C%8.png")
+                        .arg(hash)
+                        .arg(tag)
+                        .arg(ob.value(QCborValue("Hash")).toString())
+                        .arg(pos)
+                        .arg(t)
+                        .arg(f)
+                        .arg(z)
+                        .arg(cc)
+                        ;
+
+
+                StructuredMetaData data;
+                data.setContent(im.clone());
+                if (ob.contains(QCborValue("ChannelNames")))
+                {
+                    QStringList names;
+                    auto ar = ob.value(QCborValue("ChannelNames")).toArray();
+                    for (int n = 0; n < ar.size(); ++n)
+                        names << ar[n].toString();
+                    QString tt = names.join(";");
+                    //                    qDebug()  << "Channel Names" << tt;
+                    data.setProperties("ChannelNames", tt);
+                }
+                //                qDebug() << "Adding Meta" << t << f << z << cc << tag ;//<< data.size();
+                seq.addMeta(t < 1 ? 1 : t, f < 1 ? 1 : f, z < 1 ? 1 : z, cc < 0 ? 1 : cc, tag, data);
+            }
+        }
+
+        rmdl = &seq;
+    }
+    if (rmdl)
+        mdls << rmdl;
+    return mdls;
+}
 
 
 QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QJsonObject& data)
@@ -2189,7 +2484,7 @@ void SequenceViewContainer::setCurrent(SequenceFileModel *mdl)
 
 QMutex ExperimentDataModel::_lock(QMutex::NonRecursive);
 
-ExperimentDataTableModel::ExperimentDataTableModel(ExperimentFileModel *parent, int nX, int nY): _owner(parent), nbX(nX), nbY(nY)
+ExperimentDataTableModel::ExperimentDataTableModel(ExperimentFileModel *parent, int nX, int nY): _owner(parent), nbX(nX), nbY(nY), modified(false)
 {
 
 }
@@ -2286,6 +2581,7 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
     bool newCol = false;
     QModelIndex idx;
 
+    modified = true;
     if (!_datanames.contains(XP))
     {
 
@@ -2351,6 +2647,8 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
 
     endInsertRows();
     if (newCol)  endInsertColumns();
+
+
 }
 
 
@@ -2493,9 +2791,12 @@ double Aggregate(QList<double>& f, QString& ag)
     return -1.;
 }
 
-int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
+int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 {
+//    qDebug() << "Should save to " << prefix << "state" << modified;
     if (prefix.isEmpty()) return 0;
+    if (!modified) return 0;
+
     int linecounter = 0;
 
     QSettings set;
@@ -2548,7 +2849,7 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
         }
         resFile.flush();
         file.close();
-        qDebug() << "Writing " << linecounter << "Data from" << _owner->name() << "to" << fname;
+        qDebug() << "Writing " << linecounter << "Data from" << _owner->name() << "to" << writePath+fname;
     }
 
 
@@ -2595,6 +2896,8 @@ int ExperimentDataTableModel::commitToDatabase(QString hash, QString prefix)
 
         meta.copy(writePath + "/"+ _owner->name() + "_tags.json");
     }
+
+    modified = false;
 
     return linecounter;
 }

@@ -26,9 +26,9 @@ set(CMAKE_C_FLAGS "-Wno-deprecated")
 endif(WIN32)
 
 set(Checkout_VERSION_MAJOR 1)
-set(Checkout_VERSION_MINOR 8)
+set(Checkout_VERSION_MINOR 9)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 6)
+set(Checkout_VERSION_RELEASE 0)
 
 message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
 
@@ -206,7 +206,7 @@ if(BUILD_PYTHON_SCRIPTING)
 #else(BUILD_PYTHON_SCRIPTING)
 endif(BUILD_PYTHON_SCRIPTING)
 
-add_subdirectory(Server)
+#add_subdirectory(Server)
 add_subdirectory(Main)
 
 if(BUILD_PLUGINS)

@@ -84,6 +84,9 @@ public:
   int getOverlayId(QString name);
   int getOverlayMax(QString name);
 
+  double getOverlayWidth();
+  void setOverlayWidth(double v);
+
   bool currentChanged();
   QList<QString> getMetaList();
   QList<QString> getMetaOptionsList(QString meta);
@@ -134,6 +137,7 @@ protected:
   static SequenceInteractor* _current;
   float last_scale;
   bool _updating, _changed;
+  double _overlay_width;
  };
 
 

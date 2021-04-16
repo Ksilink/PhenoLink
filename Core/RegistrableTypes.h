@@ -18,7 +18,7 @@ public:
 
 
     RegistrableParent():  _position(-1), _wasSet(false), _level(Basic), _isProduct(false),
-        _isOptional(false), _isFinished(false), _isPerChannel(false), _keepInMem(false), _optionalDefault(false)
+        _isOptional(false), _isFinished(false), _isPerChannel(false),_isSync(false), _keepInMem(false), _optionalDefault(false)
     {
     }
 
@@ -101,12 +101,13 @@ public:
         json["Comment"] = _comment;
         json["Position"] = _position;
         json["PerChannelParameter"] = _isPerChannel;
+        json["IsSync"] = _isSync;
         json["DataHash"] = _hash;
         json["Level"] = QString(_level == Basic ? "Basic" :
                                                   _level == Advanced ? "Advanced" :
                                                                        _level == VeryAdvanced ? "VeryAdvanced" : "Debug");
 
-
+        json["isSlider"] = false;
         if (!_enableIf.isEmpty())
         {
             QJsonArray en;
@@ -168,6 +169,19 @@ public:
         return *this;
     }
 
+    Self& perChannels()
+    {
+        _isPerChannel = true;
+        return *this;
+    }
+
+
+    Self& setSync(bool val = true)
+    {
+        _isSync = val;
+        return *this;
+    }
+
     //    virtual void clone()  = 0;
     virtual RegistrableParent* dup() = 0;
     void setHash(QString s) {_hash = s; /*qDebug() << "Data Hash" << _tag << _hash; */}
@@ -191,7 +205,7 @@ protected:
     Level _level;
     bool _isProduct, _isFinished;
     bool _isOptional, _optionalDefault;
-    bool _isPerChannel;
+    bool _isPerChannel, _isSync;
     QList<QPair<QString, int> > _enableIf;
     QString _group;
     bool _keepInMem;

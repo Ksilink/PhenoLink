@@ -172,7 +172,7 @@ void MainWindow::exportData()
 {
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/export.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                          | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                     | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -413,6 +413,25 @@ void MainWindow::retrievedPayload(QString hash)
 }
 
 
+void MainWindow::finishedJob()
+{
+    if (_StatusProgress)
+    {
+        _StatusProgress->setValue(_StatusProgress->value()+1);
+
+        if (_StatusProgress->value() == _StatusProgress->maximum())
+        {
+            QList<QPushButton*> list = ui->processingArea->findChildren<QPushButton*>();
+            foreach(QPushButton* b, list)
+                b->setEnabled(true);
+            QTime y(0, 0);
+            y = y.addMSecs(run_time.elapsed());
+            this->statusBar()->showMessage(QString("Processing finished: %1").arg(y.toString("mm:ss.zzz")));
+
+        }
+    }
+}
+
 void MainWindow::networkProcessFinished(QJsonArray dat)
 {
     QStringList finished_hash;
@@ -573,6 +592,7 @@ void MainWindow::networkRetrievedImage(QList<SequenceFileModel *> lsfm)
         }
         zone->refresh(m);
     }
+
 }
 
 void MainWindow::commitTableToDatabase()
