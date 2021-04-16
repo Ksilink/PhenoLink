@@ -1058,8 +1058,10 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
 
 
             auto wi = findChild<QDoubleSpinBox*>(miname), wa = findChild<QDoubleSpinBox*>(maname);
-            t1->setValue(wi->value());
-            t2->setValue(wa->value());
+            if (wi)
+                t1->setValue(wi->value());
+            if (wa)
+                t2->setValue(wa->value());
             _syncmapper[miname] = t1;
             _syncmapper[maname] = t2;
         }

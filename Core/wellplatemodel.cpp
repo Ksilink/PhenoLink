@@ -2484,9 +2484,10 @@ void SequenceViewContainer::setCurrent(SequenceFileModel *mdl)
 
 QMutex ExperimentDataModel::_lock(QMutex::NonRecursive);
 
-ExperimentDataTableModel::ExperimentDataTableModel(ExperimentFileModel *parent, int nX, int nY): _owner(parent), nbX(nX), nbY(nY), modified(false)
+ExperimentDataTableModel::ExperimentDataTableModel(ExperimentFileModel *parent, int nX, int nY):
+    _owner(parent), nbX(nX), nbY(nY),
+    modified(false), saveTimer(-1)
 {
-
 }
 
 QPoint ExperimentDataTableModel::stringToPos(QString Spos)
@@ -2572,9 +2573,29 @@ INSERT INTO players (user_name, age)
 SELECT 'steven', 32
 WHERE (Select Changes() = 0);*/
 
+void ExperimentDataTableModel::timerEvent(QTimerEvent *event)
+{
+    if (saveTimer == event->timerId())
+    {
+        commitToDatabase(QString(), _commitName);
+    }
+}
 
 void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int time, int chan, int x, int y, QVector<double> data)
 {
+    using namespace std::chrono;
+
+    if (saveTimer == -1)
+    {
+        saveTimer = startTimer(seconds(30));
+    }
+    else
+    {
+        killTimer(saveTimer);
+        saveTimer = startTimer(seconds(30));
+    }
+
+
     //  qDebug() << "add Data" << XP << field << stackZ << time << chan << x << y;
     static quint64 MaxY = 50, MaxChan = 30, MaxTime = 1000, MaxField = 100, MaxZ = 1000;
     DataHolder h;
@@ -2931,6 +2952,7 @@ QString ExperimentDataTableModel::getMeta(int row, int col) const
     if (_owner->hasTag() && col == 5) return dh.tags;
     return QString();
 }
+
 
 QString& ExperimentDataTableModel::getAggregationMethod(QString XP)
 {

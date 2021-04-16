@@ -82,8 +82,8 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             auto hash = oj["DataHash"].toString();
             ScreensHandler::getHandler().addDataToDb(hash, commit, oj, false);
             qDebug() << "Process finished" << finished << commit << NetworkProcessHandler::handler().remainingProcess().size();
-//            if (finished)
-            ScreensHandler::getHandler().commitAll();
+            if (finished)
+                ScreensHandler::getHandler().commitAll();
         }
     }
 

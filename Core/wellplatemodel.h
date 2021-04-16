@@ -319,6 +319,8 @@ public:
     QVariant getData(int row, QString) const;
     QString getMeta(int row, int col) const;
 
+    void timerEvent(QTimerEvent *event);
+
 protected:
     ExperimentFileModel* _owner;
     QString _commitName;
@@ -334,6 +336,8 @@ protected:
     void bindValue(QSqlQuery& select, DataHolder& h, QString key = QString());
 
     bool modified;
+
+    int saveTimer;
 
 public:
 
