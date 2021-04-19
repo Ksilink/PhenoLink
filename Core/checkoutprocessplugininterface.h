@@ -207,7 +207,11 @@ public:
     QString plateName()
     {
         return _callParams["XP"].toString().split('/').last();
-//        return _callParams["PlateName"].toString();
+    }
+
+    QString commitName()
+    {
+        return _callParams["CommitName"].toString();
     }
 
 

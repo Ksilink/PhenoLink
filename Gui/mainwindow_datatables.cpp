@@ -677,7 +677,7 @@ void MainWindow::addImageWorkbench()
 {
     int count = 1;
     for (int i = 0; i < ui->tabWidget->count(); ++i)
-        if (ui->tabWidget->tabText(i).startsWith("Image Workbench")) count++;
+        if (ui->tabWidget->widget(i)->objectName().startsWith("Image Workbench")) count++;
 
     ScrollZone* s = new ScrollZone(ui->tabWidget);
 
