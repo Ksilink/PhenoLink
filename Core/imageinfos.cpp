@@ -72,7 +72,7 @@ ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QStr
     ImageInfos* ifo = nullptr;
 
     // FIXME: Change stored image infos key : use XP / Workbench / deposit group
-    QString k = key.isEmpty() ? ImageInfos::key() : key;
+    QString k = QString("/%1").arg(key.isEmpty() ? ImageInfos::key() : key);
 
     if (data->_platename_palette_color.contains(platename + k)
             || data->_platename_palette_color.contains(platename))
@@ -91,6 +91,13 @@ ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QStr
     
     return ifo;
 }
+
+ QMap<QString, ImageInfos*> ImageInfos::getInstances()
+{
+    QPair<ImageInfosShared*, QMap<QString, ImageInfos*>*> t = instanceHolder();
+    return *t.second;
+}
+
 
 void ImageInfos::deleteInstance()
 {

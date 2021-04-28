@@ -531,12 +531,14 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     QString writePath = QString("%1/%2/Checkout_Results/").arg(dir.absolutePath())
             .arg(lsfm[0]->getOwner()->property("project"))
             ;
+
     dir.mkpath(writePath + st);
     QString fn = writePath + st +
             proc.replace("/", "_").replace(" ", "_") + "_" +
             QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss")+".json";
 
-    qDebug() << "Saving run params to:"<<fn;
+    qDebug() << "Saving run params to:" << fn;
+
     QJsonDocument doc(stored);
     QFile saveFile(fn);
 

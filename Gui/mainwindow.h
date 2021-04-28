@@ -32,7 +32,7 @@ class QHBoxLayout;
 class ctkPopupWidget;
 class CheckoutCorePythonInterface;
 class QWinTaskbarProgress;
-
+class QCloseEvent;
 
 #include "experimentworkbenchcontrol.h"
 
@@ -113,6 +113,8 @@ protected:
 
 
 	void conditionChanged(QWidget* sen, int val);
+    void closeEvent(QCloseEvent *ev);
+
 
 private slots:
     void deleteDirectoryPath();
@@ -221,6 +223,9 @@ public slots:
     void finishedJob();
 
     void setOverlayWidth(double w);
+    void renameWorkbench();
+
+    void exportContent();
 protected slots:
     void updateProcessStatusMessage(QJsonArray ob);
 

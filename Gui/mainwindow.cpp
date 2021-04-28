@@ -82,6 +82,7 @@
 #include "Core/networkprocesshandler.h"
 
 #include <QErrorMessage>
+#include <QCloseEvent>
 #include <guiserver.h>
 
 DllGuiExport QFile _logFile;
@@ -265,10 +266,12 @@ void MainWindow::on_tabWidget_customContextMenuRequested(const QPoint &pos)
     /// FIXME: Need to construct some plugin based solution to add query data
 
     QAction* addWb = menu.addAction(tr("Add an &Image Workbench tab"), this, SLOT(addImageWorkbench()));
+    QAction* rename = menu.addAction(tr("Rename Workbench tab"), this, SLOT(renameWorkbench()));
 
     QAction* addWflw = menu.addAction(tr("Add a &Workflow tab"));
     QAction* addExpWb = menu.addAction(tr("Add an &Experiment Workbench tab"), this, SLOT(addExperimentWorkbench()));
 
+    Q_UNUSED(rename);
     Q_UNUSED(addWb);
     Q_UNUSED(addExpWb);
 
@@ -420,6 +423,21 @@ void MainWindow::overlayChanged(QString id)
         _sinteractor.current()->overlayChange(name, id);
     }
 }
+
+void MainWindow::exportContent()
+{
+    if (sender())
+    {
+        QString name = sender()->objectName();
+        QString fname = QFileDialog::getSaveFileName(this, "Save File",
+                                     QDir::homePath(), tr("csv File (*.csv)"));
+        if (!fname.isEmpty())
+        {
+            _sinteractor.current()->exportOverlay(name, fname);
+        }
+    }
+}
+
 
 void MainWindow::setTile(int tile)
 {
@@ -709,6 +727,10 @@ void MainWindow::updateCurrentSelection()
             bvl->addWidget(new QLabel(ov, wwid), itms, 1);
             bvl->addWidget(setupTilePosition(new QSpinBox(wwid), ov, fo), itms, 2);
             bvl->addWidget(setupOverlaySelection(new QComboBox(wwid), ov, fo), itms, 3);
+            auto but = new QPushButton("Export");
+            but->setObjectName(ov);
+            connect(but, SIGNAL(clicked()), this, SLOT(exportContent()));
+            bvl->addWidget(but, itms, 4);
             itms++;
         }
 
@@ -1244,6 +1266,9 @@ void MainWindow::setupProcessCall(QJsonObject obj)
     lb->setObjectName(process);
     lb->setToolTip(obj["Comment"].toString());
     layo->addRow(lb);
+
+    auto cb = new QComboBox();
+    layo->addRow(cb);
 
     // FIXME: Properly handle the "Position" of parameter
     // FIXME: Properly handle other data types
@@ -2244,13 +2269,48 @@ void MainWindow::exportToCellProfiler()
 bool MainWindow::close()
 {
     //  CheckoutProcess::handler().exitServer();
+
+    // Save state
+
+
+    auto imf= ui->tabWidget->findChildren<ImageForm*>();
+
+    qDebug() << "Closing" << imf.size();
+
+    QSet<ImageForm*> inters;
+
+    for (auto frm : imf)
+        inters.insert(frm);
+
+    qDebug() << "Preparing to store image infos" << inters.size();
+
+    for (auto frm: inters)
+        for (unsigned i = 0; i < frm->getInteractor()->getChannels(); ++i)
+        {
+            auto ifo = frm->getInteractor()->getChannelImageInfos(i+1);
+            qDebug() << frm->getInteractor()->getExperimentName() << i << ifo->getDispMin() << ifo->getDispMax();
+        }
+
+
     return QMainWindow::close();
 }
+
+
 
 void MainWindow::on_action_Exit_triggered()
 {
     emit close();
 }
+
+void MainWindow::closeEvent(QCloseEvent *ev)
+{
+    bool res = close();
+    if (res)
+        ev->accept();
+    else
+       ev->ignore();
+}
+
 
 void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
 {

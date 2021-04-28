@@ -120,6 +120,41 @@ QString SequenceInteractor::getOverlayCode(QString name)
     return overlay_coding[name].first;
 }
 
+void SequenceInteractor::exportOverlay(QString name, QString tofile)
+{
+    if (!_mdl)
+        return;
+    int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
+
+    for (int c = 1; c <= cns;++c)
+    {
+        QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
+        if (data.contains(name))
+        {
+            auto k= data[name];
+            QString cols = k.property("ChannelNames");
+            cols = cols.replace(';', ',');
+            QFile of(tofile);
+            if (of.open(QIODevice::WriteOnly | QIODevice::Text))
+            {
+                QTextStream str(&of);
+                str << cols << "\r\n";
+                cv::Mat& feat = k.content();
+
+                for (int r = 0; r < feat.rows; ++r)
+                {
+                    for (int c = 0; c < feat.cols; ++c)
+                    {
+                        if (c != 0) str << ',';
+                        str << feat.at<float>(r,c);
+                    }
+                    str << "\r\n";
+                }
+            }
+        }
+    }
+}
+
 void SequenceInteractor::overlayChange(QString name, QString id)
 {
     overlay_coding[name].first = id;
@@ -1294,7 +1329,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
     //    SequenceFileModel::Channel& chans = _mdl->getChannelsFiles(_timepoint, _field, _zpos);
 
     int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
-//    qDebug() << "Overlays :" << _timepoint << _field << _zpos << cns;
+    //    qDebug() << "Overlays :" << _timepoint << _field << _zpos << cns;
     for (int c = 1; c <= cns;++c)
     {
         QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
@@ -1355,7 +1390,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                                     height= feat.at<float>(r, h);
                             item->setRect(QRectF(x,y,width,height));
                             //qDebug() << r << x << y << width << height;
-                            QString tip;
+                            QString tip= QString("Id: %1\r\n").arg(r);
                             for (auto p : feats)
                             {
                                 float fea = feat.at<float>(r,p);
@@ -1383,7 +1418,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                                     height= feat.at<float>(r, h);
                             item->setRect(QRectF(x,y,width,height));
                             //qDebug() << r << x << y << width << height;
-                            QString tip;
+                            QString tip = QString("Id: %1\r\n").arg(r);
                             for (auto p : feats)
                             {
                                 float fea = feat.at<float>(r,p);
@@ -1493,7 +1528,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                                 QPen p(qRgb(colo[0], colo[1], colo[2]));
                                 p.setWidthF(_overlay_width);
                                 item->setPen(p);
-//                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
+                                //                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
                             }
                         }
                         else
@@ -1514,7 +1549,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                                 QPen p(qRgb(colo[0], colo[1], colo[2]));
                                 p.setWidthF(_overlay_width);
                                 item->setPen(p);
-//                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
+                                //                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
                             }
                         res << group;
 

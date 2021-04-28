@@ -74,6 +74,8 @@
 
 #include "ScreensDisplay/screensgraphicsview.h"
 
+#include <QInputDialog>
+
 void MainWindow::on_computeFeatures_currentChanged(int index)
 {
     QTabWidget* cf = ui->computeFeatures;
@@ -671,6 +673,16 @@ void MainWindow::updateProcessStatusMessage(QJsonArray oa)
     }
 }
 
+
+void MainWindow::renameWorkbench()
+{
+    bool ok;
+    QString text = QInputDialog::getText(this, "Change Workbench name",
+                                         tr("Workbench name:"), QLineEdit::Normal,
+                                         ui->tabWidget->tabText(ui->tabWidget->currentIndex()), &ok);
+    if (ok && !text.isEmpty())
+        ui->tabWidget->setTabText(ui->tabWidget->currentIndex(), text);
+}
 
 
 void MainWindow::addImageWorkbench()

@@ -55,6 +55,7 @@ public:
     QStringList getChannelNames();
 
     void updateDecorator(QList<QGraphicsItem *> decors);
+    SequenceInteractor* getInteractor();
 protected:
     virtual void resizeEvent(QResizeEvent * event) ;
     virtual void mousePressEvent(QMouseEvent *event);

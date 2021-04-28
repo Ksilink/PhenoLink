@@ -2203,7 +2203,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue &data
     }
 
 
-    ExperimentFileModel* mdl =  _mscreens[hash]->getSibling( tag );
+    ExperimentFileModel* mdl =  _mscreens[hash]->getSibling( tag + hash );
     mdl->setProperties("hash", hash);
     mdl->setName(_mscreens[hash]->name());
 

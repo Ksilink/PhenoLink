@@ -68,6 +68,8 @@ public:
     static ImageInfos* getInstance(SequenceInteractor* par, QString fname, QString platename,int channel,
                                    bool& exists, QString key = QString());
 
+    static QMap<QString, ImageInfos *> getInstances();
+
     void deleteInstance();
 
 

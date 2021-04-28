@@ -573,6 +573,8 @@ void ImageForm::updateDecorator(QList<QGraphicsItem*> decors)
     _decorators = decors;
 }
 
+SequenceInteractor *ImageForm::getInteractor() {return _interactor; }
+
 
 void ImageForm::prevImClicked()
 {
