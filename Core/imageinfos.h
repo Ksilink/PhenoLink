@@ -151,7 +151,8 @@ public:
 
     double getOverlayWidth();
 
-
+    QJsonObject getStoredParams();
+    void timerEvent(QTimerEvent *event);
 
 public slots:
     void changeColorState(int chan);
@@ -184,7 +185,6 @@ signals:
 
 protected:
 
-    void timerEvent(QTimerEvent *event);
 
     QString loadedWithkey;
     QString channelName;

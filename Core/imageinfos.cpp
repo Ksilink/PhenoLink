@@ -24,6 +24,25 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     loadedWithkey = key();
     //    qDebug() << "ImageInfos" << this << thread();
     //qDebug() << "Imageinfos" << this << fname << platename << par;
+    auto pl = _plate.split("/").first();
+    QJsonObject ob = getStoredParams();
+    int l = QString("%1").arg(channel+1).length();
+    pl=pl.left(pl.length()-l);
+
+//        qDebug() << "Searching plate params" << pl;
+//        qDebug() << ob.keys();
+    if (ob.contains(pl))
+    {
+        auto ar = ob[pl].toArray();
+        if (channel <= ar.size())
+        {
+            auto mima = ar[channel-1].toObject();
+            _ifo._platename_to_colorCode[_plate]._dispMin = mima["min"].toDouble();
+            _ifo._platename_to_colorCode[_plate]._dispMax = mima["max"].toDouble();
+        }
+
+    }
+
     _ifo._platename_to_infos[_plate].append(this);
 }
 
@@ -454,7 +473,30 @@ int ImageInfos::getOverlayMax(QString name)
 
 double ImageInfos::getOverlayWidth()
 {
-  return _parent->getOverlayWidth();
+    return _parent->getOverlayWidth();
+}
+
+QJsonObject ImageInfos::getStoredParams()
+{
+
+    static QJsonObject ob;
+
+    if (ob.isEmpty())
+    {
+        QDir dir( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
+
+        QFile cbfile(dir.path() + "/context.cbor");
+        if (!cbfile.open(QIODevice::ReadOnly)) {
+            qWarning("Couldn't open save file.");
+            ob.insert("NoFile", "Empty"); // to avoid trying to reload on each call if empty file
+            return ob;
+        }
+        QByteArray saveData = cbfile.readAll();
+        ob = QCborValue::fromCbor(saveData).toMap().toJsonObject();
+    }
+
+
+    return ob;
 }
 
 

@@ -430,7 +430,7 @@ void MainWindow::exportContent()
     {
         QString name = sender()->objectName();
         QString fname = QFileDialog::getSaveFileName(this, "Save File",
-                                     QDir::homePath(), tr("csv File (*.csv)"));
+                                                     QDir::homePath(), tr("csv File (*.csv)"));
         if (!fname.isEmpty())
         {
             _sinteractor.current()->exportOverlay(name, fname);
@@ -464,6 +464,8 @@ ctkDoubleRangeSlider* MainWindow::RangeWidgetSetup(ctkDoubleRangeSlider* w, Imag
     w->setSymmetricMoves(false);
     connect(w, SIGNAL(valuesChanged(double, double)), this, SLOT(rangeChange(double, double)), Qt::UniqueConnection);
     connect(fo, SIGNAL(updateRange(double, double)), w, SLOT(setMinMax(double, double)));
+
+    fo->timerEvent(NULL);
 
     return w;
 }
@@ -1150,9 +1152,9 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
                 box->setCurrentIndex(par["Default"].toInt() - 1);
 
             wid = box;
-        }        
-//        else
-//            qDebug() << "Not handled" << par ;
+        }
+        //        else
+        //            qDebug() << "Not handled" << par ;
         /// FIXME: Add GUI for Containers & complex datatypes
     }
     if (par.contains("isString"))
@@ -1323,19 +1325,19 @@ void MainWindow::setupProcessCall(QJsonObject obj)
                 par["guiChan"] = channels-1;
 
                 QWidget* w = widgetFromJSON(par);
-                   if (w)
-                    {
+                if (w)
+                {
                     QString nm;
 
                     if (_channelsNames.size() == _channelsIds.size())
                         nm = QString(_channelsNames[list.at(channels-1)]);
                     else
-                        nm = QString("Channel %1").arg(p++);             
+                        nm = QString("Channel %1").arg(p++);
 
                     l->addRow(nm, w);
 
                     w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(channels));
-//                    qDebug() << "Created Widget:" << w << w->objectName();
+                    //                    qDebug() << "Created Widget:" << w << w->objectName();
 
                 }
 
@@ -1354,7 +1356,7 @@ void MainWindow::setupProcessCall(QJsonObject obj)
                 int end = par["endChannel"].toInt();
                 end = end < 0 ? list.size() : end;
                 int c_def = par.contains("Default") ? par["Default"].toInt() : start;
-//                qDebug() << "Mapping data Per channel value";
+                //                qDebug() << "Mapping data Per channel value";
                 foreach(int i, list)
                 {
 
@@ -1390,12 +1392,12 @@ void MainWindow::setupProcessCall(QJsonObject obj)
                     {
                         w->setAttribute(Qt::WA_DeleteOnClose, true);
                         w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(c));
-//                        if (par["PerChannelParameter"].toBool())
-//                            lay->addRow(w);
-//                        else
+                        //                        if (par["PerChannelParameter"].toBool())
+                        //                            lay->addRow(w);
+                        //                        else
                         lay->addRow(par["Tag"].toString(), w);
                         w->setToolTip(par["Comment"].toString());
-//                        qDebug() << "Created Widget:" << w;
+                        //                        qDebug() << "Created Widget:" << w;
 
                     }
                     c++;
@@ -1709,7 +1711,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                  | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -2198,7 +2200,7 @@ void MainWindow::exportToCellProfiler()
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                            | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                       | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -2272,25 +2274,42 @@ bool MainWindow::close()
 
     // Save state
 
-
-    auto imf= ui->tabWidget->findChildren<ImageForm*>();
-
-    qDebug() << "Closing" << imf.size();
+    auto imf = ui->tabWidget->findChildren<ImageForm*>();
 
     QSet<ImageForm*> inters;
 
     for (auto frm : imf)
         inters.insert(frm);
 
-    qDebug() << "Preparing to store image infos" << inters.size();
+    QDir dir( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
+
+    QFile cbfile(dir.path() + "/context.cbor");
+    if (!cbfile.open(QIODevice::ReadWrite)) {
+        qWarning("Couldn't open save file.");
+        return false;
+    }
+    QByteArray saveData = cbfile.readAll();
+
+    QJsonObject meta = QCborValue::fromCbor(saveData).toMap().toJsonObject();
 
     for (auto frm: inters)
+    {
+        auto xp = frm->getInteractor()->getExperimentName();
+        QJsonArray mima;
         for (unsigned i = 0; i < frm->getInteractor()->getChannels(); ++i)
         {
             auto ifo = frm->getInteractor()->getChannelImageInfos(i+1);
-            qDebug() << frm->getInteractor()->getExperimentName() << i << ifo->getDispMin() << ifo->getDispMax();
+            QJsonObject ob;
+            ob.insert("min", ifo->getDispMin());
+            ob.insert("max", ifo->getDispMax());
+//            qDebug() << xp << i << ifo->getDispMin() << ifo->getDispMax();
+            mima.insert(i, ob);
         }
+        meta.insert(xp, mima);
+    }
 
+    cbfile.seek(0); // rewind file
+    cbfile.write(QCborValue::fromJsonValue(meta).toCbor());
 
     return QMainWindow::close();
 }
@@ -2304,11 +2323,13 @@ void MainWindow::on_action_Exit_triggered()
 
 void MainWindow::closeEvent(QCloseEvent *ev)
 {
+//    qDebug() << "Close Event !";
+
     bool res = close();
     if (res)
         ev->accept();
     else
-       ev->ignore();
+        ev->ignore();
 }
 
 
@@ -2358,7 +2379,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
                                                       set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;
