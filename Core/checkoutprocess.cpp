@@ -201,10 +201,13 @@ public:
         }
         // Plugin should be deletable now, should not be saved anywhere
         delete plugin;
+        plugin=0;
     }
 
     ~PluginRunner()
     {
+        if (plugin)
+            delete plugin;
     }
 
 protected:
@@ -942,6 +945,7 @@ std::vector<unsigned char> CheckoutProcess::detachPayload(QString hash)
                 //needs to be maintained if multiple images/results are produced by plugin
                 delete p; */
         }
+
     }
     else { qDebug() << "Expecting hash (" << hash << ") to be present in the server, but was not found, skipping..."; }
     //    qDebug() << "Detach " << hash << r.size();
