@@ -202,9 +202,9 @@ cv::Mat ImageInfos::image(float scale, bool reload)
         _ifo._platename_to_colorCode[_plate].max = std::max(max, _ifo._platename_to_colorCode[_plate].max);
 
         if (_ifo._platename_to_colorCode[_plate]._dispMax == -std::numeric_limits<float>::infinity())
-            _ifo._platename_to_colorCode[_plate]._dispMax = _ifo._platename_to_colorCode[_plate]._dispMax;
+            _ifo._platename_to_colorCode[_plate]._dispMax = _ifo._platename_to_colorCode[_plate].max;
         if (_ifo._platename_to_colorCode[_plate]._dispMin == std::numeric_limits<float>::infinity())
-            _ifo._platename_to_colorCode[_plate]._dispMin = _ifo._platename_to_colorCode[_plate]._dispMin;
+            _ifo._platename_to_colorCode[_plate]._dispMin = _ifo._platename_to_colorCode[_plate].min;
 
         _nbcolors = max-min;
         if (max >= 16) _nbcolors+=1;
