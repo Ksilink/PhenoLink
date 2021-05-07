@@ -562,7 +562,7 @@ QDoubleSpinBox *MainWindow::setupOverlayWidth(QDoubleSpinBox *box, QString itemN
         box->setObjectName(QString(itemName));
         box->setAttribute(Qt::WA_DeleteOnClose);
         box->setMinimum(0);
-        box->setMaximum(10);
+        box->setMaximum(50);
         box->setValue(ifo->getOverlayWidth());
     }
     box->setToolTip(QString("Overlay Width %1 Overlay").arg(itemName));

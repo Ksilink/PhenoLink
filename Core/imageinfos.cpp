@@ -196,7 +196,7 @@ cv::Mat ImageInfos::image(float scale, bool reload)
                 else if ( v > max) max = v;
             }
 
-        qDebug() << "Plate is: " << _plate;
+//        qDebug() << "Plate is: " << _plate;
 
         _ifo._platename_to_colorCode[_plate].min = std::min(min, _ifo._platename_to_colorCode[_plate].min);
         _ifo._platename_to_colorCode[_plate].max = std::max(max, _ifo._platename_to_colorCode[_plate].max);
@@ -595,11 +595,11 @@ void ImageInfos::rangeChanged(double mi, double ma)
         ma != _ifo._platename_to_colorCode[_plate]._dispMax)
     {
         _modified = true;
-
         _ifo._platename_to_colorCode[_plate]._dispMin = mi;
         _ifo._platename_to_colorCode[_plate]._dispMax = ma;
-        Update();
     }
+
+    Update();
 }
 
 // Changing the ranges max/min value does not need to update the image, also no need to set modified flag
