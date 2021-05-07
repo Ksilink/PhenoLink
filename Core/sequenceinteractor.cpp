@@ -1376,7 +1376,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                         f = feats.first();
                     getMinMax(feat, f, cmin, cmax);
 
-                    qDebug() << "Colormaping: " << it.key() << cmin << cmax;
+//                    qDebug() << "Colormaping: " << it.key() << cmin << cmax;
 
                     using namespace colormap ;
 
@@ -1436,7 +1436,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                             float fea = feat.at<float>(r,f);
                             auto colo = pal(fea);
                             QPen p(qRgb(colo[0], colo[1], colo[2]));
-                            qDebug() << "Color" << r  << f << fea << colo[0] << colo[1] << colo[2];
+//                            qDebug() << "Color" << r  << f << fea << colo[0] << colo[1] << colo[2];
 
 
                             p.setWidthF(_overlay_width);

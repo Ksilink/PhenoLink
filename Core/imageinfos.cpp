@@ -624,7 +624,7 @@ void ImageInfos::changeFps(double fps)
 void ImageInfos::rangeMinValueChanged(double mi)
 {
     _modified = true;
-    qDebug() << "Image infos range min" << this << mi ;
+//    qDebug() << "Image infos range min" << this << mi ;
     _ifo._platename_to_colorCode[_plate]._dispMin = mi;
 
     Update();
@@ -633,7 +633,7 @@ void ImageInfos::rangeMinValueChanged(double mi)
 void ImageInfos::rangeMaxValueChanged(double ma)
 {
     _modified = true;
-    qDebug() << "Image infos Range max" << this << ma;
+//    qDebug() << "Image infos Range max" << this << ma;
     _ifo._platename_to_colorCode[_plate]._dispMax = ma;
 
     Update();
