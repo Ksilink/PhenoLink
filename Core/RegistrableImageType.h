@@ -261,7 +261,7 @@ public:
         {
             QJsonArray t = json["ChannelNames"].toArray();
             for (int i = 0; i < t.size(); ++i)
-                _vectorNames << t[i].toString();
+                _vectorNames << t[i].toString().simplified();
         }
     }
 

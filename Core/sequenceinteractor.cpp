@@ -157,7 +157,9 @@ void SequenceInteractor::exportOverlay(QString name, QString tofile)
 
 void SequenceInteractor::overlayChange(QString name, QString id)
 {
+//    qDebug() << "Overlay selection changed" << name << id;
     overlay_coding[name].first = id;
+    modifiedImage();
 }
 
 void SequenceInteractor::overlayChangeCmap(QString name, QString id)
@@ -996,7 +998,7 @@ void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
     // get a colormap and rescale it
     auto pal = palettes.at(palette);
     //    pal.rescale(mi, ma); // We are using already scaled data!!
-    pal.rescale(0, 1);//
+    //pal.rescale(0, 1);//
     float mami = ma - mi;
     for (int i = 0; i < rows; ++i)
     {
@@ -1352,7 +1354,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                     // Find item pos:
                     cv::Mat& feat = k.content();
 
-                    int t,l,w,h, f;
+                    int t,l,w,h, f = -1;
                     QStringList lcols = cols.split(";").mid(0, feat.cols);
                     QList<int> feats;
 
@@ -1364,17 +1366,21 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                         else if (s.contains("_Width")) w = i;
                         else if (s.contains("_Height")) h = i;
                         else { feats << i;  }
+
+                        if (overlay_coding.contains(it.key()) && s == overlay_coding[it.key()].first)
+                            f = i;
                     }
 
-                    float cmin, cmax;
-                    f = feats.first();
+                    float cmin, cmax;                   
+                    if (f < 0)
+                        f = feats.first();
                     getMinMax(feat, f, cmin, cmax);
 
+                    qDebug() << "Colormaping: " << it.key() << cmin << cmax;
 
                     using namespace colormap ;
 
-                    auto pal = palettes.at("jet");
-                    pal.rescale(cmin, cmax);
+                    auto pal = palettes.at("jet").rescale(cmin, cmax);
 
 
                     auto group = new QGraphicsItemGroup(parent);
@@ -1399,6 +1405,8 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                             item->setToolTip(tip.trimmed());
                             float fea = feat.at<float>(r,f);
                             auto colo = pal(fea);
+
+
                             QPen p(qRgb(colo[0], colo[1], colo[2]));
                             p.setWidthF(_overlay_width);
                             item->setPen(p);
@@ -1428,6 +1436,9 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                             float fea = feat.at<float>(r,f);
                             auto colo = pal(fea);
                             QPen p(qRgb(colo[0], colo[1], colo[2]));
+                            qDebug() << "Color" << r  << f << fea << colo[0] << colo[1] << colo[2];
+
+
                             p.setWidthF(_overlay_width);
                             item->setPen(p);
                             //                item->setBrush(); // FIXME: Add color feature
@@ -1489,6 +1500,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                         int t,l,  f;
                         QStringList lcols = cols.split(";").mid(0, feat.cols);
 
+                        //overlay_coding
                         for (int i = 0; i < lcols.size(); ++i)
                         {
                             QString s = lcols[i];
@@ -1504,8 +1516,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
 
                         using namespace colormap ;
                         // "jet" should be replaced by: overlay_coding[name].second :)
-                        auto pal = palettes.at("jet");
-                        pal.rescale(cmin, cmax);
+                        auto pal = palettes.at("jet").rescale(cmin, cmax);
 
                         auto group = new QGraphicsItemGroup(parent);
 

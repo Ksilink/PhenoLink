@@ -54,8 +54,8 @@ public:
 
   void queryPayload(QString hash);
   void deletePayload(QString hash);
-  void attachPayload(QString hash, std::vector<unsigned char> data, bool mem = false, size_t pos = 0);
 
+  void attachPayload(QString hash, std::vector<unsigned char> data, bool mem = false, size_t pos = 0);
   void attachPlugin(QString hash, CheckoutProcessPluginInterface* p);
 
   std::vector<unsigned char> detachPayload(QString hash);

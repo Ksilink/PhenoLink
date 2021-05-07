@@ -2824,7 +2824,10 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
     QString dataname;
     QMap<unsigned, QMap<QString, QList<double> >    >  factor;
 
-    foreach (QString key, _datanames)
+    QStringList datas(_datanames.begin(), _datanames.end());
+    datas.sort();
+
+    foreach (QString key, datas)
     {
         dataname += QString(",%1").arg(key);
     }
@@ -2857,7 +2860,7 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
                     << h.chan << "," << (_owner->getTags(h.pos).join(";"));
 
 
-            foreach (QString key, _datanames)
+            foreach (QString key, datas)
             {
                 double v = h.data[key].first();
                 resFile << "," << v ;
@@ -2894,7 +2897,7 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
             QString pos = posToString(npos);
             resFile << _owner->name() << "," << pos << "," << (_owner->getTags(npos).join(";"));
 
-            foreach (QString key, _datanames)
+            foreach (QString key, datas)
             {
                 double v = Aggregate(it.value()[key], getAggregationMethod(key));
                 resFile << "," << v;

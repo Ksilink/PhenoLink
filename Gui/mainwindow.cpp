@@ -456,9 +456,16 @@ ctkDoubleRangeSlider* MainWindow::RangeWidgetSetup(ctkDoubleRangeSlider* w, Imag
         w->setAttribute(Qt::WA_DeleteOnClose);
         w->setObjectName(QString("Channel%1").arg(channel));
 
+        QSettings set;
 
-        w->setRange(fo->getMin(), fo->getMax());
-        w->setPositions(fo->getDispMin(), fo->getDispMax());
+        double rat = set.value("RefreshSliderRatio", 0.05).toDouble();
+        double dv = rat *( fo->getDispMax() - fo->getDispMin());
+        w->setMinMax(fo->getDispMin() - dv,
+                     fo->getDispMax() + dv);
+
+        w->setMinimumValue(fo->getDispMin());
+        w->setMaximumValue(fo->getDispMax());
+
     }
 
     w->setSymmetricMoves(false);

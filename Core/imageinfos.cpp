@@ -196,13 +196,15 @@ cv::Mat ImageInfos::image(float scale, bool reload)
                 else if ( v > max) max = v;
             }
 
+        qDebug() << "Plate is: " << _plate;
+
         _ifo._platename_to_colorCode[_plate].min = std::min(min, _ifo._platename_to_colorCode[_plate].min);
         _ifo._platename_to_colorCode[_plate].max = std::max(max, _ifo._platename_to_colorCode[_plate].max);
 
         if (_ifo._platename_to_colorCode[_plate]._dispMax == -std::numeric_limits<float>::infinity())
-            _ifo._platename_to_colorCode[_plate]._dispMax = _ifo._platename_to_colorCode[_plate].max;
+            _ifo._platename_to_colorCode[_plate]._dispMax = _ifo._platename_to_colorCode[_plate]._dispMax;
         if (_ifo._platename_to_colorCode[_plate]._dispMin == std::numeric_limits<float>::infinity())
-            _ifo._platename_to_colorCode[_plate]._dispMin = _ifo._platename_to_colorCode[_plate].min;
+            _ifo._platename_to_colorCode[_plate]._dispMin = _ifo._platename_to_colorCode[_plate]._dispMin;
 
         _nbcolors = max-min;
         if (max >= 16) _nbcolors+=1;
@@ -409,29 +411,13 @@ void ImageInfos::setTile(int tile)
     }
 }
 
-//void ImageInfos::update_range_ontime()
-//{
-//    range_timer->stop();
-//    qDebug() << "Intensity Scale shall change";
-//    double dv = .05 *(_ifo._platename_to_colorCode[_plate]._dispMax-_ifo._platename_to_colorCode[_plate]._dispMin);
-
-
-//    qDebug() << _ifo._platename_to_colorCode[_plate]._dispMin - dv << _ifo._platename_to_colorCode[_plate]._dispMin + dv;
-//    emit rangeChanged(_ifo._platename_to_colorCode[_plate]._dispMin - dv,
-//                      _ifo._platename_to_colorCode[_plate]._dispMax + dv);
-//}
-
 void ImageInfos::timerEvent(QTimerEvent *)
 {
-    //    qDebug() << "Intensity Scale shall change";
     QSettings set;
 
     double rat = set.value("RefreshSliderRatio", 0.05).toDouble();
 
     double dv = rat *(_ifo._platename_to_colorCode[_plate]._dispMax-_ifo._platename_to_colorCode[_plate]._dispMin);
-
-
-    //    qDebug() << _ifo._platename_to_colorCode[_plate]._dispMin - dv << _ifo._platename_to_colorCode[_plate]._dispMin + dv;
 
     emit updateRange(_ifo._platename_to_colorCode[_plate]._dispMin - dv,
                      _ifo._platename_to_colorCode[_plate]._dispMax + dv);
@@ -596,17 +582,24 @@ void ImageInfos::changeColorState(int chan)
 
 void ImageInfos::rangeChanged(double mi, double ma)
 {
+
     QSettings set;
     if (range_timerId>=0)
         killTimer(range_timerId);
 
     range_timerId = startTimer(set.value("RefreshSliderRate", 2000).toInt());
 
-    _modified = true;
 
-    _ifo._platename_to_colorCode[_plate]._dispMin = mi;
-    _ifo._platename_to_colorCode[_plate]._dispMax = ma;
-    Update();
+    if (mi != _ifo._platename_to_colorCode[_plate]._dispMin
+            ||
+        ma != _ifo._platename_to_colorCode[_plate]._dispMax)
+    {
+        _modified = true;
+
+        _ifo._platename_to_colorCode[_plate]._dispMin = mi;
+        _ifo._platename_to_colorCode[_plate]._dispMax = ma;
+        Update();
+    }
 }
 
 // Changing the ranges max/min value does not need to update the image, also no need to set modified flag

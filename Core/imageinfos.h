@@ -108,8 +108,8 @@ public:
     inline float getMin() const {return _ifo._platename_to_colorCode[_plate].min; }
     inline float getMax() const { return _ifo._platename_to_colorCode[_plate].max; }
 
-    inline float getDispMin() const {return _ifo._platename_to_colorCode[_plate]._dispMin; }
-    inline float getDispMax() const { return _ifo._platename_to_colorCode[_plate]._dispMax; }
+    inline float getDispMin() const {return _ifo._platename_to_colorCode[_plate]._dispMin; qDebug() << "Disp Min" << _ifo._platename_to_colorCode[_plate]._dispMin; }
+    inline float getDispMax() const { return _ifo._platename_to_colorCode[_plate]._dispMax; qDebug() << "Disp Max" << _ifo._platename_to_colorCode[_plate]._dispMax; }
     int nbColors() { return _nbcolors; }
 
     inline unsigned char Red() const{ return _ifo._platename_to_colorCode[_plate]._r; }
