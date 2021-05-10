@@ -725,7 +725,6 @@ void ExperimentFileModel::setProperties(QString ttag, QString value)
 
         // Load database data here !
         reloadDatabaseData();
-
     }
 
     DataProperty::setProperties(ttag, value);
@@ -878,26 +877,6 @@ QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, in
     return r;
 }
 
-
-
-
-//QStringList SequenceFileModel::getMetaNames(int timePoint, int fieldIdx, int Zindex, int channel)
-//{
-//    return QStringList();
-//}
-
-//bool SequenceFileModel::hasMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name )
-//{
-//    if (name.isEmpty())
-//    {
-
-//    }
-//    else
-//    {
-
-//    }
-//    return false;
-//}
 
 bool SequenceFileModel::hasChannel(int timePoint, int fieldIdx, int Zindex, int channel)
 {
@@ -2128,14 +2107,14 @@ void ScreensHandler::commitAll()
 }
 
 
-void ScreensHandler::addDataToDb(QString hash, QString commit, QJsonObject& data, bool finished)
+ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, QJsonObject& data, bool finished)
 {
     if (!_mscreens.contains(hash))
     {
         qDebug() << "Cannot find original XP for hash" << hash;
         qDebug() << "#### NOT ADDING Data ##########";
         qDebug() << data;
-        return ;
+        return 0;
     }
 
     ExperimentFileModel* mdl =  _mscreens[hash];
@@ -2145,7 +2124,7 @@ void ScreensHandler::addDataToDb(QString hash, QString commit, QJsonObject& data
 
     if (!datamdl) {
         qDebug() << "Experiment data not found, could not store data...." << hash;
-        return;
+        return 0;
     }
     datamdl->setCommitName(commit);
     QString id = data.take("Pos").toString();
@@ -2180,6 +2159,8 @@ void ScreensHandler::addDataToDb(QString hash, QString commit, QJsonObject& data
     if (finished)
         datamdl->commitToDatabase(hash, commit);
 
+
+    return mdl;
 }
 
 
@@ -2867,13 +2848,11 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
                 factor[posToInt(h.pos)][key] << v;
             }
-            //        qDebug() << prep.lastQuery() << prep.boundValues();
             resFile << Qt::endl;
             linecounter++;
         }
         resFile.flush();
         file.close();
-        qDebug() << "Writing " << linecounter << "Data from" << _owner->name() << "to" << writePath+fname;
     }
 
 
@@ -2907,7 +2886,6 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
         resFile.flush();
         file.close();
-
     }
 
     if (!_owner->getMetadataPath().isEmpty())

@@ -455,12 +455,10 @@ void MainWindow::loadSelection(QStringList checked)
         }
     }
 
-    if (!lastOk) return;
+//    if (!lastOk) return;
 
     statusBar()->showMessage(QString( "Screens loaded: %1").arg(loadCount));
 
-    // Load data using factorised function
-    on_wellPlateViewTab_tabBarClicked(ui->wellPlateViewTab->currentIndex());
 
     // Force the display to modify it's information accordingly
     ScreensGraphicsView* view = (ScreensGraphicsView*)ui->wellPlateViewTab->currentWidget();
@@ -477,9 +475,11 @@ void MainWindow::loadSelection(QStringList checked)
             QList<SequenceFileModel *>  l  = mdl->getAllSequenceFiles();
             foreach(SequenceFileModel* mm, l)
                 mm->setProperties("unpack", "yes");
+            mdl->reloadDatabaseData();
         }
     }
-
+    // Load data using factorised function
+    on_wellPlateViewTab_tabBarClicked(ui->wellPlateViewTab->currentIndex());
 }
 
 

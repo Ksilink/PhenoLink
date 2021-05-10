@@ -294,6 +294,9 @@ QTableView *MainWindow::getDataTableView(QString hash)
 // React on wellPlate tab changes
 void MainWindow::on_wellPlateViewTab_tabBarClicked(int index)
 {
+    if (index < 0)
+        index = ui->wellPlateViewTab->currentIndex();
+
     Screens& data = ScreensHandler::getHandler().getScreens();
     if (data.size() < 1) return;
 
@@ -312,6 +315,7 @@ void MainWindow::on_wellPlateViewTab_tabBarClicked(int index)
 
     foreach (QString db, tmdl->getDatabaseNames())
     {
+        qDebug() << "List of DBs" << db;
         QTableView* tv = new QTableView(ui->databases);
         tv->setSortingEnabled(true);
         tv->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -531,7 +535,7 @@ void MainWindow::networkProcessFinished(QJsonArray dat)
             v->setModel(proxyModel);
         }
 
-    qDebug() << msg;
+//    qDebug() << msg;
 }
 
 void MainWindow::future_networkRetrieveImageFinished()
@@ -562,8 +566,11 @@ void MainWindow::future_networkRetrieveImageFinished()
 
 
     watcher->deleteLater();
+}
 
-    foreach (ExperimentFileModel* mdl, mdls)
+void MainWindow::updateTableView(ExperimentFileModel* mdl)
+{
+    if (mdl)
     {
         QTableView* v = getDataTableView(mdl);
 
@@ -572,9 +579,6 @@ void MainWindow::future_networkRetrieveImageFinished()
 
         v->setModel(proxyModel);
     }
-
-
-
 }
 
 void MainWindow::networkRetrievedImage(QList<SequenceFileModel *> lsfm)

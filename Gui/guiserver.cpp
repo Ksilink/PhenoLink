@@ -54,10 +54,10 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
     const QByteArray data = req->collectedData();
     QString urlpath = req->url().path(), query = req->url().query();
 
-    qDebug() << qhttp::Stringify::toString(req->method())
-             << qPrintable(urlpath)
-             << qPrintable(query)
-             << data.size();
+//    qDebug() << qhttp::Stringify::toString(req->method())
+//             << qPrintable(urlpath)
+//             << qPrintable(query)
+//             << data.size();
 
 
     // addData/<project>/<CommitName>/<Plate> <= POST data as CBOR
@@ -80,10 +80,12 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
             bool finished = (0 == NetworkProcessHandler::handler().remainingProcess().size());
             auto hash = oj["DataHash"].toString();
-            ScreensHandler::getHandler().addDataToDb(hash, commit, oj, false);
-            qDebug() << "Process finished" << finished << commit << NetworkProcessHandler::handler().remainingProcess().size();
+            auto mdl = ScreensHandler::getHandler().addDataToDb(hash, commit, oj, false);
+    //            qDebug() << "Process finished" << finished << commit << NetworkProcessHandler::handler().remainingProcess().size();
             if (finished)
                 ScreensHandler::getHandler().commitAll();
+            win->updateTableView(mdl);
+            win->on_wellPlateViewTab_tabBarClicked(-1);
         }
     }
 

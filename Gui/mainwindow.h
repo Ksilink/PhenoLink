@@ -57,6 +57,7 @@ public:
     QString workbenchKey();
 
 
+    void updateTableView(ExperimentFileModel *mdl);
 protected:
     template <typename WType>
     int getWidgetWidth(QString name)
@@ -137,7 +138,6 @@ private slots:
 
     void on_tabWidget_customContextMenuRequested(const QPoint &pos);
     void on_treeView_customContextMenuRequested(const QPoint &pos);
-    void on_wellPlateViewTab_tabBarClicked(int index);
     void on_actionPick_Intensities_toggled(bool arg1);
 
     void setDataIcon();
@@ -190,6 +190,7 @@ public slots:
 
 
 //    void processStarted(QString hash);
+    void on_wellPlateViewTab_tabBarClicked(int index);
 
     void server_processError(QProcess::ProcessError error);
     void server_processFinished(int exitCode, QProcess::ExitStatus status);
