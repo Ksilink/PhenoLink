@@ -200,13 +200,13 @@ void MainWindow::on_notebookDisplay_clicked()
         QJsonObject ob = arc[params].toObject();
         QJsonArray ar =  ob["source"].toArray();
 
-         if (!datasets.first.isEmpty())
+        if (!datasets.first.isEmpty())
             ar.append(QString("dbs=[%1]\n").arg(datasets.first.join(",")));
-         if (!datasets.second.isEmpty())
-             ar.append(QString("agdbs=[%1]\n").arg(datasets.first.join(",")));
+        if (!datasets.second.isEmpty())
+            ar.append(QString("agdbs=[%1]\n").arg(datasets.first.join(",")));
 
-         ob["source"] = ar;
-         arc[params] = ob;
+        ob["source"] = ar;
+        arc[params] = ob;
         file["cells"] = arc;
     }
     else
@@ -235,7 +235,7 @@ void MainWindow::on_notebookDisplay_clicked()
              .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
              .arg("8888")
              .arg(set.value("JupyterToken", "").toString())
-//             .arg(dbopts)
+             //             .arg(dbopts)
              .arg(tgt)
              );
     qDebug() << url;
@@ -243,7 +243,7 @@ void MainWindow::on_notebookDisplay_clicked()
     view->load(url);
     int tab = ui->tabWidget->addTab(view, "Notebook View");
 
-        Q_UNUSED(tab);
+    Q_UNUSED(tab);
 }
 
 void MainWindow::on_dashDisplay_clicked()
@@ -292,7 +292,7 @@ void MainWindow::on_dashDisplay_clicked()
     view->load(url);
     int tab = ui->tabWidget->addTab(view, "Dash View");
 
-        Q_UNUSED(tab);
+    Q_UNUSED(tab);
 }
 
 #include <QProgressDialog>
@@ -455,7 +455,7 @@ void MainWindow::loadSelection(QStringList checked)
         }
     }
 
-//    if (!lastOk) return;
+    //    if (!lastOk) return;
 
     statusBar()->showMessage(QString( "Screens loaded: %1").arg(loadCount));
 
@@ -468,15 +468,17 @@ void MainWindow::loadSelection(QStringList checked)
         multifield = (QMessageBox::question(this, "Multi Field Detected", "Do you want to automatically unpack wells on display ?") == QMessageBox::Yes);
 
 
-    if (multifield)
+
+    foreach (ExperimentFileModel* mdl, data)
     {
-        foreach (ExperimentFileModel* mdl, data)
+        if (multifield)
         {
             QList<SequenceFileModel *>  l  = mdl->getAllSequenceFiles();
+
             foreach(SequenceFileModel* mm, l)
                 mm->setProperties("unpack", "yes");
-            mdl->reloadDatabaseData();
         }
+        mdl->reloadDatabaseData();
     }
     // Load data using factorised function
     on_wellPlateViewTab_tabBarClicked(ui->wellPlateViewTab->currentIndex());
