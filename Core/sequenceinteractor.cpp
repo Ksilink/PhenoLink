@@ -1396,6 +1396,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                                     width= feat.at<float>(r, w),
                                     height= feat.at<float>(r, h);
                             item->setRect(QRectF(x,y,width,height));
+                            item->setTransformOriginPoint(width/2., height/2.);
                             if (a >= 0)
                                 item->setRotation(feat.at<float>(r, a));
                             //qDebug() << r << x << y << width << height;
@@ -1428,6 +1429,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                                     width= feat.at<float>(r, w),
                                     height= feat.at<float>(r, h);
                             item->setRect(QRectF(x,y,width,height));
+                            item->setTransformOriginPoint(width/2., height/2.);
                             if (a >= 0)
                                 item->setRotation(feat.at<float>(r, a));
 
@@ -1502,6 +1504,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                                         width= feat.at<float>(r, w),
                                         height= feat.at<float>(r, h);
                                 item->setRect(QRectF(x,y,width,height));
+                                item->setTransformOriginPoint(width/2., height/2.);
                                 if (a >= 0)
                                     item->setRotation(feat.at<float>(r, a));
 
@@ -1535,6 +1538,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                                         width= feat.at<float>(r, w),
                                         height= feat.at<float>(r, h);
                                 item->setRect(QRectF(x,y,width,height));
+                                item->setTransformOriginPoint(width/2., height/2.);
                                 if (a >= 0)
                                     item->setRotation(feat.at<float>(r, a));
 
