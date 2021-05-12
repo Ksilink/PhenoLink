@@ -1214,6 +1214,8 @@ QColor randCol(float v)
 
 void getMinMax(cv::Mat &ob, int f, float& cmin, float& cmax)
 {
+    if (f < 0)
+        return;
     cmin = std::numeric_limits<float>::max();
     cmax = -std::numeric_limits<float>::max();
 
@@ -1314,15 +1316,14 @@ QList<QString> SequenceInteractor::getMetaOptionsList(QString meta)
 }
 
 typedef struct dispType {
-    dispType(int r_,
-             int t_, int l_,
+    dispType(int t_, int l_,
              int w_, int h_, int a_,
              int f_,  colormap::map<colormap::rgb> pal_):
-        r(r_),
+        r(0),
         t(t_), l(l_),
         w(w_), h(h_), a(a_),
         f(f_), pal(pal_), color("invalid"),
-        random(false)
+        random(false), shape(Rectangle)
     {
     }
 
@@ -1332,7 +1333,7 @@ typedef struct dispType {
     QColor color;
     bool random;
 
-    enum {Ellispse, Rectangle} shape;
+    enum { Rectangle, Ellispse, Point, Line } shape;
     float overlay_width;
 
 } t_dispType;
@@ -1344,6 +1345,23 @@ void adaptItem(GraphItem* item, QString tip, QString name, QRectF rect, QPointF 
 
     item->setTransformOriginPoint(ori);
     item->setRotation(rotation);
+
+    item->setToolTip(tip);
+    item->setPen(p);
+    item->setData(1, name);
+    item->setData(2, pos);
+}
+
+
+template<>
+void adaptItem(QGraphicsLineItem* item, QString tip, QString name, QRectF rect, QPointF ori, float rotation, QPen p, int pos)
+{
+    item->setLine(rect.y(), rect.x(), rect.height(), rect.width());
+
+    item->setTransformOriginPoint(ori);
+    item->setRotation(rotation);
+
+    tip += QString("Length: %1").arg(sqrt(pow(rect.x()-rect.width(),2)+pow(rect.y()-rect.height(),2)));
 
     item->setToolTip(tip);
     item->setPen(p);
@@ -1367,7 +1385,8 @@ void drawItem(cv::Mat& feat, QStringList lcols, QString name, QList<int> feats,
             tip += QString("%1: %2\r\n").arg(lcols[p].trimmed()).arg(fea);
         }
 
-        float fea = feat.at<float>(d.r,d.f);
+        float fea = d.f >=  0  ? feat.at<float>(d.r, d.f) : 0;
+
         auto colo = d.pal(fea);
 
         QPen p(qRgb(colo[0], colo[1], colo[2]));
@@ -1375,24 +1394,37 @@ void drawItem(cv::Mat& feat, QStringList lcols, QString name, QList<int> feats,
         if (d.color.isValid()) // Force a color to be set !
             p.setColor(d.color);
 
-        if (d.random)
+        if (d.random || d.f < 0)
             p.setColor(randCol(d.r));
 
         p.setWidthF(d.overlay_width);
 
-        //        qDebug() << "Draw Item" << (d.shape == dispType::Rectangle  ? "Rectangle" : "Ellipse" )
-        //                 << x << y << width << height << fea << p << d.a;
-
-        if (d.shape == dispType::Rectangle)
+        switch (d.shape) {
+        case   dispType::Rectangle:
             adaptItem(new QGraphicsRectItem(group), tip, name,
                       QRectF(x,y,width,height),
-                      QPointF(width/2., height/2.),
+                      QPointF(x+width/2., y+height/2.),
                       d.a >= 0 ? feat.at<float>(d.r, d.a) : 0, p, d.r);
-        else
+            break;
+        case dispType::Ellispse:
             adaptItem(new QGraphicsEllipseItem(group), tip, name,
                       QRectF(x,y,width,height),
-                      QPointF(width/2., height/2.),
+                      QPointF(x+width/2., y+height/2.),
                       d.a >= 0 ? feat.at<float>(d.r, d.a) : 0, p, d.r);
+            break;
+
+        case dispType::Line:
+            adaptItem(new QGraphicsLineItem(group), tip, name,
+                      QRectF(x,y,width,height),
+                      QPointF(0, 0), 0, p, d.r);
+            break;
+
+        case dispType::Point:
+            adaptItem(new QGraphicsEllipseItem(group), tip, name,
+                      QRectF(x-d.overlay_width/2., y-d.overlay_width/2., d.overlay_width, d.overlay_width),
+                      QPointF(d.overlay_width/2., d.overlay_width/2.), 0, p, d.r);
+            break;
+        }
 
     }
 }
@@ -1454,7 +1486,8 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                 QStringList lcols = cols.split(";").mid(0, feat.cols);
                 QList<int> feats;
 
-                int t,l,w,h, f = -1, a = -1;
+                int t=0,l=0,w=0,h=0, f = -1, a = -1;
+
 
                 for (int i = 0; i < lcols.size(); ++i)
                 {
@@ -1472,8 +1505,8 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                         f = i;
                 }
 
-                float cmin, cmax;
-                if (f < 0)
+                float cmin= 0, cmax=1;
+                if (f < 0 && feats.size())
                     f = feats.first();
                 getMinMax(feat, f, cmin, cmax);
 
@@ -1483,15 +1516,12 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                 {
                     pal = colormap::palettes.at(overlay_coding[it.key()].second.toStdString()).rescale(cmin, cmax);
                 }
-                t_dispType disp(0,t,l,w,h,a,f, pal);
+                t_dispType disp(t,l,w,h,a,f, pal);
 
                 if (overlay_coding[it.key()].second.startsWith("#"))
                     disp.color = QColor(overlay_coding[it.key()].second);
                 if (overlay_coding[it.key()].second == "random")
                     disp.random = true;
-
-
-                disp.overlay_width = _overlay_width;
 
                 if (cols.contains("_Width") && cols.contains("_Height"))
                 {
@@ -1499,152 +1529,54 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                         disp.shape = dispType::Rectangle;
                     else if (cols.contains("_X") && cols.contains("_Y"))
                         disp.shape = dispType::Ellispse;
-
-                    auto group = new QGraphicsItemGroup(parent);
-                    group->setData(10, it.key());
-                    if (disp_overlay[it.key()].second >= 0)
-                    {
-                        disp.r = disp_overlay[it.key()].second;
-                        drawItem(feat, lcols, it.key(), feats, group, disp);
-                    }
-                    else
-                        for (disp.r = 0; disp.r < feat.rows; ++disp.r)
-                            drawItem(feat, lcols, it.key(), feats, group, disp);
-
-                    res << group;
                 }
                 else
                 {
-                    // There is a X & Y coordinate
                     if (cols.count("_X") >= 2 && cols.count("_Y") >= 2)
                     {
-                        // Should be a vector
-                        cv::Mat& feat = k.content();
-
-                        int x1,y1, x2, y2;
+                        qDebug() << "Line Mode";
+                        disp.shape = dispType::Line;
+                        // Special case for line, adjust the column counting
                         QStringList lcols = cols.split(";").mid(0, feat.cols);
 
                         for (int i = 0; i < lcols.size(); ++i)
                         {
                             QString s = lcols[i];
                             if (s.contains("_X"))  {
-                                x1 = i;
-                                y1 = findY(lcols, s);
+                                disp.t = i;
+                                disp.l = findY(lcols, s);
                                 for (int j = i+1; j < lcols.size(); ++j)
                                     if (lcols[j].contains("_X"))
                                     {
-                                        x2 = j;
-                                        y2 = findY(lcols, lcols[j]);
+                                        disp.h = j;
+                                        disp.w = findY(lcols, lcols[j]);
                                         break;
                                     }
                                 break;
                             }
                         }
-                        auto group = new QGraphicsItemGroup(parent);
-                        group->setData(10, it.key());
-
-                        for (int r = 0; r < feat.rows; ++r)
-                        {
-
-                            auto item = new QGraphicsLineItem (group);
-                            float x = feat.at<float>(r, x1),
-                                    y = feat.at<float>(r, y1),
-                                    w= feat.at<float>(r, x2),
-                                    h= feat.at<float>(r, y2);
-                            item->setLine(x,y,w,h);
-                            float len = sqrt(pow(x-w,2)+pow(y-h,2));
-                            //qDebug() << r << x << y << width << height;
-                            QPen p(randCol(r));
-                            p.setWidthF(_overlay_width);
-                            item->setPen(p); // Random coloring !
-
-
-
-
-                            item->setToolTip(QString("Length: %1").arg(len));
-                        }
-                        res << group;
-
 
                     }
                     else
-                    {
-                        // This is a 2d point
-                        cv::Mat& feat = k.content();
-                        int t,l,  f = -1;
-                        QStringList lcols = cols.split(";").mid(0, feat.cols);
-                        QList<int> feats;
-                        //overlay_coding
-                        for (int i = 0; i < lcols.size(); ++i)
-                        {
-                            QString s = lcols[i];
-                            if (s.contains("_X"))   t = i;
-                            else if (s.contains("_Y"))  l = i;
-                            else { feats << i;  }
-
-                            if (overlay_coding.contains(it.key()) &&
-                                    s == overlay_coding[it.key()].first)
-                                f = i;
-                        }
-                        // f should be the position of overlay_coding[name].first
-                        if (f < 0)
-                            f = feats.first();
-                        float cmin, cmax;
-                        getMinMax(feat, f, cmin, cmax);
-
-                        auto pal = colormap::palettes.at(overlay_coding[it.key()].second.toStdString()).rescale(cmin, cmax);
-
-                        auto group = new QGraphicsItemGroup(parent);
-                        group->setData(10, it.key());
-
-                        if (disp_overlay[it.key()].second >= 0)
-                        {
-                            int r =    disp_overlay[it.key()].second;
-                            if (r < feat.rows)
-                            {
-                                auto item = new QGraphicsEllipseItem(group);
-                                // Radius of 1.5 px :)
-                                float x = feat.at<float>(r, t)-_overlay_width,
-                                        y= feat.at<float>(r, l)-_overlay_width,
-                                        width= feat.at<float>(r, t)+_overlay_width,
-                                        height= feat.at<float>(r, l)+_overlay_width;
-
-                                item->setRect(QRectF(x,y,width,height));
-                                float fea = feat.at<float>(r,f);
-                                item->setToolTip(QString("%1: %2").arg(lcols[f]).arg(fea));
-                                auto colo = pal(fea);
-                                QPen p(qRgb(colo[0], colo[1], colo[2]));
-                                p.setWidthF(_overlay_width);
-                                item->setPen(p);
-                                //                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
-                            }
-                        }
-                        else
-
-                            for (int r = 0; r < feat.rows; ++r)
-                            {
-                                auto item = new QGraphicsEllipseItem(group);
-                                // Radius of 1.5 px :)
-                                float x = feat.at<float>(r, t)-_overlay_width,
-                                        y= feat.at<float>(r, l)-_overlay_width,
-                                        width= feat.at<float>(r, t)+_overlay_width,
-                                        height= feat.at<float>(r, l)+_overlay_width;
-
-                                item->setRect(QRectF(x,y,width,height));
-                                float fea = feat.at<float>(r,f);
-                                item->setToolTip(QString("%1: %2").arg(lcols[f]).arg(fea));
-                                auto colo = pal(fea);
-                                QPen p(qRgb(colo[0], colo[1], colo[2]));
-                                p.setWidthF(_overlay_width);
-                                item->setPen(p);
-                                //                                item->setBrush(QBrush(qRgb(colo[0], colo[1], colo[2])));
-                            }
-                        res << group;
-
-
-                    }
-
+                        disp.shape= dispType::Point;
                 }
+
+                disp.overlay_width = _overlay_width;
+
+
+                auto group = new QGraphicsItemGroup(parent);
+                group->setData(10, it.key());
+                if (disp_overlay[it.key()].second >= 0)
+                {
+                    disp.r = disp_overlay[it.key()].second;
+                    drawItem(feat, lcols, it.key(), feats, group, disp);
+                }
+                else
+                    for (disp.r = 0; disp.r < feat.rows; ++disp.r)
+                        drawItem(feat, lcols, it.key(), feats, group, disp);
+
+                res << group;
+
             }
     }
 
