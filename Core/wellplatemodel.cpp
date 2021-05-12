@@ -2174,6 +2174,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue &data
     SequenceFileModel* rmdl = 0;
 
     QString hash = ob.take(QCborValue("DataHash")).toString();
+    QString hh = ob.take(QCborValue("Hash")).toString();
     QString tag = ob.take(QCborValue("Tag")).toString();
 
     if (!_mscreens.contains(hash))
@@ -2190,7 +2191,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue &data
 
     if (mdl->fileName().isEmpty())
     {
-        mdl->setFileName(QString("%1_%3/%3_%2/dummyfile.mrf").arg(hash).arg(tag).arg(1));
+        mdl->setFileName(QString("%1_%3/%3_%2/dummyfile.mrf").arg(hash, tag, hh));
         mdl->setProperties("hash", hash);
     }
 
@@ -2309,7 +2310,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue &data
         //        qDebug() << "Need to handle overlay content Type";
         //        qDebug() << "Handling data for Tag" << hash << pos <<  tag;
         SequenceFileModel& seq = (*_mscreens[hash])(row, col);
-
+        //seq.isAlreadyShowed();
         QCborArray ar = ob.take(QCborValue("Payload")).toArray();
         for (int item = 0; item < ar.size(); ++item)
         {
@@ -2347,18 +2348,6 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue &data
                         ch = ob.value(QCborValue("channel")).toInteger();
 
                 int cc = datasizes.size() > 1  ? i+1 : ch;
-
-                QString fname =  QString(":/mem/%1_%2_%3_%4_T%5F%6Z%7C%8.png")
-                        .arg(hash)
-                        .arg(tag)
-                        .arg(ob.value(QCborValue("Hash")).toString())
-                        .arg(pos)
-                        .arg(t)
-                        .arg(f)
-                        .arg(z)
-                        .arg(cc)
-                        ;
-
 
                 StructuredMetaData data;
                 data.setContent(im.clone());

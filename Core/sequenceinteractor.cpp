@@ -1356,7 +1356,7 @@ void adaptItem(GraphItem* item, QString tip, QString name, QRectF rect, QPointF 
 template<>
 void adaptItem(QGraphicsLineItem* item, QString tip, QString name, QRectF rect, QPointF ori, float rotation, QPen p, int pos)
 {
-    item->setLine(rect.y(), rect.x(), rect.height(), rect.width());
+    item->setLine(rect.x(), rect.y(), rect.width(), rect.height());
 
     item->setTransformOriginPoint(ori);
     item->setRotation(rotation);
@@ -1374,8 +1374,8 @@ void drawItem(cv::Mat& feat, QStringList lcols, QString name, QList<int> feats,
 {
     if (d.r < feat.rows)
     {
-        float y = feat.at<float>(d.r, d.t),
-                x = feat.at<float>(d.r, d.l),
+        float x = feat.at<float>(d.r, d.t),
+                y = feat.at<float>(d.r, d.l),
                 width= feat.at<float>(d.r, d.w),
                 height= feat.at<float>(d.r, d.h);
         QString tip= QString("Id: %1\r\n").arg(d.r);

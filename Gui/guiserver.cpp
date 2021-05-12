@@ -98,7 +98,6 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         lsfm << ScreensHandler::getHandler().addProcessResultImage(ob);
 
         win->networkRetrievedImage(lsfm);
-
     }
 
     QJsonObject ob;
