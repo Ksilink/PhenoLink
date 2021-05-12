@@ -315,7 +315,7 @@ void MainWindow::on_wellPlateViewTab_tabBarClicked(int index)
 
     foreach (QString db, tmdl->getDatabaseNames())
     {
-        qDebug() << "List of DBs" << db;
+//        qDebug() << "List of DBs" << db;
         QTableView* tv = new QTableView(ui->databases);
         tv->setSortingEnabled(true);
         tv->setContextMenuPolicy(Qt::CustomContextMenu);

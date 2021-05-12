@@ -111,6 +111,7 @@ protected:
     QSpinBox *setupTilePosition(QSpinBox* box, QString itemName, ImageInfos* inter, bool reconnect = false);
 
     QComboBox *setupOverlaySelection(QComboBox* box, QString itemName, ImageInfos *ifo, bool reconnect = false);
+    QComboBox *setupOverlayColor(QComboBox *box, QString itemName, ImageInfos *ifo, bool reconnect = false);
 
 
 	void conditionChanged(QWidget* sen, int val);
@@ -221,6 +222,8 @@ public slots:
     void on_actionNo_network_toggled(bool arg1);
 
     void overlayChanged(QString id);
+    void overlayChangedCmap(QString id);
+
     void finishedJob();
 
     void setOverlayWidth(double w);

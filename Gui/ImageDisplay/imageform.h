@@ -61,6 +61,7 @@ protected:
     virtual void mousePressEvent(QMouseEvent *event);
     virtual void mouseDoubleClickEvent(QMouseEvent * event);
     virtual void paintEvent(QPaintEvent *event);
+//    virtual bool event(QEvent* event);
 
 signals:
     void interactorModified();

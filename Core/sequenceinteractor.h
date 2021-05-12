@@ -92,6 +92,7 @@ public:
   QList<QString> getMetaOptionsList(QString meta);
   void overlayChange(QString name, QString id);
   QString getOverlayCode(QString name);
+  QString getOverlayColor(QString name);
   void exportOverlay(QString name, QString tofile);
 
 public slots:

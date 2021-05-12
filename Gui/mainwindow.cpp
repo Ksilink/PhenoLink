@@ -85,6 +85,8 @@
 #include <QCloseEvent>
 #include <guiserver.h>
 
+#include <QColorDialog>
+
 DllGuiExport QFile _logFile;
 
 MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
@@ -419,10 +421,29 @@ void MainWindow::overlayChanged(QString id)
 {
     if (sender())
     {
-        QString name = sender()->objectName();
+        QString name = sender()->objectName();       
         _sinteractor.current()->overlayChange(name, id);
     }
 }
+
+
+void MainWindow::overlayChangedCmap(QString id)
+{
+    if (sender())
+    {
+        QString name = sender()->objectName();
+        if ("Color Coding" == id)
+       {
+            QColor c = QColorDialog::getColor(Qt::white, this, "Set Color for overlay");
+            if (c.isValid())
+                id = c.name();
+            else
+                return;
+        }
+        _sinteractor.current()->overlayChangeCmap(name, id);
+    }
+}
+
 
 void MainWindow::exportContent()
 {
@@ -605,6 +626,28 @@ QComboBox *MainWindow::setupOverlaySelection(QComboBox *box, QString itemName,Im
     return box;
 }
 
+QComboBox *MainWindow::setupOverlayColor(QComboBox *box, QString itemName,ImageInfos *ifo, bool reconnect)
+{
+    QStringList colors = QStringList() << "jet" << "inferno" << "random";
+
+    if (!reconnect)
+    {
+        box->setObjectName(itemName);
+        box->addItems(QStringList(colors) << "Color Coding");
+    }
+
+    box->setToolTip(QString("Select Color map"));
+    QString color = ifo->getInteractor()->getOverlayColor(itemName);
+
+    if (!colors.contains(color))
+        color = "Color Coding";
+
+    box->setCurrentText(color);
+    connect(box, SIGNAL(currentTextChanged(QString)), this, SLOT(overlayChangedCmap(QString)));
+
+    return box;
+}
+
 
 
 void MainWindow::updateCurrentSelection()
@@ -736,10 +779,11 @@ void MainWindow::updateCurrentSelection()
             bvl->addWidget(new QLabel(ov, wwid), itms, 1);
             bvl->addWidget(setupTilePosition(new QSpinBox(wwid), ov, fo), itms, 2);
             bvl->addWidget(setupOverlaySelection(new QComboBox(wwid), ov, fo), itms, 3);
+            bvl->addWidget(setupOverlayColor(new QComboBox(wwid), ov, fo), itms, 4);
             auto but = new QPushButton("Export");
             but->setObjectName(ov);
             connect(but, SIGNAL(clicked()), this, SLOT(exportContent()));
-            bvl->addWidget(but, itms, 4);
+            bvl->addWidget(but, itms, 5);
             itms++;
         }
 

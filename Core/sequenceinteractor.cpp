@@ -117,7 +117,17 @@ void SequenceInteractor::setFps(double fps)
 
 QString SequenceInteractor::getOverlayCode(QString name)
 {
+    if (!overlay_coding.contains(name))
+        overlay_coding[name].second = "jet"; // set default overlay
+
     return overlay_coding[name].first;
+}
+
+QString SequenceInteractor::getOverlayColor(QString name)
+{
+    if (overlay_coding.contains(name))
+        return overlay_coding[name].second;
+    return "jet";
 }
 
 void SequenceInteractor::exportOverlay(QString name, QString tofile)
@@ -158,6 +168,9 @@ void SequenceInteractor::exportOverlay(QString name, QString tofile)
 void SequenceInteractor::overlayChange(QString name, QString id)
 {
     //    qDebug() << "Overlay selection changed" << name << id;
+    if (!overlay_coding.contains(name))
+        overlay_coding[name].second = "jet";
+
     overlay_coding[name].first = id;
     modifiedImage();
 }
@@ -165,6 +178,7 @@ void SequenceInteractor::overlayChange(QString name, QString id)
 void SequenceInteractor::overlayChangeCmap(QString name, QString id)
 {
     overlay_coding[name].second = id;
+    modifiedImage();
 }
 
 
@@ -180,21 +194,31 @@ void SequenceInteractor::setOverlayId(QString name, int tile)
 void SequenceInteractor::toggleOverlay(QString name, bool disp)
 {
     //qDebug() << "Toggling Tile disp:" << disp;
+    if (!disp_overlay.contains(name))
+        disp_overlay[name].second=-1;
+
     disp_overlay[name].first = disp;
+
     //    disp_tile = disp;
     modifiedImage();
 }
 
 bool SequenceInteractor::overlayDisplayed(QString name)
 {
+    if(!disp_overlay.contains(name))
+    {
+        disp_overlay[name].first = false;
+        disp_overlay[name].second = -1;
+    }
     return disp_overlay[name].first;
 }
 
 int SequenceInteractor::getOverlayId(QString name)
 {
-    if (disp_overlay.contains(name))
-        return disp_overlay[name].second;
-    return -1;
+    if (!disp_overlay.contains(name))
+        disp_overlay[name].second = -1;
+
+    return disp_overlay[name].second;
 }
 
 
@@ -1297,40 +1321,41 @@ typedef struct dispType {
         r(r_),
         t(t_), l(l_),
         w(w_), h(h_), a(a_),
-        f(f_), pal(pal_)
+        f(f_), pal(pal_), color("invalid"),
+        random(false)
     {
     }
 
     int r, t, l , w ,h, a, f;
 
     colormap::map<colormap::rgb> pal;
+    QColor color;
+    bool random;
+
     enum {Ellispse, Rectangle} shape;
     float overlay_width;
 
 } t_dispType;
 
 template <class GraphItem>
-void adaptItem(GraphItem* item, QString tip, QRectF rect, QPointF ori, float rotation, QPen p)
+void adaptItem(GraphItem* item, QString tip, QString name, QRectF rect, QPointF ori, float rotation, QPen p, int pos)
 {
     item->setRect(rect);
 
-
-
     item->setTransformOriginPoint(ori);
     item->setRotation(rotation);
-    //qDebug() << r << x << y << width << height;
 
-    item->setToolTip(tip.trimmed());
+    item->setToolTip(tip);
     item->setPen(p);
-
+    item->setData(1, name);
+    item->setData(2, pos);
 }
 
-void drawItem(cv::Mat& feat, QStringList lcols, QList<int> feats,
+void drawItem(cv::Mat& feat, QStringList lcols, QString name, QList<int> feats,
               QGraphicsItemGroup* group, t_dispType d)
 {
     if (d.r < feat.rows)
     {
-
         float y = feat.at<float>(d.r, d.t),
                 x = feat.at<float>(d.r, d.l),
                 width= feat.at<float>(d.r, d.w),
@@ -1339,19 +1364,36 @@ void drawItem(cv::Mat& feat, QStringList lcols, QList<int> feats,
         for (auto p : feats)
         {
             float fea = feat.at<float>(d.r,p);
-            tip += QString("%1: %2\r\n").arg(lcols[p]).arg(fea);
+            tip += QString("%1: %2\r\n").arg(lcols[p].trimmed()).arg(fea);
         }
+
         float fea = feat.at<float>(d.r,d.f);
         auto colo = d.pal(fea);
 
-
         QPen p(qRgb(colo[0], colo[1], colo[2]));
+
+        if (d.color.isValid()) // Force a color to be set !
+            p.setColor(d.color);
+
+        if (d.random)
+            p.setColor(randCol(d.r));
+
         p.setWidthF(d.overlay_width);
 
-        adaptItem(new QGraphicsRectItem(group), tip,
-                  QRectF(x,y,width,height),
-                  QPointF(width/2., height/2.),
-                  d.a >= 0 ? feat.at<float>(d.r, d.a) : 0, p);
+        //        qDebug() << "Draw Item" << (d.shape == dispType::Rectangle  ? "Rectangle" : "Ellipse" )
+        //                 << x << y << width << height << fea << p << d.a;
+
+        if (d.shape == dispType::Rectangle)
+            adaptItem(new QGraphicsRectItem(group), tip, name,
+                      QRectF(x,y,width,height),
+                      QPointF(width/2., height/2.),
+                      d.a >= 0 ? feat.at<float>(d.r, d.a) : 0, p, d.r);
+        else
+            adaptItem(new QGraphicsEllipseItem(group), tip, name,
+                      QRectF(x,y,width,height),
+                      QPointF(width/2., height/2.),
+                      d.a >= 0 ? feat.at<float>(d.r, d.a) : 0, p, d.r);
+
     }
 }
 
@@ -1402,7 +1444,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
 
         //        for (auto & [k: data)
         for (QMap<QString, StructuredMetaData>::iterator it = data.begin(), e = data.end(); it != e; ++it)
-            if (disp_overlay[it.key()].first)
+            if (disp_overlay.contains(it.key()) && disp_overlay[it.key()].first)
             {
                 StructuredMetaData& k = it.value();
 
@@ -1411,7 +1453,6 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                 cv::Mat& feat = k.content();
                 QStringList lcols = cols.split(";").mid(0, feat.cols);
                 QList<int> feats;
-
 
                 int t,l,w,h, f = -1, a = -1;
 
@@ -1436,7 +1477,21 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                     f = feats.first();
                 getMinMax(feat, f, cmin, cmax);
 
-                t_dispType disp(0,t,l,w,h,a,f,  colormap::palettes.at("jet").rescale(cmin, cmax));
+
+                auto pal = colormap::palettes.at("jet").rescale(cmin, cmax);
+                if (colormap::palettes.count(overlay_coding[it.key()].second.toStdString()))
+                {
+                    pal = colormap::palettes.at(overlay_coding[it.key()].second.toStdString()).rescale(cmin, cmax);
+                }
+                t_dispType disp(0,t,l,w,h,a,f, pal);
+
+                if (overlay_coding[it.key()].second.startsWith("#"))
+                    disp.color = QColor(overlay_coding[it.key()].second);
+                if (overlay_coding[it.key()].second == "random")
+                    disp.random = true;
+
+
+                disp.overlay_width = _overlay_width;
 
                 if (cols.contains("_Width") && cols.contains("_Height"))
                 {
@@ -1446,24 +1501,17 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                         disp.shape = dispType::Ellispse;
 
                     auto group = new QGraphicsItemGroup(parent);
-
+                    group->setData(10, it.key());
                     if (disp_overlay[it.key()].second >= 0)
                     {
-                        int r = disp_overlay[it.key()].second;
-                        if (r < feat.rows)
-                        {
-                            disp.r = r;
-                            drawItem(feat, lcols, feats, group, disp);
-                        }
+                        disp.r = disp_overlay[it.key()].second;
+                        drawItem(feat, lcols, it.key(), feats, group, disp);
                     }
                     else
-                        for (int r = 0; r < feat.rows; ++r)
-                        {
-                            disp.r = r;
-                            drawItem(feat, lcols, feats, group, disp);
-                        }
-                    res << group;
+                        for (disp.r = 0; disp.r < feat.rows; ++disp.r)
+                            drawItem(feat, lcols, it.key(), feats, group, disp);
 
+                    res << group;
                 }
                 else
                 {
@@ -1493,6 +1541,8 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                             }
                         }
                         auto group = new QGraphicsItemGroup(parent);
+                        group->setData(10, it.key());
+
                         for (int r = 0; r < feat.rows; ++r)
                         {
 
@@ -1507,7 +1557,11 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                             QPen p(randCol(r));
                             p.setWidthF(_overlay_width);
                             item->setPen(p); // Random coloring !
-                            item->setToolTip(QString("Length %1").arg(len));
+
+
+
+
+                            item->setToolTip(QString("Length: %1").arg(len));
                         }
                         res << group;
 
@@ -1517,28 +1571,31 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                     {
                         // This is a 2d point
                         cv::Mat& feat = k.content();
-                        int t,l,  f;
+                        int t,l,  f = -1;
                         QStringList lcols = cols.split(";").mid(0, feat.cols);
-
+                        QList<int> feats;
                         //overlay_coding
                         for (int i = 0; i < lcols.size(); ++i)
                         {
                             QString s = lcols[i];
                             if (s.contains("_X"))   t = i;
                             else if (s.contains("_Y"))  l = i;
-                            else f = i;
+                            else { feats << i;  }
+
+                            if (overlay_coding.contains(it.key()) &&
+                                    s == overlay_coding[it.key()].first)
+                                f = i;
                         }
                         // f should be the position of overlay_coding[name].first
-
+                        if (f < 0)
+                            f = feats.first();
                         float cmin, cmax;
                         getMinMax(feat, f, cmin, cmax);
 
-
-                        using namespace colormap ;
-                        // "jet" should be replaced by: overlay_coding[name].second :)
-                        auto pal = palettes.at("jet").rescale(cmin, cmax);
+                        auto pal = colormap::palettes.at(overlay_coding[it.key()].second.toStdString()).rescale(cmin, cmax);
 
                         auto group = new QGraphicsItemGroup(parent);
+                        group->setData(10, it.key());
 
                         if (disp_overlay[it.key()].second >= 0)
                         {
@@ -1554,7 +1611,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
 
                                 item->setRect(QRectF(x,y,width,height));
                                 float fea = feat.at<float>(r,f);
-                                item->setToolTip(QString("%1 %2").arg(lcols[f]).arg(fea));
+                                item->setToolTip(QString("%1: %2").arg(lcols[f]).arg(fea));
                                 auto colo = pal(fea);
                                 QPen p(qRgb(colo[0], colo[1], colo[2]));
                                 p.setWidthF(_overlay_width);
@@ -1575,7 +1632,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
 
                                 item->setRect(QRectF(x,y,width,height));
                                 float fea = feat.at<float>(r,f);
-                                item->setToolTip(QString("%1 %2").arg(lcols[f]).arg(fea));
+                                item->setToolTip(QString("%1: %2").arg(lcols[f]).arg(fea));
                                 auto colo = pal(fea);
                                 QPen p(qRgb(colo[0], colo[1], colo[2]));
                                 p.setWidthF(_overlay_width);
@@ -1604,8 +1661,5 @@ void SequenceInteractor::getResolution(float &x, float &y)
     }
     x = _x;
     y = _y;
-    //    qDebug() << x << y;
-    //     "HorizontalPixelDimension" << "VerticalPixelDimension"
-    //_mdl->
 }
 

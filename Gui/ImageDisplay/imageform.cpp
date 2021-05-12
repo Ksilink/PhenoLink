@@ -551,6 +551,8 @@ void ImageForm::paintEvent(QPaintEvent *event)
     }
 }
 
+
+
 void ImageForm::minusClicked()
 {
     fromButton = true;
@@ -861,6 +863,18 @@ void ImageForm::imageClick(QPointF pos)
         _ruler->setVisible(false);
         _size_start = QPointF(); // reset position
     }
+
+
+
+    QList<QGraphicsItem*> items = ui->graphicsView->scene()->items(pixItem->mapToScene(pos));
+    qDebug() << "Searching item at: " << pos << items.size();
+    for(auto item : items)
+    {
+
+        qDebug() << item->toolTip() << item->data(1) << item->data(2);
+    }
+
+
 }
 
 void ImageForm::imageDoubleClick(QPointF pos)
