@@ -168,6 +168,7 @@ public:
     {
         if (plugin)
             return plugin->getPath();
+        return QString();
     }
 
     virtual void	run()
