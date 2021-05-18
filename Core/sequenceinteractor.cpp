@@ -729,9 +729,6 @@ void SequenceInteractor::refinePacking()
 void SequenceInteractor::preloadImage()
 {
 
-    //QString exp = getExperimentName();
-
-    //  t.start();
     QList<QPair<int, QString> > list = getAllChannel();
     for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it)
     {

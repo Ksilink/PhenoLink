@@ -20,6 +20,12 @@ ExperimentFileModel::ExperimentFileModel(Dictionnary dict): DataProperty(dict),
 {
 }
 
+ExperimentFileModel::~ExperimentFileModel()
+{
+    if (_computedData)
+        delete _computedData;
+}
+
 void ExperimentFileModel::setRowCount(unsigned r)
 {
     _rows = r;

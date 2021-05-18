@@ -601,6 +601,8 @@ void MainWindow::networkRetrievedImage(QList<SequenceFileModel *> lsfm)
 
 }
 
+
+
 void MainWindow::commitTableToDatabase()
 {
     QTableView* wid = qobject_cast<QTableView*>(ui->computeFeatures->currentWidget());

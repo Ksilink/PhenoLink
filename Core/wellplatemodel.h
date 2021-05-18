@@ -62,7 +62,7 @@ public:
     DataProperty(Dictionnary dict ): _dict(dict)
     {
     }
-
+    virtual ~DataProperty() {}
 
     virtual void setProperties(QString tag, QString value);
     virtual QString property(QString tag);
@@ -372,6 +372,7 @@ public:
     enum WellState { HasMeasurement = 0, IsSelected = 1, IsCurrent = 2 };
 public:
     ExperimentFileModel(Dictionnary dict = Dictionnary());
+    virtual ~ExperimentFileModel();
 
     void setRowCount(unsigned r);
     unsigned getRowCount();

@@ -439,7 +439,6 @@ void MainWindow::startProcess()
     startProcessRun();
 }
 
-
 void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
                                          bool started, QMap<QString, QSet<QString> > tags_map)
 {
@@ -754,13 +753,39 @@ void MainWindow::startProcessRun()
     run_time.start();
     startProcessOtherStates(selectedChanns, lsfm, started, tags_map);
 
-    //    QFuture<void> future = QtConcurrent::run(this, &MainWindow::startProcessOtherStates,
-    //                                             selectedChanns, lsfm, started, tags_map);
-    //    watcher->setFuture(future);
-    //    _watchers.insert(watcher);
-
 
     QPushButton* s = qobject_cast<QPushButton*>(sender());
     if (s) s->setDisabled(true);
 
+}
+
+
+void MainWindow::on_pluginhistory(QString )
+{
+    auto cb = qobject_cast<QComboBox*>(sender());
+
+    QString path = cb->currentData().toString();
+    // Reload the json !
+    if (path.isEmpty())
+    {
+        QJsonObject params;
+        CheckoutProcess::handler().getParameters(_preparedProcess, params);
+        int idx = cb->currentIndex();
+        if (idx >= 0)
+            setupProcessCall(params, idx);
+        return;
+    }
+
+    QJsonObject reloaded;
+    QFile jfile(path);
+
+    if (!jfile.open(QIODevice::ReadOnly)) {
+        qWarning("Couldn't open save file.");
+        return;
+    }
+
+    reloaded = QJsonDocument::fromJson(jfile.readAll()).object();
+    qDebug() << reloaded;
+
+    setupProcessCall(reloaded, cb->currentIndex());
 }

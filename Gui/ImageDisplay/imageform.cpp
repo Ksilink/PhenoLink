@@ -1308,8 +1308,13 @@ void ImageForm::popImage()
 void ImageForm::removeFromView()
 {
     _interactor->clearMemory();
-    if (sz) sz->widget()->layout()->removeWidget(this);
+    if (sz)
+    {
+        sz->widget()->layout()->removeWidget(this);
+        sz->removeImageForm(this);
+    }
     this->close();
     this->_pix = QPixmap(); // force empty pixmap, shall clear previous data
-    this->pixItem->setPixmap(_pix); // remove links to pixmap in case...
+    this->pixItem->setPixmap(_pix); // remove links to pixmap in case...    
+    deleteLater();
 }

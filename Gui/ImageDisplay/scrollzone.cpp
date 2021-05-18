@@ -52,10 +52,29 @@ void ScrollZone::removeSequences(QList<SequenceFileModel *> &lsfm)
         foreach (ImageForm* imf, lif)
         {
             if (imf->modelView() == sfm)
-                emit imf->close();
+            {
+                imf->close();
+                _selection.removeAll(imf);
+                delete imf;
+            }
         }
+        _seq_toImg.remove(sfm);
+
     }
 }
+
+
+void ScrollZone::removeImageForm(ImageForm* im)
+{
+    _selection.removeAll(im);
+    SequenceFileModel* sfm = 0;
+    for (auto it =  _seq_toImg.begin(), e = _seq_toImg.end(); it != e; ++it)
+        if (it.value() == im)
+            sfm = it.key();
+    if (sfm)    _seq_toImg.remove(sfm);
+    // qDebug() << "Removing Image Form" << im << sfm;
+}
+
 
 void ScrollZone::dragEnterEvent(QDragEnterEvent *event)
 {

@@ -962,11 +962,6 @@ void MainWindow::server_processFinished(int exitCode, QProcess::ExitStatus statu
 
 void MainWindow::processFinished()
 {
-    //    qDebug() << "Process Finished" << CheckoutProcess::handler().numberOfRunningProcess();
-    //    if (_progress)
-    //    {
-    //        _progress->setValue(_progress->value()+1);
-    //    }
     if (_StatusProgress)
     {
         _StatusProgress->setValue(_StatusProgress->value()+1);
@@ -976,9 +971,6 @@ void MainWindow::processFinished()
     {
         return;
     }
-    //	if (_startingProcesses) return;
-
-    //    this->statusBar()->showMessage("Processing finished: All queued process are finished");
 
     QList<QPushButton*> list = ui->processingArea->findChildren<QPushButton*>();
     foreach(QPushButton* b, list)
@@ -997,11 +989,6 @@ void MainWindow::processFinished()
         {
             int vals = mdl->computedDataModel()->commitToDatabase(mdl->hash(), mdl->computedDataModel()->getCommitName());
             Q_UNUSED(vals);
-            //            if (vals != mapValues[mdl->name()])
-            //                QMessageBox::warning(this, "Finished processes",
-            //                                     QString("Warning %1 is missing values").arg(mdl->name())
-            //                                     );
-
 
             mdl->reloadDatabaseData();
             mdl->computedDataModel()->setCommitName(QString());
@@ -1101,7 +1088,7 @@ Widget* setupProcessParameterDouble(Widget* s, QJsonObject& par, QString def)
 }
 
 
-QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
+QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
 {
     //    qDebug() << par;
     QWidget* wid = 0;
@@ -1114,11 +1101,11 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
         QWidget* wid = new QWidget();
         QHBoxLayout * lay = new QHBoxLayout();
         wid->setLayout(lay);
-        QDoubleSpinBox* t1 = setupProcessParameterDouble(new QDoubleSpinBox(), par, "Default");
+        QDoubleSpinBox* t1 = setupProcessParameterDouble(new QDoubleSpinBox(), par, reloaded ? "Value" : "Default" );
         t1->setObjectName(par["Tag"].toString());
         t1->setToolTip(par["Comment"].toString());
 
-        QDoubleSpinBox* t2 = setupProcessParameterDouble(new QDoubleSpinBox(), par, "Default2");
+        QDoubleSpinBox* t2 = setupProcessParameterDouble(new QDoubleSpinBox(), par, reloaded ? "Value2" : "Default2");
         t2->setObjectName(par["Tag"].toString() + "2");
         t2->setToolTip(par["Comment2"].toString());
 
@@ -1133,10 +1120,14 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
 
 
             auto wi = findChild<QDoubleSpinBox*>(miname), wa = findChild<QDoubleSpinBox*>(maname);
-            if (wi)
-                t1->setValue(wi->value());
-            if (wa)
-                t2->setValue(wa->value());
+
+            if (!reloaded)
+            {
+                if (wi)
+                    t1->setValue(wi->value());
+                if (wa)
+                    t2->setValue(wa->value());
+            }
             _syncmapper[miname] = t1;
             _syncmapper[maname] = t2;
         }
@@ -1152,16 +1143,16 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
             if (par["isIntegral"].toBool())
             {
                 wid = par["isSlider"].toBool() ?
-                            (QWidget*)setupProcessParameterInt(new QSlider(Qt::Horizontal), par, "Default")
+                            (QWidget*)setupProcessParameterInt(new QSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
                           :
-                            (QWidget*)setupProcessParameterInt(new QSpinBox(), par, "Default");
+                            (QWidget*)setupProcessParameterInt(new QSpinBox(), par,  reloaded ? "Value" : "Default");
             }
             else
             {
                 wid = par["isSlider"].toBool() ?
-                            (QWidget*)setupProcessParameterDouble(new ctkDoubleSlider(Qt::Horizontal), par, "Default")
+                            (QWidget*)setupProcessParameterDouble(new ctkDoubleSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
                           :
-                            (QWidget*)setupProcessParameterDouble(new QDoubleSpinBox(), par, "Default");
+                            (QWidget*)setupProcessParameterDouble(new QDoubleSpinBox(), par,  reloaded ? "Value" : "Default");
             }
 
 
@@ -1175,8 +1166,10 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
         {
             box->addItem(pp[i].toString());
         }
-
-        box->setCurrentIndex(par["Default"].toInt());
+        if (reloaded && par.contains("Value"))
+            box->setCurrentText(par["Value"].toString());
+        else
+            box->setCurrentIndex(par["Default"].toInt());
 
         wid = box;
     }
@@ -1198,8 +1191,9 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
                 else
                     box->addItem(QString("%1").arg(i));
             }
-
-            if (par.contains("Default") && par["Default"].isDouble())
+            if (reloaded && par.contains("Value"))
+                box->setCurrentText(par["Value"].toString());
+            else if (par.contains("Default") && par["Default"].isDouble())
                 box->setCurrentIndex(par["Default"].toInt() - 1);
 
             wid = box;
@@ -1215,7 +1209,9 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
         if (par["isPath"].toBool() )
         {
             auto le = new ctkPathLineEdit();
-            if (par.contains("Default"))
+            if (reloaded && par.contains("Value") && !par["Value"].toString().isEmpty())
+                le->setCurrentPath(par["Value"].toString());
+            else if (par.contains("Default"))
             {
                 le->setCurrentPath(par["Default"].toString());
             }
@@ -1224,7 +1220,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
             {
                 QString v = set.value("databaseDir", par["Default"].toString()).toString();
 
-                // retreive selection name ?
+                // retrieve selection name ?
 
                 ScreensHandler& handler = ScreensHandler::getHandler();
                 auto screens = handler.getScreens();
@@ -1237,7 +1233,9 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par)
         else
         {
             auto le = new QLineEdit();
-            if (par.contains("Default"))
+            if (reloaded && par.contains("Value"))
+                le->setText(par["Value"].toString());
+            else if (par.contains("Default"))
             {
                 le->setText(par["Default"].toString());
             }
@@ -1276,11 +1274,77 @@ QJsonArray MainWindow::sortParameters(QJsonArray & arr)
     return rr;
 }
 
-
-
-
-void MainWindow::setupProcessCall(QJsonObject obj)
+void constructHistoryComboBox(QComboBox* cb, QString process)
 {
+    // Seek for processed data
+    // Project ?
+    // L:/{Project}/Checkout_Results/*/{processpath}_date_time.json :)
+    // Order data by date/time ,
+
+    QSet<QString> projects;
+    for (auto scr : ScreensHandler::getHandler().getScreens())
+        projects.insert(scr->property("project"));
+
+    QSettings set;
+    QDir dir(set.value("databaseDir").toString());
+
+    QStringList jsons, commits;
+    for (QString proj: projects)
+    {
+
+        QString writePath = QString("%1/%2/Checkout_Results/").arg(dir.absolutePath(), proj);
+        QDir prdir(writePath);
+        QStringList dirs = prdir.entryList(QStringList() << "*", QDir::Dirs | QDir::NoDotAndDotDot);
+        for (auto dir : dirs)
+        {
+            QDir gjsons(writePath+"/"+dir);
+            QStringList df = gjsons.entryList(QStringList() << process.replace("/", "_").replace(" ", "_") + "*.json", QDir::Files);
+            jsons.append(df);
+            for (QString s: df)
+                commits << writePath+"/"+dir + "/" + s;
+        }
+    }
+    // sooooo many !!!!
+    jsons.sort();
+//    qDebug() << jsons << commits;
+    QStringList disp, paths;
+    disp << "Default";
+    paths << QString();
+
+    for (auto it = jsons.rbegin(), e= jsons.rend(); it != e; ++it)
+    {
+        for (auto r: commits)
+           if (r.contains(*it))
+           {
+               paths << r;
+               QStringList path = r.split("/");
+               QString commitName = path.at(path.size() - 2);
+               if (commitName == "params")
+                   commitName = "";
+               QStringList j = (*it).split("_");
+
+               QString hours = j.takeLast();
+               hours = hours.mid(0, hours.size()-5);
+
+               QString date = j.takeLast();
+
+               disp << QString("%1 %2 %3:%4:%5").arg(commitName, date, hours.mid(0, 2), hours.mid(2,2), hours.mid(4));
+           }
+        if (disp.size() > 9)
+            break;
+    }
+
+
+    for (int i = 0; i < disp.size(); ++i)
+        cb->addItem(disp.at(i), paths.at(i));
+}
+
+
+void MainWindow::setupProcessCall(QJsonObject obj, int idx)
+{    
+    bool reloaded = idx > 0;
+
+        
     _syncmapper.clear();
 
     QString process = obj["Path"].toString();
@@ -1320,10 +1384,17 @@ void MainWindow::setupProcessCall(QJsonObject obj)
     lb->setToolTip(obj["Comment"].toString());
     layo->addRow(lb);
 
-    auto cb = new QComboBox();
+    auto cb = new QComboBox();    
     layo->addRow(cb);
+    constructHistoryComboBox(cb, process);
+    if (idx > 0) cb->setCurrentIndex(idx);
+    connect(cb, SIGNAL(currentTextChanged(QString)), this, SLOT(on_pluginhistory(QString)));
 
-    // FIXME: Properly handle the "Position" of parameter
+    if (idx < 0 && cb->count() > 1)
+        cb->setCurrentIndex(1);
+
+
+    // FIXME: Properly handle the "Position" of parameter2
     // FIXME: Properly handle other data types
 
     bool simpleImage = false;
@@ -1370,12 +1441,26 @@ void MainWindow::setupProcessCall(QJsonObject obj)
             int p = 1;
             QList<int> list = _channelsIds.values();
             std::sort(list.begin(), list.end());
+            QJsonArray ar,ar2;
+            if (reloaded && par.contains("Value") && par["Value"].isArray())
+            {
+                ar = par["Value"].toArray();
+                if (par.contains("Value2"))
+                    ar2 = par["Value2"].toArray();
+            }
             foreach(int channels, list)
             {
 
                 par["guiChan"] = channels-1;
 
-                QWidget* w = widgetFromJSON(par);
+                if (ar.size())
+                {
+                    par["Value"]=ar[channels-1];
+                    par["Value2"]=ar2[channels-1];
+                }
+
+
+                QWidget* w = widgetFromJSON(par, reloaded);
                 if (w)
                 {
                     QString nm;
@@ -1433,12 +1518,21 @@ void MainWindow::setupProcessCall(QJsonObject obj)
                     if (par["InnerType"].toString() == "double") par["isIntegral"] = false;
                     if (par["Type"].toString() == "ChannelSelector")
                     {
-                        par["Default"] = c_def; // increment the default value for each channel.
-                        c_def++;
+                        if (reloaded && par.contains("Value"))
+                        {
+                            if (par["Value"].isArray())
+                                par["Default"] = par["Value"].toArray().at(c);
+                            else
+                                par["Default"] = par["Value"];
+                        }
+                        else {
+                            par["Default"] = c_def; // increment the default value for each channel.
+                            c_def++;
+                        }
                     }
                     //                    qDebug() << c;
 
-                    QWidget* w = widgetFromJSON(par);
+                    QWidget* w = widgetFromJSON(par, reloaded);
                     if (w)
                     {
                         w->setAttribute(Qt::WA_DeleteOnClose, true);
@@ -1459,7 +1553,7 @@ void MainWindow::setupProcessCall(QJsonObject obj)
 
         }
         else
-            wid = widgetFromJSON(par);
+            wid = widgetFromJSON(par, reloaded);
 
 
         if (par.contains("ImageType") && _channelsIds.size() != 0)

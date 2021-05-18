@@ -355,11 +355,8 @@ void MainWindow::loadSelection(QStringList checked)
     //    qDebug() << checked << data.size();
 
     if (data.size() < 1) return;
-
     bool multifield = false;
-
     int loadCount = 0;
-    ExperimentFileModel* lastOk = 0;
 
     QList<QPair<SequenceFileModel*, QString> > proc_mapps;
 
@@ -433,7 +430,6 @@ void MainWindow::loadSelection(QStringList checked)
             mdl->setDisplayed(true);
             mdl->setGroupName(this->mdl->getGroup(mdl->fileName()));
             loadCount++;
-            lastOk = mdl;
         }
         else
             QMessageBox::warning(this, "Loading error", "Warning: corrupted data in loading the file, Wellplate structure could not be reconstructed");
@@ -679,6 +675,10 @@ void MainWindow::wellplateClose(int tabId)
             erase << sfm;
 
     _scrollArea->removeSequences(erase);
+
+
+    delete tmdl;
+
 
 }
 

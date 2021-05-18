@@ -37,6 +37,7 @@ public:
 
     int items();
 
+    void removeImageForm(ImageForm *im);
 protected:
     virtual void dragEnterEvent(QDragEnterEvent *event);
     virtual void dropEvent(QDropEvent *event);

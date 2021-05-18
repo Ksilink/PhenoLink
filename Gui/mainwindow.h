@@ -104,7 +104,7 @@ protected:
     QDoubleSpinBox *setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* fo, QString text, bool isMin, bool reconnect = false);
     QCheckBox *setupActiveBox(QCheckBox *box, ImageInfos *fo, int channel, bool reconnect = false);
     QDoubleSpinBox *setupVideoFrameRate(QDoubleSpinBox* extr, QString text);
-    QWidget *widgetFromJSON(QJsonObject &par);
+    QWidget *widgetFromJSON(QJsonObject &par, bool reloaded = false);
 
 
     QCheckBox *setupOverlayBox(QCheckBox* box, QString itemName, ImageInfos* inter, bool reconnect = false);
@@ -181,7 +181,7 @@ public slots:
 
     void updateCurrentSelection();
     void prepareProcessCall();
-    void setupProcessCall(QJsonObject obj);
+    void setupProcessCall(QJsonObject obj, int idx = -1);
     void startProcess();
     void changeLayout(int value);
 
@@ -207,6 +207,8 @@ public slots:
 
     void networkRetrievedImage(QList<SequenceFileModel*> lsfm);
 
+    void on_pluginhistory(QString selection);
+
 
     void rangeChange(double mi, double ma);
 
@@ -228,7 +230,6 @@ public slots:
 
     void setOverlayWidth(double w);
     void renameWorkbench();
-
     void exportContent();
 protected slots:
     void updateProcessStatusMessage(QJsonArray ob);
