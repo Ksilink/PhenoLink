@@ -94,6 +94,8 @@ public:
    void setDriveMap(QString map);
 #endif
 
+protected:
+   void HTMLstatus(qhttp::server::QHttpResponse *res);
 };
 
 

@@ -71,6 +71,7 @@ public:
   void cancelUser(QString user);
   void finishedProcess(QStringList dhash);
 
+  QString dumpHtmlStatus();
 public slots:
 
   void updatePath();

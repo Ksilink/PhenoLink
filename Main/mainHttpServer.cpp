@@ -284,6 +284,21 @@ void Server::setHttpResponse(QJsonObject& ob,  qhttp::server::QHttpResponse* res
 }
 
 
+void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
+{
+
+    QString message;
+
+    CheckoutProcess& procs = CheckoutProcess::handler();
+
+    message = procs.dumpHtmlStatus();
+
+    res->setStatusCode(qhttp::ESTATUS_OK);
+    res->addHeaderValue("content-length", message.size());
+    res->end(message.toUtf8());
+}
+
+
 void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpResponse* res)
 {
 
@@ -322,6 +337,19 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         setHttpResponse(ob, res, !query.contains("json"));
     }
 
+    if (urlpath== "/status.html" || urlpath=="/index.html")
+    {
+        HTMLstatus(res);
+        return;
+    }
+
+    if (urlpath.startsWith("/Cancel/"))
+    {
+        QString user = urlpath.mid(8);
+        procs.cancelUser(user);
+        HTMLstatus(res);
+        return;
+    }
 
     if (urlpath.startsWith("/Start/"))
     {
@@ -392,7 +420,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     }
     else
     {
-        QString body("Server Query received, with empty content");
+        QString body = QString("Server Query received, with empty content (%1)").arg(urlpath);
         res->addHeader("connection", "close");
         res->addHeaderValue("content-length", body.length());
         res->setStatusCode(qhttp::ESTATUS_OK);

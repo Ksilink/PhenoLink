@@ -893,7 +893,35 @@ unsigned CheckoutProcess::errors()
     return NetworkProcessHandler::handler().errors();
 }
 
-QStringList CheckoutProcess::users() { return _peruser_runners.keys(); }
+QString CheckoutProcess::dumpHtmlStatus()
+{
+    QString body;
+
+    body += QString("<h1>Connected Users : %1</h1>").arg(_peruser_runners.size());
+
+    for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
+    {
+        body += QString("%1 : %2 <a href='/Cancel/%1'>Cancel User Processes</a><br>").arg(it.key()).arg(it.value().size());
+    }
+
+    return QString("<html><title>Checkout Server Status</title><body>%1</body></html>").arg(body);
+}
+
+QStringList CheckoutProcess::users()
+{
+    QStringList users, del;
+
+    for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
+        if (it.value().size())
+            users << it.key();
+        else
+            del << it.key();
+
+    for (auto v: del)
+        _peruser_runners.remove(v);
+
+    return users;
+}
 
 void CheckoutProcess::removeRunner(QString user, void *run) {
     status_protect.lock();
