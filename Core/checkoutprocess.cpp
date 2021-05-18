@@ -164,6 +164,12 @@ public:
     {
     }
 
+    QString name()
+    {
+        if (plugin)
+            return plugin->getPath();
+    }
+
     virtual void	run()
     {
         int p = 0;
@@ -902,6 +908,18 @@ QString CheckoutProcess::dumpHtmlStatus()
     for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
     {
         body += QString("%1 : %2 <a href='/Cancel/%1'>Cancel User Processes</a><br>").arg(it.key()).arg(it.value().size());
+        QMap<QString, int> counter;
+        status_protect.lock();
+
+        for (auto q: it.value())
+        {
+            auto pl = static_cast<PluginRunner*>(q);
+            counter[pl->name()]++;
+        }
+        for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
+            body += QString("<p>%1 : %2 </p>").arg(it.key()).arg(it.value());
+        status_protect.unlock();
+
     }
 
     return QString("<html><title>Checkout Server Status</title><body>%1</body></html>").arg(body);
