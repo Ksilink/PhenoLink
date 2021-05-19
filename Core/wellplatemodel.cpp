@@ -2134,12 +2134,15 @@ ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, Q
         qDebug() << "Experiment data not found, could not store data...." << hash;
         return 0;
     }
+
     datamdl->setCommitName(commit);
+
     QString id = data.take("Pos").toString();
     int fieldId = data.take("FieldId").toInt(),
             timepoint = data.take("TimePos").toInt(),
             sliceId = data.take("zPos").toInt(),
             channel = data.take("channel").toInt();
+
     data.take("hash");
     data.take("DataHash");
 
@@ -2147,7 +2150,7 @@ ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, Q
     for (QJsonObject::iterator it = data.begin(), e = data.end(); it != e; ++it)
         if (!it.key().endsWith("_Agg"))
         {
-            QString tag = it.key();
+            QString tag = it.key().simplified().replace(" ", "_").replace("-", "_");
             QString val = it.value().toString();
 //            qDebug() << "Adding data" << tag << val;
             datamdl->setAggregationMethod(tag, data[QString("%1_Agg").arg(tag)].toString() );
