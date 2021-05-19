@@ -327,7 +327,7 @@ void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
 
 
 
-void MainWindow::loadSelection(QStringList checked)
+Screens MainWindow::loadSelection(QStringList checked)
 {
     // We have the screens list
     // Need to properly load the files now
@@ -354,7 +354,7 @@ void MainWindow::loadSelection(QStringList checked)
 
     //    qDebug() << checked << data.size();
 
-    if (data.size() < 1) return;
+    if (data.size() < 1) return data;
     bool multifield = false;
     int loadCount = 0;
 
@@ -478,6 +478,8 @@ void MainWindow::loadSelection(QStringList checked)
     }
     // Load data using factorised function
     on_wellPlateViewTab_tabBarClicked(ui->wellPlateViewTab->currentIndex());
+
+    return data;
 }
 
 
@@ -486,6 +488,11 @@ void MainWindow::displayWellSelection()
 {
     if (_scrollArea)
         _scrollArea->addSelectedWells();
+}
+
+SequenceInteractor *MainWindow::getInteractor(SequenceFileModel *mdl)
+{
+   return _scrollArea->getInteractor(mdl);
 }
 
 
@@ -579,16 +586,6 @@ void MainWindow::addDirectory()
     _f_dlg->setDirectory(set.value("LastAddedDir","c:/").toString());
     _f_dlg->setOption(QFileDialog::ShowDirsOnly, true);
     _f_dlg->setFileMode(QFileDialog::Directory);
-    //    fileDialog.setOption(QFileDialog::ShowDirsOnly);
-
-    //    _f_dlg->setFileMode(QFileDialog::DirectoryOnly);
-    //    _f_dlg->setOption(QFileDialog::DontUseNativeDialog, true);
-
-    //    QListView* l = _f_dlg->findChild<QListView*>("listView");
-
-    //    if (l) l->setSelectionMode(QListView::MultiSelection);
-    //    QTreeView* t = _f_dlg->findChild<QTreeView*>();
-    //    if (t) t->setSelectionMode(QTreeView::MultiSelection);
 
     int nMode = _f_dlg->exec();
     if (nMode == QDialog::Rejected)

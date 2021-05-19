@@ -91,12 +91,12 @@ QStringList CheckoutProcess::networkPaths()
 }
 
 
-  QString CheckoutProcess::setDriveMap(QString map)
-   {
-      qDebug() << "Setting the drive mapping to " << map;
+QString CheckoutProcess::setDriveMap(QString map)
+{
+    qDebug() << "Setting the drive mapping to " << map;
     drive_map = map;
     return drive_map;
-   }
+}
 
 void CheckoutProcess::setProcessCounter(int *count)
 {
@@ -190,7 +190,7 @@ public:
             p=5;
             plugin->finished();
             p=6;
-             CheckoutProcess::handler().removeRunner(plugin->user(), (void*)this);
+            CheckoutProcess::handler().removeRunner(plugin->user(), (void*)this);
             p=7;
             // - 4) Do the gathering of processes data
             //        qDebug() << "Gathering data";
@@ -199,7 +199,7 @@ public:
             p=8;
             qDebug() << timer.elapsed() << "(ms) done";
             CheckoutProcess::handler().finishedProcess(_hash, result);
-            p=9;            
+            p=9;
         }
         catch (...)
         {
@@ -246,8 +246,8 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
 
         //  QSqlQuery q;
         QJsonObject pp(params);
-//        pp.remove("CommitName");
-  //      pp.remove("CoreProcess_hash");
+        //        pp.remove("CommitName");
+        //      pp.remove("CoreProcess_hash");
 
         QJsonArray arr = pp["Parameters"].toArray(), rra;
 
@@ -257,14 +257,14 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
             if (ob.contains("Value") || ob.contains("Data"))
             {
                 QJsonObject r;
-                    auto l = QStringList() << "Tag" << "Value" << "Value2" << "Channels" << "Data" << "isOptional" << "optionalState"
+                auto l = QStringList() << "Tag" << "Value" << "Value2" << "Channels" << "Data" << "isOptional" << "optionalState"
                                            << "ContentType" << "ImageType" << "PlateName" << "Enum" << "DataHash" << "Properties" << "PlateName"
                                             << "Pos" << "Channel" << "asVectorImage" << "tiled" << "unbias" << "isImage" ;
-                    for (auto key : l)
-                        if (ob.contains(key))
-                            r[key] = ob[key];
+                for (auto key : l)
+                    if (ob.contains(key))
+                        r[key] = ob[key];
 
-                    rra.push_back(r);
+                rra.push_back(r);
             }
         }
 
@@ -350,7 +350,7 @@ QJsonValue remap(QJsonValue v, QString map)
         if (value[1]==":")
         {
             QJsonValue res = map + value.remove(1,1);
-//            qDebug() << "Remap" << v << res;
+            //            qDebug() << "Remap" << v << res;
             return res;
         }
     }
@@ -379,7 +379,7 @@ QJsonObject remap(QJsonObject ob, QString map)
         res[it.key()]=remap(it.value(), map);
     }
 
-    return res;    
+    return res;
 }
 
 
@@ -405,11 +405,11 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
 
             // - 1) clone the plugin: call the clone() function
             plugin = plugin->clone();
-			if (!plugin)
+            if (!plugin)
             {
-				qDebug() << "Plugin cannot be cloned";
-				break;
-			}
+                qDebug() << "Plugin cannot be cloned";
+                break;
+            }
             //params["StartTime"] = QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz");
 
             QString hash = params["Process_hash"].toString();
@@ -425,22 +425,22 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
 
             //           qDebug() << "Starting process";
             PluginRunner* runner = new PluginRunner(plugin, hash);
-			if (runner)
-			{
-				QString key = params["Username"].toString() + "@" + params["Computer"].toString();
+            if (runner)
+            {
+                QString key = params["Username"].toString() + "@" + params["Computer"].toString();
                 status_protect.lock();
-				_peruser_runners[key].push_back((void*)runner);
+                _peruser_runners[key].push_back((void*)runner);
                 status_protect.unlock();
-				auto th_instance = QThreadPool::globalInstance();
-				if (th_instance)
-					th_instance->start(runner);
-				else
-					qDebug() << "Error with launching threads";
-			}
-			else
-			{
-				qDebug() << "Unable to start runner";
-			}
+                auto th_instance = QThreadPool::globalInstance();
+                if (th_instance)
+                    th_instance->start(runner);
+                else
+                    qDebug() << "Error with launching threads";
+            }
+            else
+            {
+                qDebug() << "Unable to start runner";
+            }
         }
     }
     else
@@ -693,7 +693,7 @@ void CheckoutProcess::addToComputedDataModel(QJsonObject ob)
 void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
 {
     QJsonArray finished, unfinished;
-//    qDebug() << "Finished Processes" << obj.size();
+    //    qDebug() << "Finished Processes" << obj.size();
 
     for (int i = 0; i < obj.size(); ++i)
     {
@@ -711,7 +711,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
             _status.remove(hash);
             //            qDebug() << "GUI Finished Hash" << hash << _hash_to_save.contains(hash);
 
-           
+
 
             if (_hash_to_save[hash])
             {
@@ -724,7 +724,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
                     qDebug() << "GUI Hash finished" << hash;
                     //                    qDebug() << ob;
                     // Last object of the running process, check for the field CommitName in ob & commit to the database if not empty
-                   _hash_to_save.remove(hash);
+                    _hash_to_save.remove(hash);
 
                 }
             }
@@ -737,7 +737,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
                 emit emptyProcessList();
             }
             status_protect.unlock();
-//            qDebug() << "Adding object" << ob;
+            //            qDebug() << "Adding object" << ob;
             finished.append(ob);
 
         }
@@ -745,7 +745,7 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
             unfinished.append(ob);
 
     }
-     qDebug() <<"Clearing finished process: " << finished.size();
+    qDebug() <<"Clearing finished process: " << finished.size();
 
     emit processFinished(finished);
 
@@ -811,10 +811,10 @@ void CheckoutProcess::finishedProcess(QString hash, QJsonObject result)
     CheckoutProcessPluginInterface* intf = _status[hash];
     if (dynamic_cast<ProcessDataHolder*>(intf))  return ;
 
-//    qDebug() << "Process finished " << hash << "emiting signal";
+    //    qDebug() << "Process finished " << hash << "emiting signal";
     emit finishedJob(hash, result);
     qDebug() << "process finished, remaining" << _status.size();
-//    qDebug() << "Removing" << hash;
+    //    qDebug() << "Removing" << hash;
     _status.remove(hash);
     _finished[hash] = result;
 }
@@ -834,23 +834,23 @@ void CheckoutProcess::queryPayload(QString hash)
     //qDebug() << "get payload" << hash;
 
     QSharedMemory mem(hash);
-//    if (mem.attach())
-//    {
-//        mem.lock();
-//        size_t s = *(size_t*)mem.data();
-//        std::vector<unsigned char> data(s);
-//        std::memcpy(data.data(), ( char*)(mem.data())+sizeof(size_t), s);
+    //    if (mem.attach())
+    //    {
+    //        mem.lock();
+    //        size_t s = *(size_t*)mem.data();
+    //        std::vector<unsigned char> data(s);
+    //        std::memcpy(data.data(), ( char*)(mem.data())+sizeof(size_t), s);
 
-//        attachPayload(hash, data);
-//        mem.unlock();
-//        mem.detach();
+    //        attachPayload(hash, data);
+    //        mem.unlock();
+    //        mem.detach();
 
-//        NetworkProcessHandler::handler().deletePayload(hash);
+    //        NetworkProcessHandler::handler().deletePayload(hash);
 
-//    }
-//    else
-        if (!_payloads_vectors.contains(hash))
-            NetworkProcessHandler::handler().queryPayload(hash);
+    //    }
+    //    else
+    if (!_payloads_vectors.contains(hash))
+        NetworkProcessHandler::handler().queryPayload(hash);
 }
 
 void CheckoutProcess::deletePayload(QString hash)
@@ -875,7 +875,7 @@ bool CheckoutProcess::shallDisplay(QString hash)
 void CheckoutProcess::attachPayload(QString hash, std::vector<unsigned char> data,
                                     bool , size_t pos)
 {
-//    qDebug() << "Attaching payload" << hash << data.size() <<  pos;
+    //    qDebug() << "Attaching payload" << hash << data.size() <<  pos;
     if (pos != 0)
         hash += QString("%1").arg(pos);
 
@@ -900,6 +900,25 @@ unsigned CheckoutProcess::errors()
     return NetworkProcessHandler::handler().errors();
 }
 
+void CheckoutProcess::getStatus(QJsonObject& ob)
+{
+    for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
+    {
+        QMap<QString, int> counter;
+        status_protect.lock();
+
+        for (auto q: it.value())
+        {
+            auto pl = static_cast<PluginRunner*>(q);
+            counter[pl->name()]++;
+        }
+        for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
+            ob[it.key()]=it.value();
+        status_protect.unlock();
+
+    }
+}
+
 QString CheckoutProcess::dumpHtmlStatus()
 {
     QString body;
@@ -917,10 +936,11 @@ QString CheckoutProcess::dumpHtmlStatus()
             auto pl = static_cast<PluginRunner*>(q);
             counter[pl->name()]++;
         }
+
         for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
             body += QString("<p>%1 : %2 </p>").arg(it.key()).arg(it.value());
-        status_protect.unlock();
 
+        status_protect.unlock();
     }
 
     return QString("<html><title>Checkout Server Status</title><body>%1</body></html>").arg(body);
@@ -973,7 +993,7 @@ std::vector<unsigned char> CheckoutProcess::detachPayload(QString hash)
     std::vector<unsigned char> r;
     if (_payloads_vectors.contains(hash))
     {
-//        qDebug() << "Searched hash" << hash;
+        //        qDebug() << "Searched hash" << hash;
         r = std::move(_payloads_vectors[hash]);
         _payloads_vectors.remove(hash);
         if (_stored.contains(hash))

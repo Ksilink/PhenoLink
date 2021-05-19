@@ -342,6 +342,14 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         HTMLstatus(res);
         return;
     }
+    if (urlpath.startsWith("/Status"))
+    {
+        QJsonObject ob;
+        procs.getStatus(ob);
+        //            qDebug() << path << ob;
+        setHttpResponse(ob, res, !query.contains("json"));
+    }
+
 
     if (urlpath.startsWith("/Cancel/"))
     {

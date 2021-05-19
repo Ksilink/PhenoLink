@@ -58,7 +58,13 @@ public:
 
 
     void updateTableView(ExperimentFileModel *mdl);
+    void displayWellSelection();
+
+    SequenceInteractor* getInteractor(SequenceFileModel* mdl);
+    Screens loadSelection(QStringList checked);
+
 protected:
+
     template <typename WType>
     int getWidgetWidth(QString name)
     {
@@ -129,9 +135,7 @@ private slots:
     void addDirectory();
     void clearDirectories();
     void deleteDirPath(QString dir);
-    void loadSelection(QStringList checked);
     void on_actionOpen_Single_Image_triggered();
-    void displayWellSelection();
     void addDirectoryName(QString name);
 
     void on_action_Exit_triggered();

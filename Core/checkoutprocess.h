@@ -72,6 +72,7 @@ public:
   void finishedProcess(QStringList dhash);
 
   QString dumpHtmlStatus();
+  void getStatus(QJsonObject &ob);
 public slots:
 
   void updatePath();

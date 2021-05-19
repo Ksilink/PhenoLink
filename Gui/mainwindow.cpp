@@ -1192,7 +1192,12 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
                     box->addItem(QString("%1").arg(i));
             }
             if (reloaded && par.contains("Value"))
-                box->setCurrentText(par["Value"].toString());
+            {
+                if (par["Value"].isArray())
+                    box->setCurrentText(par["Value"].toArray().at(0).toString());
+                else
+                    box->setCurrentText(par["Value"].toString());
+            }
             else if (par.contains("Default") && par["Default"].isDouble())
                 box->setCurrentIndex(par["Default"].toInt() - 1);
 

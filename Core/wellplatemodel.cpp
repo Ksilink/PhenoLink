@@ -1714,6 +1714,8 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
 }
 
 
+// http://localhost:8020/Load?plate=C:/Data/DCM/DCM-Tum-lines-seeded-for-6k-D9-4X_20200702_110209/DCM-Tum-lines-seeded-for-6k-D9-4X/MeasurementDetail.mrf&wells=B06&json&unpacked
+
 // To use with blockingMapped function to load in //
 ExperimentFileModel* loadScreenFunc(QString it, bool allow_loaded, Screens& _screens)
 {

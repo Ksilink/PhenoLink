@@ -27,14 +27,14 @@ GuiServer::GuiServer(MainWindow* par): win(par)
     connect(this, &QHttpServer::newConnection,
             [this](QHttpConnection* ){
         Q_UNUSED(this);
-//        qDebug() << "Connection to GuiServer ! ";
-//            << c->tcpSocket()->errorString();
+        //        qDebug() << "Connection to GuiServer ! ";
+        //            << c->tcpSocket()->errorString();
     });
     quint16 port = 8020;
 
     bool isListening = listen(QString::number(port),
                               [this](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res){
-//            qDebug() << "Listenning to socket!";
+            //            qDebug() << "Listenning to socket!";
             req->collectData();
             req->onEnd([this, req, res](){
         this->process(req, res);
@@ -45,8 +45,8 @@ GuiServer::GuiServer(MainWindow* par): win(par)
     if ( !isListening ) {
         qDebug() << "can not listen on" <<  port;
     }
-//    else
-//        qDebug() << "Gui Server Started";
+    //    else
+    //        qDebug() << "Gui Server Started";
 }
 
 void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res)
@@ -54,10 +54,10 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
     const QByteArray data = req->collectedData();
     QString urlpath = req->url().path(), query = req->url().query();
 
-//    qDebug() << qhttp::Stringify::toString(req->method())
-//             << qPrintable(urlpath)
-//             << qPrintable(query)
-//             << data.size();
+    //    qDebug() << qhttp::Stringify::toString(req->method())
+    //             << qPrintable(urlpath)
+    //             << qPrintable(query)
+    //             << data.size();
 
 
     // addData/<project>/<CommitName>/<Plate> <= POST data as CBOR
@@ -81,7 +81,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             bool finished = (0 == NetworkProcessHandler::handler().remainingProcess().size());
             auto hash = oj["DataHash"].toString();
             auto mdl = ScreensHandler::getHandler().addDataToDb(hash, commit, oj, false);
-    //            qDebug() << "Process finished" << finished << commit << NetworkProcessHandler::handler().remainingProcess().size();
+            //            qDebug() << "Process finished" << finished << commit << NetworkProcessHandler::handler().remainingProcess().size();
             if (finished)
                 ScreensHandler::getHandler().commitAll();
             win->updateTableView(mdl);
@@ -99,6 +99,84 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
         win->networkRetrievedImage(lsfm);
     }
+
+
+    if (urlpath.startsWith("/Load"))
+    {
+        //        "/Load/?plate=&wells=&field=&tile=&unpacked"
+
+        QStringList queries = query.split("&"), wells;
+        bool unpacked=false;
+        QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile";
+        QString plate, tile;
+        std::map<QString, QString> params;
+        for (auto q : queries)
+        {
+            if (q.startsWith("plate="))
+            {
+                q=q.mid(6);
+                plate=q;
+            }
+            if (q.startsWith("wells="))
+            {
+                q=q.mid(6);
+                wells=q.split(",");
+            }
+            if(q.startsWith("unpacked"))
+            {
+                unpacked=true;
+            }
+            for (auto p : pars)
+                if (q.startsWith(p))
+                {
+                    q=q.mid(p.size()+1);
+                    params[p]=q;
+                }
+        }
+
+
+        Screens sc = win->loadSelection(QStringList() << plate);
+        for (auto mdl: sc)
+        {
+            mdl->clearState(ExperimentFileModel::IsSelected);
+            ExperimentDataTableModel* xpmdl = mdl->computedDataModel();
+
+            if (unpacked)
+            {
+                QList<SequenceFileModel *>  l  = mdl->getAllSequenceFiles();
+
+                foreach(SequenceFileModel* mm, l)
+                    mm->setProperties("unpack", "yes");
+            }
+
+            for (auto po: wells)
+                mdl->select(xpmdl->stringToPos(po), true);
+
+            win->displayWellSelection();
+            for (auto sfm : mdl->getSelection())
+            {
+                auto inter = win->getInteractor(sfm);
+                if (inter)
+                {
+                    if (params.find("field") != params.end())
+                        inter->setField(params["field"].toInt());
+                    if (params.find("zpos") != params.end())
+                        inter->setZ(params["zpos"].toInt());
+                    if (params.find("time") != params.end())
+                        inter->setTimePoint(params["time"].toInt());
+                    if (params.find("tile") != params.end())
+                    {
+                        inter->setOverlayId("Tile", params["tile"].toInt());
+                        inter->toggleOverlay("Tile", true);
+                    }
+                }
+            }
+
+            // Need to get interactor & change field accordingly / or tile dipslay
+        }
+
+    }
+
 
     QJsonObject ob;
     setHttpResponse(ob, res, !query.contains("json"));

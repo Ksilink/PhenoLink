@@ -1489,8 +1489,8 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                 for (int i = 0; i < lcols.size(); ++i)
                 {
                     QString s = lcols[i];
-                    if (s.contains("_Top"))   t = i;
-                    else if (s.contains("_Left"))  l = i;
+                    if (s.contains("_Top"))   l = i;
+                    else if (s.contains("_Left"))  t = i;
                     else if (s.contains("_X"))   t = i;
                     else if (s.contains("_Y"))  l = i;
                     else if (s.contains("_Width")) w = i;

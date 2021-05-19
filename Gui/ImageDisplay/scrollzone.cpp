@@ -229,6 +229,15 @@ void ScrollZone::insertImage(SequenceFileModel* sfm, SequenceInteractor* iactor)
     qApp->processEvents();
 }
 
+
+SequenceInteractor* ScrollZone::getInteractor(SequenceFileModel* mdl)
+{
+    if (_seq_toImg.contains(mdl))
+        return _seq_toImg[mdl]->getInteractor();
+
+    return nullptr;
+}
+
 void ScrollZone::refresh(SequenceFileModel *sfm)
 {
 
