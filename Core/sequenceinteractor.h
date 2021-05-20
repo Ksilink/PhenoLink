@@ -72,7 +72,8 @@ public:
   QString getExperimentName();
 
   void addImage(CoreImage*ci);
-  void clearMemory();
+  void clearMemory(CoreImage *im);
+
 //signals:
   void modifiedImage();
   QPointF getFieldPosition(int field = -1);

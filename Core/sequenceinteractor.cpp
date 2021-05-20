@@ -359,14 +359,11 @@ void SequenceInteractor::addImage(CoreImage *ci)
     ifo->addCoreImage(ci);
 }
 
-void SequenceInteractor::clearMemory()
+void SequenceInteractor::clearMemory(CoreImage* im)
 {
-    /*  foreach (ImageInfos* im, _infos.values())
-        delete im;
-    _infos.clear();//
 
+    _ImageList.removeAll(static_cast<CoreImage*>(im));
 
-*/
     QString exp = getExperimentName();// +_mdl->Pos();
 
     for (unsigned ii = 1; ii <= _mdl->getChannels(); ++ii)

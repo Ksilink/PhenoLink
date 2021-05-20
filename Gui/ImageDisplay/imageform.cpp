@@ -1307,7 +1307,7 @@ void ImageForm::popImage()
 
 void ImageForm::removeFromView()
 {
-    _interactor->clearMemory();
+    _interactor->clearMemory(this);
     if (sz)
     {
         sz->widget()->layout()->removeWidget(this);
