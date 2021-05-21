@@ -48,6 +48,8 @@ void ScrollZone::removeSequences(QList<SequenceFileModel *> &lsfm)
 {
     foreach (SequenceFileModel* sfm, lsfm)
     {
+        sfm->setAsShowed(false);
+           
         QList<ImageForm*> lif = findChildren<ImageForm*>();
         foreach (ImageForm* imf, lif)
         {
@@ -67,11 +69,15 @@ void ScrollZone::removeSequences(QList<SequenceFileModel *> &lsfm)
 void ScrollZone::removeImageForm(ImageForm* im)
 {
     _selection.removeAll(im);
-    SequenceFileModel* sfm = 0;
+    QList<SequenceFileModel*> sfm;
     for (auto it =  _seq_toImg.begin(), e = _seq_toImg.end(); it != e; ++it)
         if (it.value() == im)
-            sfm = it.key();
-    if (sfm)    _seq_toImg.remove(sfm);
+        {
+            sfm << it.key();
+            it.key()->setAsShowed(false);
+        }
+    for (auto s: sfm)
+        _seq_toImg.remove(s);
     // qDebug() << "Removing Image Form" << im << sfm;
 }
 
@@ -240,10 +246,11 @@ SequenceInteractor* ScrollZone::getInteractor(SequenceFileModel* mdl)
 
 void ScrollZone::refresh(SequenceFileModel *sfm)
 {
-
-    _seq_toImg[sfm]->updateButtonVisibility();
-
-    _seq_toImg[sfm]->redrawPixmap();
+    if (_seq_toImg.contains(sfm))
+    {
+        _seq_toImg[sfm]->updateButtonVisibility();
+        _seq_toImg[sfm]->redrawPixmap();
+    }
 }
 
 void ScrollZone::clearSelection()

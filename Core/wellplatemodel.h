@@ -156,7 +156,7 @@ public:
     QString Pos();
 
     bool isAlreadyShowed();
-    void setAsShowed();
+    void setAsShowed(bool showed=true);
 
     bool toDisplay();
     void setDisplayStatus(bool disp);

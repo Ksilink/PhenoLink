@@ -1396,8 +1396,10 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     connect(cb, SIGNAL(currentTextChanged(QString)), this, SLOT(on_pluginhistory(QString)));
 
     if (idx < 0 && cb->count() > 1)
+    {
         cb->setCurrentIndex(1);
-
+        return;
+     }
 
     // FIXME: Properly handle the "Position" of parameter2
     // FIXME: Properly handle other data types

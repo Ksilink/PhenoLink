@@ -912,9 +912,9 @@ bool SequenceFileModel::isAlreadyShowed()
     return _isShowed;
 }
 
-void SequenceFileModel::setAsShowed()
+void SequenceFileModel::setAsShowed(bool showed)
 {
-    _isShowed = true;
+    _isShowed = showed;
 }
 
 bool SequenceFileModel::toDisplay()
@@ -2289,6 +2289,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue &data
                 seq.addFile(t, f, z, cc, fname);
 
                 rmdl = &seq;
+                seq.setAsShowed(false); // Force to not shown
                 _result_images << fname;
 
                 if (ob.contains(QCborValue("Colormap")))
