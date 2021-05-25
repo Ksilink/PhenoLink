@@ -2126,10 +2126,12 @@ ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, Q
     for (QJsonObject::iterator it = data.begin(), e = data.end(); it != e; ++it)
         if (!it.key().endsWith("_Agg"))
         {
-            QString tag = it.key().simplified().replace(" ", "_").replace("-", "_");
+
+            QString otag = it.key();
+            QString tag = otag.simplified().replace(" ", "_").replace("-", "_");
             QString val = it.value().toString();
 //            qDebug() << "Adding data" << tag << val;
-            datamdl->setAggregationMethod(tag, data[QString("%1_Agg").arg(tag)].toString() );
+            datamdl->setAggregationMethod(tag, data[QString("%1_Agg").arg(otag)].toString() );
 
             if (val.contains(','))
             {
