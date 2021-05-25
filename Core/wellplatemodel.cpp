@@ -1744,7 +1744,6 @@ Screens ScreensHandler::loadScreens(QStringList list, bool allow_loaded)
 {
     _error = QString();
     // This class shall use the plugin interface to expose multiple instances of the CheckoutDataLoaderPluginInterface
-#if 1
 
     auto func = std::bind(loadScreenFunc, std::placeholders::_1 , allow_loaded, _screens);
     Screens tmp = QtConcurrent::blockingMapped(list, func);
@@ -1755,34 +1754,11 @@ Screens ScreensHandler::loadScreens(QStringList list, bool allow_loaded)
         if (mdl)
             res << mdl;
 
-
-#else
-
-    for (QStringList::iterator it = list.begin(), e = list.end(); it != e; ++it)
-    {
-        bool loaded = false; // Check if file is alredy loaded
-        foreach(ExperimentFileModel* mdl, _screens)
-        {
-            loaded = (mdl->fileName() == *it);
-            //          qDebug() << mdl->fileName()<< *it << loaded;
-            if (loaded && allow_loaded && !mdl->displayed())
-                loaded = false;
-            if (loaded && allow_loaded)
-                res << mdl;
-            if (loaded) break;
-        }
-        //      qDebug() << "is already loaded" << *it << loaded << _screens.size();
-        if (loaded) continue;
-
-
-        ExperimentFileModel* xp = loadScreen(*it);
-        //      qDebug() << *it << xp ;
-        if (xp)
-            res <<    xp;
-    }
-#endif
     return res;
 }
+
+
+
 
 Screens &ScreensHandler::getScreens()
 {

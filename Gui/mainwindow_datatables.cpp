@@ -500,24 +500,11 @@ void MainWindow::networkProcessFinished(QJsonArray dat)
 
                         QString hh = ar[(int)i].toObject()["DataHash"].toString(); //QString("%1%2").arg(dhash).arg(i);
 
-                        //                    qDebug() << hh;
                         if (!should_delete)  _waitingForImages[hh] = ob;
 
                         hashes << hh;
                     }
                 }
-
-                foreach (QString h, hashes)
-                    if (should_delete)
-                    {
-                        //removeHash=false;
-                        CheckoutProcess::handler().deletePayload(h);
-                    }
-                    else
-                    {
-                        //removeHash = false;
-                        CheckoutProcess::handler().queryPayload(h);
-                    }
             }
         }
         finished_hash << processHash;

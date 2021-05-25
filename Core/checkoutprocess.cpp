@@ -830,43 +830,43 @@ void CheckoutProcess::exitServer()
     NetworkProcessHandler::handler().exitServer();
 }
 
-void CheckoutProcess::queryPayload(QString hash)
-{
-    //qDebug() << "get payload" << hash;
+//void CheckoutProcess::queryPayload(QString hash)
+//{
+//    //qDebug() << "get payload" << hash;
 
-    QSharedMemory mem(hash);
-    //    if (mem.attach())
-    //    {
-    //        mem.lock();
-    //        size_t s = *(size_t*)mem.data();
-    //        std::vector<unsigned char> data(s);
-    //        std::memcpy(data.data(), ( char*)(mem.data())+sizeof(size_t), s);
+////    QSharedMemory mem(hash);
+////    //    if (mem.attach())
+////    //    {
+////    //        mem.lock();
+////    //        size_t s = *(size_t*)mem.data();
+////    //        std::vector<unsigned char> data(s);
+////    //        std::memcpy(data.data(), ( char*)(mem.data())+sizeof(size_t), s);
 
-    //        attachPayload(hash, data);
-    //        mem.unlock();
-    //        mem.detach();
+////    //        attachPayload(hash, data);
+////    //        mem.unlock();
+////    //        mem.detach();
 
-    //        NetworkProcessHandler::handler().deletePayload(hash);
+////    //        NetworkProcessHandler::handler().deletePayload(hash);
 
-    //    }
-    //    else
-    if (!_payloads_vectors.contains(hash))
-        NetworkProcessHandler::handler().queryPayload(hash);
-}
+////    //    }
+////    //    else
+////    if (!_payloads_vectors.contains(hash))
+////        NetworkProcessHandler::handler().queryPayload(hash);
+//}
 
-void CheckoutProcess::deletePayload(QString hash)
-{
-    if (!_payloads_vectors.contains(hash))
-        NetworkProcessHandler::handler().deletePayload(hash);
+//void CheckoutProcess::deletePayload(QString hash)
+//{
+//    if (!_payloads_vectors.contains(hash))
+//        NetworkProcessHandler::handler().deletePayload(hash);
 
-    if (_inmems.contains(hash))
-    {
-        _inmems[hash]->detach();
-        _inmems.remove(hash);
-        QSharedMemory* m = _inmems[hash];
-        delete m;
-    }
-}
+//    if (_inmems.contains(hash))
+//    {
+//        _inmems[hash]->detach();
+//        _inmems.remove(hash);
+//        QSharedMemory* m = _inmems[hash];
+//        delete m;
+//    }
+//}
 
 bool CheckoutProcess::shallDisplay(QString hash)
 {
@@ -984,9 +984,9 @@ void CheckoutProcess::cancelUser(QString user)
     status_protect.unlock();
 }
 
-void CheckoutProcess::finishedProcess(QStringList dhash)
+void CheckoutProcess::finishedProcess(QStringList /*dhash*/)
 {
-    NetworkProcessHandler::handler().processFinished(dhash);
+//    NetworkProcessHandler::handler().processFinished(dhash);
 }
 
 std::vector<unsigned char> CheckoutProcess::detachPayload(QString hash)

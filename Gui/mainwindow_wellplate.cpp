@@ -327,12 +327,12 @@ void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
 
 
 
-Screens MainWindow::loadSelection(QStringList checked)
+Screens MainWindow::loadSelection(QStringList checked, bool reload)
 {
     // We have the screens list
     // Need to properly load the files now
     ScreensHandler& handler = ScreensHandler::getHandler();
-    Screens data = handler.loadScreens(checked, true);
+    Screens data = handler.loadScreens(checked, reload);
 
     QString err = handler.errorMessage();
     if (!err.isEmpty())

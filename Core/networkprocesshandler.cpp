@@ -518,105 +518,6 @@ void NetworkProcessHandler::getProcessMessageStatus(QString process, QList<QStri
 #endif
 }
 
-void NetworkProcessHandler::queryPayload(QString ohash)
-{
-#if FALSE
-    QString hash=ohash;
-    hash.truncate(32);
-    //    CheckoutHost* h = procMapper.first().first();
-    (*hash_logfile) << "Payload " << ohash << Qt::endl;
-    CheckoutHost* h = runningProcs[hash];
-
-    if (!h)
-    {
-        qDebug() << "queryPayload: Get Network process handler" << hash;
-        return;
-    }
-    else
-    {
-        runningProcs.remove(ohash);
-        qDebug() << "query Payload: Network Stack remaining hash" << runningProcs.size();
-    }
-
-    qDebug() << "Query Payload";
-
-    QTcpSocket* soc =  getNewSocket(h);
-
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_3);
-    out << (uint)0;
-    out << QString(getNetworkMessageString(Process_Payload));
-    out << ohash;
-    out.device()->seek(0);
-    out << (uint)(block.size() - sizeof(uint));
-
-    if (block.size())
-    {
-        soc->write(block);
-        soc->waitForBytesWritten();
-    }
-#endif
-}
-
-void NetworkProcessHandler::deletePayload(QString hash)
-{
-#if FALSE
-    //    CheckoutHost* h = procMapper.first().first();
-    CheckoutHost* h = runningProcs[hash];
-    runningProcs.remove(hash);
-
-    if (!h)
-    {
-        //    qDebug() << "deletePayload: Get Network process handler" << hash;
-        return;
-    }
-    else
-    {
-        //  qDebug() << "deletePayload: sending delete command for" << hash;
-        qDebug() << "Delete payload: Network Stack remaining hash" << runningProcs.size();
-    }
-
-    //  qDebug() << "Query Payload";
-
-    QTcpSocket* soc =  getNewSocket(h);
-
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_3);
-    out << (uint)0;
-    out << QString(getNetworkMessageString(Delete_Payload));
-    out << hash;
-    out.device()->seek(0);
-    out << (uint)(block.size() - sizeof(uint));
-
-    if (block.size())
-    {
-        soc->write(block);
-        soc->waitForBytesWritten();
-    }
-#endif
-
-}
-
-void NetworkProcessHandler::processFinished(QStringList hashes)
-{
-
-//runningProcs[hash]->send()
-
-#if FALSE
-    foreach(QString hash, hashes)
-    {
-        if (runningProcs.contains(hash))
-            runningProcs.remove(hash);
-    }
-    qDebug() << "Process finished : "<< hashes << "Network Stack remaining hash" << runningProcs.size();
-    //	if (hash_logfile)
-    //	(*hash_logfile) << "Finished " << hash << Qt::endl;
-    //    qDebug() << "Query clear mem" << hash;
-    //    CheckoutProcess::handler().deletePayload(hash);
-#endif
-}
 
 QJsonArray FilterObject(QString hash, QJsonObject ds)
 {
@@ -792,8 +693,6 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
     QCborArray bin = filterBinary(hash, res);
     for (auto b: bin)
     {
-//        qDebug() << b.toJsonValue();
-//        qDebug() << "AddImage";
         client->send(QString("/addImage/"), QString(), b.toCbor());
     }
 
@@ -812,28 +711,6 @@ void NetworkProcessHandler::removeHash(QString hash)
 
 void NetworkProcessHandler::exitServer()
 {
-#if FALSE
-    // FIXME: Should only kill Owned server and not all the queued ones...
-    CheckoutHost* h = procMapper.first().first();
-
-    QTcpSocket* soc =  getNewSocket(h);
-
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_3);
-
-    out << (uint)0;
-    out << QString(getNetworkMessageString(Exit_Server));
-
-    out.device()->seek(0);
-    out << (uint)(block.size() - sizeof(uint));
-    qDebug() << "Exit server";
-    if (block.size())
-    {
-        soc->write(block);
-        soc->waitForBytesWritten();
-    }
-#endif
 }
 
 QList<QPair<QString, QJsonArray> > NetworkProcessHandler::erroneousProcesses()
@@ -868,109 +745,6 @@ void NetworkProcessHandler::handleHashMapping(QJsonArray Core, QJsonArray Run)
         emit processStarted(coreHash, hash);
     }
 
-}
-
-void NetworkProcessHandler::handleMessageProcessStart(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket)
-{
-#if FIXME_HTTP
-    Q_UNUSED(tcpSocket);
-
-    static const QString name = getNetworkMessageString(Process_Start);
-
-    if (keyword == name)
-    {
-        //        qDebug()* << "Server return value" << name;
-        QByteArray arr;
-        in >> arr;
-        QJsonObject obj = QJsonDocument::fromBinaryData(arr).object();
-
-        QJsonArray Core = obj["ArrayCoreProcess"].toArray();
-        QJsonArray Run = obj["ArrayRunProcess"].toArray();
-
-        if (Core.size() != Run.size())  qDebug() << "Incoherent data size in starting processes...";
-
-        for (int i = 0; i < std::min(Core.size(), Run.size()); ++i)
-        {
-            QString coreHash = Core.at(i).toString("");
-            QString hash = Run.at(i).toString("");
-
-            CheckoutHost* h = runningProcs[coreHash];
-            runningProcs.remove(coreHash);
-            runningProcs[hash] = h;
-
-            if (hash_logfile)
-                (*hash_logfile) << coreHash << "->" << hash << Qt::endl;
-
-            emit processStarted(coreHash, hash);
-        }
-    }
-#endif
-}
-
-void NetworkProcessHandler::handleMessageProcessStatus(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket)
-{
-#if FIXME_HTTP
-    Q_UNUSED(tcpSocket);
-
-    static const QString name = getNetworkMessageString(Process_Status);
-
-    if (keyword == name)
-    {
-        QByteArray arr;
-        in >> arr;
-        if (arr.size())
-        {
-            QJsonArray ob = QJsonDocument::fromBinaryData(arr).array();
-            //          qDebug() << name << ob;
-            emit updateProcessStatusMessage(ob);
-        }
-        else
-        {
-            qDebug() << name << "Empty proc status...";
-        }
-        _waiting_Update = false;
-    }
-#endif
-}
-
-void NetworkProcessHandler::handleMessageProcessPayload(QString &keyword, QDataStream &in, QTcpSocket *tcpSocket)
-{
-#if FIXME_HTTP
-    Q_UNUSED(tcpSocket);
-
-    static const QString name = getNetworkMessageString(Process_Payload);
-    if (keyword == name)
-    {
-
-        QString hash;
-
-        in >> hash;
-
-        std::vector<unsigned char> arr;
-        in >> arr;
-
-        // got the payload here0
-        CheckoutProcess::handler().attachPayload(hash, arr);
-        emit payloadAvailable(hash);
-    }
-#endif
-}
-
-void NetworkProcessHandler::handleMessageDeletePayload(QString &keyword, QDataStream &in, QTcpSocket *tcpSocket)
-{
-#if FIXME_HTTP
-    Q_UNUSED(tcpSocket);
-
-    static const QString name = getNetworkMessageString(Delete_Payload);
-    if (keyword == name)
-    {
-
-        QString hash;
-
-        in >> hash;
-
-    }
-#endif
 }
 
 

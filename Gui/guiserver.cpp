@@ -115,7 +115,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             if (q.startsWith("plate="))
             {
                 q=q.mid(6);
-                plate=q;
+                plate=q.replace("\\", "/");
             }
             if (q.startsWith("wells="))
             {
@@ -135,7 +135,20 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         }
 
 
-        Screens sc = win->loadSelection(QStringList() << plate);
+        Screens sc;
+        for (auto xp: ScreensHandler::getHandler().getScreens())
+        {
+            if (xp->fileName().contains(plate))
+                sc << xp;
+
+        }
+
+
+        if (sc.isEmpty())
+            sc = win->loadSelection(QStringList() << plate, false);
+
+
+
         for (auto mdl: sc)
         {
             mdl->clearState(ExperimentFileModel::IsSelected);
@@ -145,34 +158,43 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             {
                 QList<SequenceFileModel *>  l  = mdl->getAllSequenceFiles();
 
-                foreach(SequenceFileModel* mm, l)
-                    mm->setProperties("unpack", "yes");
-            }
-
-            for (auto po: wells)
-                mdl->select(xpmdl->stringToPos(po), true);
-
-            win->displayWellSelection();
-            for (auto sfm : mdl->getSelection())
-            {
-                auto inter = win->getInteractor(sfm);
-                if (inter)
+                foreach(SequenceFileModel * mm, l)
                 {
-                    if (params.find("field") != params.end())
-                        inter->setField(params["field"].toInt());
-                    if (params.find("zpos") != params.end())
-                        inter->setZ(params["zpos"].toInt());
-                    if (params.find("time") != params.end())
-                        inter->setTimePoint(params["time"].toInt());
-                    if (params.find("tile") != params.end())
-                    {
-                        inter->setOverlayId("Tile", params["tile"].toInt());
-                        inter->toggleOverlay("Tile", true);
-                    }
+                    mm->setProperties("unpack", "yes");
+                    mm->checkValidity();
                 }
             }
 
-            // Need to get interactor & change field accordingly / or tile dipslay
+            for (auto po: wells)
+            {
+                auto pos = xpmdl->stringToPos(po);
+                if ((*mdl)(pos).isValid())
+                    mdl->select(pos, true);
+            }
+
+            win->displayWellSelection();
+            for (auto sfm : mdl->getSelection())
+                if (sfm->isValid())
+                {
+                    auto inter = win->getInteractor(sfm);
+                    if (inter)
+                    {
+                        if (params.find("field") != params.end())
+                            inter->setField(params["field"].toInt());
+
+                        if (params.find("zpos") != params.end())
+                            inter->setZ(params["zpos"].toInt());
+
+                        if (params.find("time") != params.end())
+                            inter->setTimePoint(params["time"].toInt());
+
+                        if (params.find("tile") != params.end())
+                        {
+                            inter->setOverlayId("Tile", params["tile"].toInt());
+                            inter->toggleOverlay("Tile", true);
+                        }
+                    }
+                }
         }
 
     }
@@ -184,7 +206,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
 
 
-void GuiServer::setHttpResponse(QJsonObject& ob, qhttp::server::QHttpResponse* res, bool binary  )
+void GuiServer::setHttpResponse(QJsonObject ob, qhttp::server::QHttpResponse* res, bool binary  )
 {
     QByteArray body =  binary ? QCborValue::fromJsonValue(ob).toCbor() :
                                 QJsonDocument(ob).toJson();

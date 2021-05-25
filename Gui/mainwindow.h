@@ -61,7 +61,7 @@ public:
     void displayWellSelection();
 
     SequenceInteractor* getInteractor(SequenceFileModel* mdl);
-    Screens loadSelection(QStringList checked);
+    Screens loadSelection(QStringList checked, bool reload=true);
 
 protected:
 

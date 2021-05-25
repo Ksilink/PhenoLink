@@ -92,10 +92,10 @@ public:
 
     void getProcessMessageStatus(QString process, QList<QString> hash);
 
-    void queryPayload(QString hash);
+//    void queryPayload(QString hash);
 
-    void deletePayload(QString hash);
-    void processFinished(QStringList hashes);
+//    void deletePayload(QString hash);
+//    void processFinished(QStringList hashes);
 
     void finishedProcess(QString hash, QJsonObject res);
 
@@ -111,14 +111,6 @@ public:
     QStringList remainingProcess();
     void setProcesses(QJsonArray ar, CheckoutHttpClient* cl);
     void handleHashMapping(QJsonArray Core, QJsonArray Run);
-protected:
-
-    void handleMessageProcessStart(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket);
-    void handleMessageProcessStatus(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket);
-    void handleMessageProcessPayload(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket);
-
-    void handleMessageDeletePayload(QString& keyword, QDataStream& in, QTcpSocket* tcpSocket);
-
 
 private slots:
     void displayError(QAbstractSocket::SocketError socketError);
@@ -141,9 +133,6 @@ protected:
     QMap<QString, CheckoutHttpClient*> runningProcs;
 
     QList<CheckoutHttpClient*> alive_replies;
-
-//    QList<QTcpSocket*> activeProcess;
-//    QMap<QTcpSocket*, uint > _blockSize;
 
     QList<QPair<CheckoutHttpClient* , QPair<QString, QJsonArray> > > _error_list; // Keep track of the errors from start process
 
