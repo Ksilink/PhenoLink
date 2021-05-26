@@ -505,6 +505,10 @@ void ExperimentFileModel::setFileName(const QString &fileName)
 
 QString ExperimentFileModel::getProjectName() const
 {
+    if (!this->property("project").isEmpty())
+        return this->property("project");
+
+
     QStringList file = _fileName.split("/", Qt::SkipEmptyParts);
     QString next;
     for (QString f: file)
@@ -545,7 +549,7 @@ void ExperimentFileModel::setGroupName(const QString &name)
     _groupName = name;
 }
 
-ExperimentFileModel *ExperimentFileModel::getOwner()
+ExperimentFileModel *ExperimentFileModel::getOwner() const
 {
     return _owner;
 }
@@ -755,7 +759,7 @@ void ExperimentFileModel::setProperties(QString ttag, QString value)
     DataProperty::setProperties(ttag, value);
 }
 
-QString ExperimentFileModel::property(QString tag)
+QString ExperimentFileModel::property(QString tag) const
 {
     QString r = DataProperty::property(tag);
     if (r.isEmpty() && getOwner())
@@ -773,7 +777,7 @@ void DataProperty::setProperties(QString ttag, QString value)
     _properties[tag] = value;
 }
 
-QString DataProperty::property(QString tag)
+QString DataProperty::property(QString tag) const
 {
     return _properties[tag].toString();
 }
@@ -791,7 +795,7 @@ QString DataProperty::properties()
     return r;
 }
 
-bool DataProperty::hasProperty(QString tag)
+bool DataProperty::hasProperty(QString tag) const
 {
     return _properties.contains(tag);
 }

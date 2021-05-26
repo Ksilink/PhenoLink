@@ -65,9 +65,9 @@ public:
     virtual ~DataProperty() {}
 
     virtual void setProperties(QString tag, QString value);
-    virtual QString property(QString tag);
+    virtual QString property(QString tag) const;
     virtual QString properties();
-    virtual bool hasProperty(QString tag);
+    virtual bool hasProperty(QString tag) const;
 
 protected:
     Dictionnary             _dict;
@@ -397,7 +397,7 @@ public:
     QPair<QStringList, QStringList> databases();
 
     void setProperties(QString tag, QString value);
-    virtual QString property(QString tag);
+    virtual QString property(QString tag) const;
 
     QSize getSize();
 
@@ -431,7 +431,7 @@ public:
     QString groupName() const;
     void setGroupName(const QString& name);
 
-    ExperimentFileModel* getOwner();
+    ExperimentFileModel* getOwner() const;
     void setOwner(ExperimentFileModel* own);
 
 
