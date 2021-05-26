@@ -70,6 +70,7 @@ public:
   SequenceInteractor* current();
 
   QString getExperimentName();
+  QString getProjectName();
 
   void addImage(CoreImage*ci);
   void clearMemory(CoreImage *im);
@@ -95,6 +96,7 @@ public:
   QString getOverlayCode(QString name);
   QString getOverlayColor(QString name);
   void exportOverlay(QString name, QString tofile);
+
 
 public slots:
 

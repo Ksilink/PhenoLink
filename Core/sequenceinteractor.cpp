@@ -335,6 +335,11 @@ QImage SequenceInteractor::getAllChannelsImage()
     return QImage();
 }
 
+QString SequenceInteractor::getProjectName()
+{
+    return  _mdl->getOwner()->getProjectName();
+}
+
 QString SequenceInteractor::getExperimentName()
 {
     QStringList file = getFileName().split("/", Qt::SkipEmptyParts);

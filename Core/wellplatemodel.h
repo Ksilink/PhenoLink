@@ -438,6 +438,8 @@ public:
     QString fileName() const;
     void setFileName(const QString &fileName);
 
+    QString getProjectName() const;
+
     void clearState(WellState state);
 
     QList<ExperimentFileModel *> getSiblings();
@@ -511,6 +513,9 @@ public:
     Screens loadScreens(QStringList list, bool allow_loaded=false);
     Screens& getScreens();
     ExperimentFileModel* getScreenFromHash(QString hash);
+
+    QString findPlate(QString plate, QString project);
+
 
     QList<SequenceFileModel *> addProcessResultImage(QJsonObject &data);
     SequenceFileModel *addProcessResultSingleImage(QJsonObject &data);

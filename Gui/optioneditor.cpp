@@ -362,14 +362,14 @@ QWidget *GlobalOptions::features()
     mainLayout->addRow("Intensity Margin (% of range intensity) ", intensity_refreshRatio);
 
 
-    refreshRate = new QSpinBox();
-    refreshRate->setMinimum(0);
-    refreshRate->setMaximum(60000);
-    refreshRate->setValue(set.value("RefreshRate", 300).toInt());
-    refreshRate->setToolTip("Default: 300");
-    connect(refreshRate, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
+//    refreshRate = new QSpinBox();
+//    refreshRate->setMinimum(0);
+//    refreshRate->setMaximum(60000);
+//    refreshRate->setValue(set.value("RefreshRate", 300).toInt());
+//    refreshRate->setToolTip("Default: 300");
+//    connect(refreshRate, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
 
-    mainLayout->addRow("Process Query Refressh Rate ", refreshRate);
+//    mainLayout->addRow("Process Query Refressh Rate ", refreshRate);
 
 
     minServerProcs = new QSpinBox();
@@ -381,14 +381,14 @@ QWidget *GlobalOptions::features()
 
     mainLayout->addRow("Minimum Process List Size ", minServerProcs);
 
-    maxRefreshQuery = new QSpinBox();
-    maxRefreshQuery->setMinimum(0);
-    maxRefreshQuery->setMaximum(1000);
-    maxRefreshQuery->setValue(set.value("maxRefreshQuery", 100).toInt());
-    maxRefreshQuery->setToolTip("Default: 100");
-    connect(maxRefreshQuery, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
+//    maxRefreshQuery = new QSpinBox();
+//    maxRefreshQuery->setMinimum(0);
+//    maxRefreshQuery->setMaximum(1000);
+//    maxRefreshQuery->setValue(set.value("maxRefreshQuery", 100).toInt());
+//    maxRefreshQuery->setToolTip("Default: 100");
+//    connect(maxRefreshQuery, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
 
-    mainLayout->addRow("Maximum states query", maxRefreshQuery);
+//    mainLayout->addRow("Maximum states query", maxRefreshQuery);
 
 
     unpackScaling = new QDoubleSpinBox();
@@ -639,8 +639,8 @@ void GlobalOptions::updatePaths()
     set.setValue("UserName", username->text());
 
     set.setValue("MinProcs", minServerProcs->value());
-    set.setValue("RefreshRate", refreshRate->value());
-    set.setValue("maxRefreshQuery", maxRefreshQuery->value());
+//    set.setValue("RefreshRate", refreshRate->value());
+//    set.setValue("maxRefreshQuery", maxRefreshQuery->value());
     set.setValue("unpackScaling", unpackScaling->value());
 
 
@@ -648,7 +648,7 @@ void GlobalOptions::updatePaths()
     set.setValue("RefreshSliderRatio", intensity_refreshRatio->value());
 
 
-    this->parentWidget()->startTimer(refreshRate->value());
+//    this->parentWidget()->startTimer(refreshRate->value());
 
 
     QStringList var;

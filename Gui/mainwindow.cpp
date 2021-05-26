@@ -803,9 +803,11 @@ void MainWindow::updateCurrentSelection()
     QString own = file.last();
 
 
-    items.append(new QTreeWidgetItem(QStringList() << "File " << QString("%2 %1").arg(exp).arg(own)));
-    items.append(new QTreeWidgetItem(QStringList() << "Well " << QString("%1").arg(inter->getSequenceFileModel()->Pos())));
-    items.append(new QTreeWidgetItem(QStringList() << "Z : " << QString("%2/%1").arg(inter->getZCount()).arg(inter->getZ())));
+    items.append(new QTreeWidgetItem(QStringList() << "Project" << QString("%1").arg(inter->getExperimentName())));
+    items.append(new QTreeWidgetItem(QStringList() << "XP" << QString("%1").arg(inter->getExperimentName())));
+    items.append(new QTreeWidgetItem(QStringList() << "File" << QString("%2 %1").arg(exp).arg(own)));
+    items.append(new QTreeWidgetItem(QStringList() << "Well" << QString("%1").arg(inter->getSequenceFileModel()->Pos())));
+    items.append(new QTreeWidgetItem(QStringList() << "Z" << QString("%2/%1").arg(inter->getZCount()).arg(inter->getZ())));
     items.append(new QTreeWidgetItem(QStringList() << "timePoints" << QString("%2/%1").arg(inter->getTimePointCount()).arg(inter->getTimePoint())));
     items.append(new QTreeWidgetItem(QStringList() << "Fields" << QString("%2/%1").arg(inter->getFieldCount()).arg(inter->getField())));
     items.append(new QTreeWidgetItem(QStringList() << "Channels" << QString("%1").arg(channels)));

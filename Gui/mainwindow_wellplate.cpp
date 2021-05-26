@@ -482,6 +482,15 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
     return data;
 }
 
+Screens MainWindow::findPlate(QString plate, QString project)
+{
+    ScreensHandler& handler = ScreensHandler::getHandler();
+
+    QString file = handler.findPlate(plate, project);
+
+    return loadSelection(QStringList() << file, false);
+}
+
 
 
 void MainWindow::displayWellSelection()

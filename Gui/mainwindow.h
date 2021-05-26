@@ -63,6 +63,9 @@ public:
     SequenceInteractor* getInteractor(SequenceFileModel* mdl);
     Screens loadSelection(QStringList checked, bool reload=true);
 
+    Screens findPlate(QString plate, QString project);
+
+
 protected:
 
     template <typename WType>

@@ -54,8 +54,8 @@ protected:
     QDoubleSpinBox* intensity_refreshRatio;
 
 
-    QSpinBox* refreshRate;
-    QSpinBox* maxRefreshQuery;
+//    QSpinBox* refreshRate;
+//    QSpinBox* maxRefreshQuery;
     QSpinBox* minServerProcs;
     QDoubleSpinBox* unpackScaling;
 

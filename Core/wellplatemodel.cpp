@@ -503,6 +503,25 @@ void ExperimentFileModel::setFileName(const QString &fileName)
     _fileName = fileName;
 }
 
+QString ExperimentFileModel::getProjectName() const
+{
+    QStringList file = _fileName.split("/", Qt::SkipEmptyParts);
+    QString next;
+    for (QString f: file)
+    {
+        if (f == "MeasurementData")
+            next = f;
+        else
+            if (!next.isEmpty())
+            {
+                next = f;
+                break;
+            }
+    }
+
+    return next;
+}
+
 
 QString ExperimentFileModel::name() const
 {
@@ -1775,6 +1794,42 @@ ExperimentFileModel *ScreensHandler::getScreenFromHash(QString hash)
     return 0;
 }
 
+QString ScreensHandler::findPlate(QString plate, QString project)
+{
+
+    CheckoutDataLoader& loader = CheckoutDataLoader::handler();
+    //    qDebug() << "Searching: " << scr;
+    QStringList filehandled = loader.handledFiles();
+
+    QStringList raw, wildcards;
+
+
+    for (auto s: filehandled)
+        if (s.contains("*"))
+            wildcards << s;
+        else
+            raw << s;
+    // First we seek for raw s
+
+    QSettings sets;
+    QStringList searchPaths = sets.value("SearchPlate", QStringList() << "U:/BTSData/MeasurementData/"
+                                                                      << "Z:/BTSData/MeasurementData/"
+                                                                      << "W:/BTSData/MeasurementData/"
+                                                                      << "K:/BTSData/MeasurementData/").toStringList();
+
+    // Append the project name to the search path
+    QDir dir;
+    if (!project.isEmpty()) for (QString a: searchPaths) if (dir.exists(a + project))  a += project;
+
+    QStringList platesplit = plate.split('_');
+    platesplit.pop_back(); platesplit.pop_back();
+    QString searchplate=platesplit.join("_");
+
+    qDebug() << "Will search" << searchPaths << "for plate" << searchplate << plate;
+
+    return QString();
+}
+
 
 void stringToPos(QString pos, int& row, int& col)
 {
@@ -2809,13 +2864,13 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
         QTextStream resFile(&file);
 
-        resFile << "Plate,Well,timepoint,fieldId,sliceId,channel,tags" << dataname << Qt::endl;
+        resFile << "Projec,tPlate,Well,fieldId,sliceId,,timepoint,channel,tags" << dataname << Qt::endl;
 
         for (QList<DataHolder>::iterator it = _dataset.begin(), e = _dataset.end(); it !=e ; ++it)
         {
             DataHolder& h = *it;
             QString pos =  posToString(h.pos);
-            resFile << _owner->name() << "," << pos << "," << h.field << ","
+            resFile << _owner->getProjectName() << "," << _owner->name() << "," << pos << "," << h.field << ","
                     << h.stackZ << "," << h.time << ","
                     << h.chan << "," << (_owner->getTags(h.pos).join(";"));
 
@@ -2846,14 +2901,14 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
         QTextStream resFile(&file);
 
-        resFile << "Plate,Well,tags" << dataname << Qt::endl;
+        resFile << "Project,Plate,Well,tags" << dataname << Qt::endl;
 
         for (QMap<unsigned, QMap<QString, QList<double> >    >::iterator it = factor.begin(), e = factor.end();
              it != e; ++it)
         {
             QPoint npos = intToPos(it.key());
             QString pos = posToString(npos);
-            resFile << _owner->name() << "," << pos << "," << (_owner->getTags(npos).join(";"));
+            resFile  << _owner->getProjectName() << ","  << _owner->name() << "," << pos << "," << (_owner->getTags(npos).join(";"));
 
             foreach (QString key, datas)
             {

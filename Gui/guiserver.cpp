@@ -107,7 +107,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
         QStringList queries = query.split("&"), wells;
         bool unpacked=false;
-        QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile";
+        QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile" << "project";
         QString plate, tile;
         std::map<QString, QString> params;
         for (auto q : queries)
@@ -140,12 +140,20 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         {
             if (xp->fileName().contains(plate))
                 sc << xp;
-
         }
 
 
         if (sc.isEmpty())
-            sc = win->loadSelection(QStringList() << plate, false);
+        {
+            if (plate[1]==":")
+            {
+                sc = win->loadSelection(QStringList() << plate, false);
+            }
+            else
+            {
+
+            }
+        }
 
 
 
