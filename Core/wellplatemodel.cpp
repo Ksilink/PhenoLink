@@ -1798,6 +1798,88 @@ ExperimentFileModel *ScreensHandler::getScreenFromHash(QString hash)
     return 0;
 }
 
+
+QString exactMatchFinder(QStringList paths, QString subplate, QString plate, QStringList fileToMatch)
+{
+    //qDebug() << "Recursive exact finder" << paths << subplate << plate << fileToMatch;
+    for (auto ddir : paths)
+    {
+        QDir dir(ddir);
+        for (auto f : fileToMatch)
+        {
+            if (dir.exists(QString("%1/%2/%3").arg(ddir, plate, f))) // Check direct match first
+            {
+                return QString("%1/%2/%3").arg(ddir, plate, f);
+            }
+            if (dir.exists(QString("%1/%2/%3/%4").arg(ddir, subplate, plate, f))) // Check subplate/plate second
+            {
+                return QString("%1/%2/%3/%4").arg(ddir, subplate, plate, f);
+            }
+            // Nothing was found let's get recursive first on subplate name
+            auto glb = QString("%1*").arg(subplate);
+            QFileInfoList ff = dir.entryInfoList(QStringList() << glb, QDir::Dirs | QDir::NoDotAndDotDot);
+            foreach(QFileInfo i, ff)
+            {
+                //qDebug() << i;
+                QString r = exactMatchFinder(QStringList() << i.absoluteFilePath(), subplate, plate, fileToMatch);
+                if (!r.isEmpty())
+                    return r;
+            }
+            // Still Nothing was found let's get recursive with wildcard name
+            ff = dir.entryInfoList(QStringList() << "*", QDir::Dirs | QDir::NoDotAndDotDot);
+            foreach(QFileInfo i, ff)
+            {
+                //qDebug() << i;
+
+                QString r = exactMatchFinder(QStringList() << i.absoluteFilePath(), subplate, plate, fileToMatch);
+                if (!r.isEmpty())
+                    return r;
+            }
+        }
+    }
+    return QString();
+}
+
+QString globMatchFinder(QStringList paths, QString subplate, QString plate, QStringList fileToMatch)
+{ 
+    for (auto ddir : paths)
+    {
+        QDir dir(ddir);
+        for (auto f : fileToMatch)
+        {
+            auto glb = QString("%1/%2").arg(plate, f);
+            QFileInfoList ff = dir.entryInfoList(QStringList() << glb, QDir::Files); // Use the glob on the directory directly
+            foreach(QFileInfo i, ff)
+            {
+                QString r = i.absoluteFilePath();
+                if (!r.isEmpty())
+                    return r;
+            }
+            // Nothing was found let's get recursive first on subplate name
+            glb = QString("%1*").arg(subplate);
+            ff = dir.entryInfoList(QStringList() << glb, QDir::Dirs | QDir::NoDotAndDotDot);
+            foreach(QFileInfo i, ff)
+            {
+                //qDebug() << i;
+                QString r = globMatchFinder(QStringList() << i.absoluteFilePath(), subplate, plate, fileToMatch);
+                if (!r.isEmpty())
+                    return r;
+            }
+            // Still Nothing was found let's get recursive with wildcard name
+            ff = dir.entryInfoList(QStringList() << "*", QDir::Dirs | QDir::NoDotAndDotDot);
+            foreach(QFileInfo i, ff)
+            {
+                //qDebug() << i;
+
+                QString r = globMatchFinder(QStringList() << i.absoluteFilePath(), subplate, plate, fileToMatch);
+                if (!r.isEmpty())
+                    return r;
+            }
+        }
+    }
+    return QString();
+}
+
 QString ScreensHandler::findPlate(QString plate, QString project)
 {
 
@@ -1807,7 +1889,6 @@ QString ScreensHandler::findPlate(QString plate, QString project)
 
     QStringList raw, wildcards;
 
-
     for (auto s: filehandled)
         if (s.contains("*"))
             wildcards << s;
@@ -1816,22 +1897,32 @@ QString ScreensHandler::findPlate(QString plate, QString project)
     // First we seek for raw s
 
     QSettings sets;
-    QStringList searchPaths = sets.value("SearchPlate", QStringList() << "U:/BTSData/MeasurementData/"
-                                                                      << "Z:/BTSData/MeasurementData/"
-                                                                      << "W:/BTSData/MeasurementData/"
-                                                                      << "K:/BTSData/MeasurementData/").toStringList();
-
-    // Append the project name to the search path
+    QStringList searchPaths;
     QDir dir;
-    if (!project.isEmpty()) for (QString a: searchPaths) if (dir.exists(a + project))  a += project;
+
+    for (auto file : sets.value("SearchPlate", QStringList() << "U:/BTSData/MeasurementData/"
+        << "Z:/BTSData/MeasurementData/"
+        << "W:/BTSData/MeasurementData/"
+        << "K:/BTSData/MeasurementData/"
+        << "C:/Data/").toStringList())
+        if (dir.exists(file))
+            if (!project.isEmpty() && dir.exists(file + project))
+                searchPaths << file + project;
+            else
+                searchPaths << file;
 
     QStringList platesplit = plate.split('_');
-    platesplit.pop_back(); platesplit.pop_back();
+    for (int i = std::max(platesplit.size()-2, 1); i < platesplit.size(); i++)    platesplit.pop_back(); 
     QString searchplate=platesplit.join("_");
 
-    qDebug() << "Will search" << searchPaths << "for plate" << searchplate << plate;
+    qDebug() << "Will search" << searchPaths << "for plate" << searchplate << plate << "searching for files" << raw << "and if not found with widlcards" << wildcards;
 
-    return QString();
+
+    QString res = exactMatchFinder(searchPaths, searchplate, plate, raw);
+    if (res.isEmpty())
+        res = globMatchFinder(searchPaths, searchplate, plate, wildcards);
+
+    return res;
 }
 
 

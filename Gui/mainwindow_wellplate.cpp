@@ -482,7 +482,7 @@ Screens MainWindow::findPlate(QString plate, QString project)
     ScreensHandler& handler = ScreensHandler::getHandler();
 
     QString file = handler.findPlate(plate, project);
-
+    if (file.isEmpty())   return Screens();
     return loadSelection(QStringList() << file, false);
 }
 

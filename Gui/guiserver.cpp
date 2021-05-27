@@ -151,7 +151,8 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             }
             else
             {
-
+                QString project = params["project"];
+                sc= win->findPlate(plate, project);
             }
         }
 
