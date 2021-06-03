@@ -72,7 +72,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         QString commit=urlpath.mid((int)strlen("/addData/"));
 
         //qDebug() << "Adding data" << commit;
-        for (auto item: ob)
+        for (auto item: qAsConst(ob))
         {
             auto oj = item.toObject();
 
@@ -110,7 +110,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile" << "project";
         QString plate, tile;
         std::map<QString, QString> params;
-        for (auto q : queries)
+        for (auto q : qAsConst(queries) )
         {
             if (q.startsWith("plate="))
             {
@@ -126,7 +126,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             {
                 unpacked=true;
             }
-            for (auto p : pars)
+            for (auto p : qAsConst(pars))
                 if (q.startsWith(p))
                 {
                     q=q.mid(p.size()+1);
@@ -158,7 +158,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
 
 
-        for (auto mdl: sc)
+        for (auto mdl: qAsConst(sc))
         {
             mdl->clearState(ExperimentFileModel::IsSelected);
             ExperimentDataTableModel* xpmdl = mdl->computedDataModel();
@@ -174,7 +174,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 }
             }
 
-            for (auto po: wells)
+            for (auto po: qAsConst(wells) )
             {
                 auto pos = xpmdl->stringToPos(po);
                 if ((*mdl)(pos).isValid())
@@ -206,6 +206,9 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 }
         }
 
+    //        QString()<a href="JavaScript:window.close()">Close</a>
+
+        return;
     }
 
 

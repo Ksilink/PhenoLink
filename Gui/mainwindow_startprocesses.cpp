@@ -334,7 +334,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                     auto l = ui->processingArea->findChildren<QWidget*>(tag);
 //                    qDebug() << "Searching Tag:" << tag << l.size();
 
-                    for (auto item: l)
+                    for (auto item: qAsConst(l))
                         wids.append(item);
                 }
                 qDebug() << wids;

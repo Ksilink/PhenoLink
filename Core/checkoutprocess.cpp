@@ -261,7 +261,7 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
                                            << "ContentType" << "ImageType" << "PlateName" << "Enum" << "DataHash" << "Properties" << "PlateName"
                                             << "Pos" << "Channel" << "asVectorImage" << "tiled" << "unbias"
                                             << "isImage" << "FieldId" << "TimePos" << "zPos";
-                for (auto key : l)
+                for (auto key : qAsConst(l) )
                     if (ob.contains(key))
                         r[key] = ob[key];
 
@@ -271,7 +271,7 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
 
         pp["Parameters"] = rra;
         auto l = QStringList() << "Comment" << "ProcessStartId" << "State" << "authors" << "shallDisplay";
-        for (auto key: l)
+        for (auto key: qAsConst(l) )
             pp.remove(key);
 
         QJsonDocument doc(pp);
@@ -908,7 +908,7 @@ void CheckoutProcess::getStatus(QJsonObject& ob)
         QMap<QString, int> counter;
         status_protect.lock();
 
-        for (auto q: it.value())
+        for (auto q: qAsConst(it.value()) )
         {
             auto pl = static_cast<PluginRunner*>(q);
             counter[pl->name()]++;
@@ -957,7 +957,7 @@ QStringList CheckoutProcess::users()
         else
             del << it.key();
 
-    for (auto v: del)
+    for (auto v: qAsConst(del) )
         _peruser_runners.remove(v);
 
     return users;
@@ -974,7 +974,7 @@ void CheckoutProcess::removeRunner(QString user, void *run) {
 void CheckoutProcess::cancelUser(QString user)
 {
     status_protect.lock();
-    for (auto q : _peruser_runners[user])
+    for (auto q : qAsConst(_peruser_runners[user]) )
     {
         auto res = QThreadPool::globalInstance()->tryTake(static_cast<PluginRunner*>(q));
         Q_UNUSED(res);

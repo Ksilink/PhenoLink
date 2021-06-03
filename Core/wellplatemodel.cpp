@@ -226,11 +226,8 @@ QPair<QList<double>, QList<double> > ExperimentFileModel::getFieldSpatialPositio
 }
 
 
-
-
-
 SequenceFileModel &ExperimentFileModel::operator()(int row, int col)
-{
+{    
     SequenceFileModel& res = _sequences[row][col];
     if (!res.getOwner())
         res.setOwner(this);
@@ -566,7 +563,7 @@ void ExperimentFileModel::reloadDatabaseData()
 
     QPair<QStringList, QStringList> dbs = databases();
 
-    for (auto file: dbs.first)
+    for (auto file: qAsConst(dbs.first))
     {
         QString t = file;
         QStringList spl = t.split("/");
@@ -575,7 +572,7 @@ void ExperimentFileModel::reloadDatabaseData()
 
         reloadDatabaseData(file, t, false);
     }
-    for (auto file: dbs.first)
+    for (auto file: qAsConst(dbs.first))
     {
         QString t = file;
         QStringList spl = t.split("/");
@@ -858,10 +855,10 @@ QStringList SequenceFileModel::getAllFiles()
     QStringList files;
 
 
-    for (auto f: _data)
-        for (auto z: f)
-            for (auto t: z)
-                for (auto c: t)
+    for (auto f: qAsConst(_data))
+        for (auto z: qAsConst(f) )
+            for (auto t: qAsConst(z) )
+                for (auto c: qAsConst(t) )
                     files << c;
 
     return files;
@@ -882,12 +879,21 @@ StructuredMetaData &SequenceFileModel::getMeta(int timePoint, int fieldIdx, int 
 
 
 int SequenceFileModel::getMetaChannels(int timePoint, int fieldIdx, int Zindex)
-{
+{         
     if (_sdata.contains(fieldIdx))
         if (_sdata[fieldIdx].contains(Zindex))
             if (_sdata[fieldIdx][Zindex].contains(timePoint))
                 return _sdata[fieldIdx][Zindex][timePoint].size();
-    return 0;
+
+    int s = 0;
+    for (auto s : qAsConst(_siblings) )
+    {
+       int r = s->getMetaChannels(timePoint, fieldIdx, Zindex);
+       s += r;
+    }
+
+
+    return s;
 }
 
 QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, int fieldIdx, int Zindex, int channel)
@@ -902,6 +908,13 @@ QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, in
                 if (_sdata[fieldIdx][Zindex][timePoint].contains(channel))
                     return _sdata[fieldIdx][Zindex][timePoint][channel];
 
+
+    for (auto s : qAsConst(_siblings) )
+    {
+        auto v = s->getMetas(timePoint, fieldIdx, Zindex, channel);
+        for (auto it = v.begin(), e = v.end(); it != e; ++it)
+            r.insert(it.key(), it.value());
+    }
 
     return r;
 }
@@ -1195,7 +1208,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
 QJsonObject SequenceFileModel::getMeta(SequenceFileModel::MetaDataHandler &h)
 {
     QJsonObject props;
-    for (auto k: h.metaData)
+    for (auto k: qAsConst(h.metaData) )
     {
 
         QString mtag = QString("f%1s%2t%3c%4%5").arg(h.fieldIdx).arg(h.zindex)
@@ -1210,7 +1223,7 @@ QJsonObject SequenceFileModel::getMeta(SequenceFileModel::MetaDataHandler &h)
 
     if (_owner)
     {
-        for (auto k: h.metaData)
+        for (auto k: qAsConst( h.metaData) )
         {
             QString t = _owner->property(k);
             if (!t.isEmpty())
@@ -1673,7 +1686,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
                 {
                     auto ar = meta["global_tags"].toArray();
 
-                    for (auto i: ar) gtags << i.toString();
+                    for (auto i: qAsConst(ar) ) gtags << i.toString();
 
                     mdl->setProperties("global_tags", gtags.join(";"));
                 }
@@ -1681,7 +1694,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
                 {
                     auto ar = meta["cell_lines"].toArray();
                     QStringList ll;
-                    for (auto i: ar) ll << i.toString();
+                    for (auto i: qAsConst(ar) ) ll << i.toString();
                     mdl->setProperties("cell_lines", ll.join(";"));
                 }
             }
@@ -1802,10 +1815,10 @@ ExperimentFileModel *ScreensHandler::getScreenFromHash(QString hash)
 QString exactMatchFinder(QStringList paths, QString subplate, QString plate, QStringList fileToMatch)
 {
     //qDebug() << "Recursive exact finder" << paths << subplate << plate << fileToMatch;
-    for (auto ddir : paths)
+    for (auto ddir : qAsConst(paths) )
     {
         QDir dir(ddir);
-        for (auto f : fileToMatch)
+        for (auto f : qAsConst(fileToMatch) )
         {
             if (dir.exists(QString("%1/%2/%3").arg(ddir, plate, f))) // Check direct match first
             {
@@ -1842,10 +1855,10 @@ QString exactMatchFinder(QStringList paths, QString subplate, QString plate, QSt
 
 QString globMatchFinder(QStringList paths, QString subplate, QString plate, QStringList fileToMatch)
 { 
-    for (auto ddir : paths)
+    for (auto ddir : qAsConst(paths) )
     {
         QDir dir(ddir);
-        for (auto f : fileToMatch)
+        for (auto f : qAsConst(fileToMatch) )
         {
             auto glb = QString("%1/%2").arg(plate, f);
             QFileInfoList ff = dir.entryInfoList(QStringList() << glb, QDir::Files); // Use the glob on the directory directly
@@ -1889,7 +1902,7 @@ QString ScreensHandler::findPlate(QString plate, QString project)
 
     QStringList raw, wildcards;
 
-    for (auto s: filehandled)
+    for (auto s: qAsConst(filehandled) )
         if (s.contains("*"))
             wildcards << s;
         else
@@ -1901,18 +1914,23 @@ QString ScreensHandler::findPlate(QString plate, QString project)
     QDir dir;
 
     for (auto file : sets.value("SearchPlate", QStringList() << "U:/BTSData/MeasurementData/"
-        << "Z:/BTSData/MeasurementData/"
-        << "W:/BTSData/MeasurementData/"
-        << "K:/BTSData/MeasurementData/"
-        << "C:/Data/").toStringList())
+                                << "Z:/BTSData/MeasurementData/"
+                                << "W:/BTSData/MeasurementData/"
+                                << "K:/BTSData/MeasurementData/"
+                                << "C:/Data/").toStringList())
         if (dir.exists(file))
+        {
             if (!project.isEmpty() && dir.exists(file + project))
+            {
                 searchPaths << file + project;
+            }
             else
+            {
                 searchPaths << file;
-
+            }
+        }
     QStringList platesplit = plate.split('_');
-    for (int i = std::max(platesplit.size()-2, 1); i < platesplit.size(); i++)    platesplit.pop_back(); 
+    for (int i = std::max(platesplit.size()-2, 1); i < platesplit.size(); i++)    platesplit.pop_back();
     QString searchplate=platesplit.join("_");
 
     qDebug() << "Will search" << searchPaths << "for plate" << searchplate << plate << "searching for files" << raw << "and if not found with widlcards" << wildcards;
@@ -2225,19 +2243,19 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
 
 void ScreensHandler::commitAll()
 {
- for (auto scr: _mscreens)
- {
-     if (scr)
-     {
-         auto dtmdl = scr->computedDataModel();
-         if (dtmdl)
-         {
-             QString commit = dtmdl->getCommitName();
-             dtmdl->commitToDatabase(QString(), commit);
-         }
-     }
+    for (auto scr: qAsConst(_mscreens) )
+    {
+        if (scr)
+        {
+            auto dtmdl = scr->computedDataModel();
+            if (dtmdl)
+            {
+                QString commit = dtmdl->getCommitName();
+                dtmdl->commitToDatabase(QString(), commit);
+            }
+        }
 
- }
+    }
 }
 
 
@@ -2280,7 +2298,7 @@ ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, Q
             QString otag = it.key();
             QString tag = otag.simplified().replace(" ", "_").replace("-", "_");
             QString val = it.value().toString();
-//            qDebug() << "Adding data" << tag << val;
+            //            qDebug() << "Adding data" << tag << val;
             datamdl->setAggregationMethod(tag, data[QString("%1_Agg").arg(otag)].toString() );
 
             if (val.contains(','))
@@ -2924,7 +2942,7 @@ double Aggregate(QList<double>& f, QString& ag)
 
 int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 {
-//    qDebug() << "Should save to " << prefix << "state" << modified;
+    //    qDebug() << "Should save to " << prefix << "state" << modified;
     if (prefix.isEmpty()) return 0;
     if (!modified) return 0;
 
@@ -2959,7 +2977,7 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
         QTextStream resFile(&file);
 
-        resFile << "Projec,tPlate,Well,fieldId,sliceId,,timepoint,channel,tags" << dataname << Qt::endl;
+        resFile << "Project,Plate,Well,fieldId,sliceId,,timepoint,channel,tags" << dataname << Qt::endl;
 
         for (QList<DataHolder>::iterator it = _dataset.begin(), e = _dataset.end(); it !=e ; ++it)
         {

@@ -76,7 +76,7 @@ void ScrollZone::removeImageForm(ImageForm* im)
             sfm << it.key();
             it.key()->setAsShowed(false);
         }
-    for (auto s: sfm)
+    for (auto s: qAsConst(sfm) )
         _seq_toImg.remove(s);
     // qDebug() << "Removing Image Form" << im << sfm;
 }

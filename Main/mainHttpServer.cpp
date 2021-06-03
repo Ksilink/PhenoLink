@@ -517,7 +517,7 @@ void Control::timerEvent(QTimerEvent * event)
         if (missing) missing_users << user;
     }
 
-    for (auto old: _users)
+    for (auto old: qAsConst(_users))
     {
         bool rem = true;
         for (auto ne: procs.users())
@@ -535,7 +535,7 @@ void Control::timerEvent(QTimerEvent * event)
 
     lastNpro = npro;
 
-    for (auto user: missing_users)
+    for (auto user: qAsConst(missing_users))
         _users.append(_cancelMenu->addAction(user));
 }
 

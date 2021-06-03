@@ -276,7 +276,7 @@ template <>
 inline QString tostr(std::vector<int>& val)
 {
     QString r;
-    for (auto i : val)
+    for (auto i : qAsConst(val) )
         r = QString("%1,%2").arg(r).arg(i);
     return r;
 }

@@ -28,7 +28,7 @@ endif(WIN32)
 set(Checkout_VERSION_MAJOR 1)
 set(Checkout_VERSION_MINOR 9)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 5)
+set(Checkout_VERSION_RELEASE 6)
 
 message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
 
