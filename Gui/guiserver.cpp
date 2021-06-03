@@ -105,17 +105,20 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
     {
         //        "/Load/?plate=&wells=&field=&tile=&unpacked"
 
-        QStringList queries = query.split("&"), wells;
+        QStringList queries = query.split("&"), wells, plates;
         bool unpacked=false;
         QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile" << "project";
-        QString plate, tile;
+        QString tile;
         std::map<QString, QString> params;
         for (auto q : qAsConst(queries) )
         {
             if (q.startsWith("plate="))
             {
                 q=q.mid(6);
-                plate=q.replace("\\", "/");
+                plates=q.replace("\\", "/").split(",");
+                if (plates.isEmpty())
+
+                    return;
             }
             if (q.startsWith("wells="))
             {
@@ -136,77 +139,77 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
 
         Screens sc;
-        for (auto xp: ScreensHandler::getHandler().getScreens())
-        {
-            if (xp->fileName().contains(plate))
-                sc << xp;
-        }
 
-
-        if (sc.isEmpty())
+        for (auto plate: qAsConst(plates) )
         {
-            if (plate[1]==":")
+            for (auto xp: ScreensHandler::getHandler().getScreens())
             {
-                sc = win->loadSelection(QStringList() << plate, false);
+                    if (xp->fileName().contains(plate))
+                        sc << xp;
             }
-            else
+
+            if (sc.isEmpty())
             {
-                QString project = params["project"];
-                sc= win->findPlate(plate, project);
-            }
-        }
-
-
-
-        for (auto mdl: qAsConst(sc))
-        {
-            mdl->clearState(ExperimentFileModel::IsSelected);
-            ExperimentDataTableModel* xpmdl = mdl->computedDataModel();
-
-            if (unpacked)
-            {
-                QList<SequenceFileModel *>  l  = mdl->getAllSequenceFiles();
-
-                foreach(SequenceFileModel * mm, l)
+                if (plate[1]==":")
                 {
-                    mm->setProperties("unpack", "yes");
-                    mm->checkValidity();
+                    sc = win->loadSelection(QStringList() << plate, false);
+                }
+                else
+                {
+                    QString project = params["project"];
+                    sc= win->findPlate(plate, project);
                 }
             }
 
-            for (auto po: qAsConst(wells) )
+            for (auto mdl: qAsConst(sc))
             {
-                auto pos = xpmdl->stringToPos(po);
-                if ((*mdl)(pos).isValid())
-                    mdl->select(pos, true);
-            }
+                mdl->clearState(ExperimentFileModel::IsSelected);
+                ExperimentDataTableModel* xpmdl = mdl->computedDataModel();
 
-            win->displayWellSelection();
-            for (auto sfm : mdl->getSelection())
-                if (sfm->isValid())
+                if (unpacked)
                 {
-                    auto inter = win->getInteractor(sfm);
-                    if (inter)
+                    QList<SequenceFileModel *>  l  = mdl->getAllSequenceFiles();
+
+                    foreach(SequenceFileModel * mm, l)
                     {
-                        if (params.find("field") != params.end())
-                            inter->setField(params["field"].toInt());
-
-                        if (params.find("zpos") != params.end())
-                            inter->setZ(params["zpos"].toInt());
-
-                        if (params.find("time") != params.end())
-                            inter->setTimePoint(params["time"].toInt());
-
-                        if (params.find("tile") != params.end())
-                        {
-                            inter->setOverlayId("Tile", params["tile"].toInt());
-                            inter->toggleOverlay("Tile", true);
-                        }
+                        mm->setProperties("unpack", "yes");
+                        mm->checkValidity();
                     }
                 }
-        }
 
-    //        QString()<a href="JavaScript:window.close()">Close</a>
+                for (auto po: qAsConst(wells) )
+                {
+                    auto pos = xpmdl->stringToPos(po);
+                    if ((*mdl)(pos).isValid())
+                        mdl->select(pos, true);
+                }
+
+                win->displayWellSelection();
+                for (auto sfm : mdl->getSelection())
+                    if (sfm->isValid())
+                    {
+                        auto inter = win->getInteractor(sfm);
+                        if (inter)
+                        {
+                            if (params.find("field") != params.end())
+                                inter->setField(params["field"].toInt());
+
+                            if (params.find("zpos") != params.end())
+                                inter->setZ(params["zpos"].toInt());
+
+                            if (params.find("time") != params.end())
+                                inter->setTimePoint(params["time"].toInt());
+
+                            if (params.find("tile") != params.end())
+                            {
+                                inter->setOverlayId("Tile", params["tile"].toInt());
+                                inter->toggleOverlay("Tile", true);
+                            }
+                        }
+                    }
+            }
+
+        }
 
         return;
     }
