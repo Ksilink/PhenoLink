@@ -6,6 +6,7 @@
 
 #include <QtSql>
 #include <QSharedMemory>
+#include <config.h>
 
 QMutex process_mutex(QMutex::NonRecursive);
 QMutex hash_to_save_mtx(QMutex::NonRecursive);
@@ -916,7 +917,6 @@ void CheckoutProcess::getStatus(QJsonObject& ob)
         for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
             ob[it.key()]=it.value();
         status_protect.unlock();
-
     }
 }
 
@@ -924,7 +924,7 @@ QString CheckoutProcess::dumpHtmlStatus()
 {
     QString body;
 
-    body += QString("<h1>Connected Users : %1</h1>").arg(_peruser_runners.size());
+    body += QString("<h2>Connected Users : %1</h2>").arg(_peruser_runners.size());
 
     for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
     {
@@ -943,8 +943,12 @@ QString CheckoutProcess::dumpHtmlStatus()
 
         status_protect.unlock();
     }
+    QHostInfo info;
+    QStringList addresses;
+    for (auto v : info.addresses())
+        addresses.append(v.toString());
 
-    return QString("<html><title>Checkout Server Status</title><body>%1</body></html>").arg(body);
+    return QString("<html><title>Checkout Server Status %2</title><body><p>%3</p>%1</body></html>").arg(body).arg(addresses.join(" ")).arg(CHECKOUT_VERSION);
 }
 
 QStringList CheckoutProcess::users()

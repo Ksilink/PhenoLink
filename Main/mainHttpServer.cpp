@@ -482,7 +482,7 @@ Control::Control(Server* serv): QWidget(), _serv(serv), lastNpro(0)
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setContextMenu(trayIconMenu);
     trayIcon->setIcon(QIcon(":/ServerIcon.png"));
-    trayIcon->setToolTip(QString("Checkout Server listenning on port %1").arg(sets.value("ServerPort", 13378).toUInt()));
+    trayIcon->setToolTip(QString("Checkout Server %2 (%1)").arg(sets.value("ServerPort", 13378).toUInt()).arg(CHECKOUT_VERSION));
     trayIcon->show();
 
     startTimer(2000);
@@ -499,9 +499,9 @@ void Control::timerEvent(QTimerEvent * event)
     int npro = procs.numberOfRunningProcess();
     QString tooltip;
     if (npro != 0)
-        tooltip = QString("Checkout Server processing %1 requests").arg(npro);
+        tooltip = QString("CheckoutServer %2 (%1 requests").arg(npro).arg(CHECKOUT_VERSION);
     else
-        tooltip = QString("Checkout Server listenning on port %1").arg(_serv->serverPort());
+        tooltip = QString("CheckoutServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
 
     QStringList missing_users;
     for (auto user : procs.users())
