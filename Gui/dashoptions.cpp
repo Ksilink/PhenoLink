@@ -116,7 +116,7 @@ void DashOptions::populateDataset()
 
     QSet<QString> projs;
 
-    for (auto it : qAsConst(_screens))
+    for (auto it : _screens)
     {
         projs.insert(it->property("project"));
         auto dbs = it->databases();
@@ -126,7 +126,7 @@ void DashOptions::populateDataset()
         auto rw = new QTreeWidgetItem(parent, QStringList()<<"Raw"<<"" <<"");
         auto ag = new QTreeWidgetItem(parent, QStringList()<<"Aggregated"<<"" <<"");
         //      qDebug() << dbs.first << dbs.second;
-        for (auto l : qAsConst(dbs.first))
+        for (auto l : dbs.first)
         {
             QStringList split = l.split("/");
             QString t = split[split.count()-2];
@@ -141,7 +141,7 @@ void DashOptions::populateDataset()
             ti->setCheckState(0, Qt::Unchecked);
             //          ti->setCheckState(0, Qt::CheckState);
         }
-        for (auto l : qAsConst(dbs.second))
+        for (auto l : dbs.second)
         {
             QStringList split = l.split("/");
             QString t = split[split.count()-2];
@@ -203,7 +203,7 @@ void DashOptions::notebookAdapt()
 
     qtw = new QComboBox();
 
-    for (auto item : qAsConst(nbs) )
+    for (auto item : nbs)
     {
         item = item.replace("//", "/").replace(notebooksPaths, "");
         qtw->addItem(item.replace(".ipynb",""), item);
@@ -226,7 +226,7 @@ QStringList DashOptions::recurseNotebooks(QString path, QStringList projects)
         for (int i = 0; i < files.size(); ++i)  files[i] = path + "/"  + files[i];
 
         QStringList subd = iter.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
-        for (auto p: qAsConst(subd) )
+        for (auto p: subd)
         {
             if (p == "Run") continue;
 
@@ -237,7 +237,7 @@ QStringList DashOptions::recurseNotebooks(QString path, QStringList projects)
     }
     else
     {
-        for (auto p: qAsConst(projects) )
+        for (auto p: projects)
         {
             QStringList tmps = recurseNotebooks(path + "/" + p);
             //for (int i = 0; i < tmps.size(); ++i)  tmps[i] = path + "/" + tmps[i];

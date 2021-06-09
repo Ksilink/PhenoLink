@@ -567,7 +567,7 @@ void ImageForm::plusClicked()
 
 void ImageForm::updateDecorator(QList<QGraphicsItem*> decors)
 {
-    for (auto d :    qAsConst(_decorators) )
+    for (auto d :    _decorators)
     {
         ui->graphicsView->scene()->removeItem(d);
         delete d;
@@ -868,7 +868,7 @@ void ImageForm::imageClick(QPointF pos)
 
     QList<QGraphicsItem*> items = ui->graphicsView->scene()->items(pixItem->mapToScene(pos));
     qDebug() << "Searching item at: " << pos << items.size();
-    for(auto item : qAsConst(items))
+    for(auto item : items)
     {
 
         qDebug() << item->toolTip() << item->data(1) << item->data(2);

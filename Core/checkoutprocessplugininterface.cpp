@@ -239,7 +239,7 @@ bool CheckoutProcessPluginInterface::isFinished()
 
 void CheckoutProcessPluginInterface::setColormap(void *data, CheckoutProcessPluginInterface::Colormap color)
 {
-    for (auto p : qAsConst(_results) )
+    for (auto p : _results)
     {
         RegistrableImageParent* im = dynamic_cast<RegistrableImageParent*>(p);
         if (im && im->hasData(data))

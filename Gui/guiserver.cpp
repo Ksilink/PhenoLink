@@ -72,7 +72,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         QString commit=urlpath.mid((int)strlen("/addData/"));
 
         //qDebug() << "Adding data" << commit;
-        for (auto item: qAsConst(ob))
+        for (auto item: (ob))
         {
             auto oj = item.toObject();
 
@@ -110,7 +110,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile" << "project";
         QString tile;
         std::map<QString, QString> params;
-        for (auto q : qAsConst(queries) )
+        for (auto q : (queries) )
         {
             if (q.startsWith("plate="))
             {
@@ -129,7 +129,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             {
                 unpacked=true;
             }
-            for (auto p : qAsConst(pars))
+            for (auto p : (pars))
                 if (q.startsWith(p))
                 {
                     q=q.mid(p.size()+1);
@@ -140,7 +140,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
         Screens sc;
 
-        for (auto plate: qAsConst(plates) )
+        for (auto plate: (plates) )
         {
             for (auto xp: ScreensHandler::getHandler().getScreens())
             {
@@ -161,7 +161,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 }
             }
 
-            for (auto mdl: qAsConst(sc))
+            for (auto mdl: (sc))
             {
                 mdl->clearState(ExperimentFileModel::IsSelected);
                 ExperimentDataTableModel* xpmdl = mdl->computedDataModel();
@@ -177,7 +177,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                     }
                 }
 
-                for (auto po: qAsConst(wells) )
+                for (auto po: (wells) )
                 {
                     auto pos = xpmdl->stringToPos(po);
                     if ((*mdl)(pos).isValid())

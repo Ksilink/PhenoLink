@@ -563,7 +563,7 @@ void ExperimentFileModel::reloadDatabaseData()
 
     QPair<QStringList, QStringList> dbs = databases();
 
-    for (auto file: qAsConst(dbs.first))
+    for (auto file: (dbs.first))
     {
         QString t = file;
         QStringList spl = t.split("/");
@@ -572,7 +572,7 @@ void ExperimentFileModel::reloadDatabaseData()
 
         reloadDatabaseData(file, t, false);
     }
-    for (auto file: qAsConst(dbs.first))
+    for (auto file: (dbs.first))
     {
         QString t = file;
         QStringList spl = t.split("/");
@@ -855,10 +855,10 @@ QStringList SequenceFileModel::getAllFiles()
     QStringList files;
 
 
-    for (auto f: qAsConst(_data))
-        for (auto z: qAsConst(f) )
-            for (auto t: qAsConst(z) )
-                for (auto c: qAsConst(t) )
+    for (auto f: (_data))
+        for (auto z: (f) )
+            for (auto t: (z) )
+                for (auto c: (t) )
                     files << c;
 
     return files;
@@ -886,7 +886,7 @@ int SequenceFileModel::getMetaChannels(int timePoint, int fieldIdx, int Zindex)
                 return _sdata[fieldIdx][Zindex][timePoint].size();
 
     int s = 0;
-    for (auto s : qAsConst(_siblings) )
+    for (auto s : (_siblings) )
     {
        int r = s->getMetaChannels(timePoint, fieldIdx, Zindex);
        s += r;
@@ -909,7 +909,7 @@ QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, in
                     return _sdata[fieldIdx][Zindex][timePoint][channel];
 
 
-    for (auto s : qAsConst(_siblings) )
+    for (auto s : (_siblings) )
     {
         auto v = s->getMetas(timePoint, fieldIdx, Zindex, channel);
         for (auto it = v.begin(), e = v.end(); it != e; ++it)
@@ -1208,7 +1208,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
 QJsonObject SequenceFileModel::getMeta(SequenceFileModel::MetaDataHandler &h)
 {
     QJsonObject props;
-    for (auto k: qAsConst(h.metaData) )
+    for (auto k: (h.metaData) )
     {
 
         QString mtag = QString("f%1s%2t%3c%4%5").arg(h.fieldIdx).arg(h.zindex)
@@ -1223,7 +1223,7 @@ QJsonObject SequenceFileModel::getMeta(SequenceFileModel::MetaDataHandler &h)
 
     if (_owner)
     {
-        for (auto k: qAsConst( h.metaData) )
+        for (auto k: ( h.metaData) )
         {
             QString t = _owner->property(k);
             if (!t.isEmpty())
@@ -1686,7 +1686,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
                 {
                     auto ar = meta["global_tags"].toArray();
 
-                    for (auto i: qAsConst(ar) ) gtags << i.toString();
+                    for (auto i: (ar) ) gtags << i.toString();
 
                     mdl->setProperties("global_tags", gtags.join(";"));
                 }
@@ -1694,7 +1694,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
                 {
                     auto ar = meta["cell_lines"].toArray();
                     QStringList ll;
-                    for (auto i: qAsConst(ar) ) ll << i.toString();
+                    for (auto i: (ar) ) ll << i.toString();
                     mdl->setProperties("cell_lines", ll.join(";"));
                 }
             }
@@ -1815,10 +1815,10 @@ ExperimentFileModel *ScreensHandler::getScreenFromHash(QString hash)
 QString exactMatchFinder(QStringList paths, QString subplate, QString plate, QStringList fileToMatch)
 {
     //qDebug() << "Recursive exact finder" << paths << subplate << plate << fileToMatch;
-    for (auto ddir : qAsConst(paths) )
+    for (auto ddir : (paths) )
     {
         QDir dir(ddir);
-        for (auto f : qAsConst(fileToMatch) )
+        for (auto f : (fileToMatch) )
         {
             if (dir.exists(QString("%1/%2/%3").arg(ddir, plate, f))) // Check direct match first
             {
@@ -1855,10 +1855,10 @@ QString exactMatchFinder(QStringList paths, QString subplate, QString plate, QSt
 
 QString globMatchFinder(QStringList paths, QString subplate, QString plate, QStringList fileToMatch)
 { 
-    for (auto ddir : qAsConst(paths) )
+    for (auto ddir : (paths) )
     {
         QDir dir(ddir);
-        for (auto f : qAsConst(fileToMatch) )
+        for (auto f : (fileToMatch) )
         {
             auto glb = QString("%1/%2").arg(plate, f);
             QFileInfoList ff = dir.entryInfoList(QStringList() << glb, QDir::Files); // Use the glob on the directory directly
@@ -1902,7 +1902,7 @@ QString ScreensHandler::findPlate(QString plate, QString project)
 
     QStringList raw, wildcards;
 
-    for (auto s: qAsConst(filehandled) )
+    for (auto s: (filehandled) )
         if (s.contains("*"))
             wildcards << s;
         else
@@ -2243,7 +2243,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
 
 void ScreensHandler::commitAll()
 {
-    for (auto scr: qAsConst(_mscreens) )
+    for (auto scr: (_mscreens) )
     {
         if (scr)
         {

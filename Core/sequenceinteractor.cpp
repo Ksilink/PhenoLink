@@ -697,7 +697,7 @@ void SequenceInteractor::refinePacking()
 
 
     QMap<int, QPair<double, QPoint> > proj;
-    for (auto v : qAsConst(res) )
+    for (auto v : res)
     {
         if (proj.contains(std::get<0>(v)))
         {
@@ -1295,10 +1295,10 @@ QList<QString> SequenceInteractor::getMetaOptionsList(QString meta)
 
             QStringList sp = cols.split(";");
 
-            for (auto s : qAsConst(sp) )
+            for (auto s : sp)
             {
                 bool add = true;
-                for (auto ss : qAsConst(sub) )
+                for (auto ss : sub)
                 {
                     if (s.contains(ss))
                     {
@@ -1378,7 +1378,7 @@ void drawItem(cv::Mat& feat, QStringList lcols, QString name, QList<int> feats,
                 width= feat.at<float>(d.r, d.w),
                 height= feat.at<float>(d.r, d.h);
         QString tip= QString("Id: %1\r\n").arg(d.r);
-        for (auto p : qAsConst(feats) )
+        for (auto p : feats)
         {
             float fea = feat.at<float>(d.r,p);
             tip += QString("%1: %2\r\n").arg(lcols[p].trimmed()).arg(fea);

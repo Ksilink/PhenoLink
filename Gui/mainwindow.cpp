@@ -447,7 +447,7 @@ void MainWindow::overlayChanged(QString id)
 {
     if (sender())
     {
-        QString name = sender()->objectName();
+        QString name = sender()->objectName();       
         _sinteractor.current()->overlayChange(name, id);
     }
 }
@@ -459,7 +459,7 @@ void MainWindow::overlayChangedCmap(QString id)
     {
         QString name = sender()->objectName();
         if ("Color Coding" == id)
-        {
+       {
             QColor c = QColorDialog::getColor(Qt::white, this, "Set Color for overlay");
             if (c.isValid())
                 id = c.name();
@@ -799,7 +799,7 @@ void MainWindow::updateCurrentSelection()
 
         QStringList overlays = inter->getMetaList();
         int itms = 2;
-        for (auto ov : qAsConst(overlays))
+        for (auto ov : overlays)
         {
             bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), ov, fo), itms, 0);
             bvl->addWidget(new QLabel(ov, wwid), itms, 1);
@@ -960,7 +960,7 @@ void MainWindow::clearDirectories()
         l << item->data(Qt::ToolTipRole).toString();
     }
 
-    for (auto s: qAsConst(l))  deleteDirPath(s);
+    for (auto s: l)  deleteDirPath(s);
 
 }
 
@@ -1315,7 +1315,7 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
     // Order data by date/time ,
 
     QSet<QString> projects;
-    for (auto scr : qAsConst(ScreensHandler::getHandler().getScreens()))
+    for (auto scr : ScreensHandler::getHandler().getScreens())
         projects.insert(scr->property("project"));
 
     QSettings set;
@@ -1328,7 +1328,7 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
         QString writePath = QString("%1/%2/Checkout_Results/").arg(dir.absolutePath(), proj);
         QDir prdir(writePath);
         QStringList dirs = prdir.entryList(QStringList() << "*", QDir::Dirs | QDir::NoDotAndDotDot);
-        for (auto dir : qAsConst(dirs))
+        for (auto dir : dirs)
         {
             QDir gjsons(writePath+"/"+dir);
             QStringList df = gjsons.entryList(QStringList() << process.replace("/", "_").replace(" ", "_") + "*.json", QDir::Files);
@@ -1339,30 +1339,30 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
     }
     // sooooo many !!!!
     jsons.sort();
-    //    qDebug() << jsons << commits;
+//    qDebug() << jsons << commits;
     QStringList disp, paths;
     disp << "Default";
     paths << QString();
 
     for (auto it = jsons.rbegin(), e= jsons.rend(); it != e; ++it)
     {
-        for (auto r: qAsConst(commits))
-            if (r.contains(*it))
-            {
-                paths << r;
-                QStringList path = r.split("/");
-                QString commitName = path.at(path.size() - 2);
-                if (commitName == "params")
-                    commitName = "";
-                QStringList j = (*it).split("_");
+        for (auto r: commits)
+           if (r.contains(*it))
+           {
+               paths << r;
+               QStringList path = r.split("/");
+               QString commitName = path.at(path.size() - 2);
+               if (commitName == "params")
+                   commitName = "";
+               QStringList j = (*it).split("_");
 
-                QString hours = j.takeLast();
-                hours = hours.mid(0, hours.size()-5);
+               QString hours = j.takeLast();
+               hours = hours.mid(0, hours.size()-5);
 
-                QString date = j.takeLast();
+               QString date = j.takeLast();
 
-                disp << QString("%1 %2 %3:%4:%5").arg(commitName, date, hours.mid(0, 2), hours.mid(2,2), hours.mid(4));
-            }
+               disp << QString("%1 %2 %3:%4:%5").arg(commitName, date, hours.mid(0, 2), hours.mid(2,2), hours.mid(4));
+           }
         if (disp.size() > 9)
             break;
     }
@@ -1377,7 +1377,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 {    
     bool reloaded = idx > 0;
 
-
+        
     _syncmapper.clear();
 
     QString process = obj["Path"].toString();
@@ -1417,7 +1417,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     lb->setToolTip(obj["Comment"].toString());
     layo->addRow(lb);
 
-    auto cb = new QComboBox();
+    auto cb = new QComboBox();    
     layo->addRow(cb);
     constructHistoryComboBox(cb, process);
     if (idx > 0) cb->setCurrentIndex(idx);
@@ -1427,7 +1427,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     {
         cb->setCurrentIndex(1);
         return;
-    }
+     }
 
     // FIXME: Properly handle the "Position" of parameter2
     // FIXME: Properly handle other data types
@@ -1891,7 +1891,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -2332,7 +2332,7 @@ void MainWindow::exportToCellProfiler()
     values["Z"]="";
     QSet<QString> tags;
     QSet<QString> chans;
-    for (auto xp: qAsConst(s))
+    for (auto xp: s)
     {
         QString plate_name = xp->name();
         QString path = xp->fileName();
@@ -2341,12 +2341,13 @@ void MainWindow::exportToCellProfiler()
         else
             basePath = basePath.left(longestMatch(basePath, path));
 
-        for (auto a: xp->getChannelNames())
-            chans.insert(a.trimmed().replace(" ", "_"));
+        QStringList cname = xp->getChannelNames();
+        for (auto a: cname) chans.insert(a.trimmed().replace(" ", "_"));
 
         for (auto seq: xp->getValidSequenceFiles())
         {
-            for (auto a: seq->getTags())
+            QStringList t = seq->getTags();
+            for (auto a: t)
                 tags.insert(a);
 
         }
@@ -2355,14 +2356,14 @@ void MainWindow::exportToCellProfiler()
     // "C:/Data/DCM/DCM-Tum-lines-seeded-for-6k-D9-4X_20200702_110209/DCM-Tum-lines-seeded-for-6k-D9-4X/MeasurementDetail.mrf"
     //("Hoechst 33342", "2", "3")
     // QSet("D-001-Cb-08", "D-001-Cc-01", "W-004-017", "D-001-035 (3232)", "D-001-Ca-12")
-    //    qDebug() << basePath << chans << tags;
-    for (auto c : qAsConst(chans))
+    qDebug() << basePath << chans << tags;
+    for (auto c : chans)
     {
         values[QString("Image_FileName_%1").arg(c)]=QString();
         values[QString("Image_PathName_%1").arg(c)]=QString();
     }
     QSet<QString> titration,meta;
-    for (auto c : qAsConst(tags))
+    for (auto c : tags)
     {
         if (c.contains('#'))
         {
@@ -2374,12 +2375,12 @@ void MainWindow::exportToCellProfiler()
             meta.insert(c);
     }
 
-    for (auto c : qAsConst(meta)) values[QString("Metadata_%1").arg(c.trimmed().replace(" ", "_"))]=QString("0");
-    for (auto c : qAsConst(titration)) values[QString("Titration_%1").arg(c.trimmed().replace(" ", "_"))]=QString("0");
+    for (auto c : meta) values[QString("Metadata_%1").arg(c.trimmed().replace(" ", "_"))]=QString("0");
+    for (auto c : titration) values[QString("Titration_%1").arg(c.trimmed().replace(" ", "_"))]=QString("0");
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                  | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                       | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -2389,13 +2390,13 @@ void MainWindow::exportToCellProfiler()
 
     QTextStream resFile(&file);
     auto l = --values.end();
-    for (auto c: qAsConst(values))      resFile << c.first << (c.first == l->first ? "" : ",");
+    for (auto c: values )      resFile << c.first << (c.first == l->first ? "" : ",");
     resFile << Qt::endl;
 
-    for (auto xp: qAsConst(s))
+    for (auto xp: s)
     {
         // Empty all the configs
-        for (auto c: qAsConst(values) )  c.second=QString("0");
+        for (auto c: values )  c.second=QString("0");
 
         values["Metadata_Plate"] = xp->name();
         // Set the basepath for all files:
@@ -2408,11 +2409,11 @@ void MainWindow::exportToCellProfiler()
         {
             QStringList t = seq->getTags();
 
-            for (auto a: qAsConst(cname))  values[QString("Image_PathName_%1").arg(a.trimmed().replace(" ", "_"))]=path;
-            for (auto c : qAsConst(meta)) values[QString("Metadata_%1").arg(c.trimmed().replace(" ", "_"))] = QString("0");
-            for (auto c : qAsConst(titration)) values[QString("Titration_%1").arg(c.trimmed().replace(" ", "_"))] = QString("0");
+            for (auto a: cname)  values[QString("Image_PathName_%1").arg(a.trimmed().replace(" ", "_"))]=path;
+            for (auto c : meta) values[QString("Metadata_%1").arg(c.trimmed().replace(" ", "_"))] = QString("0");
+            for (auto c : titration) values[QString("Titration_%1").arg(c.trimmed().replace(" ", "_"))] = QString("0");
 
-            for (auto c : qAsConst(t))
+            for (auto c : t)
             {
                 if (c.contains('#'))
                 {
@@ -2439,7 +2440,7 @@ void MainWindow::exportToCellProfiler()
                             values[QString("Image_FileName_%1").arg(cname[c].trimmed().replace(" ", "_"))]=fi.split('/').back();
                         }
 
-                        for (auto & c: qAsConst(values) )      resFile << c.second << (c.first == l->first ? "" : ",");
+                        for (auto & c: values )      resFile << c.second << (c.first == l->first ? "" : ",");
                         resFile << Qt::endl;
                     }
         }
@@ -2457,7 +2458,7 @@ bool MainWindow::close()
 
     QSet<ImageForm*> inters;
 
-    for (auto frm : qAsConst(imf))
+    for (auto frm : imf)
         inters.insert(frm);
 
     QDir dir( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
@@ -2471,7 +2472,7 @@ bool MainWindow::close()
 
     QJsonObject meta = QCborValue::fromCbor(saveData).toMap().toJsonObject();
 
-    for (auto frm: qAsConst(inters))
+    for (auto frm: inters)
     {
         auto xp = frm->getInteractor()->getExperimentName();
         QJsonArray mima;
@@ -2481,7 +2482,7 @@ bool MainWindow::close()
             QJsonObject ob;
             ob.insert("min", ifo->getDispMin());
             ob.insert("max", ifo->getDispMax());
-            //            qDebug() << xp << i << ifo->getDispMin() << ifo->getDispMax();
+//            qDebug() << xp << i << ifo->getDispMin() << ifo->getDispMax();
             mima.insert(i, ob);
         }
         meta.insert(xp, mima);
@@ -2502,7 +2503,7 @@ void MainWindow::on_action_Exit_triggered()
 
 void MainWindow::closeEvent(QCloseEvent *ev)
 {
-    //    qDebug() << "Close Event !";
+//    qDebug() << "Close Event !";
 
     bool res = close();
     if (res)
@@ -2558,7 +2559,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
                                                       set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;

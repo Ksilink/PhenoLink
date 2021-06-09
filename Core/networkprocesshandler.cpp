@@ -528,7 +528,7 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
     if (ds.contains("Data"))
     {
         auto arr = ds["Data"].toArray();
-        for (auto itd : qAsConst(arr) )
+        for (auto itd : arr)
         {
             auto obj = itd.toObject();
             if (obj["Data"].toString() != "Image results" )
@@ -547,7 +547,7 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
                     auto met = obj["Meta"].toArray()[0].toObject();
 
                     auto txt = QStringList() << "FieldId" << "Pos" << "TimePos" << "channel" << "zPos" << "DataHash";
-                    for (auto s: qAsConst(txt) )
+                    for (auto s: txt)
                         if (met.contains(s))
                         {
 
@@ -578,7 +578,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
     if (ds.contains("Data"))
     {
         auto arr = ds["Data"].toArray();
-        for (auto itd : qAsConst(arr) )
+        for (auto itd : arr)
         {
             auto obj = itd.toObject();
             if (obj["Data"].toString() == "Image results" && obj.contains("Payload"))
@@ -587,7 +587,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                 {
                     auto ps = obj["Payload"].toArray();
                     QCborArray cbar;
-                    for (auto pp : qAsConst(ps) )
+                    for (auto pp : ps)
                     {
                         auto pay = pp.toObject();
                         if (pay.contains("DataHash"))
@@ -603,7 +603,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                 QCborMap ob;
                 auto txt = QStringList() << "ContentType" << "ImageType" << "ChannelNames"
                                          << "Tag";
-                for (auto s: qAsConst(txt) )
+                for (auto s: txt)
                     if (obj.contains(s))
                     {
                         ob.insert(QCborValue(s), QCborValue::fromJsonValue(obj[s]));
@@ -615,7 +615,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                     auto met = obj["Meta"].toArray()[0].toObject();
                     auto txt = QStringList() << "FieldId" << "Pos" << "TimePos"
                             << "channel" << "zPos" << "DataHash" ;
-                    for (auto s: qAsConst(txt) )
+                    for (auto s: txt)
                         if (met.contains(s))
                         {
                             ob.insert(QCborValue(s), QCborValue::fromJsonValue(met[s]));
@@ -633,13 +633,13 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                 // Now add Image info:
                 auto ps = obj["Payload"].toArray();
                 QCborArray cbar;
-                for (auto pp : qAsConst(ps) )
+                for (auto pp : ps)
                 {
                     QCborMap mm;
 
                     auto pay = pp.toObject();
                     auto ql = QStringList() << "Cols" << "Rows" << "DataSizes" << "cvType" << "DataTypeSize";
-                    for (auto s : qAsConst(ql) )
+                    for (auto s : ql)
                     {
                         if (pay.contains(s))
                             mm.insert(QCborValue(s), QCborValue::fromJsonValue(pay[s]));
@@ -691,7 +691,7 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
 
 
     QCborArray bin = filterBinary(hash, res);
-    for (auto b: qAsConst(bin) )
+    for (auto b: bin)
     {
         client->send(QString("/addImage/"), QString(), b.toCbor());
     }
