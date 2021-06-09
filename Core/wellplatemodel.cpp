@@ -2977,13 +2977,13 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
         QTextStream resFile(&file);
 
-        resFile << "Project,Plate,Well,fieldId,sliceId,,timepoint,channel,tags" << dataname << Qt::endl;
+        resFile << _owner->getProjectName() <<"#" << QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss") << ",Plate,Well,fieldId,sliceId,timepoint,channel,tags" << dataname << Qt::endl;
 
         for (QList<DataHolder>::iterator it = _dataset.begin(), e = _dataset.end(); it !=e ; ++it)
         {
             DataHolder& h = *it;
             QString pos =  posToString(h.pos);
-            resFile << _owner->getProjectName() << "," << _owner->name() << "," << pos << "," << h.field << ","
+            resFile << "," << _owner->name() << "," << pos << "," << h.field << ","
                     << h.stackZ << "," << h.time << ","
                     << h.chan << "," << (_owner->getTags(h.pos).join(";"));
 
@@ -3014,14 +3014,14 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
         QTextStream resFile(&file);
 
-        resFile << "Project,Plate,Well,tags" << dataname << Qt::endl;
+        resFile << _owner->getProjectName() <<"#" << QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss") << ",Plate,Well,tags" << dataname << Qt::endl;
 
         for (QMap<unsigned, QMap<QString, QList<double> >    >::iterator it = factor.begin(), e = factor.end();
              it != e; ++it)
         {
             QPoint npos = intToPos(it.key());
             QString pos = posToString(npos);
-            resFile  << _owner->getProjectName() << ","  << _owner->name() << "," << pos << "," << (_owner->getTags(npos).join(";"));
+            resFile  << ","  << _owner->name() << "," << pos << "," << (_owner->getTags(npos).join(";"));
 
             foreach (QString key, datas)
             {
