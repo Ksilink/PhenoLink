@@ -640,10 +640,10 @@ void ImageInfos::rangeMaxValueChanged(double ma)
 }
 
 
-void ImageInfos::setActive(bool value)
+void ImageInfos::setActive(bool value, bool update)
 {
     _modified = true;
     _ifo._platename_to_colorCode[_plate]._active = value;
-
-    Update();
+    if (update)
+        Update();
 }

@@ -167,7 +167,7 @@ public slots:
     void rangeMinValueChanged(double mi) ;
     void rangeMaxValueChanged(double ma) ;
 
-    void setActive(bool value);
+    void setActive(bool value, bool update=true);
     void setColor(QColor c, bool refresh=true);
 
     void setChannelName(QString name);

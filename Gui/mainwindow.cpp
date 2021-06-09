@@ -302,6 +302,9 @@ void MainWindow::channelCheckboxMenu(const QPoint & pos)
 
 
     QMenu myMenu;
+    auto select = myMenu.addAction("Select only this channel");
+    select->setCheckable(false);
+
     auto action = myMenu.addAction("Saturated Channel");
     action->setCheckable(true);
     action->setChecked(fo->isSaturated());
@@ -326,7 +329,29 @@ void MainWindow::channelCheckboxMenu(const QPoint & pos)
     QAction* selectedItem = myMenu.exec(globalPos);
     if (selectedItem)
     {
-        if (selectedItem == action) {
+        if (selectedItem == select) {
+            // Loop over all other channels & unselect
+            for (unsigned i = 0; i < inter->getChannels(); ++i)
+            {
+                ImageInfos* fo = inter->getChannelImageInfos(i+1);
+                fo->setActive(false, false);
+
+                auto box = ui->imageControl->findChild<QCheckBox*>(QString("box%1").arg(i));
+                if (box)
+                {
+                    box->blockSignals(true);
+                    box->setChecked(false);
+                    box->blockSignals(false);
+                }
+            }
+            ImageInfos* fo = inter->getChannelImageInfos(chan + 1);
+            fo->setActive(true);
+
+            auto box = ui->imageControl->findChild<QCheckBox*>(sender()->objectName());
+            box->setChecked(true);
+
+        }
+        else if (selectedItem == action) {
             fo->toggleSaturate();
         } else if (selectedItem == inverted) {
             fo->toggleInverted();
@@ -350,6 +375,7 @@ QCheckBox* MainWindow::setupActiveBox(QCheckBox* box, ImageInfos* fo, int channe
     if (!reconnect)
     {
         box->setObjectName(QString("box%1").arg(channel));
+//        qDebug() << "Created box" << channel << box;
         box->setAttribute(Qt::WA_DeleteOnClose);
         box->setChecked(fo->active());
 
