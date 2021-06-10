@@ -181,9 +181,6 @@ void ExperimentFileModel::setFieldPosition()
     {
         for (auto it = sit.value().begin(), ei = sit.value().end(); it != ei; ++it)
         {
-            //
-
-
             for (unsigned field = 1; field <= it.value().getFieldCount(); ++field)
             {
                 QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
