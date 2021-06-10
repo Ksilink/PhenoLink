@@ -171,8 +171,16 @@ QPointF getFieldPos(SequenceFileModel* seq, int field, int z, int t, int c)
 void ExperimentFileModel::setFieldPosition()
 {
     // get first Well
-    auto mdl = _sequences.begin().value().begin().value();
-    int first_chan = *mdl.getChannelsIds().begin();
+    SequenceFileModel* mdl;
+
+    for (auto a = _sequences.begin(), e = _sequences.end(); a != e; ++a)
+        for (auto it = a->begin(), ee = a->end(); it != ee; ++it)
+            if (it->isValid())
+            {
+                mdl = &(it.value());
+            }
+
+    int first_chan = *(mdl->getChannelsIds().begin());
 
     int z = 1, t = 1, c = first_chan;
     QSet<double> x,y;
@@ -201,9 +209,9 @@ void ExperimentFileModel::setFieldPosition()
 
     fields_pos = qMakePair(xl,yl);
 
-    for (unsigned i = 0; i < mdl.getFieldCount(); ++i)
+    for (unsigned i = 0; i < mdl->getFieldCount(); ++i)
     {
-        QPointF p = getFieldPos(&mdl, i+1, 1, 1, 1);
+        QPointF p = getFieldPos(mdl, i+1, 1, 1, 1);
 
         int x = fields_pos.first.indexOf(p.x());
         int y = fields_pos.second.size() - fields_pos.second.indexOf(p.y()) - 1;
