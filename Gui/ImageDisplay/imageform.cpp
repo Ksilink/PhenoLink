@@ -897,10 +897,13 @@ void ImageForm::imageMouseMove(QPointF pos)
 void ImageForm::mouseOverImage(QPointF pos)
 {
     _pos = pos;
-    QString str = QString("(%1 x %2 : [").arg((int)pos.x()).arg((int)pos.y());
+    QString str = QString("(%1 x %2 : ").arg((int)pos.x()).arg((int)pos.y());
 
     int field = 0;
     QList<unsigned> l =_interactor->getData(pos,field, packed );
+
+    str += QString("F%1 [").arg(field, 2);
+
     for (int i = 0; i < l.size(); ++i)
         str += QString("%1 ").arg(l.at(i));
     str += "])";

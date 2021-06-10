@@ -1168,12 +1168,20 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
         int cx = floor(d.x() / m.cols);
         int cy = floor(d.y() / m.rows);
 
+        auto origD = d;
 
         d.setX(d.x() - cx * m.cols);
         d.setY(d.y() - cy * m.rows);
 
+        auto toField = _mdl->getOwner()->getFieldPosition();
+        if (!toField.contains(cx) || !toField[cx].contains(cy))
+        {
+            qDebug() << "Field not found for displaying value:"
+            << "intial coordinates: " << origD
+            << "Searching pixel pos: " << d << " Pos correction " << cx << cy;
+        }
 
-        int f = _mdl->getOwner()->getFieldPosition()[cx][cy];
+        int f = toField[cx][cy];
         field = f;
 
         int ii = 0;
