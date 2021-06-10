@@ -1173,7 +1173,6 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
         d.setX(d.x() - cx * m.cols);
         d.setY(d.y() - cy * m.rows);
 
-        _mdl->getOwner()->setFieldPosition();
         auto toField = _mdl->getOwner()->getFieldPosition();
         if (!toField.contains(cx) || !toField[cx].contains(cy))
         {
