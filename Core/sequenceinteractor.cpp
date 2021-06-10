@@ -1174,7 +1174,7 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
         d.setY(d.y() - cy * m.rows);
 
         auto toField = _mdl->getOwner()->getFieldPosition();
-        if (!toField.contains(cx) || !toField[cx].contains(cy))
+        if (!toField.contains(cy) || !toField[cy].contains(cx))
         {
             qDebug() << "Field not found for displaying value:"
                 << "intial coordinates: " << origD
@@ -1185,7 +1185,7 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
         else
         {
 
-            int f = toField[cx][cy];
+            int f = toField[cy][cx];
             field = f;
 
             int ii = 0;
