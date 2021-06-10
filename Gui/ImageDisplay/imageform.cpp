@@ -901,14 +901,18 @@ void ImageForm::mouseOverImage(QPointF pos)
 
     int field = 0;
     QList<unsigned> l =_interactor->getData(pos,field, packed );
+    if (field == -1)
+    {
+        str += "[ Field not Found ]";
+    }
+    else
+    {
+        str += QString("F%1 [").arg(field, 2);
 
-    str += QString("F%1 [").arg(field, 2);
-
-    for (int i = 0; i < l.size(); ++i)
-        str += QString("%1 ").arg(l.at(i));
-    str += "])";
-
-
+        for (int i = 0; i < l.size(); ++i)
+            str += QString("%1 ").arg(l.at(i));
+        str += "])";
+    }
 
     str += packed ? " " : " U";
     str += bias_correction ? "B" : "";

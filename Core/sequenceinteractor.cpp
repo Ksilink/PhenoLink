@@ -1177,21 +1177,26 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
         if (!toField.contains(cx) || !toField[cx].contains(cy))
         {
             qDebug() << "Field not found for displaying value:"
-            << "intial coordinates: " << origD
-            << "Searching pixel pos: " << d << " Pos correction " << cx << cy;
+                << "intial coordinates: " << origD
+                << "Searching pixel pos: " << d << " Pos correction " << cx << cy;
+            field=-1;
+            res << -1;
         }
-
-        int f = toField[cx][cy];
-        field = f;
-
-        int ii = 0;
-        QList<QPair<int, QString> > list = getAllChannel(f);
-
-        for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
+        else
         {
-            cv::Mat m = imageInfos(it->second, it->first, loadkey)->image();
-            if (m.rows > d.y() && m.cols > d.x())
-                res << m.at<unsigned short>((int)d.y(), (int)d.x());
+
+            int f = toField[cx][cy];
+            field = f;
+
+            int ii = 0;
+            QList<QPair<int, QString> > list = getAllChannel(f);
+
+            for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
+            {
+                cv::Mat m = imageInfos(it->second, it->first, loadkey)->image();
+                if (m.rows > d.y() && m.cols > d.x())
+                    res << m.at<unsigned short>((int)d.y(), (int)d.x());
+            }
         }
 
     }
@@ -1583,7 +1588,6 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                         drawItem(feat, lcols, it.key(), feats, group, disp);
 
                 res << group;
-
             }
     }
 
