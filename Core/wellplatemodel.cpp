@@ -171,40 +171,33 @@ QPointF getFieldPos(SequenceFileModel* seq, int field, int z, int t, int c)
 void ExperimentFileModel::setFieldPosition()
 {
     // get first Well
-    SequenceFileModel* mdl;
+    SequenceFileModel* mdl = 0;
 
-    for (auto a = _sequences.begin(), e = _sequences.end(); a != e; ++a)
-        for (auto it = a->begin(), ee = a->end(); it != ee; ++it)
+    int z = 1, t = 1;
+    QSet<double> x,y;
+
+    for (auto a = _sequences.begin(), e = _sequences.end(); a != e && mdl == 0; ++a)
+        for (auto it = a->begin(), ee = a->end(); it != ee && mdl == 0; ++it)
             if (it->isValid())
             {
                 mdl = &(it.value());
+
+                int c = *(mdl->getChannelsIds().begin());
+
+                for (unsigned field = 1; field <= it.value().getFieldCount(); ++field)
+                {
+                    QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
+                    x.insert(it.value().property(k).toDouble());
+                    k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
+                    y.insert(it.value().property(k).toDouble());
+                }
             }
-
-    int first_chan = *(mdl->getChannelsIds().begin());
-
-    int z = 1, t = 1, c = first_chan;
-    QSet<double> x,y;
-
-    for (auto sit = _sequences.begin(), se = _sequences.end(); sit != se; ++sit)
-    {
-        for (auto it = sit.value().begin(), ei = sit.value().end(); it != ei; ++it)
-        {
-            for (unsigned field = 1; field <= it.value().getFieldCount(); ++field)
-            {
-                QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
-                x.insert(it.value().property(k).toDouble());
-                k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
-                y.insert(it.value().property(k).toDouble());
-            }
-        }
-    }
 
 
     QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
     std::sort(xl.begin(), xl.end());
     std::sort(yl.begin(), yl.end());
     qDebug() << "Unpack well pos sorted" <<  xl << yl;
-
 
 
     fields_pos = qMakePair(xl,yl);
