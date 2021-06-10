@@ -145,12 +145,12 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
         y.insert(v);
 
     }
-    qDebug() << "Unpack well pos sorted" << x << y;
+    qDebug() << "Get Well Pos: Unpack well pos sorted" << x << y;
 
     QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
     std::sort(xl.begin(), xl.end());
     std::sort(yl.begin(), yl.end());
-    qDebug() << "Unpack well pos sorted" <<  xl << yl;
+    qDebug() << "Get Well Pos: Unpack well pos sorted" <<  xl << yl;
     //    xl.indexOf(), yl.indexOf()
     return qMakePair(xl,yl);
 }
