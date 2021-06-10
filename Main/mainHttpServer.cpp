@@ -314,8 +314,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     if (urlpath == "/ListProcesses")
     {
-
-        QStringList prcs = procs.pluginPaths();
+        // If not using cbor outputs the version also
+        QStringList prcs = procs.pluginPaths(query.contains("json"));
         int processor_count = (int)std::thread::hardware_concurrency();
 
         QJsonObject ob;

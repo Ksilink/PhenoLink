@@ -25,7 +25,7 @@ public:
   void removeProcess(CheckoutProcessPluginInterface* proc);
 
   QStringList paths();
-  QStringList pluginPaths();
+  QStringList pluginPaths(bool withVersion=false);
   QStringList networkPaths();
 
   QString setDriveMap(QString map);

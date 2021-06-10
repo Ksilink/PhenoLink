@@ -66,13 +66,16 @@ QStringList CheckoutProcess::paths()
     return res;
 }
 
-QStringList CheckoutProcess::pluginPaths()
+QStringList CheckoutProcess::pluginPaths(bool withVersion)
 {
     QStringList l;
     foreach(CheckoutProcessPluginInterface* plugin,  _plugins)
         if (plugin)
         {
-            l << plugin->getPath();
+            l << (withVersion ?
+                     QString("%1 - %2").arg(plugin->getPath(), plugin->plugin_version())
+                     :
+                     plugin->getPath() );
         }
     return l;
 }
