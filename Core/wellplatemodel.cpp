@@ -184,12 +184,12 @@ void ExperimentFileModel::setFieldPosition()
 
                 int c = *(mdl->getChannelsIds().begin());
 
-                for (unsigned field = 1; field <= it.value().getFieldCount(); ++field)
+                for (unsigned field = 1; field <= mdl->getFieldCount(); ++field)
                 {
                     QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
-                    x.insert(it.value().property(k).toDouble());
+                    x.insert(mdl->property(k).toDouble());
                     k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
-                    y.insert(it.value().property(k).toDouble());
+                    y.insert(mdl->property(k).toDouble());
                 }
             }
 
@@ -982,6 +982,8 @@ QString SequenceFileModel::property(QString tag)
     QString r = DataProperty::property(tag);
     if (r.isEmpty() && getOwner())
         r = getOwner()->property(tag);
+    if (r.isEmpty())
+        qDebug() << "Searching Tag" << tag << "failed" << this->Pos();
     return r;
 }
 
