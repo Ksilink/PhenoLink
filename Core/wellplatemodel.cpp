@@ -135,12 +135,12 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
 
     QSet<double> x,y;
 
-    for (unsigned field = 1; field < seq->getFieldCount(); ++ field)
+    for (unsigned field = 1; field <= seq->getFieldCount(); ++ field)
     {
-        QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
+        QRegExp k(QString("f%1s.*X").arg(field));
         double v = seq->property(k).toDouble();
         x.insert(v);
-        k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
+        k.setPattern(QString("f%1s.*Y").arg(field));
         v = seq->property(k).toDouble();
         y.insert(v);
 
@@ -157,12 +157,12 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
 
 QPointF getFieldPos(SequenceFileModel* seq, int field, int z, int t, int c)
 {
-    QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
+    QRegExp k(QString("^f%1s.*X$").arg(field));
     double x = seq->property(k).toDouble();
-    k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
+    k.setPattern(QString("^f%1s.*Y$").arg(field));
     double y = seq->property(k).toDouble();
 
-    qDebug() << "Extracting Field Pos :" << field << x << y;
+    //qDebug() << "Extracting Field Pos :" << field << x << y;
     return QPointF(x,y);
 }
 
@@ -176,38 +176,42 @@ void ExperimentFileModel::setFieldPosition()
     int z = 1, t = 1;
     QSet<double> x,y;
 
-    for (auto a = _sequences.begin(), e = _sequences.end(); a != e && mdl == 0; ++a)
-        for (auto it = a->begin(), ee = a->end(); it != ee && mdl == 0; ++it)
-            if (it->isValid())
+    unsigned int nb_fields = 0;
+
+    for (auto a = _sequences.begin(), e = _sequences.end(); a != e ; ++a)
+        for (auto it = a->begin(), ee = a->end(); it != ee ; ++it)
+            if (it->hasMeasurements() && it->isValid())
             {
                 mdl = &(it.value());
 
                 int c = *(mdl->getChannelsIds().begin());
-
+                nb_fields = std::max(nb_fields, mdl->getFieldCount());
                 for (unsigned field = 1; field <= mdl->getFieldCount(); ++field)
                 {
-                    QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
+                    QRegExp k(QString("^f%1s.*X$").arg(field));
                     x.insert(mdl->property(k).toDouble());
-                    k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("Y");
+                    k.setPattern(QString("^f%1s.*Y$").arg(field));
                     y.insert(mdl->property(k).toDouble());
                 }
             }
 
 
     QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
-    std::sort(xl.begin(), xl.end());
-    std::sort(yl.begin(), yl.end());
-    qDebug() << "Unpack well pos sorted" <<  xl << yl;
+    std::sort(xl.begin(), xl.end());// , std::greater<double>());
+    std::sort(yl.begin(), yl.end(), std::greater<double>());
+//    qDebug() << "Unpack well pos sorted" <<  xl << yl;
 
 
     fields_pos = qMakePair(xl,yl);
 
-    for (unsigned i = 0; i < mdl->getFieldCount(); ++i)
+    for (unsigned i = 0; i < nb_fields; ++i)
     {
         QPointF p = getFieldPos(mdl, i+1, 1, 1, 1);
-
-        int x = fields_pos.first.indexOf(p.x());
-        int y = fields_pos.second.size() - fields_pos.second.indexOf(p.y()) - 1;
+   
+        int x = xl.indexOf(p.x());
+        int y = yl.indexOf(p.y());
+        
+        //qDebug() << i + 1 << x << y << p.x() << p.y();
 
         toField[x][y] = i+1;
     }
@@ -215,11 +219,13 @@ void ExperimentFileModel::setFieldPosition()
 
 QMap<int, QMap<int, int> > ExperimentFileModel::getFieldPosition()
 {
+    //setFieldPosition();
     return toField;
 }
 
 QPair<QList<double>, QList<double> > ExperimentFileModel::getFieldSpatialPositions()
 {
+    //setFieldPosition();
     return fields_pos;
 }
 
@@ -762,6 +768,13 @@ QString ExperimentFileModel::property(QString tag) const
     return r;
 }
 
+QString ExperimentFileModel::property(QRegExp tag) const
+{
+    QString r = DataProperty::property(tag);
+    if (r.isEmpty() && getOwner())
+        return getOwner()->property(tag);
+    return r;
+}
 
 void DataProperty::setProperties(QString ttag, QString value)
 {
@@ -776,6 +789,18 @@ QString DataProperty::property(QString tag) const
 {
     return _properties[tag].toString();
 }
+
+QString DataProperty::property(QRegExp& re) const
+{
+   // qDebug() << re;
+    for (auto it = _properties.begin(), e = _properties.end(); it != e; ++it)
+    {
+        if (re.indexIn(it.key()) >= 0)
+            return it.value().toString();
+    }
+    return QString();
+}
+
 
 QString DataProperty::properties()
 {
@@ -935,7 +960,7 @@ QPoint SequenceFileModel::pos()
 }
 
 // FIXME: Add Helper function for this and handle the pos/point to text in a single function (avoiding errors)
-QString SequenceFileModel::Pos()
+QString SequenceFileModel::Pos() const
 {
     unsigned char key[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -978,11 +1003,22 @@ QList<SequenceFileModel *> SequenceFileModel::getSiblings()
     return _siblings;
 }
 
-QString SequenceFileModel::property(QString tag)
+QString SequenceFileModel::property(QRegExp& tag) const
 {
     QString r = DataProperty::property(tag);
-    if (r.isEmpty() && getOwner())
-        r = getOwner()->property(tag);
+    if (r.isEmpty() && this->getOwner())
+        r = this->getOwner()->property(tag);
+    if (r.isEmpty())
+        qDebug() << "Searching Tag" << tag << "failed" << this->Pos();
+    return r;
+
+}
+
+QString SequenceFileModel::property(QString tag) const
+{
+    QString r = DataProperty::property(tag);
+    if (r.isEmpty() && this->getOwner())
+        r = this->getOwner()->property(tag);
     if (r.isEmpty())
         qDebug() << "Searching Tag" << tag << "failed" << this->Pos();
     return r;
@@ -1151,7 +1187,7 @@ void SequenceFileModel::setOwner(ExperimentFileModel *ow)
     _owner = ow;
 }
 
-ExperimentFileModel *SequenceFileModel::getOwner()
+ExperimentFileModel *SequenceFileModel::getOwner() const
 {
     return _owner;
 }

@@ -403,8 +403,9 @@ void SequenceInteractor::modifiedImage()
 QPointF SequenceInteractor::getFieldPosition(int field)
 {
     if (field < 0) field = _field;
-    QString x = QString("f%1s%2t%3c%4%5").arg(field).arg(_zpos).arg(_timepoint).arg(1).arg("X");
-    QString y = QString("f%1s%2t%3c%4%5").arg(field).arg(_zpos).arg(_timepoint).arg(1).arg("Y");
+
+    QRegExp x(QString("f%1s.*X").arg(field));
+    QRegExp y(QString("f%1s.*Y").arg(field));
 
     return QPoint(_mdl->property(x).toDouble(), _mdl->property(y).toDouble());
 }
@@ -795,57 +796,37 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
         QSettings set;
         float scale = set.value("unpackScaling", 1.0).toDouble();
 
-
-        QPair<QList<double>, QList<double> > li = _mdl->getOwner()->getFieldSpatialPositions();
-        QPair<QList<bool>, QList<bool> > filt;
-
-        for (int p = 0; p < li.first.size(); ++p)
-            filt.first << false;
-        for (int p = 0; p < li.second.size(); ++p)
-            filt.second << false;
-
-
-
-
+      
         QList<int> perf; for (unsigned i = 0; i < _mdl->getFieldCount(); ++i) perf.append( i+1);
         QList<QPair<int, QImage> > toStitch = QtConcurrent::blockingMapped(perf, StitchStruct(this, bias_correction, scale));
 
-        for (unsigned i = 0; i < _mdl->getFieldCount(); ++i)
+        auto li = _mdl->getOwner()->getFieldPosition();
+
+        int rows = 0, cols = 0;
+        for (int i = 0; i < toStitch.size() ; ++i)
         {
-            QPointF p = getFieldPos(_mdl, toStitch[i].first, _zpos, _timepoint, _channel);
-
-
-            int x = li.first.indexOf(p.x());
-            filt.first[x] = true;
-            int y =li.second.indexOf(p.y());
-            filt.second[y] = true;
+            auto d = toStitch[i];
+            rows = std::max(rows, li.size() * d.second.width());
+            cols = std::max(cols, li.first().size() * d.second.height());
         }
 
-        QList<double> a, b;
+        QVector<QPoint> proj(li.size()* li.first().size());
+        for (auto a = li.begin(), ae = li.end(); a != ae; ++a)
+            for (auto b = a->begin(), be = a->end(); b != be; ++b)
+                proj[b.value()-1] = QPoint(a.key(), b.key());
 
-        for (unsigned i =0; i < (unsigned)li.first.size(); ++i)
-            if (filt.first[i])
-                a << li.first[i];
 
-        for (unsigned i =0; i < (unsigned)li.second.size(); ++i)
-            if (filt.second[i])
-                b << li.second[i];
-
-        li.first = a;
-        li.second = b;
-
-        const int rows = li.first.size() * toStitch[0].second.width();
-        const int cols = li.second.size() * toStitch[0].second.height();
         QImage toPix(rows, cols, QImage::Format_RGBA8888);
 
         toPix.fill(Qt::black);
         for (unsigned i = 0; i < _mdl->getFieldCount(); ++i)
         {
 
-            QPointF p = getFieldPos(_mdl, toStitch[i].first, _zpos, _timepoint, _channel);
+//            QPointF p = getFieldPos(_mdl, toStitch[i].first, _zpos, _timepoint, _channel);
+            auto p = proj[i];
 
-            int x = li.first.indexOf(p.x());
-            int y = li.second.size() - li.second.indexOf(p.y()) - 1;
+            int x = p.x();
+            int y = p.y();
 
             QPainter pa(&toPix);
             QPoint offset = QPoint(x*toStitch[0].second.width(), y * toStitch[0].second.height());
@@ -1056,7 +1037,8 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
     {
         img.append(imageInfos(it->second, it->first, loadkey)); // Auto channel determination
     }
-
+    if (img.isEmpty())
+        return QImage();
 
     images = QtConcurrent::blockingMapped(img, Loader(scale, last_scale != scale));
 
@@ -1066,8 +1048,14 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
 
     //  qDebug() << t.elapsed() << "ms";
     //  qDebug() << "Got image list";
-    const int rows = images[0].rows;
-    const int cols = images[0].cols;
+    int rows = 0, cols = 0;
+
+    for (int i = 0; i < images.size(); ++i)
+    {
+        rows = std::max(rows, images[i].rows);
+        cols = std::max(cols, images[i].cols);
+    }
+
     //  qDebug() << rows << cols ;
 
     QImage toPix(cols, rows, QImage::Format_RGBA8888);
@@ -1176,9 +1164,9 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
         auto toField = _mdl->getOwner()->getFieldPosition();
         if (!toField.contains(cx) || !toField[cx].contains(cy))
         {
-            qDebug() << "Field not found for displaying value:"
+          /*  qDebug() << "Field not found for displaying value:"
                 << "intial coordinates: " << origD
-                << "Searching pixel pos: " << d << " Pos correction " << cx << cy;
+                << "Searching pixel pos: " << d << " Pos correction " << cx << cy;*/
             field=-1;
             res << -1;
         }

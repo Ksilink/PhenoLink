@@ -149,7 +149,7 @@ cv::Mat ImageInfos::image(float scale, bool reload)
     if (reload && !_name.startsWith(":/mem/"))
         _image = cv::Mat();
 
-    if (_image.empty())
+    if (_image.empty() && !_name.isEmpty())
     {
 
         if (_name.startsWith(":/mem/"))

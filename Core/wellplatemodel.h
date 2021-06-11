@@ -66,6 +66,7 @@ public:
 
     virtual void setProperties(QString tag, QString value);
     virtual QString property(QString tag) const;
+    virtual QString property(QRegExp& re) const;
     virtual QString properties();
     virtual bool hasProperty(QString tag) const;
 
@@ -143,7 +144,7 @@ public:
 
     void setOwner(ExperimentFileModel* ow);
 
-    ExperimentFileModel* getOwner();
+    ExperimentFileModel* getOwner() const;
 
     QList<QJsonObject> toJSON(QString imageType, bool asVectorImage, QList<bool> selectedChanns, QStringList &metaData);
 
@@ -153,7 +154,7 @@ public:
 
     void setPos(unsigned r, unsigned c);
     QPoint pos();
-    QString Pos();
+    QString Pos() const;
 
     bool isAlreadyShowed();
     void setAsShowed(bool showed=true);
@@ -167,7 +168,9 @@ public:
     void addSibling(SequenceFileModel* mdl);
     QList<SequenceFileModel*> getSiblings();
 
-    virtual QString property(QString tag);
+    virtual QString property(QString tag) const;
+    virtual QString property(QRegExp& tag) const;
+   
     void setInvalid();
     bool isValid();
     void checkValidity();
@@ -398,6 +401,7 @@ public:
 
     void setProperties(QString tag, QString value);
     virtual QString property(QString tag) const;
+    virtual QString property(QRegExp tag) const;
 
     QSize getSize();
 
