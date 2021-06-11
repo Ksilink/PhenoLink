@@ -857,7 +857,8 @@ QStringList SequenceFileModel::getAllFiles()
         for (auto z: (f) )
             for (auto t: (z) )
                 for (auto c: (t) )
-                    files << c;
+                    if (!c.isEmpty())
+                        files << c;
 
     return files;
 }
