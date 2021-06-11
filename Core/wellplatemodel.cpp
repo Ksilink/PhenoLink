@@ -863,7 +863,8 @@ unsigned SequenceFileModel::getChannels() const
 
 void SequenceFileModel::addFile(int timePoint, int fieldIdx, int Zindex, int channel, QString file)
 {
-    _channelsIds.insert(channel);
+    if (!file.isEmpty())
+        _channelsIds.insert(channel);
     //  qDebug() << "Adding: "<< timePoint << fieldIdx << Zindex << channel;
     _data[fieldIdx][Zindex][timePoint][channel] = file;
 }
@@ -3026,8 +3027,8 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
 
             foreach (QString key, datas)
-            {
-                double v = h.data[key].first();
+            {               
+                double v = h.data[key].size() ? h.data[key].first() : std::numeric_limits<double>::quiet_NaN();
                 resFile << "," << v ;
 
                 factor[posToInt(h.pos)][key] << v;
