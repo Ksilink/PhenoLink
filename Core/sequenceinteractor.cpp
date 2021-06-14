@@ -644,7 +644,7 @@ void SequenceInteractor::refinePacking()
     {
         for (auto sit = it.value().begin(), send = it.value().end(); sit != send; ++sit)
         {
-            qDebug() << "Field " << sit.value() << " is at position" << it.key() << sit.key();
+            //qDebug() << "Field " << sit.value() << " is at position" << it.key() << sit.key();
             if (ref.empty())
             {
                 QString file = _mdl->getFile(_timepoint, sit.value(), _zpos, 1);
@@ -830,7 +830,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
 
             QPainter pa(&toPix);
             QPoint offset = QPoint(x*toStitch[0].second.width(), y * toStitch[0].second.height());
-            qDebug() << "Field" << i << toStitch[i].first << "X Y:" << x << y << "Offset:" << offset;
+            //qDebug() << "Field" << i << toStitch[i].first << "X Y:" << x << y << "Offset:" << offset;
             if (pixOffset.size()  > 0)
                 offset += pixOffset[i];
 

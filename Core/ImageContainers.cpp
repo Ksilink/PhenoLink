@@ -25,7 +25,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1)
     {
         for (size_t i = 0; i < (size_t)data.size(); ++i)
         {
-            if (im >= 0 && im != (int)i) continue;
+            if (im >= 0 && im != (int)i) continue;            
             cv::Mat m = cv::imread(data.at((int)i).toString().toStdString(), 2);
             if (m.type() != CV_16U)
             {

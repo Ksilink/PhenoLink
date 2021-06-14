@@ -871,6 +871,7 @@ void SequenceFileModel::addFile(int timePoint, int fieldIdx, int Zindex, int cha
 
 void SequenceFileModel::addMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name, StructuredMetaData meta)
 {
+    channel = channel < 1 ? 1 : 0;
     _sdata[fieldIdx][Zindex][timePoint][channel][name] = meta;
 }
 
@@ -928,11 +929,25 @@ QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, in
     static QMap<QString, StructuredMetaData> r;
 
     if (_sdata.contains(fieldIdx))
+    {
+        //qDebug() << "SFM getMetas" << timePoint << fieldIdx << Zindex << channel << _sdata[fieldIdx].keys();
         if (_sdata[fieldIdx].contains(Zindex))
-            if (_sdata[fieldIdx][Zindex].contains(timePoint))
-                if (_sdata[fieldIdx][Zindex][timePoint].contains(channel))
-                    return _sdata[fieldIdx][Zindex][timePoint][channel];
+        {
+            //qDebug() << "SFM getMetas" << _sdata[fieldIdx][Zindex].keys();
 
+            if (_sdata[fieldIdx][Zindex].contains(timePoint))
+            {
+                //qDebug() << "SFM getMetas" << _sdata[fieldIdx][Zindex][timePoint].keys();
+
+                if (_sdata[fieldIdx][Zindex][timePoint].contains(channel))
+                {
+                    //qDebug() << "SFM getMetas" << _sdata[fieldIdx][Zindex][timePoint][channel].keys();
+                    return _sdata[fieldIdx][Zindex][timePoint][channel];
+                }
+            }
+        }
+    }
+    
 
     for (auto s : (_siblings) )
     {
