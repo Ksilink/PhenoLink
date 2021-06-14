@@ -581,6 +581,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
         for (auto itd : arr)
         {
             auto obj = itd.toObject();
+            qDebug() << "Filtering" << obj["Tag"] << obj;
             if (obj["Data"].toString() == "Image results" && obj.contains("Payload"))
             {
                 if (obj.contains("isOptional") && !obj["optionalState"].toBool())
@@ -629,7 +630,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                             << obj;
                     continue;
                 }
-//                qDebug() << "Ready data" << ob.toJsonObject();
+                qDebug() << "Ready data" << ob.toJsonObject();
                 // Now add Image info:
                 auto ps = obj["Payload"].toArray();
                 QCborArray cbar;

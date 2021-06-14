@@ -941,7 +941,7 @@ QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, in
 
                 if (_sdata[fieldIdx][Zindex][timePoint].contains(channel))
                 {
-                    //qDebug() << "SFM getMetas" << _sdata[fieldIdx][Zindex][timePoint][channel].keys();
+                       //qDebug() << "SFM getMetas" << _sdata[fieldIdx][Zindex][timePoint][channel].keys();
                     return _sdata[fieldIdx][Zindex][timePoint][channel];
                 }
             }
