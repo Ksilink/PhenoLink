@@ -871,7 +871,7 @@ void SequenceFileModel::addFile(int timePoint, int fieldIdx, int Zindex, int cha
 
 void SequenceFileModel::addMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name, StructuredMetaData meta)
 {
-    channel = channel < 1 ? 1 : 0;
+    channel = channel < 1 ? 1 : channel;
     _sdata[fieldIdx][Zindex][timePoint][channel][name] = meta;
 }
 

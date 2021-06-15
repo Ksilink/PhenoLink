@@ -581,7 +581,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
         for (auto itd : arr)
         {
             auto obj = itd.toObject();
-            qDebug() << "Filtering" << obj["Tag"] << obj;
+          //  qDebug() << "Filtering" << obj["Tag"] << obj;
             if (obj["Data"].toString() == "Image results" && obj.contains("Payload"))
             {
                 if (obj.contains("isOptional") && !obj["optionalState"].toBool())
@@ -686,7 +686,7 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
     // now we can setup the reply !
 
     QJsonArray data = FilterObject(hash, res);
-    qDebug() << "Sending dataset" << data;
+   // qDebug() << "Sending dataset" << data;
     client->send(QString("/addData/%1").arg(commitname), QString(), data);
 
 

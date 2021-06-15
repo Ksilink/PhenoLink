@@ -1358,9 +1358,11 @@ void adaptItem(QGraphicsLineItem* item, QString tip, QString name, QRectF rect, 
 {
     item->setLine(rect.x(), rect.y(), rect.width(), rect.height());
 
-    item->setTransformOriginPoint(ori);
-    item->setRotation(rotation);
-
+    if (std::abs(rotation) > 1e-9)
+    {
+        item->setTransformOriginPoint(ori);
+        item->setRotation(rotation);
+    }
     tip += QString("Length: %1").arg(sqrt(pow(rect.x()-rect.width(),2)+pow(rect.y()-rect.height(),2)));
 
     item->setToolTip(tip);
@@ -1548,8 +1550,8 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                                 for (int j = i+1; j < lcols.size(); ++j)
                                     if (lcols[j].contains("_X"))
                                     {
-                                        disp.h = j;
-                                        disp.w = findY(lcols, lcols[j]);
+                                        disp.w = j;
+                                        disp.h = findY(lcols, lcols[j]);
                                         break;
                                     }
                                 break;
