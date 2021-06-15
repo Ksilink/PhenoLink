@@ -1534,7 +1534,13 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                     if (c < start) { c++; continue; }
                     if (c > end) break;
 
-                    QString nm = QString("Channel %1").arg(i);
+                    QString nm;
+
+                    if (_channelsNames.size() == _channelsIds.size())
+                        nm = QString(_channelsNames[list.at(i - 1)]);
+                    else
+                        nm = QString("Channel %1").arg(i);
+
                     lay = mapper[nm];
 
                     if (!lay)
