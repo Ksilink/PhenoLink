@@ -101,7 +101,7 @@ void loadPlugins(bool isServer)
                 {
                     if (pr->plugin_version().isEmpty())
                     {
-                        qDebug() << "WARNING empty versionned plugin are not be loaded anymore !!";
+                        qDebug() << "WARNING empty versionned plugin are not loaded anymore !!";
                         qDebug() << "Fix:"<< pr->getPath();
                     }
                     else

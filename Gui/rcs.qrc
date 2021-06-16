@@ -2,14 +2,6 @@
     <qresource prefix="/">
         <file>Styles/darkorange.qss</file>
         <file alias="openhand.png">Styles/OpenHand.png</file>
-        <file alias="MicC8.png">Images/Base Microscope Network.png</file>
-        <file alias="MicC0.png">Images/Base Microscope.png</file>
-        <file alias="MicC9.png">Images/Base Microscope NetworkC1.png</file>
-        <file alias="MicC10.png">Images/Base Microscope NetworkC2.png</file>
-        <file alias="MicC11.png">Images/Base Microscope NetworkC3.png</file>
-        <file alias="MicC12.png">Images/Base Microscope NetworkC4.png</file>
-        <file alias="MicC13.png">Images/Base Microscope NetworkC5.png</file>
-        <file alias="MicC14.png">Images/Base Microscope NetworkC6.png</file>
         <file alias="MicC1.png">Images/Base MicroscopeC1.png</file>
         <file alias="MicC2.png">Images/Base MicroscopeC2.png</file>
         <file alias="MicC3.png">Images/Base MicroscopeC3.png</file>
@@ -17,6 +9,20 @@
         <file alias="MicC5.png">Images/Base MicroscopeC5.png</file>
         <file alias="MicC6.png">Images/Base MicroscopeC6.png</file>
         <file alias="MicC7.png">Images/Base MicroscopeC7.png</file>
+        <file alias="MicC8.png">Images/Base MicroscopeC8.png</file>
+        <file alias="MicC9.png">Images/Base MicroscopeC9.png</file>
+        <file alias="MicC10.png">Images/Base MicroscopeC10.png</file>
+        <file alias="MicC11.png">Images/Base Microscope Network.png</file>
+        <file alias="MicC12.png">Images/Base Microscope.png</file>
+        <file alias="MicC13.png">Images/Base Microscope NetworkC1.png</file>
+        <file alias="MicC14.png">Images/Base Microscope NetworkC2.png</file>
+        <file alias="MicC15.png">Images/Base Microscope NetworkC3.png</file>
+        <file alias="MicC16.png">Images/Base Microscope NetworkC4.png</file>
+        <file alias="MicC17.png">Images/Base Microscope NetworkC5.png</file>
+        <file alias="MicC18.png">Images/Base Microscope NetworkC6.png</file>
+        <file alias="MicC19.png">Images/Base Microscope NetworkC7.png</file>
+        <file alias="MicC20.png">Images/Base Microscope NetworkC8.png</file>
+        <file alias="MicC21.png">Images/Base Microscope NetworkC9.png</file>
         <file alias="ColorPickerIcon.png">Images/ColorPickerIcon.png</file>
         <file alias="ColorPickerCursor.png">Images/ColorPickerCursor.png</file>
         <file alias="ServerIcon.png">Images/CheckoutServerIcon.png</file>
