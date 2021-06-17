@@ -776,9 +776,8 @@ void MainWindow::updateCurrentSelection()
 
     ui->imageControl->layout()->addWidget(wwid);
 
-    // Addind overlay control shall start here
-    if (true) // Wait for further checking on this topic
-    {
+
+    { // Overlay control
         ImageInfos* fo = inter->getChannelImageInfos(1);
 
         auto wwid = new QWidget;
@@ -2541,7 +2540,7 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
         menu.addSeparator();
         menu.addAction("clear all Directories", this, SLOT(clearDirectories()));
 
-        for (int i = 0; i < 15; ++i)
+        for (int i = 0; i < 21; ++i)
         {
             QIcon cmic(QString(":/MicC%1.png").arg(i));
             QAction* nmic = new QAction(cmic, tr("&Set Icon"), this);
