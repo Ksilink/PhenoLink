@@ -238,6 +238,9 @@ public slots:
     void setOverlayWidth(double w);
     void renameWorkbench();
     void exportContent();
+    void finishedEditMinValue();
+    void finishedEditMaxValue();
+
 protected slots:
     void updateProcessStatusMessage(QJsonArray ob);
 

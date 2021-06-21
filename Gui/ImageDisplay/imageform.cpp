@@ -112,6 +112,7 @@ ImageForm::ImageForm(QWidget *parent, bool packed) :
 
     _ruler = new QGraphicsLineItem(pixItem);
     QPen pen(Qt::yellow);
+    // What's the current overlay width ?
     pen.setWidth(3);
     _ruler->setPen(pen);
     _ruler->setVisible(false);

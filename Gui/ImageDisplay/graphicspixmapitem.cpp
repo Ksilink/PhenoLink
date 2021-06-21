@@ -27,7 +27,7 @@ QVariant GraphicsPixmapItem::itemChange(QGraphicsItem::GraphicsItemChange change
       //      QRectF rect = scene()->sceneRect();
       QGraphicsView* v = scene()->views().first();
 
-      QRectF rect = v->mapToScene(v->viewport()->rect()).boundingRect();
+      QRectF rect = v->mapToScene(v->viewport()->geometry()).boundingRect();
 
 
       QRectF br = mapToScene(boundingRect()).boundingRect();

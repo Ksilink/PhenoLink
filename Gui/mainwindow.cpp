@@ -572,11 +572,13 @@ QDoubleSpinBox* MainWindow::setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* 
     //    extr->disconnect();
     if (isMin)
     {
-        connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeRangeValueMin(double)), Qt::UniqueConnection);
+        //connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeRangeValueMin(double)), Qt::UniqueConnection);
+        connect(extr, SIGNAL(editingFinished()), this, SLOT(finishedEditMinValue()), Qt::UniqueConnection);
     }
     else
     {
-        connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeRangeValueMax(double)), Qt::UniqueConnection);
+//        connect(extr, SIGNAL(valueChanged(double)), this, SLOT(changeRangeValueMax(double)), Qt::UniqueConnection);
+        connect(extr, SIGNAL(editingFinished()), this, SLOT(finishedEditMaxValue()), Qt::UniqueConnection);
     }
     return extr;
 }
@@ -636,6 +638,9 @@ QSpinBox *MainWindow::setupTilePosition(QSpinBox *extr, QString itemName, ImageI
 
     return extr;
 }
+
+
+
 
 QComboBox *MainWindow::setupOverlaySelection(QComboBox *box, QString itemName,ImageInfos *ifo, bool reconnect)
 {
@@ -796,8 +801,14 @@ void MainWindow::updateCurrentSelection()
         ui->overlayControl->layout()->addWidget(wwid);
         _imageControls[inter->getExperimentName()].append(wwid);
 
+
+        bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), "Scale", fo), 2, 0);
+        bvl->addWidget(new QLabel("Scale: ", wwid), 2, 1);
+        bvl->addWidget(setupTilePosition(new QSpinBox(wwid), "Scale", fo), 2, 2);
+
+
         QStringList overlays = inter->getMetaList();
-        int itms = 2;
+        int itms = 3;
         for (auto ov : overlays)
         {
             bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), ov, fo), itms, 0);
@@ -2067,6 +2078,11 @@ void MainWindow::udpateRange(double mi, double ma)
 
 }
 
+void MainWindow::finishedEditMaxValue()
+{
+    auto spin = qobject_cast<QDoubleSpinBox*>(sender());
+    changeRangeValueMax(spin->value());
+}
 
 void MainWindow::changeRangeValueMax(double val)
 {
@@ -2091,6 +2107,12 @@ void MainWindow::changeRangeValueMax(double val)
         _syncmapper[sender()->objectName()]->setValue(val);
     }
 
+}
+
+void MainWindow::finishedEditMinValue()
+{
+    auto spin = qobject_cast<QDoubleSpinBox*>(sender());
+    changeRangeValueMin(spin->value());
 }
 
 void MainWindow::changeRangeValueMin(double val)

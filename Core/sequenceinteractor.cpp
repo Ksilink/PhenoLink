@@ -2,7 +2,8 @@
 #include <tuple>
 
 #include <QImage>
-
+#include <QGraphicsScene>
+#include <QGraphicsView>
 #include "Gui/ctkWidgets/ctkDoubleRangeSlider.h"
 
 #include <QtConcurrent/QtConcurrent>
@@ -972,12 +973,19 @@ void randomMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, 
         for (int j = 0; j < cols; ++j, ++p)
         {
             unsigned short v = *p  ;
-            std::minstd_rand0 nb(v);
-            int r = nb(), g = nb(), b = nb(); // get a random value
+            if (v == 0)
+            {
+                pix[j] = qRgb(0,0,0);
+            }
+            else
+            {
+                std::minstd_rand0 nb(v);
+                int r = nb(), g = nb(), b = nb(); // get a random value
 
-            pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + (float)(r&0xFF)),
-                          std::min(255.f, qGreen(pix[j])+ (float)(g&0xFF)),
-                          std::min(255.f, qBlue(pix[j]) + (float)(b&0xFF)));
+                pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + (float)(r&0xFF)),
+                              std::min(255.f, qGreen(pix[j])+ (float)(g&0xFF)),
+                              std::min(255.f, qBlue(pix[j]) + (float)(b&0xFF)));
+            }
         }
     }
 }
@@ -1156,7 +1164,7 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
         int cx = floor(d.x() / m.cols);
         int cy = floor(d.y() / m.rows);
 
-        auto origD = d;
+        //auto origD = d;
 
         d.setX(d.x() - cx * m.cols);
         d.setY(d.y() - cy * m.rows);
@@ -1464,6 +1472,48 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
         item->setPen(p);
         //        qDebug() << item->rect();
         res << item;
+    }
+
+    if (disp_overlay["Scale"].first)
+    { // Should display the scale as an overlay
+//parent->window()
+        // We shall know the pixel size
+        auto sc = parent->scene();
+
+        auto view = (sc->views().front());
+        auto boundaries = parent->mapFromScene(view->mapToScene(view->viewport()->geometry()));
+        if (boundaries.size() == 4)
+        {
+           auto key = boundaries[2];
+           //
+
+           float dx, dy;
+           getResolution(dx, dy);
+
+           auto item = new QGraphicsLineItem(parent);
+           if (disp_overlay["Scale"].second >= 0)
+           {
+               int len = disp_overlay["Scale"].second;
+
+               float size = len / dx;
+               // We need to figure out the position we have with respect to the border...
+               QPen p(Qt::yellow);
+               p.setWidthF(_overlay_width);
+               item->setPen(p);
+               QPointF x1(key.x()-size-50, key.y()-20), x2( key.x()-50, key.y()-20);
+               QLineF line(x1, x2);
+               item->setLine(line);
+               // Now write text above
+        //               parent->par
+               auto t = new QGraphicsTextItem(parent);
+
+               t->setPlainText(QString("%1 µm").arg(len));
+               t->setPos(key.x()-size/2-50, key.y()-25);
+
+               res << item << t;
+            }
+        }
+
     }
 
 

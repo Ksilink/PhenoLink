@@ -42,7 +42,7 @@
             //      QRectF rect = scene()->sceneRect();
             QGraphicsView* v = scene()->views().first();
 
-            QRectF rect = v->mapToScene(v->viewport()->rect()).boundingRect(),
+            QRectF rect = v->mapToScene(v->viewport()->geometry()).boundingRect(),
                     tr = rect;
 
             QRectF br = scene()->sceneRect();

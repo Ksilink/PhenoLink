@@ -447,6 +447,8 @@ int ImageInfos::getOverlayMin(QString name)
 {
     if (name == "Tile")
         return 0;
+    if (name == "Scale")
+        return 1;
     else return -1;
 }
 
@@ -454,6 +456,9 @@ int ImageInfos::getOverlayMax(QString name)
 {
     if (name == "Tile")
         return 361;
+    if (name == "Scale")
+        return 10000;
+
     else return _parent->getOverlayMax(name);
 }
 
