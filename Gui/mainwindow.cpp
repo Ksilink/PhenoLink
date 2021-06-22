@@ -1363,7 +1363,10 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
                QStringList path = r.split("/");
                QString commitName = path.at(path.size() - 2);
                if (commitName == "params")
+                {
                    commitName = "";
+                   continue;
+               }
                QStringList j = (*it).split("_");
 
                QString hours = j.takeLast();
@@ -2377,10 +2380,10 @@ void MainWindow::exportToCellProfiler()
     std::map<QString, QString> values;
     QString basePath;
     values["Metadata_Plate"]="";
-    values["Well"]="";
-    values["Field"]="";
-    values["Time"]="";
-    values["Z"]="";
+    values["Metadata_Well"]="";
+    values["Metadata_Site"]="";
+    values["Metadata_Time"]="";
+    values["Metadata_Z"]="";
     QSet<QString> tags;
     QSet<QString> chans;
     for (auto xp: s)
@@ -2486,7 +2489,7 @@ void MainWindow::exportToCellProfiler()
             if (validated_tags != tag_filter.size()) continue;
 
             auto wPos = seq->Pos();
-            values["Well"] = wPos;
+            values["Metadata_Well"] = wPos;
 
             if (!wellMatcher.isEmpty() && !wellMatcher.exactMatch(wPos))
                 continue;
@@ -2499,9 +2502,9 @@ void MainWindow::exportToCellProfiler()
                         for (unsigned c = 0; c < seq->getChannels(); ++c)
                         {
                             QString fi = seq->getFile(t+1,f+1, z+1, c+1);
-                            values["Field"]=QString("%1").arg(f);
-                            values["Time"]=QString("%1").arg(t);
-                            values["Z"]=QString("%1").arg(z);
+                            values["Metadata_Site"]=QString("%1").arg(f);
+                            values["Metadata_Time"]=QString("%1").arg(t);
+                            values["Metadata_Z"]=QString("%1").arg(z);
                             values[QString("Image_FileName_%1").arg(cname[c].trimmed().replace(" ", "_"))]=fi.split('/').back();
                         }
 
