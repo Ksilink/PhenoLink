@@ -2350,15 +2350,18 @@ void MainWindow::exportToCellProfiler()
 
     QStringList tag_filter = filtertags.isEmpty() ? QStringList() :
                                                     filtertags.split(';');
-
+    filtertags=QString();
     QRegExp wellMatcher;
 
     for (auto f : tag_filter)
     {
-        if (f.startsWith("W:"))
+        if (f.startsWith("W:"))            
+        {
             wellMatcher.setPattern(f.right(2));
+            filtertags = f;
+        }
     }
-
+    if (!filtertags.isEmpty())  tag_filter.removeAll(filtertags);
 
     // Load plate if necessary
     mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
