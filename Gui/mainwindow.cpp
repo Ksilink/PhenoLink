@@ -2336,9 +2336,33 @@ int longestMatch(QString a, QString b)
             break;
     return i;
 }
+#include <QInputDialog>
 
 void MainWindow::exportToCellProfiler()
 {
+
+    bool ok;
+
+    QString filtertags = QInputDialog::getText(this,
+                                               "Set Filter condition (separated by ';' )",
+                                                "Part of tag or Well Regexp 'W:' followed by regexp:", QLineEdit::Normal, "", &ok);
+    if (!ok) return;
+
+    QStringList tag_filter = filtertags.isEmpty() ? QStringList() :
+                                                    filtertags.split(';');
+    filtertags=QString();
+    QRegExp wellMatcher;
+
+    for (auto f : tag_filter)
+    {
+        if (f.startsWith("W:"))            
+        {
+            wellMatcher.setPattern(f.right(2));
+            filtertags = f;
+        }
+    }
+    if (!filtertags.isEmpty())  tag_filter.removeAll(filtertags);
+
     // Load plate if necessary
     mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
     on_loadSelection_clicked();
@@ -2376,7 +2400,6 @@ void MainWindow::exportToCellProfiler()
             QStringList t = seq->getTags();
             for (auto a: t)
                 tags.insert(a);
-
         }
     }
     // "DCM-Tum-lines-seeded-for-6k-D9-4X"
@@ -2436,12 +2459,20 @@ void MainWindow::exportToCellProfiler()
         {
             QStringList t = seq->getTags();
 
+
             for (auto a: cname)  values[QString("Image_PathName_%1").arg(a.trimmed().replace(" ", "_"))]=path;
             for (auto c : meta) values[QString("Metadata_%1").arg(c.trimmed().replace(" ", "_"))] = QString("0");
             for (auto c : titration) values[QString("Titration_%1").arg(c.trimmed().replace(" ", "_"))] = QString("0");
 
+            int validated_tags = 0;
+
             for (auto c : t)
             {
+
+
+                for (auto mt : tag_filter)
+                    validated_tags += c.contains(mt);
+
                 if (c.contains('#'))
                 {
                     QStringList sc =  c.split('#');
@@ -2452,7 +2483,14 @@ void MainWindow::exportToCellProfiler()
                     values[QString("Metadata_%1").arg(c.replace(" ", "_"))] = "1";
             }
 
-            values["Well"]=seq->Pos();
+            if (validated_tags != tag_filter.size()) continue;
+
+            auto wPos = seq->Pos();
+            values["Well"] = wPos;
+
+            if (!wellMatcher.isEmpty() && !wellMatcher.exactMatch(wPos))
+                continue;
+
 
             for (unsigned int t = 0; t < seq->getTimePointCount(); ++t)
                 for (unsigned f = 0; f < seq->getFieldCount(); ++f)
