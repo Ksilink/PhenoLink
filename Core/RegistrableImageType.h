@@ -300,16 +300,6 @@ public:
 
             unsigned long long len = split[0].elemSize()* split[0].rows * split[0].cols;
 
-            //          QJsonArray arr;
-            //                    qDebug() << "Writing image data to socket"
-            //                             << split[0].elemSize()
-            //                             << split[0].type()
-            //                             << split[0].rows
-            //                             << split[0].cols
-            //                             << len
-            //                             << split.size();
-            //          QByteArray r;
-
             std::vector<unsigned char> r(split.size()*len);
             auto iter = r.begin();
             QJsonArray d;
@@ -320,16 +310,12 @@ public:
                     *iter = *p;
                 d.append(QJsonValue((int)len));//a.size());
             }
-            //          qDebug() << "Writing image data to done" ;
-            //          ob["Data"]=arr;
             RegistrableParent::attachPayload(getHash(), r);
-            //          CheckoutProcess::handler().attachPayload(getHash(), r);
+
             ob["DataSizes"] = d;
-            //qDebug() << d;
             auto ar = QJsonArray();
             ar.push_back(ob);
             json["Payload"] = ar;
-            //          qDebug() << json;
 
         }
 

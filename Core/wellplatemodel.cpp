@@ -129,7 +129,7 @@ QSize ExperimentFileModel::getSize()
     return QSize(_rows, _cols);
 }
 
-QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned fieldc,  int z, int t, int c)
+QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned fieldc,  int /*z*/, int /*t*/, int /*c*/)
 {
     Q_UNUSED(fieldc);
 
@@ -155,7 +155,7 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
     return qMakePair(xl,yl);
 }
 
-QPointF getFieldPos(SequenceFileModel* seq, int field, int z, int t, int c)
+QPointF getFieldPos(SequenceFileModel* seq, int field, int /*z*/, int /*t*/, int /*c*/)
 {
     QRegExp k(QString("^f%1s.*X$").arg(field));
     double x = seq->property(k).toDouble();
@@ -173,7 +173,7 @@ void ExperimentFileModel::setFieldPosition()
     // get first Well
     SequenceFileModel* mdl = 0;
 
-    int z = 1, t = 1;
+//    int z = 1, t = 1;
     QSet<double> x,y;
 
     unsigned int nb_fields = 0;
@@ -185,6 +185,7 @@ void ExperimentFileModel::setFieldPosition()
                 mdl = &(it.value());
 
                 int c = *(mdl->getChannelsIds().begin());
+                Q_UNUSED(c);
                 nb_fields = std::max(nb_fields, mdl->getFieldCount());
                 for (unsigned field = 1; field <= mdl->getFieldCount(); ++field)
                 {
@@ -2191,7 +2192,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
             }
             else
             { // Handle other types of results, points + features & Box + features expected here
-                qDebug() << "Need to handle overlay content Type";
+//                qDebug() << "Need to handle overlay content Type";
                 SequenceFileModel& seq = (*_mscreens[hash])(row, col);
 
                 QJsonArray res = ob["Payload"].toArray();
@@ -2351,14 +2352,18 @@ ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, Q
             QString otag = it.key();
             QString tag = otag.simplified().replace(" ", "_").replace("-", "_");
             QString val = it.value().toString();
-            //            qDebug() << "Adding data" << tag << val;
+//            qDebug() << "Adding data" << tag << val;
             datamdl->setAggregationMethod(tag, data[QString("%1_Agg").arg(otag)].toString() );
 
-            if (val.contains(','))
+            if (val.contains(';'))
             {
-                QStringList t = val.split(",", Qt::SkipEmptyParts);
+                QStringList t = val.split(";", Qt::SkipEmptyParts);
                 for (int i = 0; i < t.size(); ++i)
-                    datamdl->addData(QString("%1#%2").arg(tag).arg(i, 4, 10, QLatin1Char('0')), fieldId, sliceId, timepoint, channel, id, t[i].toDouble());
+                {
+                    auto tt = QString("%1#%2").arg(tag).arg(i, 4, 10, QLatin1Char('0'));
+                    datamdl->setAggregationMethod(tt, data[QString("%1_Agg").arg(otag)].toString() );
+                    datamdl->addData(tt, fieldId, sliceId, timepoint, channel, id, t[i].toDouble());
+                }
             }
             else
                 datamdl->addData(tag, fieldId, sliceId, timepoint, channel, id, val.toDouble());

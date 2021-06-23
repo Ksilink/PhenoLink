@@ -681,7 +681,7 @@ void CheckoutProcess::addToComputedDataModel(QJsonObject ob)
         QString tag = d["Tag"].toString().replace(" ", "_").replace("-", "_").replace(" ", "_");
         mutex_dataupdate.lock();
         datamdl->setAggregationMethod(tag, d["Aggregation"].toString() );
-        if (d["Type"].toString() == "Container")
+        if (d["Data"].toString().contains(";"))
         {
             QStringList t = d["Data"].toString().split(";",Qt::SkipEmptyParts);
             for (int i = 0; i < t.size(); ++i)
@@ -834,44 +834,6 @@ void CheckoutProcess::exitServer()
     NetworkProcessHandler::handler().exitServer();
 }
 
-//void CheckoutProcess::queryPayload(QString hash)
-//{
-//    //qDebug() << "get payload" << hash;
-
-////    QSharedMemory mem(hash);
-////    //    if (mem.attach())
-////    //    {
-////    //        mem.lock();
-////    //        size_t s = *(size_t*)mem.data();
-////    //        std::vector<unsigned char> data(s);
-////    //        std::memcpy(data.data(), ( char*)(mem.data())+sizeof(size_t), s);
-
-////    //        attachPayload(hash, data);
-////    //        mem.unlock();
-////    //        mem.detach();
-
-////    //        NetworkProcessHandler::handler().deletePayload(hash);
-
-////    //    }
-////    //    else
-////    if (!_payloads_vectors.contains(hash))
-////        NetworkProcessHandler::handler().queryPayload(hash);
-//}
-
-//void CheckoutProcess::deletePayload(QString hash)
-//{
-//    if (!_payloads_vectors.contains(hash))
-//        NetworkProcessHandler::handler().deletePayload(hash);
-
-//    if (_inmems.contains(hash))
-//    {
-//        _inmems[hash]->detach();
-//        _inmems.remove(hash);
-//        QSharedMemory* m = _inmems[hash];
-//        delete m;
-//    }
-//}
-
 bool CheckoutProcess::shallDisplay(QString hash)
 {
     return _display.contains(_hash_to_core[hash]);
@@ -1006,24 +968,12 @@ std::vector<unsigned char> CheckoutProcess::detachPayload(QString hash)
         _payloads_vectors.remove(hash);
         if (_stored.contains(hash))
         {
-            //            qDebug() << "Plugin Runner, deleting data for thread" << (uint)QThread::currentThreadId();
-            //CheckoutProcessPluginInterface* p = _stored[hash];
-
             _stored.remove(hash);
-            /*
-            QList<CheckoutProcessPluginInterface*> l = _stored.values();
-            int cc = 0;
-            foreach(CheckoutProcessPluginInterface* pt, l)
-                if (pt == p) cc++;
-
-            if (cc <= 1) // Only delete if only one instance of the plugin remains,
-                //needs to be maintained if multiple images/results are produced by plugin
-                delete p; */
         }
 
     }
     else { qDebug() << "Expecting hash (" << hash << ") to be present in the server, but was not found, skipping..."; }
-    //    qDebug() << "Detach " << hash << r.size();
+
     return r;
 }
 
