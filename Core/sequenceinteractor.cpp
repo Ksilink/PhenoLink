@@ -1371,7 +1371,8 @@ void adaptItem(QGraphicsLineItem* item, QString tip, QString name, QRectF rect, 
         item->setTransformOriginPoint(ori);
         item->setRotation(rotation);
     }
-    tip += QString("Length: %1").arg(sqrt(pow(rect.x()-rect.width(),2)+pow(rect.y()-rect.height(),2)));
+
+    //    tip += QString("Length: %1").arg(sqrt(pow(rect.x()-rect.width(),2)+pow(rect.y()-rect.height(),2)));
 
     item->setToolTip(tip);
     item->setPen(p);
