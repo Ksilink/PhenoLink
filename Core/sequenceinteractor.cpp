@@ -1587,7 +1587,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                 {
                     if (cols.count("_X") >= 2 && cols.count("_Y") >= 2)
                     {
-                        qDebug() << "Line Mode";
+//                        qDebug() << "Line Mode";
                         disp.shape = dispType::Line;
                         // Special case for line, adjust the column counting
                         QStringList lcols = cols.split(";").mid(0, feat.cols);

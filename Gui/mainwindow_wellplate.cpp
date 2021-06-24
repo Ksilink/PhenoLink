@@ -618,16 +618,30 @@ void MainWindow::addDirectoryName(QString dir)
     QtConcurrent::run(mdl, &ScreensModel::addDirectoryTh,  dir);
 }
 
-
+#include <QHBoxLayout>
 void MainWindow::createWellPlateViews(ExperimentFileModel* data)
 {
 
     if (ui->wellPlateViewTab->count() == 0)
     {
-        QPushButton* button = new QPushButton("to wkb");
+        auto w = new QWidget;
+        auto hl = new QHBoxLayout();
+
+        w->setLayout(hl);
+
+        QPushButton* button = new QPushButton("bird view");
+        connect(button, SIGNAL(clicked()), this, SLOT(createBirdView()));
+        hl->addWidget(button);
+
+        button = new QPushButton("to wkb");
         connect(button, SIGNAL(clicked()), this, SLOT(addExperimentWorkbench()));
-        ui->wellPlateViewTab->setCornerWidget(button);
-        button->show();
+        hl->addWidget(button);
+
+        hl->setContentsMargins(0, 0, 0, 0);
+
+
+        ui->wellPlateViewTab->setCornerWidget(w);
+        w->show();
     }
 
 
@@ -721,7 +735,10 @@ void MainWindow::refreshExperimentControl(QTreeWidget* l,ExperimentFileModel* md
 }
 
 
+void MainWindow::createBirdView()
+{ //
 
+}
 
 
 void MainWindow::addExperimentWorkbench()

@@ -163,7 +163,10 @@ private slots:
     void on_actionPython_Core_triggered();
     void on_actionOptions_triggered();
     void exec_pythonCommand();
+
+    void createBirdView();
     void addExperimentWorkbench();
+
     void on_tabWidget_currentChanged(int index);
 
     void on_wellSelectionChanged();

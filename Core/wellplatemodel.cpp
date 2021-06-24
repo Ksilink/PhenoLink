@@ -1288,6 +1288,10 @@ QJsonObject SequenceFileModel::getMeta(SequenceFileModel::MetaDataHandler &h)
                 QString t = _owner->property(ch);
                 if (!t.isEmpty())
                     props[ch] = t;
+                ch =k+QString("%1").arg(c+1);
+                t = _owner->property(ch);
+                if (!t.isEmpty())
+                    props[ch] = t;
             }
         }
     }
@@ -2229,6 +2233,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
                     {
 
                         int r = payload["Rows"].toInt(), c = payload["Cols"].toInt();
+
                         int cvtype = payload["cvType"].toInt();
 
                         unsigned long long len = r * c * payload["DataTypeSize"].toInt() ;

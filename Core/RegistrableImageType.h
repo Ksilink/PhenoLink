@@ -146,6 +146,10 @@ public:
 
     QString getMeta(QString me) 
     { 
+
+//        for (auto i = _metaData.begin(), e = _metaData.end(); i != e; ++i)
+//            qDebug() << i.key() << i.value();
+
         return _metaData[me]; 
     }
 
@@ -270,7 +274,7 @@ public:
         RegistrableImageParent::write(json);
         json["ImageType"]  = QString("ImageContainer");
 
-        if (!_value || (_value->rows == 0 && _value->cols == 0))
+        if (!_value )
         { //qDebug() << "Empty image !!!!";
             return; }
         //      qDebug() << "Finishing Registered images" << _value->rows << _value->cols  << _value->channels();
@@ -289,34 +293,45 @@ public:
                 qDebug() << "OpenCV Split returned empty image... leaving..";
                 return;
             }
+
             QJsonObject ob;
 
-            ob["DataTypeSize"] = (int)split[0].elemSize();
-            ob["cvType"]=split[0].type();
-            ob["Rows"] = split[0].rows;
-            ob["Cols"] = split[0].cols;
-            ob["DataHash"]=getHash();
-            //          qDebug() << ob;
-
-            unsigned long long len = split[0].elemSize()* split[0].rows * split[0].cols;
-
-            std::vector<unsigned char> r(split.size()*len);
-            auto iter = r.begin();
-            QJsonArray d;
-            for(int i = 0; i < split.size(); ++i)
-            {
-                unsigned char *p = split[i].ptr<  unsigned char>(0);
-                for (int i = 0; i < len; ++i, ++p, ++iter)
-                    *iter = *p;
-                d.append(QJsonValue((int)len));//a.size());
+            if (_value->rows == 0 && _value->cols == 0)
+              {
+                ob["DataTypeSize"] = 0;
+                ob["cvType"]=0;
+                ob["Rows"] = 0;
+                ob["Cols"] = 0;
             }
-            RegistrableParent::attachPayload(getHash(), r);
+            else
+            {
 
-            ob["DataSizes"] = d;
-            auto ar = QJsonArray();
-            ar.push_back(ob);
-            json["Payload"] = ar;
+                ob["DataTypeSize"] = (int)split[0].elemSize();
+                ob["cvType"]=split[0].type();
+                ob["Rows"] = split[0].rows;
+                ob["Cols"] = split[0].cols;
+                ob["DataHash"]=getHash();
+                //          qDebug() << ob;
 
+                unsigned long long len = split[0].elemSize()* split[0].rows * split[0].cols;
+
+                std::vector<unsigned char> r(split.size()*len);
+                auto iter = r.begin();
+                QJsonArray d;
+                for(int i = 0; i < split.size(); ++i)
+                {
+                    unsigned char *p = split[i].ptr<  unsigned char>(0);
+                    for (int i = 0; i < len; ++i, ++p, ++iter)
+                        *iter = *p;
+                    d.append(QJsonValue((int)len));//a.size());
+                }
+                RegistrableParent::attachPayload(getHash(), r);
+
+                ob["DataSizes"] = d;
+                auto ar = QJsonArray();
+                ar.push_back(ob);
+                json["Payload"] = ar;
+            }
         }
 
     }
