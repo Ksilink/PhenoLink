@@ -173,7 +173,7 @@ void ExperimentFileModel::setFieldPosition()
     // get first Well
     SequenceFileModel* mdl = 0;
 
-//    int z = 1, t = 1;
+    //    int z = 1, t = 1;
     QSet<double> x,y;
 
     unsigned int nb_fields = 0;
@@ -200,7 +200,7 @@ void ExperimentFileModel::setFieldPosition()
     QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
     std::sort(xl.begin(), xl.end());// , std::greater<double>());
     std::sort(yl.begin(), yl.end(), std::greater<double>());
-//    qDebug() << "Unpack well pos sorted" <<  xl << yl;
+    //    qDebug() << "Unpack well pos sorted" <<  xl << yl;
 
 
     fields_pos = qMakePair(xl,yl);
@@ -208,7 +208,7 @@ void ExperimentFileModel::setFieldPosition()
     for (unsigned i = 0; i < nb_fields; ++i)
     {
         QPointF p = getFieldPos(mdl, i+1, 1, 1, 1);
-   
+
         int x = xl.indexOf(p.x());
         int y = yl.indexOf(p.y());
         
@@ -793,7 +793,7 @@ QString DataProperty::property(QString tag) const
 
 QString DataProperty::property(QRegExp& re) const
 {
-   // qDebug() << re;
+    // qDebug() << re;
     for (auto it = _properties.begin(), e = _properties.end(); it != e; ++it)
     {
         if (re.indexIn(it.key()) >= 0)
@@ -915,8 +915,8 @@ int SequenceFileModel::getMetaChannels(int timePoint, int fieldIdx, int Zindex)
     int s = 0;
     for (auto s : (_siblings) )
     {
-       int r = s->getMetaChannels(timePoint, fieldIdx, Zindex);
-       s += r;
+        int r = s->getMetaChannels(timePoint, fieldIdx, Zindex);
+        s += r;
     }
 
 
@@ -942,7 +942,7 @@ QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, in
 
                 if (_sdata[fieldIdx][Zindex][timePoint].contains(channel))
                 {
-                       //qDebug() << "SFM getMetas" << _sdata[fieldIdx][Zindex][timePoint][channel].keys();
+                    //qDebug() << "SFM getMetas" << _sdata[fieldIdx][Zindex][timePoint][channel].keys();
                     return _sdata[fieldIdx][Zindex][timePoint][channel];
                 }
             }
@@ -1971,22 +1971,26 @@ QString ScreensHandler::findPlate(QString plate, QString project)
     QStringList searchPaths;
     QDir dir;
 
-    for (auto file : sets.value("SearchPlate", QStringList() << "U:/BTSData/MeasurementData/"
+    QStringList searchpaths = sets.value("SearchPlate", QStringList() << "U:/BTSData/MeasurementData/"
                                 << "Z:/BTSData/MeasurementData/"
                                 << "W:/BTSData/MeasurementData/"
                                 << "K:/BTSData/MeasurementData/"
-                                << "C:/Data/").toStringList())
-        if (dir.exists(file))
-        {
-            if (!project.isEmpty() && dir.exists(file + project))
-            {
+                                << "C:/Data/").toStringList();
+
+    if (!project.isEmpty())
+    {
+        for (auto file : searchpaths)
+            if (dir.exists(file) && dir.exists(file + project))
                 searchPaths << file + project;
-            }
-            else
-            {
+    }
+    else
+    {
+        for (auto file : searchpaths)
+            if (dir.exists(file))
                 searchPaths << file;
-            }
-        }
+    }
+
+
     QStringList platesplit = plate.split('_');
     for (int i = std::max(platesplit.size()-2, 1); i < platesplit.size(); i++)    platesplit.pop_back();
     QString searchplate=platesplit.join("_");
@@ -2196,7 +2200,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject &ob)
             }
             else
             { // Handle other types of results, points + features & Box + features expected here
-//                qDebug() << "Need to handle overlay content Type";
+                //                qDebug() << "Need to handle overlay content Type";
                 SequenceFileModel& seq = (*_mscreens[hash])(row, col);
 
                 QJsonArray res = ob["Payload"].toArray();
@@ -2357,7 +2361,7 @@ ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, Q
             QString otag = it.key();
             QString tag = otag.simplified().replace(" ", "_").replace("-", "_");
             QString val = it.value().toString();
-//            qDebug() << "Adding data" << tag << val;
+            //            qDebug() << "Adding data" << tag << val;
             datamdl->setAggregationMethod(tag, data[QString("%1_Agg").arg(otag)].toString() );
 
             if (val.contains(';'))
@@ -3052,7 +3056,7 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
 
             foreach (QString key, datas)
-            {               
+            {
                 double v = h.data[key].size() ? h.data[key].first() : std::numeric_limits<double>::quiet_NaN();
                 resFile << "," << v ;
 
