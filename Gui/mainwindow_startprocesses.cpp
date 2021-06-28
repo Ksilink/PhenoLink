@@ -472,7 +472,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
             QString s = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
             xps.insert(s);
         }
-        if (_shareTags->isChecked())
+        if (_shareTags && _shareTags->isChecked())
         {
             //            sfm->clearTags();
             foreach (QString l, tags_map[sfm->Pos()]) sfm->setTag(l);
@@ -488,7 +488,8 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
             deb = false;
         }
-        adapt[sfm->getOwner()->name()] += tmp.size();
+        if (sfm && sfm->getOwner())
+            adapt[sfm->getOwner()->name()] += tmp.size();
         count += tmp.size();
         _StatusProgress->setMinimum(0);
         _StatusProgress->setMaximum(count);
@@ -691,7 +692,7 @@ void MainWindow::startProcessRun()
 
             for (QList<SequenceFileModel*> ::Iterator si = seqs.begin(), se = seqs.end(); si != se; ++si)
             {
-                if ((*si)->isValid())
+                if ((*si)->isValid() && (*si)->getOwner()->hasMeasurements((*si)->pos()))
                 {
                     // si->Pos();
                     lsfm << *si;
