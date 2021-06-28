@@ -782,7 +782,8 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
                 {
                     QString imgPath = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
                                           + colname + ".jpg";
-                    out <<    "<td><img src='"<< imgPath << "' width='100%' title='"<< (*mdl)(r,c).getTags().join(',') << "' /></td>";
+                    out <<    "<td><a href='http://localhost:8020/Load?plate=" << mdl->name() << "&well=" << QString('A'+r) << colname << "&project=" << mdl->getProjectName() << "&json'  target='_blank'><img src='file://"
+                    << imgPath << "' width='100%' title='"<< (*mdl)(r,c).getTags().join(',') << "' /></a></td>";
                     if (res.isEmpty())
                         res = imgPath;
                 }
