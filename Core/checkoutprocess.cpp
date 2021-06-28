@@ -919,7 +919,7 @@ QString CheckoutProcess::dumpHtmlStatus()
 QStringList CheckoutProcess::users()
 {
     QStringList users, del;
-
+    status_protect.lock();
     for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
         if (it.value().size())
             users << it.key();
@@ -928,7 +928,7 @@ QStringList CheckoutProcess::users()
 
     for (auto v: del)
         _peruser_runners.remove(v);
-
+    status_protect.unlock();
     return users;
 }
 

@@ -71,6 +71,11 @@
 #include "ScreensDisplay/screensgraphicsview.h"
 #include <QtWebView/QtWebView>
 #include <QInputDialog>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/utime.h>
+#include <time.h>
 
 
 #include <QtWebEngineWidgets/QWebEngineView>
@@ -777,7 +782,7 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
                 {
                     QString imgPath = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
                                           + colname + ".jpg";
-                    out <<    "<td><img src='"<< imgPath << "' width='100%' /></td>";
+                    out <<    "<td><img src='"<< imgPath << "' width='100%' title='"<< (*mdl)(r,c).getTags().join(',') << "' /></td>";
                     if (res.isEmpty())
                         res = imgPath;
                 }
@@ -822,11 +827,41 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         QDir dir(QDir::cleanPath(mdl->fileName()));
         dir.cdUp(); dir.cdUp();
         QString platename = mdl->name();
-        qDebug() << dir.path() << platename;
+//        qDebug() << dir.path() << platename;
 
         QString fpath(QString("%1/birdview_%2.html").arg(dir.path(), mdl->name()));
         QFile file(fpath);
         QString imgName = generatePlate(file, mdl);
+
+        QStringList ds=dir.path().split("/").last().split('_');
+        if (ds.size() > 3)
+        {
+            QString time = ds.last(); ds.pop_back();
+            QString date = ds.last();
+            QDateTime dt = QDateTime::fromString(QString("%1#%2").arg(date, time), "YYYYMMdd#hhmmss");
+            auto pt = dir.path().toLocal8Bit();
+
+            struct tm tmm;
+            struct _utimbuf ut;
+
+            tmm.tm_hour = dt.time().hour();
+            tmm.tm_min = dt.time().minute();
+            tmm.tm_sec = dt.time().second();
+
+            tmm.tm_year = dt.date().year() - 1900;
+            tmm.tm_mday = dt.date().day();
+            tmm.tm_mon = dt.date().month();
+
+            tmm.tm_isdst = 0;
+
+            ut.actime = mktime(&tmm);
+            ut.modtime = mktime(&tmm);
+
+            _utime(pt.data(), &ut);
+
+        }
+
+
 
         // Check if the birdview's plugin's has run or run it
         //if (!QFile::exists(imgName))
