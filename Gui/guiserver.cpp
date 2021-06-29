@@ -106,6 +106,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         //        "/Load/?plate=&wells=&field=&tile=&unpacked"
 
         QStringList queries = query.split("&"), wells, plates;
+        qDebug() << "Load" << queries;
         bool unpacked=false;
         QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile" << "project";
         QString tile;
@@ -117,8 +118,10 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 q=q.mid(6);
                 plates=q.replace("\\", "/").split(",");
                 if (plates.isEmpty())
-
+                {
+                    qDebug() << "Returning due to empty plate" << plates << q;
                     return;
+                }
             }
             if (q.startsWith("wells="))
             {
@@ -136,6 +139,8 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                     params[p]=q;
                 }
         }
+
+    qDebug() << "Should handle" << plates << unpacked << wells;
 
 
         Screens sc;

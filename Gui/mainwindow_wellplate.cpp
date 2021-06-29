@@ -761,9 +761,13 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
     {
         QTextStream out(&file);
         out << "<html>"
-            << "<head></head>"
-            << "<body>"
-            <<"<table width='100%'>";
+            << "<head>"
+            <<"<link rel='stylesheet' href='" << dbP << "/Code/HTML/birdview.css'>"
+            <<"<script src='"<< dbP << "/Code/HTML/jquery.js'></script>"
+            <<"<script src='"<< dbP << "/Code/HTML/ksilink.js'></script>"
+            << "</head>"
+            << "<body><h1>" << mdl->name() << "</h1>"
+            <<"<table width='100%' >";
 
         out  << "<thead>" << "<tr><th></th>"; // Empty col for row name
 
@@ -782,8 +786,10 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
                 {
                     QString imgPath = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
                                           + colname + ".jpg";
-                    out <<    "<td><a href='http://localhost:8020/Load?plate=" << mdl->name() << "&well=" << QString('A'+r) << colname << "&project=" << mdl->getProjectName() << "&json'  target='_blank'><img src='file://"
-                    << imgPath << "' width='100%' title='"<< (*mdl)(r,c).getTags().join(',') << "' /></a></td>";
+                    // http://localhost:8020/Load?project=MFM&plate=VB9%20MFM%20WT1%20D004%20hiPS-CM%20J9%20Rap%20Met%20treatment%2040X&wells=C12,C14&unpack&json
+                    // http://localhost:8020/Load?project=DCM&plate=DCM-Tum-lines-seeded-for-6k-D9-4X&wells=C09&json
+                    out <<    "<td><div class='birdview_tile'><a href='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'  target='_blank'><img src='file://"
+                    << imgPath << "' width='100%' title='"<< (*mdl)(r,c).getTags().join(',') << "' /></a></div></td>";
                     if (res.isEmpty())
                         res = imgPath;
                 }
