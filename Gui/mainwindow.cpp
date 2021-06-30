@@ -1591,13 +1591,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                     {
                         w->setAttribute(Qt::WA_DeleteOnClose, true);
                         w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(c));
-                        //                        if (par["PerChannelParameter"].toBool())
-                        //                            lay->addRow(w);
-                        //                        else
                         lay->addRow(par["Tag"].toString(), w);
                         w->setToolTip(par["Comment"].toString());
-                        //                        qDebug() << "Created Widget:" << w;
-
                     }
                     c++;
 
@@ -1649,34 +1644,40 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
             if (!wid->objectName().isEmpty())
                 qDebug() << "Created Widget:" << wid << wid->objectName();
 
+            bool show = true;
+
             if (par.contains("Level"))
             {
                 //            qDebug() << par["Level"];
                 if (par["Level"] == "Advanced" &&
                         !ui->actionAdvanced_User->isChecked())
-                    wid->hide();
+                    show=false;
 
                 if (par["Level"] == "VeryAdvanced" &&
                         !ui->actionVery_Advanced->isChecked())
-                    wid->hide();
+                    show=false;
 
                 if (par["Level"] == "Debug" &&
                         !ui->actionDebug->isChecked())
-                    wid->hide();
+                    show=false;
             }
 
-
-            wid->setAttribute(Qt::WA_DeleteOnClose, true);
-            wid->setObjectName(par["Tag"].toString());
-            //            qDebug() << par["Tag"].toString();
-            if (par["PerChannelParameter"].toBool())
-                lay->addRow(wid);
+            if (show)
+            {
+                wid->setAttribute(Qt::WA_DeleteOnClose, true);
+                wid->setObjectName(par["Tag"].toString());
+                //            qDebug() << par["Tag"].toString();
+                if (par["PerChannelParameter"].toBool())
+                    lay->addRow(wid);
+                else
+                    lay->addRow(par["Tag"].toString(), wid);
+                wid->setToolTip(par["Comment"].toString());
+            }
             else
-                lay->addRow(par["Tag"].toString(), wid);
-            wid->setToolTip(par["Comment"].toString());
-            //            wid->setToolTip(par["Tag"].toString());
+            {
+                delete wid;
+            }
         }
-
     }
 
 
