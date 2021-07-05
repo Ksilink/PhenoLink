@@ -467,7 +467,7 @@ double ImageInfos::getOverlayWidth()
     return _parent->getOverlayWidth();
 }
 
-QJsonObject ImageInfos::getStoredParams()
+QJsonObject& ImageInfos::getStoredParams()
 {
 
     static QJsonObject ob;

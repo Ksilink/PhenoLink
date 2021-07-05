@@ -151,7 +151,7 @@ public:
 
     double getOverlayWidth();
 
-    QJsonObject getStoredParams();
+    static QJsonObject& getStoredParams();
     void timerEvent(QTimerEvent *event);
 
 public slots:

@@ -3197,7 +3197,7 @@ QVariant ExperimentDataTableModel::headerData(int section, Qt::Orientation orien
     QString data[] = {"Pos", "Time", "Field", "Z", "Channel", "#Tags"};
     if (role == Qt::DisplayRole && orientation == Qt::Horizontal && section >= 0)
     {
-        if (section < 5 +_owner->hasTag() )
+        if (section < 5 + (_owner->hasTag() ? 1 : 0) )
         {
             return data[section];
         }
