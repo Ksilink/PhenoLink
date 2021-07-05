@@ -839,6 +839,7 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         QString fpath(QString("%1/birdview_%2.html").arg(dir.path(), mdl->name()));
         QFile file(fpath);
         QString imgName = generatePlate(file, mdl);
+        file.close();
 
         QStringList ds=dir.path().split("/").last().split('_');
         if (ds.size() > 3)
