@@ -3202,9 +3202,9 @@ QVariant ExperimentDataTableModel::headerData(int section, Qt::Orientation orien
             return data[section];
         }
         else
-            if (this->getExperiments().size() > (section - (5+_owner->hasTag())))
+            if (this->getExperiments().size() > (section - (5+ (_owner->hasTag() ? 1 : 0))))
             {
-                return this->getExperiments().at(section-(5+_owner->hasTag()));
+                return this->getExperiments().at(section-(5+ (_owner->hasTag() ? 1 : 0)));
             }
     }
 
@@ -3215,7 +3215,7 @@ void ExperimentDataTableModel::clearAll()
 {
 
     QModelIndex idx;
-    beginRemoveColumns(idx, 5+_owner->hasTag(), this->columnCount());
+    beginRemoveColumns(idx, 5+ (_owner->hasTag() ? 1 : 0), this->columnCount());
     beginRemoveRows(idx, 0, _dataset.size());
 
     _datanames.clear();
