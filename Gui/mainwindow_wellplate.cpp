@@ -690,7 +690,7 @@ void MainWindow::wellplateClose(int tabId)
 
     assoc_WellPlateWidget.remove(ui->wellPlateViewTab->widget(tabId));
 
-    data.removeAll(tmdl);
+    ScreensHandler::getHandler().removeScreen(tmdl);
 
     ui->wellPlateViewTab->removeTab(tabId);
 
@@ -698,16 +698,13 @@ void MainWindow::wellplateClose(int tabId)
     SequenceViewContainer & container = SequenceViewContainer::getHandler();
     QList<SequenceFileModel *>& lsfm = container.getSequences();
     QList<SequenceFileModel *> erase;
+
     foreach (SequenceFileModel* sfm, lsfm)
         if (sfm->getOwner() == tmdl)
             erase << sfm;
 
     _scrollArea->removeSequences(erase);
-
-
     delete tmdl;
-
-
 }
 
 void MainWindow::refreshExperimentControl(QTreeWidget* l,ExperimentFileModel* mdl)
