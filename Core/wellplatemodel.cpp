@@ -1702,6 +1702,13 @@ void ScreensHandler::addScreen(ExperimentFileModel* xp)
     _screens << xp;
     _mscreens[xp->hash()] = xp;
 }
+
+void ScreensHandler::removeScreen(ExperimentFileModel *xp)
+{
+    _mscreens.remove(xp->hash());
+    _screens.removeAll(xp);
+}
+
 ExperimentFileModel* loadScreenFunct(QString it)
 {
     Q_UNUSED(it  );
