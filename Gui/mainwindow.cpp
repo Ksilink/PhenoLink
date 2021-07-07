@@ -2361,8 +2361,10 @@ void MainWindow::exportToCellProfiler()
     {
         if (f.startsWith("W:"))            
         {
-            wellMatcher.setPattern(f.right(2));
             filtertags = f;
+            wellMatcher.setPattern(f.replace("W:", ""));
+            //qDebug() << "Well filter" << f.replace("W:", "");
+
         }
     }
     if (!filtertags.isEmpty())  tag_filter.removeAll(filtertags);
