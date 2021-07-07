@@ -2367,8 +2367,10 @@ void MainWindow::exportToCellProfiler()
     }
     if (!filtertags.isEmpty())  tag_filter.removeAll(filtertags);
 
-    // Load plate if necessary
-    mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
+    // Check Plate selection Load plate if necessary
+    if (mdl->getCheckedDirectories(false).size() == 0)
+        mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
+
     on_loadSelection_clicked();
 
     // Get all selected screens
