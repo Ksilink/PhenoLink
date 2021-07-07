@@ -842,13 +842,17 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         file.close();
 
         QStringList ds=dir.path().split("/").last().split('_');
-        if (ds.size() > 3)
+        if (ds.size() >= 3)
         {
             QString time = ds.last(); ds.pop_back();
             QString date = ds.last();
-            QDateTime dt = QDateTime::fromString(QString("%1#%2").arg(date, time), "YYYYMMdd#hhmmss");
+            QDateTime dt = QDateTime::fromString(QString("%1#%2").arg(date, time), "yyyyMMdd#hhmmss");
+            qDebug() << dt;
+#if WIN32
+            auto pt = dir.path().replace("/","\\").toLocal8Bit();
+#else
             auto pt = dir.path().toLocal8Bit();
-
+#endif
             struct tm tmm;
             struct _utimbuf ut;
 
@@ -858,14 +862,17 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
 
             tmm.tm_year = dt.date().year() - 1900;
             tmm.tm_mday = dt.date().day();
-            tmm.tm_mon = dt.date().month();
+            tmm.tm_mon = dt.date().month()- 1 ;
 
+            tmm.tm_wday = 0;  
+            tmm.tm_yday = 0;  
             tmm.tm_isdst = 0;
 
             ut.actime = mktime(&tmm);
             ut.modtime = mktime(&tmm);
 
-            _utime(pt.data(), &ut);
+            int retval = _utime(pt.data(), &ut);
+            qDebug() << "Adjusting creation time of" << fpath << "to" << dt << "utime: " << retval;
 
         }
 

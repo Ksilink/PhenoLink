@@ -2654,7 +2654,7 @@ void SequenceViewContainer::addSequence(SequenceFileModel *mdl)
 void SequenceViewContainer::removeSequence(SequenceFileModel *mdl)
 { // Fix: Bug #31
     mdl->setSelectState(false);
-    _curView.removeOne(mdl);
+    _curView.removeAll(mdl);
 }
 
 
