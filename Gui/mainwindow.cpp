@@ -447,7 +447,7 @@ void MainWindow::overlayChanged(QString id)
 {
     if (sender())
     {
-        QString name = sender()->objectName();       
+        QString name = sender()->objectName();
         _sinteractor.current()->overlayChange(name, id);
     }
 }
@@ -1387,10 +1387,10 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
 
 
 void MainWindow::setupProcessCall(QJsonObject obj, int idx)
-{    
+{
     bool reloaded = idx > 0;
 
-        
+
     _syncmapper.clear();
 
     QString process = obj["Path"].toString();
@@ -1430,7 +1430,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     lb->setToolTip(obj["Comment"].toString());
     layo->addRow(lb);
 
-    auto cb = new QComboBox();    
+    auto cb = new QComboBox();
     layo->addRow(cb);
     constructHistoryComboBox(cb, process);
     if (idx > 0) cb->setCurrentIndex(idx);
@@ -2354,20 +2354,23 @@ void MainWindow::exportToCellProfiler()
 
     QStringList tag_filter = filtertags.isEmpty() ? QStringList() :
                                                     filtertags.split(';');
-    filtertags=QString();
-    QRegExp wellMatcher;
+    QStringList remTags;
+    QRegExp wellMatcher, siteMatcher;
 
     for (auto f : tag_filter)
     {
-        if (f.startsWith("W:"))            
+        if (f.startsWith("W:"))
         {
-            filtertags = f;
+            remTags <<  f;
             wellMatcher.setPattern(f.replace("W:", ""));
-            //qDebug() << "Well filter" << f.replace("W:", "");
-
+        }
+        if (f.startsWith("S:"))
+        {
+            remTags << f;
+            siteMatcher.setPattern(f.replace("S:", ""));
         }
     }
-    if (!filtertags.isEmpty())  tag_filter.removeAll(filtertags);
+    for (auto s: remTags) tag_filter.removeAll(s);
 
     // Check Plate selection Load plate if necessary
     if (mdl->getCheckedDirectories(false).size() == 0)
@@ -2502,6 +2505,10 @@ void MainWindow::exportToCellProfiler()
 
             for (unsigned int t = 0; t < seq->getTimePointCount(); ++t)
                 for (unsigned f = 0; f < seq->getFieldCount(); ++f)
+                {
+                    if (!siteMatcher.isEmpty() && !siteMatcher.exactMatch(QString("%1").arg(f)))
+                        continue;
+
                     for (unsigned z = 0; z < seq->getZCount(); ++z)
                     {
                         for (unsigned c = 0; c < seq->getChannels(); ++c)
@@ -2516,6 +2523,7 @@ void MainWindow::exportToCellProfiler()
                         for (auto & c: values )      resFile << c.second << (c.first == l->first ? "" : ",");
                         resFile << Qt::endl;
                     }
+                }
         }
     }
 
