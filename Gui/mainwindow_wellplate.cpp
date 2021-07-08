@@ -7,7 +7,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#endif
+#else
+#include <sys/utime.h>
+#endif 
+
 
 #include <algorithm>
 
@@ -74,7 +77,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/utime.h>
+
 #include <time.h>
 
 
@@ -174,7 +177,7 @@ void MainWindow::on_notebookDisplay_clicked()
     // Let's copy the ipynb file to some other location for better integration
     // =>
 
-#ifdef WIN32
+#ifdef _WIN64
     QString username = qgetenv("USERNAME");
 #else
     QString username = qgetenv("USER");
@@ -307,7 +310,7 @@ QMutex mx;
 void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
 {
 
-#ifdef WIN32
+#ifdef _WIN64
 
     if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(pairs.second.toStdWString().c_str()))
     {
@@ -839,7 +842,7 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         file.close();
 
         QStringList ds=dir.path().split("/").last().split('_');
-#if WIN32
+#if _WIN64
         if (ds.size() >= 3)
         {
             QString time = ds.last(); ds.pop_back();
