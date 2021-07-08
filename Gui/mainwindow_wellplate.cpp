@@ -6,6 +6,7 @@
 #ifndef _WIN64
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/utime.h>
 #include <unistd.h>
 #endif
 
@@ -74,7 +75,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/utime.h>
+
 #include <time.h>
 
 
@@ -174,7 +175,7 @@ void MainWindow::on_notebookDisplay_clicked()
     // Let's copy the ipynb file to some other location for better integration
     // =>
 
-#ifdef WIN32
+#ifdef _WIN64
     QString username = qgetenv("USERNAME");
 #else
     QString username = qgetenv("USER");
@@ -307,7 +308,7 @@ QMutex mx;
 void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
 {
 
-#ifdef WIN32
+#ifdef _WIN64
 
     if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(pairs.second.toStdWString().c_str()))
     {
@@ -839,17 +840,14 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         file.close();
 
         QStringList ds=dir.path().split("/").last().split('_');
+#if _WIN64
         if (ds.size() >= 3)
         {
             QString time = ds.last(); ds.pop_back();
             QString date = ds.last();
             QDateTime dt = QDateTime::fromString(QString("%1#%2").arg(date, time), "yyyyMMdd#hhmmss");
             qDebug() << dt;
-#if WIN32
             auto pt = dir.path().replace("/","\\").toLocal8Bit();
-#else
-            auto pt = dir.path().toLocal8Bit();
-#endif
             struct tm tmm;
             struct _utimbuf ut;
 
@@ -872,7 +870,7 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
             qDebug() << "Adjusting creation time of" << fpath << "to" << dt << "utime: " << retval;
 
         }
-
+#endif
 
 
         // Check if the birdview's plugin's has run or run it
