@@ -2438,6 +2438,7 @@ void MainWindow::exportToCellProfiler()
 
     for (auto c : meta) values[QString("Metadata_%1").arg(c.trimmed().replace(" ", "_"))]=QString("0");
     for (auto c : titration) values[QString("Titration_%1").arg(c.trimmed().replace(" ", "_"))]=QString("0");
+    values["Metadata_Tags"]="";
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
@@ -2470,6 +2471,7 @@ void MainWindow::exportToCellProfiler()
         {
             QStringList t = seq->getTags();
 
+            values["Metadata_Tags"]= t.join(";");
 
             for (auto a: cname)  values[QString("Image_PathName_%1").arg(a.trimmed().replace(" ", "_"))]=path;
             for (auto c : meta) values[QString("Metadata_%1").arg(c.trimmed().replace(" ", "_"))] = QString("0");
