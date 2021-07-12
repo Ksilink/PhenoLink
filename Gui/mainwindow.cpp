@@ -2450,12 +2450,15 @@ void MainWindow::exportToCellProfiler()
     values["Metadata_Tags"]="";
 
     int slice = 1;
+
+//    QString t = dir;
+    QFile file(dir);//t.replace(".csv", QString("_%1.csv").arg(slice++, 4, 10, QChar('0'))));
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+        return ;
+
+
     for (auto xp: s)
     {
-
-        QFile file(dir.replace(".csv", QString("%1.csv").arg(slice++, 4, 10, QChar('0'))));
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
-            return ;
 
         QTextStream resFile(&file);
         auto l = --values.end();
