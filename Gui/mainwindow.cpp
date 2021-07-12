@@ -2456,15 +2456,13 @@ void MainWindow::exportToCellProfiler()
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
         return ;
 
+    QTextStream resFile(&file);
+    auto l = --values.end();
+    for (auto c: values )      resFile << c.first << (c.first == l->first ? "" : ",");
+    resFile << Qt::endl;
 
     for (auto xp: s)
     {
-
-        QTextStream resFile(&file);
-        auto l = --values.end();
-        for (auto c: values )      resFile << c.first << (c.first == l->first ? "" : ",");
-        resFile << Qt::endl;
-
 
         // Empty all the configs
         for (auto c: values )  c.second=QString("0");
@@ -2480,7 +2478,7 @@ void MainWindow::exportToCellProfiler()
         {
             QStringList t = seq->getTags();
 
-            values["Metadata_Tags"]= t.join(";");
+            values["Metadata_Tags"]= t.join(";").replace("%","");
 
             for (auto a: cname)  values[QString("Image_PathName_%1").arg(a.trimmed().replace(" ", "_"))]=path;
             for (auto c : meta) values[QString("Metadata_%1").arg(c.trimmed().replace(" ", "_"))] = QString("0");
@@ -2499,7 +2497,7 @@ void MainWindow::exportToCellProfiler()
                 {
                     QStringList sc =  c.split('#');
                     if (!sc.isEmpty())
-                        values[QString("Titration_%1").arg(sc.front().replace(" ", "_"))] = sc.back();
+                        values[QString("Titration_%1").arg(sc.front().replace(" ", "_"))] = sc.back().replace("%","");
                 }
                 else
                     values[QString("Metadata_%1").arg(c.replace(" ", "_"))] = "1";
@@ -2528,7 +2526,12 @@ void MainWindow::exportToCellProfiler()
                             values["Metadata_Site"]=QString("%1").arg(f);
                             values["Metadata_Time"]=QString("%1").arg(t);
                             values["Metadata_Z"]=QString("%1").arg(z);
-                            values[QString("Image_FileName_%1").arg(cname[c].trimmed().replace(" ", "_"))]=fi.split('/').back();
+                            QString fname = fi.split('/').back();
+
+                            if (fname.isEmpty())
+                                continue;
+
+                            values[QString("Image_FileName_%1").arg(cname[c].trimmed().replace(" ", "_"))]=fname;
                         }
 
                         for (auto & c: values )      resFile << c.second << (c.first == l->first ? "" : ",");
