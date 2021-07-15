@@ -9,10 +9,17 @@ public:
   typedef THE_TYPE DataType;
 
   Registrable(): _hasDefault(false), _hasRange(false), _low(std::numeric_limits<DataType>::min()), _high(std::numeric_limits<DataType>::max()),
-    _isSlider(false)
+    _isSlider(false), _value(0)
   {
 
   }
+
+  ~Registrable()
+  {
+      if (_duped && _value)
+          delete _value;
+  }
+
 
 
   Self& setRange(DataType l, DataType h)
@@ -34,6 +41,12 @@ public:
   }
   Self& setValuePointer(DataType *v)
   {
+      if (_value && _duped)
+      {
+         delete _value;
+          _duped = false;
+      }
+
     _value = v;
     return *this;
 
@@ -70,6 +83,9 @@ public:
   virtual void read(const QJsonObject &json)
   {
     RegistrableParent::read(json);
+
+    if (_hasDefault)
+        (*_value) = _default;
 
     if (json.contains("Value"))
       {

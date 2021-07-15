@@ -226,7 +226,7 @@ void ImageForm::updateImageInfos()
 
 void ImageForm::redrawPixmap(QPixmap img)
 {
-    //    qDebug() << "redrawPixmap"; 
+    //    qDebug() << "redrawPixmap";
     setPixmap(img);
     updateDecorator(_interactor->getMeta(pixItem));
 
@@ -260,7 +260,7 @@ void ImageForm::redrawPixmap()
         QFutureWatcher<QPixmap>* wa = new QFutureWatcher<QPixmap>();
         connect(wa, SIGNAL(finished()), this, SLOT(watcherPixmap()));
 
-        
+
 
         QFuture<QPixmap>  future = QtConcurrent::run(GetPixmap(packed, bias_correction), _interactor);
         wa->setFuture(future);
@@ -868,14 +868,13 @@ void ImageForm::imageClick(QPointF pos)
 
 
     QList<QGraphicsItem*> items = ui->graphicsView->scene()->items(pixItem->mapToScene(pos));
-    qDebug() << "Searching item at: " << pos << items.size();
+
     for(auto item : items)
-    {
-
-        qDebug() << item->toolTip() << item->data(1) << item->data(2);
-    }
-
-
+        if (item->toolTip().isEmpty())
+        {
+            qDebug() << "Found item at: " << pos << items.size();
+            qDebug() << item->toolTip() << item->data(1) << item->data(2);
+        }
 }
 
 void ImageForm::imageDoubleClick(QPointF pos)
@@ -937,7 +936,7 @@ void ImageForm::mouseOverImage(QPointF pos)
         str += QString(" - %1 %2").arg(s, 0, 'g', 2).arg(unit);
 
         s = sqrt(pow((_size_end.x() - _size_start.x())*dx, 2) +
-                       pow((_size_end.y() - _size_start.y())*dy, 2));
+                 pow((_size_end.y() - _size_start.y())*dy, 2));
 
         str += QString(" / %1 µm").arg(s, 0, 'g', 2);
     }
@@ -1323,6 +1322,6 @@ void ImageForm::removeFromView()
     }
     this->close();
     this->_pix = QPixmap(); // force empty pixmap, shall clear previous data
-    this->pixItem->setPixmap(_pix); // remove links to pixmap in case...    
+    this->pixItem->setPixmap(_pix); // remove links to pixmap in case...
     deleteLater();
 }
