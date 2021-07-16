@@ -48,6 +48,9 @@ public:
       }
 
     _value = v;
+    if (_hasDefault)
+        (*_value) = _default;
+
     return *this;
 
   }
@@ -56,6 +59,8 @@ public:
   {
     _hasDefault = true;
     _default = v;
+    (*_value) = v;
+
     return *this;
   }
 

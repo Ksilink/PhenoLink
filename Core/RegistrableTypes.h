@@ -253,6 +253,9 @@ public:
         }
 
         _value = v;
+        if (_hasDefault)
+            (*_value) = _default;
+
         return *this;
     }
 
@@ -397,7 +400,13 @@ public:
         }
 
         _value1 = v1;
+        if (_hasDefault)
+            (*_value1) = _default1;
+
         _value2 = v2;
+        if (_hasDefault)
+            (*_value1) = _default2;
+
         return *this;
     }
 
@@ -514,6 +523,10 @@ public:
         _default1 = d1;
         _default2 = d2;
 
+        (*_value1) = d1;
+        (*_value2) = d2;
+
+
         return *this;
     }
 
@@ -581,6 +594,9 @@ public:
         }
 
         _value = v;
+        if (_hasDefault)
+            (*_value) = _default;
+
         return *this;
     }
 
@@ -594,6 +610,7 @@ public:
     {
         _hasDefault = true;
         _default = v;
+        (*_value) = v;
         return *this;
     }
 
@@ -694,6 +711,9 @@ public:
             _duped = false;
         }
         _value = v;
+        if (_hasDefault)
+            (*_value) = _default;
+
         return *this;
     }
 
@@ -701,6 +721,7 @@ public:
     {
         _hasDefault = true;
         _default = v;
+        (*_value) = v;
         return *this;
     }
 
@@ -810,6 +831,9 @@ public:
             _duped = false;
         }
         _value = v;
+        if (_hasDefault)
+            (*_value) = _default;
+
         return *this;
 
     }
@@ -818,6 +842,7 @@ public:
     {
         _hasDefault = true;
         _default = v;
+        (*_value) = v;
         return *this;
     }
 

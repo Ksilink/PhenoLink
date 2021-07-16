@@ -144,13 +144,13 @@ public:
     bool imageAutoloading() { return _autoload; }
 
 
-    QString getMeta(QString me) 
-    { 
+    QString getMeta(QString me)
+    {
 
 //        for (auto i = _metaData.begin(), e = _metaData.end(); i != e; ++i)
 //            qDebug() << i.key() << i.value();
 
-        return _metaData[me]; 
+        return _metaData[me];
     }
 
     // Unbias on load
@@ -404,7 +404,7 @@ public:
 
     Registrable(): RegistrableImageParent(), _value(nullptr)
     {
-        
+
     }
 
 
@@ -1046,13 +1046,13 @@ public:
         RegistrableImageParent::read(json);
         // Need to find out the metadata!!!
          QJsonArray data = json["Data"].toArray();
-       
+
 
         for (int i = 0; i < data.size(); i++)
         {
             auto d = data.at(i).toObject();
             setProperties(d,QString("f%1").arg(i));
-           
+
             if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
             {
                 QJsonArray t = d["ChannelNames"].toArray();
@@ -1171,7 +1171,7 @@ public:
         {
             auto d = data.at(i).toObject();
             setProperties(d, QString("f%1").arg(i));
-            
+
             if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
             {
                 QJsonArray t = d["ChannelNames"].toArray();
@@ -1418,7 +1418,7 @@ public:
         {
             auto d = data.at(i).toObject();
             setProperties(d, QString("f%1").arg(i));
-           
+
             if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
             {
                 QJsonArray t = d["ChannelNames"].toArray();
