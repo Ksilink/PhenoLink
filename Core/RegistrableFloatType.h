@@ -25,6 +25,7 @@ public:
     {
         _hasDefault = true;
         _default = v;
+       (*_value) = v;
         return *this;
     }
 
@@ -42,6 +43,8 @@ public:
     Self& setValuePointer(DataType *v)
     {
         _value = v;
+        if (_hasDefault)
+            (*_value) = _default;
 
         return *this;
 
@@ -103,11 +106,11 @@ public:
           json["Default"] = _default;
         }
       json["isSlider"] = _isSlider;
-	  json["Aggregation"] = QString(_aggreg == Sum ? "Sum" :
-		  (_aggreg == Mean ? "Mean" :
-		  (_aggreg == Median ? "Median" :
-			  (_aggreg == Min ? "Min" : "Max"))));
-	
+      json["Aggregation"] = QString(_aggreg == Sum ? "Sum" :
+          (_aggreg == Mean ? "Mean" :
+          (_aggreg == Median ? "Median" :
+              (_aggreg == Min ? "Min" : "Max"))));
+
     }
 
     virtual QString toString() const
@@ -125,9 +128,9 @@ public:
 
       s->setTag(this->_tag);
       s->setComment(this->_comment);
-	  s->setHash(this->_hash);
+      s->setHash(this->_hash);
 
-	  s->setAggregationType(this->_aggreg); // Fix : Aggregation need to be copied otherwise unknown state will be set..
+      s->setAggregationType(this->_aggreg); // Fix : Aggregation need to be copied otherwise unknown state will be set..
 
       return s;
     }
