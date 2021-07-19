@@ -253,8 +253,8 @@ public:
         }
 
         _value = v;
-        if (_hasDefault)
-            (*_value) = _default;
+        if (this->_hasDefault)
+            (*_value) = this->_default;
 
         return *this;
     }
