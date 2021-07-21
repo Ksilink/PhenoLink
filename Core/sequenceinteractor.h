@@ -97,6 +97,7 @@ public:
   QString getOverlayColor(QString name);
   void exportOverlay(QString name, QString tofile);
 
+  void initImageInfos(int field);
 
 public slots:
 

@@ -494,7 +494,7 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
     // To be added workbench Id + selectionModifier
     QString exp = getExperimentName();// +_mdl->Pos();
     int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
-    
+
     // getWellPos();
     //        qDebug() << "Building Image info" << file << exp << ii;
     bool exists = false;
@@ -592,7 +592,7 @@ std::tuple<double, QPoint> refineLower(cv::Mat& up, cv::Mat& down, int overlap, 
     QPoint res;
 
     double mii = std::numeric_limits<double>::max();
-    
+
     for (int r = 1; r < overlap; ++r)
     {
         for (int c = 0; c < overlap; ++c)
@@ -635,7 +635,7 @@ void SequenceInteractor::refinePacking()
     cv::Mat ref;
 
     QList<std::tuple<int, cv::Mat, cv::Mat, bool /*left/up*/,  bool/*1st/2nd step*/> > data_mapping;
-    
+
     this->pixOffset.resize(_mdl->getFieldCount());
 
 
@@ -694,8 +694,14 @@ void SequenceInteractor::refinePacking()
 
     };
 
-    QList< std::tuple<int, double, QPoint> > res =
-            QtConcurrent::blockingMapped(data_mapping, Mapping()); //apply the mapping
+    QList< std::tuple<int, double, QPoint> > res
+            = QtConcurrent::blockingMapped(data_mapping, Mapping()); //apply the mapping
+
+    //    for (auto d : data_mapping)
+    //    {
+    //        Mapping m;
+    //        res.append(m(d));
+    //    }
 
 
     QMap<int, QPair<double, QPoint> > proj;
@@ -788,6 +794,8 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
     Q_UNUSED(scale);
     if (packed)
     {
+        // Need to check that all the objects are constructed in the main thread
+        initImageInfos(_field);
         QImage toPix = getPixmapChannels(_field, bias_correction);
         _cachePixmap = QPixmap::fromImage(toPix);
         return _cachePixmap;
@@ -797,9 +805,22 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
         QSettings set;
         float scale = set.value("unpackScaling", 1.0).toDouble();
 
-      
-        QList<int> perf; for (unsigned i = 0; i < _mdl->getFieldCount(); ++i) perf.append( i+1);
+
+        QList<int> perf;
+        for (unsigned i = 0; i < _mdl->getFieldCount(); ++i) {
+            initImageInfos(i+1);
+            perf.append( i+1);
+        }
+
+
+        // Need to check that all the objects are constructed in the main thread
         QList<QPair<int, QImage> > toStitch = QtConcurrent::blockingMapped(perf, StitchStruct(this, bias_correction, scale));
+
+        //        for (auto pr: perf)
+        //        {
+        //            StitchStruct s(this, bias_correction, scale);
+        //            toStitch.append(s(pr));
+        //        }
 
         auto li = _mdl->getOwner()->getFieldPosition();
 
@@ -823,7 +844,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
         for (unsigned i = 0; i < _mdl->getFieldCount(); ++i)
         {
 
-//            QPointF p = getFieldPos(_mdl, toStitch[i].first, _zpos, _timepoint, _channel);
+            //            QPointF p = getFieldPos(_mdl, toStitch[i].first, _zpos, _timepoint, _channel);
             auto p = proj[i];
 
             int x = p.x();
@@ -1032,6 +1053,21 @@ void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
         }
     }
 }
+
+
+void SequenceInteractor::initImageInfos(int field)
+{
+    QList<QPair<int, QString> > list = getAllChannel(field);
+    for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it)
+    {
+        QString file = it->second;
+        int channel = it->first;
+        int ii = channel < 0  ? getChannelsFromFileName(file) : channel;
+        bool exists;
+        ImageInfos::getInstance(this, file, getExperimentName() + QString("%1").arg(ii),ii, exists, loadkey);
+    }
+}
+
 /* #region Main */
 
 QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, float scale)
@@ -1050,6 +1086,11 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
 
     images = QtConcurrent::blockingMapped(img, Loader(scale, last_scale != scale));
 
+    //    for (auto im : img)
+    //    {
+    //        Loader l(scale, last_scale != scale);
+    //        images.append(l(im));
+    //    }
 
     last_scale = scale;
 
@@ -1172,7 +1213,7 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
         auto toField = _mdl->getOwner()->getFieldPosition();
         if (!toField.contains(cx) || !toField[cx].contains(cy))
         {
-          /*  qDebug() << "Field not found for displaying value:"
+            /*  qDebug() << "Field not found for displaying value:"
                 << "intial coordinates: " << origD
                 << "Searching pixel pos: " << d << " Pos correction " << cx << cy;*/
             field=-1;
@@ -1477,7 +1518,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
 
     if (disp_overlay["Scale"].first)
     { // Should display the scale as an overlay
-//parent->window()
+        //parent->window()
         // We shall know the pixel size
         auto sc = parent->scene();
 
@@ -1485,33 +1526,33 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
         auto boundaries = parent->mapFromScene(view->mapToScene(view->viewport()->geometry()));
         if (boundaries.size() == 4)
         {
-           auto key = boundaries[2];
-           //
+            auto key = boundaries[2];
+            //
 
-           float dx, dy;
-           getResolution(dx, dy);
+            float dx, dy;
+            getResolution(dx, dy);
 
-           auto item = new QGraphicsLineItem(parent);
-           if (disp_overlay["Scale"].second >= 0)
-           {
-               int len = disp_overlay["Scale"].second;
+            auto item = new QGraphicsLineItem(parent);
+            if (disp_overlay["Scale"].second >= 0)
+            {
+                int len = disp_overlay["Scale"].second;
 
-               float size = len / dx;
-               // We need to figure out the position we have with respect to the border...
-               QPen p(Qt::yellow);
-               p.setWidthF(_overlay_width);
-               item->setPen(p);
-               QPointF x1(key.x()-size-50, key.y()-20), x2( key.x()-50, key.y()-20);
-               QLineF line(x1, x2);
-               item->setLine(line);
-               // Now write text above
-        //               parent->par
-               auto t = new QGraphicsTextItem(parent);
+                float size = len / dx;
+                // We need to figure out the position we have with respect to the border...
+                QPen p(Qt::yellow);
+                p.setWidthF(_overlay_width);
+                item->setPen(p);
+                QPointF x1(key.x()-size-50, key.y()-20), x2( key.x()-50, key.y()-20);
+                QLineF line(x1, x2);
+                item->setLine(line);
+                // Now write text above
+                //               parent->par
+                auto t = new QGraphicsTextItem(parent);
 
-               t->setPlainText(QString("%1 µm").arg(len));
-               t->setPos(key.x()-size/2-50, key.y()-25);
+                t->setPlainText(QString("%1 µm").arg(len));
+                t->setPos(key.x()-size/2-50, key.y()-25);
 
-               res << item << t;
+                res << item << t;
             }
         }
 
@@ -1587,7 +1628,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                 {
                     if (cols.count("_X") >= 2 && cols.count("_Y") >= 2)
                     {
-//                        qDebug() << "Line Mode";
+                        //                        qDebug() << "Line Mode";
                         disp.shape = dispType::Line;
                         // Special case for line, adjust the column counting
                         QStringList lcols = cols.split(";").mid(0, feat.cols);
