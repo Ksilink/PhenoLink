@@ -264,7 +264,10 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
 
         if (_typeOfprocessing->currentText() == "All Loaded Screens"
                 ||
-                _typeOfprocessing->currentText() == "Selected Screens"   )
+                _typeOfprocessing->currentText() == "Selected Screens"
+                ||
+                _typeOfprocessing->currentText() == "Selected Screens and Filter"
+                )
             obj["shallDisplay"] = false;
         else
             obj["shallDisplay"] = true;
@@ -310,7 +313,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                 cchans = par["Channels"].toArray();
             }
         }
-//         qDebug() << "Found channels:" << cchans;
+        //         qDebug() << "Found channels:" << cchans;
         for (int i = 0; i < params.size(); ++i )
         {
             QJsonObject par = params[i].toObject();
@@ -322,17 +325,17 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
             if (cchans.size() &&  par["PerChannelParameter"].toBool())
             {
                 tag = QString("%1_%2").arg(par["Tag"].toString()).arg(cchans.first().toInt());
-//                qDebug() << "Searching Tag" << tag << cchans.size() << cchans;
+                //                qDebug() << "Searching Tag" << tag << cchans.size() << cchans;
                 wids = ui->processingArea->findChildren<QWidget*>(tag);
             }
             if (wids.isEmpty() && par["PerChannelParameter"].toBool())
             {
-               // qDebug() << cchans.size() << _channelsIds.values();
+                // qDebug() << cchans.size() << _channelsIds.values();
                 for (int i = 0; i < _channelsIds.size(); ++i)
                 {
                     tag = QString("%1_%2").arg(par["Tag"].toString()).arg(i+1);
                     auto l = ui->processingArea->findChildren<QWidget*>(tag);
-//                    qDebug() << "Searching Tag:" << tag << l.size();
+                    //                    qDebug() << "Searching Tag:" << tag << l.size();
 
                     for (auto item: l)
                         wids.append(item);
@@ -350,7 +353,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
 
             foreach (QWidget* wid, wids)
             {
-//                qDebug() << par << wids;
+                //                qDebug() << par << wids;
                 getValue(wid, par, "Value", wids.size() > 1);
             }
             params.replace(i, par);
@@ -388,8 +391,8 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                 QCheckBox* wid = ui->processingArea->findChild<QCheckBox*>(tag);
 
                 if (!wid) continue;
-                if (_typeOfprocessing->currentText() == "Selected Screens")
-                 {
+                if (_typeOfprocessing->currentText() == "Selected Screens" || _typeOfprocessing->currentText() == "Selected Screens and Filter")
+                {
                     // Do not reclaim images if we are running heavy duty informations!!!
                     par["optionalState"] = false;
                     obj["BatchRun"]=true;
@@ -617,7 +620,7 @@ void MainWindow::startProcessRun()
 
     QList<SequenceFileModel*> lsfm ;
 
-    if (_typeOfprocessing->currentText() == "Selected Screens")
+    if (_typeOfprocessing->currentText() == "Selected Screens"  || _typeOfprocessing->currentText() == "Selected Screens and Filter")
     {
 
         QStringList checked = mdl->getCheckedDirectories();
@@ -718,6 +721,72 @@ void MainWindow::startProcessRun()
 
     }
     //}
+
+    if ( _typeOfprocessing->currentText() == "Selected Screens and Filter")
+    {
+        // Add the filtering part !!!
+
+        bool ok;
+
+        QString filtertags = QInputDialog::getText(this,
+                                                   "Set Filter condition (separated by ';' )",
+                                                   "Part of tag or Well Regexp 'W:' followed by regexp:", QLineEdit::Normal, "", &ok);
+        if (!ok) return;
+
+        QStringList tag_filter = filtertags.isEmpty() ? QStringList() :
+                                                        filtertags.split(';');
+        QStringList remTags;
+        QRegExp wellMatcher, siteMatcher;
+        QList<QRegExp> tagRegexps;
+
+        for (auto f : tag_filter)
+        {
+            if (f.startsWith("W:"))
+            {
+                remTags <<  f;
+                wellMatcher.setPattern(f.replace("W:", ""));
+            }
+            if (f.startsWith("S:"))
+            {
+                remTags << f;
+                siteMatcher.setPattern(f.replace("S:", ""));
+            }
+            if (f.startsWith("T:"))
+            {
+                remTags << f;
+                QRegExp r;
+                r.setPattern(f.replace("T:", ""));
+                tagRegexps << r;
+            }
+        }
+        for (auto s: remTags) tag_filter.removeAll(s);
+
+
+        QList<SequenceFileModel*> lsfm2 ;
+
+
+        for (auto sfm: lsfm)
+        {
+            QStringList tgs = sfm->getTags();
+            int matches = 0;
+            for (auto t : tag_filter)
+                matches += tgs.contains(t);
+
+            auto wPos = sfm->Pos();
+            if (!wellMatcher.isEmpty() && !wellMatcher.exactMatch(wPos))
+                matches ++;
+
+            for (auto r: tagRegexps) for (auto t: tgs) if (r.exactMatch(t))  matches++;
+
+            if (matches > 0)
+                lsfm2 << sfm;
+        }
+
+
+
+        lsfm = lsfm2;
+    }
+
 
     if (lsfm.isEmpty())
     {

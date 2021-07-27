@@ -1818,7 +1818,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     names << "Current Well" << "All loaded Sequences"
           << "Selected Wells"
              /* <<  "Images in View" << "Current Screen" */
-          << "Selected Screens" << "All Loaded Screens";
+          << "Selected Screens" << "Selected Screens and Filter" << "All Loaded Screens";
 
     _typeOfprocessing->addItems(names);
     if (_scrollArea->items() == 0)
