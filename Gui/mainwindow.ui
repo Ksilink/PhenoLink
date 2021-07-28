@@ -347,8 +347,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>262</width>
-          <height>291</height>
+          <width>412</width>
+          <height>299</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -488,6 +488,14 @@
           </widget>
          </item>
          <item>
+          <widget class="ctkCollapsibleGroupBox" name="overlayInfos">
+           <property name="title">
+            <string>Overlay Infos</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_15"/>
+          </widget>
+         </item>
+         <item>
           <widget class="ctkCollapsibleGroupBox" name="processingParameterGroup">
            <property name="title">
             <string>Processing</string>
@@ -521,7 +529,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>256</width>
+                 <width>406</width>
                  <height>68</height>
                 </rect>
                </property>
@@ -553,7 +561,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>262</width>
+          <width>412</width>
           <height>68</height>
          </rect>
         </property>

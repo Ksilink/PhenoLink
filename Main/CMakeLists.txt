@@ -17,6 +17,16 @@ install(TARGETS Checkout COMPONENT applications DESTINATION bin)
 ENDIF(WIN32)
 
 
+add_executable(ckcli  mainCli.cpp mainCli.h ${AppRCFILE} )
+
+target_include_directories(ckcli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_link_libraries(ckcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network Qt::Sql Qt::Concurrent Qt::WinExtras Qt::WebView ${OpenCV_LIBS} )
+
+install(TARGETS ckcli COMPONENT applications DESTINATION bin)
+
+
+
 #add_custom_command(TARGET Checkout  PRE_BUILD
 #    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
 #   )
@@ -36,7 +46,7 @@ add_definitions(-DQHTTP_HAS_CLIENT)
 #install(TARGETS CheckoutProcessServer COMPONENT applications DESTINATION bin)
 
 
-add_executable(CheckoutHttpServer ${GUI_TYPE} mainHttpServer.cpp checkouthttpserver.h ${SrvRCFILE} )
+add_executable(CheckoutHttpServer mainHttpServer.cpp checkouthttpserver.h ${SrvRCFILE} )
 target_include_directories(CheckoutHttpServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (WIN32)

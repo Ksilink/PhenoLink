@@ -52,9 +52,9 @@ ImageForm::ImageForm(QWidget *parent, bool packed) :
     pixItem = new GraphicsPixmapItem();
     //    pixItem->
     if (!ui->graphicsView->scene())
-        ui->graphicsView->setScene(new QGraphicsScene());
+        ui->graphicsView->setScene(new QGraphicsScene(this));
 
-    QGraphicsScene* scene = ui->graphicsView->scene();
+    QGraphicsScene* scene = ui->graphicsView->scene();   
     scene->addItem(pixItem);
     connect(pixItem, SIGNAL(mouseClick(QPointF)), this, SLOT(changeCurrentSelection()));
 
@@ -362,7 +362,7 @@ void ImageForm::connectInteractor()
     }
     this->_interactor->setCurrent(_interactor);
 
-    textItem->setPlainText(imageInfos);
+   // textItem->setPlainText(imageInfos);
 }
 
 QString ImageForm::contentPos()
@@ -870,7 +870,7 @@ void ImageForm::imageClick(QPointF pos)
     QList<QGraphicsItem*> items = ui->graphicsView->scene()->items(pixItem->mapToScene(pos));
 
     for(auto item : items)
-        if (item->toolTip().isEmpty())
+        if (!item->toolTip().isEmpty())
         {
             qDebug() << "Found item at: " << pos << items.size();
             qDebug() << item->toolTip() << item->data(1) << item->data(2);

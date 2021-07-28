@@ -575,7 +575,7 @@ void MainWindow::networkRetrievedImage(QList<SequenceFileModel *> lsfm)
         if (!m) continue;
         if (!m->toDisplay()) continue;
 
-
+// First time drop from server, just need to create the image info
         ScrollZone* zone = qobject_cast<ScrollZone*>(ui->tabWidget->currentWidget());
         if (!zone) zone = _scrollArea;
         if (!m->isAlreadyShowed())

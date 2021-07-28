@@ -49,7 +49,7 @@ void ScrollZone::removeSequences(QList<SequenceFileModel *> &lsfm)
     foreach (SequenceFileModel* sfm, lsfm)
     {
         sfm->setAsShowed(false);
-           
+
         QList<ImageForm*> lif = findChildren<ImageForm*>();
         foreach (ImageForm* imf, lif)
         {
@@ -101,7 +101,7 @@ void ScrollZone::dropEvent(QDropEvent *event)
         groupId++;
     }
 
-    qDebug() << "Loading with key" << key;
+//    qDebug() << "Loading with key" << key;
 
     ImageInfos::key(key);
 
@@ -210,22 +210,29 @@ void ScrollZone::setupImageFormInteractor(ImageForm* f)
     f->resize(256,216);
     _wid->layout()->addWidget(f);
     f->show();
-
-    //_wid->resize(_wid->layout()->minimumSize());
-
-    //  if (_progDiag) _progDiag->setValue(_progDiag->value()+1);
-
 }
 
 void ScrollZone::insertImage(SequenceFileModel* sfm, SequenceInteractor* iactor)
 {
     SequenceViewContainer::getHandler().addSequence(sfm);
 
-    ImageForm* f = new ImageForm(nullptr, !sfm->hasProperty("unpack"));
+    ImageForm* f = new ImageForm(this, !sfm->hasProperty("unpack"));
     _seq_toImg[sfm] = f;
+    f->moveToThread(thread());
 
 
-    SequenceInteractor* intr =  iactor ? iactor : new SequenceInteractor(sfm, ImageInfos::key("0"));
+    SequenceInteractor* intr =  0;
+    if (iactor)
+    {
+        intr = iactor ;
+    }
+        else
+    {
+        intr = new SequenceInteractor(sfm, ImageInfos::key("0"));
+    
+    }
+    
+    intr->moveToThread(thread());
 
     f->setModelView(sfm, intr);
 

@@ -2449,7 +2449,7 @@ void MainWindow::exportToCellProfiler()
     for (auto c : titration) values[QString("Titration_%1").arg(c.trimmed().replace(" ", "_"))]=QString("0");
     values["Metadata_Tags"]="";
 
-    int slice = 1;
+    //int slice = 1;
 
 //    QString t = dir;
     QFile file(dir);//t.replace(".csv", QString("_%1.csv").arg(slice++, 4, 10, QChar('0'))));

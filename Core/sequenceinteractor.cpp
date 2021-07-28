@@ -864,6 +864,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
     }
 }
 
+
 struct Loader
 {
     Loader(float scale, bool changed_scale): _scale(scale), ch_sc(changed_scale)
