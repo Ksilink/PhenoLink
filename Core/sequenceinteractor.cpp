@@ -851,7 +851,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
             int y = p.y();
 
             QPainter pa(&toPix);
-            QPoint offset = QPoint(x*toStitch[0].second.width(), y * toStitch[0].second.height());
+            QPoint offset = QPoint(x*toStitch[i].second.width(), y * toStitch[i].second.height());
             //qDebug() << "Field" << i << toStitch[i].first << "X Y:" << x << y << "Offset:" << offset;
             if (pixOffset.size()  > 0)
                 offset += pixOffset[i];
