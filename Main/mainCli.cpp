@@ -29,6 +29,12 @@
 #include <QLoggingCategory>
 
 
+#include "qhttp/qhttpserver.hpp"
+#include "qhttp/qhttpserverconnection.hpp"
+#include "qhttp/qhttpserverrequest.hpp"
+#include "qhttp/qhttpserverresponse.hpp"
+using namespace qhttp::server;
+
 void help()
 {
     qDebug() << "Checkout Command Line interface";
@@ -36,48 +42,288 @@ void help()
     qDebug() << "\tls/list:  List available plugins";
     qDebug() << "\tls/list {plugin/name} Describe the plugin info";
     qDebug() << "\tds/describe platename: Load the plate for an overview";
-    qDebug() << "\trun plugin/name [key=value] [plate names]: Run the plugin on the plates";
+    qDebug() << "\trun plugin/name [key=value] {list of plate names}: Run the plugin on the plates";
     qDebug() << "\tdump {output.json} plugin/name [key=value] [plate names]: Dumps the description of the run";
-    qDebug() << "\tload {output.json} : Load and run a description of a run";
+    qDebug() << "\tload {output.json} [start=0] [end=-1]: Load and run a description of a run, can be used to skip parts (start/end option)";
 
     qApp->exit();
 }
+
 
 
 
 void helper::listParams(QJsonObject ob)
 {
-    qDebug() << ob["Comment"].toString();
+    std::cout << ob["Comment"].toString().toStdString() << std::endl;
 
     for (auto p: ob["Parameters"].toArray())
     {
         auto c = p.toObject();
-        qDebug() << c["Tag"].toString().replace(" ", "") << "\t" << c["Comment"].toString();
+        QString val = QString("\t%1 :\t%2 ").arg(c["Tag"].toString().replace(" ", ""), c["Comment"].toString());
+        if (c.contains("Value"))
+            val += c["Value"].toString();
+        if (c.contains("Value1"))
+            val += " " + c["Value1"].toString();
+        if (c.contains("Value2"))
+            val += " " + c["Value2"].toString();
+
+        std::cout << val.toStdString() << std::endl;
     }
-    qApp->exit();
+
+    if (proc.isEmpty())
+        qApp->exit();
 }
 
 void helper::startProcess(QJsonObject ob)
 {
 
-   QJsonArray startParams;
+    QJsonArray startParams;
 
     // Need to match the ob & this->params
+    QJsonArray arr = ob["Parameters"].toArray(), resArray;
+    for (auto par: arr)
+    {
+        QJsonObject pobj = par.toObject();
+        QString op = pobj["Tag"].toString();
+        op.replace(" ", "");
+
+        for (auto s: this->params)
+        {
+            QStringList opt = s.split("=");
+
+            if (op == opt.first())
+            {
+                //                qDebug() << s << op;
+                pobj["Value"]=opt.at(1);
+                if (opt.size() > 2)
+                {
+
+                    pobj["Value1"] = opt.at(1);
+                    pobj["Value2"] = opt.at(2);
+                }
+            }
+        }
+
+        resArray.append(pobj);
+    }
+    ob["Parameters"]=resArray;
+    ///    show
+    listParams(ob); // need to check the value ?
+
+    // Need to load & unroll the plates$
+    QList<SequenceFileModel*> lsfm ;
+    for (auto plate : plates)
+    {
+        auto efm = ScreensHandler::getHandler().loadScreen(plate);
+        QList<SequenceFileModel*> t = efm->getAllSequenceFiles();
+        foreach (SequenceFileModel* l, t)
+            lsfm.push_back(l);
+    }
 
 
-    // Need to load & unroll the plates
 
-    NetworkProcessHandler::handler().startProcess(process, startParams);
+    QJsonArray procArray;
+    int StartId = 0;
+    for (auto sfm: lsfm)
+    {
+
+        QList<bool> selectedChanns;
+        for (auto p: sfm->getChannelNames())
+            selectedChanns.push_back(true);
+
+        QString imgType;
+        QStringList metaData;
+
+        bool asVectorImage = isVectorImageAndImageType(ob, imgType, metaData);
+
+
+        QList<QJsonObject>  images =  sfm->toJSON(imgType, asVectorImage, selectedChanns, metaData);
+        foreach (QJsonObject im, images)
+        {
+            ob["shallDisplay"] = false;
+            ob["ProcessStartId"] = StartId++;
+            QJsonArray params = ob["Parameters"].toArray(), bias;
+
+            for (int i = 0; i < params.size(); ++i )
+            { // First set the images up, so that it will match the input data
+                QJsonObject par = params[i].toObject();
+
+                if (par.contains("ImageType"))
+                {
+                    foreach (QString j, im.keys())
+                        par.insert(j, im[j]);
+
+                    if (par["Channels"].isArray() && bias.isEmpty())
+                    {
+                        QJsonArray chs = par["Channels"].toArray();
+                        for (int j = 0; j < chs.size(); ++j)
+                        {
+                            int channel = chs[j].toInt();
+                            QString bias_file = sfm->property(QString("ShadingCorrectionSource_ch%1").arg(channel));
+                            bias.append(bias_file);
+                        }
+                    }
+
+
+                    par["bias"] = bias;
+                    params.replace(i, par);
+                }
+
+                QSettings set;
+                if (par["isDbPath"].toBool())
+                {
+                    QString v = set.value("databaseDir", par["Default"].toString()).toString();
+                    v=QString("%1/%2/Checkout_Results/").arg(v).arg(sfm->getOwner()->property("project"));
+                    par["Value"]=v;
+                    params.replace(i, par);
+                }
+
+
+            }
+            QJsonArray cchans;
+            for (int i = 0; i < params.size(); ++i )
+            {
+                QJsonObject par = params[i].toObject();
+                if (par["Channels"].isArray() && cchans.isEmpty())
+                {
+                    cchans = par["Channels"].toArray();
+                }
+            }
+            ob["Parameters"] = params;
+
+            params = ob["ReturnData"].toArray();
+            for (int i = 0; i < params.size(); ++i )
+            {
+                QJsonObject par = params[i].toObject();
+
+                if (par.contains("isOptional"))
+                { // Do not reclaim images if we are running heavy duty informations!!!
+                    par["optionalState"] = false;
+                    ob["BatchRun"]=true;
+                    params.replace(i, par);
+                }
+            }
+
+            ob["ReturnData"] = params;
+            ob["Pos"] = sfm->Pos();
+
+            QByteArray arr;    arr += QCborValue::fromJsonValue(ob).toByteArray();//QJsonDocument(obj).toBinaryData();
+            arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
+            QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
+
+            ob["CoreProcess_hash"] = QString(hash.toHex());
+            ob["CommitName"] = commitName;
+            if (sfm->getOwner())
+                ob["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
+            ob["WellTags"] = sfm->getTags().join(";");
+
+
+            procArray.append(ob);
+        }
+
+    }
+
+    //if (!dump.isEmpty())
+    {
+        qDebug() << procArray;
+        // Save Json to file
+
+        qApp->exit();
+    }
+
+    qApp->exit();
+    if (false)
+    {
+
+        connect(this, &QHttpServer::newConnection,
+                [this](QHttpConnection* ){
+            Q_UNUSED(this);
+            //        qDebug() << "Connection to GuiServer ! ";
+            //            << c->tcpSocket()->errorString();
+        });
+        quint16 port = 8020;
+
+        bool isListening = listen(QString::number(port),
+                                  [this](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res){
+                //            qDebug() << "Listenning to socket!";
+                req->collectData();
+                req->onEnd([this, req, res](){
+            this->process(req, res);
+        });
+    });
+
+
+        if ( !isListening ) {
+            qDebug() << "can not listen on" <<  port;
+        }
+
+        NetworkProcessHandler::handler().startProcess(proc, startParams);
+    }
 }
 
 
-void helper::setParams(QString proc, QStringList params, QStringList plates)
+void helper::setParams(QString proc, QString commit, QStringList params, QStringList plates)
 {
-    this->process = proc;
+    this->proc = proc;
+    this->commitName = commit;
     this->params = params;
     this->plates = plates;
 }
 
+void helper::setDump(QString dumpfile)
+{
+    this->dump = dumpfile;
+}
+
+void helper::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res)
+{
+    const QByteArray data = req->collectedData();
+    QString urlpath = req->url().path(), query = req->url().query();
+
+    if (urlpath.startsWith("/addData/"))
+    { // Now let's do the fun part :)
+        auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
+
+        QString commit=urlpath.mid((int)strlen("/addData/"));
+
+        //qDebug() << "Adding data" << ob;
+        for (auto item: (ob))
+        {
+            auto oj = item.toObject();
+
+            NetworkProcessHandler::handler().removeHash(oj["hash"].toString());
+
+            bool finished = (0 == NetworkProcessHandler::handler().remainingProcess().size());
+            auto hash = oj["DataHash"].toString();
+            ScreensHandler::getHandler().addDataToDb(hash, commit, oj, false);
+            if (finished)
+            {
+                ScreensHandler::getHandler().commitAll();
+                qApp->exit();
+            }
+        }
+    }
+
+    QJsonObject ob;
+    setHttpResponse(ob, res, !query.contains("json"));
+}
+
+
+void helper::setHttpResponse(QJsonObject ob, qhttp::server::QHttpResponse* res, bool binary  )
+{
+    QByteArray body =  binary ? QCborValue::fromJsonValue(ob).toCbor() :
+                                QJsonDocument(ob).toJson();
+    res->addHeader("Connection", "keep-alive");
+
+    if (binary)
+        res->addHeader("Content-Type", "application/cbor");
+    else
+        res->addHeader("Content-Type", "application/json");
+
+    res->addHeaderValue("Content-Length", body.length());
+    res->setStatusCode(qhttp::ESTATUS_OK);
+    res->end(body);
+}
 
 void dumpProcess(QString proc = QString())
 {
@@ -194,8 +440,9 @@ void showPlate(ExperimentFileModel* efm)
 
 
 
-void startProcess(QString proc, QStringList params, QStringList plates)
+void startProcess(QString proc, QString commitName,  QStringList params, QStringList plates, QString dumpfile)
 {
+
     NetworkProcessHandler::handler().establishNetworkAvailability();
     while(NetworkProcessHandler::handler().getProcesses().isEmpty())
         qApp->processEvents();
@@ -203,11 +450,13 @@ void startProcess(QString proc, QStringList params, QStringList plates)
 
     helper h;
 
+    h.setParams(proc, commitName, params, plates);
+    h.setDump(dumpfile);
+
     qApp->connect(&NetworkProcessHandler::handler(), SIGNAL(parametersReady(QJsonObject)),
                   &h, SLOT(startProcess(QJsonObject)));
 
     qApp->exec();
-
 }
 
 int main(int ac, char** av)
@@ -267,28 +516,47 @@ int main(int ac, char** av)
                 if (!plate.contains("="))
                 {
                     QString file = handler.findPlate(plate, project);
-                    // Found a plate
-                    auto efm = handler.loadScreen(file);
-                    showPlate(efm);
+                    if (!file.isEmpty())
+                    {
+                        // Found a plate
+                        auto efm = handler.loadScreen(file);
+                        showPlate(efm);
+                    }
                 }
             }
             //            qDebug() << file;
         }
 
-        if (item == "run")
+        if (item == "run" || item == "dump")
         {
+
+
+            QString dumpfile;
+
+            PluginManager::loadPlugins();
+
             QProcess server;
             startServer(a, server, var);
             if (ac <= i+1) { help(); exit(0); }
 
-            QString process(av[i+1]);
+            if (item == "dump")
+            {
+                   dumpfile = av[i+1];
+                   i++;
+            }
+
+            QString process(av[i+1]), commit;
 
 
             QStringList pluginParams;
-            int p = i+1;
+            int p = i+2;
             for (; p < ac; ++p){
                 QString par(av[p]);
-                if (par.contains("="))
+                if (par.startsWith("commitName="))
+                {
+                    commit = par.split("=").last();
+                }
+                else if (par.contains("="))
                 {
                     pluginParams << par;
                 }
@@ -300,7 +568,7 @@ int main(int ac, char** av)
             QStringList plates;
             ScreensHandler& handler = ScreensHandler::getHandler();
 
-            for (int l = p+1; l <ac; ++l)
+            for (int l = p; l <ac; ++l)
             {
                 QString v(av[l]);
                 if (!v.contains("="))
@@ -310,9 +578,8 @@ int main(int ac, char** av)
                         plates << v;
                 }
             }
-
             if (!process.isEmpty() && !plates.isEmpty())
-                startProcess(process, pluginParams, plates);
+                startProcess(process, commit, pluginParams, plates, dumpfile);
         }
 
     }

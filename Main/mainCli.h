@@ -3,22 +3,40 @@
 
 #include <QObject>
 #include <QApplication>
-#include <QJsonObject>
+#include <QtCore>
+#include <QtConcurrent>
 
-class helper: public QObject
+#include "qhttp/qhttpserver.hpp"
+#include "qhttp/qhttpserverconnection.hpp"
+#include "qhttp/qhttpserverrequest.hpp"
+#include "qhttp/qhttpserverresponse.hpp"
+
+#include <QJsonObject>
+using namespace qhttp::server;
+
+class helper: public QHttpServer
 {
     Q_OBJECT
+
+private:
+    void process(qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res);
+    void setHttpResponse(QJsonObject ob, qhttp::server::QHttpResponse *res, bool binary = true);
+
 public slots:
    void listParams(QJsonObject ob);
 
    void startProcess(QJsonObject ob);
 
-   void setParams(QString proc, QStringList params, QStringList plates);
-
+   void setParams(QString proc, QString commit, QStringList params, QStringList plates);
+   void setDump(QString dumpfile);
 
 
 protected:
-   QString process;
+
+   QString dump;
+
+   QString proc, commitName;
+
    QStringList params;
    QStringList plates;
 };

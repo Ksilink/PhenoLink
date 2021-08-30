@@ -211,7 +211,7 @@ void ExperimentFileModel::setFieldPosition()
 
         int x = xl.indexOf(p.x());
         int y = yl.indexOf(p.y());
-        
+
         //qDebug() << i + 1 << x << y << p.x() << p.y();
 
         toField[x][y] = i+1;
@@ -232,7 +232,7 @@ QPair<QList<double>, QList<double> > ExperimentFileModel::getFieldSpatialPositio
 
 
 SequenceFileModel &ExperimentFileModel::operator()(int row, int col)
-{    
+{
     SequenceFileModel& res = _sequences[row][col];
     if (!res.getOwner())
         res.setOwner(this);
@@ -906,7 +906,7 @@ StructuredMetaData &SequenceFileModel::getMeta(int timePoint, int fieldIdx, int 
 
 
 int SequenceFileModel::getMetaChannels(int timePoint, int fieldIdx, int Zindex)
-{         
+{
     if (_sdata.contains(fieldIdx))
         if (_sdata[fieldIdx].contains(Zindex))
             if (_sdata[fieldIdx][Zindex].contains(timePoint))
@@ -948,7 +948,7 @@ QMap<QString, StructuredMetaData> &SequenceFileModel::getMetas(int timePoint, in
             }
         }
     }
-    
+
 
     for (auto s : (_siblings) )
     {
@@ -1036,8 +1036,8 @@ QString SequenceFileModel::property(QString tag) const
     QString r = DataProperty::property(tag);
     if (r.isEmpty() && this->getOwner())
         r = this->getOwner()->property(tag);
-    if (r.isEmpty())
-        qDebug() << "Searching Tag" << tag << "failed" << this->Pos();
+//    if (r.isEmpty())
+  //      qDebug() << "Searching Tag" << tag << "failed" << this->Pos();
     return r;
 }
 
@@ -1919,7 +1919,7 @@ QString exactMatchFinder(QStringList paths, QString subplate, QString plate, QSt
 }
 
 QString globMatchFinder(QStringList paths, QString subplate, QString plate, QStringList fileToMatch)
-{ 
+{
     for (auto ddir : (paths) )
     {
         QDir dir(ddir);

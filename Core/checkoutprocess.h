@@ -11,6 +11,30 @@
 #include "checkoutprocessplugininterface.h"
 
 
+inline bool isVectorImageAndImageType(QJsonObject obj,  QString& imgType, QStringList& metaData)
+{
+    bool asVectorImage = false;
+    {
+        QJsonArray params = obj["Parameters"].toArray();
+        for (int i = 0; i < params.size(); ++i )
+        {
+            QJsonObject par = params[i].toObject();
+            if (par.contains("ImageType"))
+            {
+                imgType = par["ImageType"].toString();
+                asVectorImage = par["asVectorImage"].toBool();
+            }
+            if (par.contains("Properties"))
+            {
+                QJsonArray ar = par["Properties"].toArray();
+                for (int i =0; i < ar.size(); i++)
+                    metaData << ar.at(i).toString();
+            }
+        }
+    }
+    return asVectorImage;
+}
+
 class DllPluginManagerExport CheckoutProcess: public QObject
 {
     Q_OBJECT
@@ -29,7 +53,7 @@ public:
   QStringList networkPaths();
 
   QString setDriveMap(QString map);
-  
+
   void setProcessCounter(int* count);
   int getProcessCounter(QString hash);
 
@@ -117,7 +141,7 @@ signals:
 
    QMap<QString, QSharedMemory*> _inmems;
    QMap<QString, CheckoutProcessPluginInterface*> _stored;
-   
+
    QMap<QString, QList<void*> > _peruser_runners;
 
    int* _counter;
