@@ -9,7 +9,7 @@
 #include <unistd.h>
 #else
 #include <sys/utime.h>
-#endif 
+#endif
 
 
 #include <algorithm>
@@ -319,7 +319,7 @@ void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
         mx.unlock();
     }
 #else
-    
+
 
     struct stat buf;
     int exist = stat(pairs.second.toStdString().c_str(), &buf);
@@ -759,14 +759,24 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
     // Let's create the HTML file !
     if (file.open(QFile::WriteOnly))
     {
+
+
         QTextStream out(&file);
+
+        QString chanChange("<select name='channel' onchange='chanChange(this.value);'><option value='composite' >Composite</option>");
+        for (auto chan : mdl->getChannelNames())
+            chanChange += QString("<option value='%1'>%1</option>").arg(chan.replace(" ", "_"));
+        chanChange += "</select>";
+
+
         out << "<html>"
             << "<head>"
             <<"<link rel='stylesheet' href='" << dbP << "/Code/HTML/birdview.css'>"
             <<"<script src='"<< dbP << "/Code/HTML/jquery.js'></script>"
             <<"<script src='"<< dbP << "/Code/HTML/ksilink.js'></script>"
             << "</head>"
-            << "<body><h1>" << mdl->name() << "</h1>"
+            << "<body><h1>" << mdl->name() << " " << chanChange << "</h1>"
+            << "<div id='largeImg' class='Center' hidden=True></div>"
             <<"<table width='100%' >";
 
         out  << "<thead>" << "<tr><th></th>"; // Empty col for row name
@@ -788,8 +798,8 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
                                           + colname + ".jpg";
                     // http://localhost:8020/Load?project=MFM&plate=VB9%20MFM%20WT1%20D004%20hiPS-CM%20J9%20Rap%20Met%20treatment%2040X&wells=C12,C14&unpack&json
                     // http://localhost:8020/Load?project=DCM&plate=DCM-Tum-lines-seeded-for-6k-D9-4X&wells=C09&json
-                    out <<    "<td><div class='birdview_tile'><a href='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'  target='_blank'><img src='file://"
-                    << imgPath << "' width='100%' title='"<< (*mdl)(r,c).getTags().join(',') << "' /></a></div></td>";
+                    out <<    "<td><img src='file://"
+                    << imgPath << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+r) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'" <<"/></td>";
                     if (res.isEmpty())
                         res = imgPath;
                 }
@@ -861,8 +871,8 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
             tmm.tm_mday = dt.date().day();
             tmm.tm_mon = dt.date().month()- 1 ;
 
-            tmm.tm_wday = 0;  
-            tmm.tm_yday = 0;  
+            tmm.tm_wday = 0;
+            tmm.tm_yday = 0;
             tmm.tm_isdst = 0;
 
             ut.actime = mktime(&tmm);

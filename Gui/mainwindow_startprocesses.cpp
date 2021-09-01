@@ -249,6 +249,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
             obj["shallDisplay"] = true;
 
         obj["ProcessStartId"] = StartId;
+        obj["Project"] = sfm->getOwner()->property("project");
 
         // Need to fill the parameters with appropriate values
         QJsonArray params = obj["Parameters"].toArray(), bias;

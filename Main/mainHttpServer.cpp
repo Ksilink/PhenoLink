@@ -382,7 +382,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             if (req->connection()->tcpSocket()->peerAddress() ==
                     req->connection()->tcpSocket()->localAddress())
                 obj["LocalRun"] = true;
-            obj["ReplyTo"] = refIP; // Address to push results to !
+
+            if (!obj.contains("ReplyTo"))
+                obj["ReplyTo"] = refIP; // Address to push results to !
 
             ob.replace(i, obj);
         }
