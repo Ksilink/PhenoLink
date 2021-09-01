@@ -775,7 +775,7 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
             <<"<script src='"<< dbP << "/Code/HTML/jquery.js'></script>"
             <<"<script src='"<< dbP << "/Code/HTML/ksilink.js'></script>"
             << "</head>"
-            << "<body><h1>" << mdl->name() << " " << chanChange << "</h1>"
+            << "<body><h1>" << mdl->name() << " " << chanChange << "<label class='switch'><input type='checkbox' id='togBtn' onchange='toBW();'><div class='slider round' id='bw'></div></label></h1>"
             << "<div id='largeImg' class='Center' hidden=True></div>"
             <<"<table width='100%' >";
 
