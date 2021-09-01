@@ -798,7 +798,7 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
                                           + colname + ".jpg";
                     // http://localhost:8020/Load?project=MFM&plate=VB9%20MFM%20WT1%20D004%20hiPS-CM%20J9%20Rap%20Met%20treatment%2040X&wells=C12,C14&unpack&json
                     // http://localhost:8020/Load?project=DCM&plate=DCM-Tum-lines-seeded-for-6k-D9-4X&wells=C09&json
-                    out <<    "<td><img src='file://"
+                    out <<    "<td><img width='100%' src='file://"
                     << imgPath << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+r) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'" <<"/></td>";
                     if (res.isEmpty())
                         res = imgPath;
