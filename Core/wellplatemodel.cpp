@@ -171,7 +171,7 @@ QPointF getFieldPos(SequenceFileModel* seq, int field, int /*z*/, int /*t*/, int
 void ExperimentFileModel::setFieldPosition()
 {
     // get first Well
-    SequenceFileModel* mdl = 0;
+    SequenceFileModel* mdl = 0, * bmdl = 0;
 
     //    int z = 1, t = 1;
     QSet<double> x,y;
@@ -187,12 +187,19 @@ void ExperimentFileModel::setFieldPosition()
                 int c = *(mdl->getChannelsIds().begin());
                 Q_UNUSED(c);
                 nb_fields = std::max(nb_fields, mdl->getFieldCount());
+                if (!bmdl || nb_fields == mdl->getFieldCount())
+                    bmdl = mdl;
+
                 for (unsigned field = 1; field <= mdl->getFieldCount(); ++field)
                 {
                     QRegExp k(QString("^f%1s.*X$").arg(field));
-                    x.insert(mdl->property(k).toDouble());
+                    QString prop = mdl->property(k);
+                    if (prop.isEmpty()) continue;
+                    x.insert(prop.toDouble());
                     k.setPattern(QString("^f%1s.*Y$").arg(field));
-                    y.insert(mdl->property(k).toDouble());
+                    prop = mdl->property(k);
+                    if (prop.isEmpty()) continue;
+                    y.insert(prop.toDouble());
                 }
             }
 
@@ -200,14 +207,14 @@ void ExperimentFileModel::setFieldPosition()
     QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
     std::sort(xl.begin(), xl.end());// , std::greater<double>());
     std::sort(yl.begin(), yl.end(), std::greater<double>());
-    //    qDebug() << "Unpack well pos sorted" <<  xl << yl;
+    qDebug() << "Unpack well pos sorted" <<  xl << yl;
 
 
     fields_pos = qMakePair(xl,yl);
 
     for (unsigned i = 0; i < nb_fields; ++i)
     {
-        QPointF p = getFieldPos(mdl, i+1, 1, 1, 1);
+        QPointF p = getFieldPos(bmdl, i+1, 1, 1, 1);
 
         int x = xl.indexOf(p.x());
         int y = yl.indexOf(p.y());
@@ -220,13 +227,13 @@ void ExperimentFileModel::setFieldPosition()
 
 QMap<int, QMap<int, int> > ExperimentFileModel::getFieldPosition()
 {
-    //setFieldPosition();
+   // setFieldPosition();
     return toField;
 }
 
 QPair<QList<double>, QList<double> > ExperimentFileModel::getFieldSpatialPositions()
 {
-    //setFieldPosition();
+   // setFieldPosition();
     return fields_pos;
 }
 
@@ -1025,8 +1032,8 @@ QString SequenceFileModel::property(QRegExp& tag) const
     QString r = DataProperty::property(tag);
     if (r.isEmpty() && this->getOwner())
         r = this->getOwner()->property(tag);
-    if (r.isEmpty())
-        qDebug() << "Searching Tag" << tag << "failed" << this->Pos();
+  /*  if (r.isEmpty())
+        qDebug() << "Searching Tag" << tag << "failed" << this->Pos();*/
     return r;
 
 }

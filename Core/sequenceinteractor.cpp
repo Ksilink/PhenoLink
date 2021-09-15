@@ -832,7 +832,8 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
             cols = std::max(cols, li.first().size() * d.second.height());
         }
 
-        QVector<QPoint> proj(li.size()* li.first().size());
+      
+        QVector<QPoint> proj(perf.size());
         for (auto a = li.begin(), ae = li.end(); a != ae; ++a)
             for (auto b = a->begin(), be = a->end(); b != be; ++b)
                 proj[b.value()-1] = QPoint(a.key(), b.key());

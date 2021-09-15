@@ -17,7 +17,9 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
-find_package(Git)
+find_package(Git REQUIRED)
+
+find_package(Arrow REQUIRED)
 
 if(WIN32)
 else()
