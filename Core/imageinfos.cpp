@@ -561,18 +561,50 @@ QColor ImageInfos::getColor()
     return QColor::fromRgb(_ifo._platename_to_colorCode[_plate]._r, _ifo._platename_to_colorCode[_plate]._g, _ifo._platename_to_colorCode[_plate]._b);
 }
 
-void ImageInfos::setDefaultColor(int channel, bool )
+void ImageInfos::setDefaultColor(int channel, bool refresh )
 {
     channel --;
     _modified = true;
-    setColor(255,255,255); // Default to white
 
-    if (channel == 0) setColor(255,0,0);
-    if (channel == 1) setColor(0,255,0);
-    if (channel == 2) setColor(0,0,255);
-    if (channel == 3) setColor(255,0,255);
-    if (channel == 4) setColor(255,255,0);
-    if (channel == 5) setColor(0,255,255);
+    if (channel == 0) { setColor(QColor(255, 0, 0), refresh); return; }
+    if (channel == 1) { setColor(QColor(0, 255, 0), refresh); return; }
+    if (channel == 2) { setColor(QColor(0, 0, 255), refresh); return; }
+    if (channel == 3) { setColor(QColor(255, 0, 255), refresh); return; }
+    if (channel == 4) { setColor(QColor(255, 255, 0), refresh); return; }
+    if (channel == 5) { setColor(QColor(0, 255, 255), refresh); return;  }
+
+
+    if (channel == 6) {
+        setColor(Qt::magenta, refresh); return;
+    }
+    if (channel == 7) { setColor(Qt::darkRed, refresh); return;
+ }
+        if (channel == 8) {
+            setColor(Qt::darkGreen, refresh); return;
+        }
+     if (channel == 9) {
+         setColor(Qt::darkBlue, refresh); return;
+     }
+        if (channel == 10) {
+            setColor(Qt::darkCyan, refresh); return;
+        }
+        if (channel == 11) {
+            setColor(Qt::darkMagenta, refresh); return;
+        }
+        if (channel == 12) {
+            setColor(Qt::darkYellow, refresh); return;
+        }
+        if (channel == 13) {
+            setColor(Qt::gray, refresh); return;
+        }
+        if (channel == 14) {
+            setColor(Qt::lightGray, refresh); return;
+        }
+        if (channel == 15) {
+            setColor(Qt::darkGray, refresh); return;
+        }
+
+    setColor(QColor(255, 255, 255), refresh); // Default to white
 
 }
 

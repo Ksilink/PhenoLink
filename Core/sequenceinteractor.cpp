@@ -14,7 +14,7 @@
 
 QMutex sequence_interactorMutex(QMutex::NonRecursive);
 
-SequenceInteractor::SequenceInteractor():
+SequenceInteractor::SequenceInteractor() :
     _mdl(0),
     _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),
     //    disp_tile(false), tile_id(0),
@@ -22,7 +22,7 @@ SequenceInteractor::SequenceInteractor():
 {
 }
 
-SequenceInteractor::SequenceInteractor(SequenceFileModel *mdl, QString key):
+SequenceInteractor::SequenceInteractor(SequenceFileModel* mdl, QString key) :
     _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),
     _fps(25.), loadkey(key), last_scale(-1.), _updating(false), _changed(true), _overlay_width(1)
 {
@@ -52,7 +52,7 @@ void SequenceInteractor::setField(unsigned t)
         if (ifo)
         {
             QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
-            foreach(ImageInfos* info, list)
+            foreach(ImageInfos * info, list)
             {
                 SequenceInteractor* inter = info->getInteractor();
 
@@ -84,7 +84,7 @@ void SequenceInteractor::setZ(unsigned z)
         if (ifo)
         {
             QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
-            foreach(ImageInfos* info, list)
+            foreach(ImageInfos * info, list)
             {
                 SequenceInteractor* inter = info->getInteractor();
                 if (inter && !inter->isUpdating())
@@ -111,7 +111,7 @@ void SequenceInteractor::setFps(double fps)
     //    foreach (ImageInfos* im, _infos.values())
     //        im->changeFps(fps);
 
-    foreach (CoreImage* im, _ImageList)
+    foreach(CoreImage * im, _ImageList)
         im->changeFps(fps);
 
 }
@@ -137,12 +137,12 @@ void SequenceInteractor::exportOverlay(QString name, QString tofile)
         return;
     int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
 
-    for (int c = 1; c <= cns;++c)
+    for (int c = 1; c <= cns; ++c)
     {
         QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
         if (data.contains(name))
         {
-            auto k= data[name];
+            auto k = data[name];
             QString cols = k.property("ChannelNames");
             cols = cols.replace(';', ',');
             QFile of(tofile);
@@ -157,7 +157,7 @@ void SequenceInteractor::exportOverlay(QString name, QString tofile)
                     for (int c = 0; c < feat.cols; ++c)
                     {
                         if (c != 0) str << ',';
-                        str << feat.at<float>(r,c);
+                        str << feat.at<float>(r, c);
                     }
                     str << "\r\n";
                 }
@@ -196,7 +196,7 @@ void SequenceInteractor::toggleOverlay(QString name, bool disp)
 {
     //qDebug() << "Toggling Tile disp:" << disp;
     if (!disp_overlay.contains(name))
-        disp_overlay[name].second=-1;
+        disp_overlay[name].second = -1;
 
     disp_overlay[name].first = disp;
 
@@ -206,7 +206,7 @@ void SequenceInteractor::toggleOverlay(QString name, bool disp)
 
 bool SequenceInteractor::overlayDisplayed(QString name)
 {
-    if(!disp_overlay.contains(name))
+    if (!disp_overlay.contains(name))
     {
         disp_overlay[name].first = false;
         disp_overlay[name].second = -1;
@@ -302,7 +302,7 @@ QList<QPair<int, QString> > SequenceInteractor::getAllChannel(int field)
 
     for (SequenceFileModel::Channel::const_iterator it = chans.cbegin(), e = chans.cend();
          it != e; ++it)
-        if (!it.value().isEmpty())   l <<  qMakePair(it.key(), it.value());
+        if (!it.value().isEmpty())   l << qMakePair(it.key(), it.value());
 
     return l;
 }
@@ -350,7 +350,7 @@ QString SequenceInteractor::getExperimentName()
     return exp;
 }
 
-void SequenceInteractor::addImage(CoreImage *ci)
+void SequenceInteractor::addImage(CoreImage* ci)
 {
     this->_ImageList << ci;
     //
@@ -360,7 +360,7 @@ void SequenceInteractor::addImage(CoreImage *ci)
     //if (!_infos.contains(nm))
     //    _infos[nm] =
 
-    ImageInfos *ifo = imageInfos(nm, _channel);
+    ImageInfos* ifo = imageInfos(nm, _channel);
 
     ifo->addCoreImage(ci);
 }
@@ -388,14 +388,14 @@ void SequenceInteractor::clearMemory(CoreImage* im)
 void SequenceInteractor::modifiedImage()
 {
     //    qDebug() << "Interactor Modified Image";
-    foreach (CoreImage* ci, _ImageList)
+    foreach(CoreImage * ci, _ImageList)
     {
         ci->modifiedImage();
     }
 
     QString nm = _mdl->getFile(_timepoint, _field, _zpos, _channel);
     ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
-    foreach(CoreImage* ci, ifo->getCoreImages())
+    foreach(CoreImage * ci, ifo->getCoreImages())
     {
         ci->modifiedImage();
     }
@@ -411,7 +411,7 @@ QPointF SequenceInteractor::getFieldPosition(int field)
     return QPoint(_mdl->property(x).toDouble(), _mdl->property(y).toDouble());
 }
 
-ImageInfos *SequenceInteractor::getChannelImageInfos(unsigned channel)
+ImageInfos* SequenceInteractor::getChannelImageInfos(unsigned channel)
 {
     //  if (!_mdl->hasChannel(_timepoint, _field, _zpos, channel))
     //    return getChannelImageInfos(channel+1);
@@ -430,7 +430,7 @@ ImageInfos *SequenceInteractor::getChannelImageInfos(unsigned channel)
 }
 
 
-void SequenceInteractor::setCurrent(SequenceInteractor *i)
+void SequenceInteractor::setCurrent(SequenceInteractor* i)
 {
     if (i != _current)
     {
@@ -450,12 +450,12 @@ bool SequenceInteractor::currentChanged()
     return res;
 }
 
-SequenceFileModel *SequenceInteractor::getSequenceFileModel()
+SequenceFileModel* SequenceInteractor::getSequenceFileModel()
 {
     return _mdl;
 }
 
-SequenceInteractor *SequenceInteractor::current()
+SequenceInteractor* SequenceInteractor::current()
 {
     return _current;
 }
@@ -499,28 +499,23 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
     //        qDebug() << "Building Image info" << file << exp << ii;
     bool exists = false;
     ImageInfos* info = ImageInfos::getInstance(this, file, exp + QString("%1").arg(ii), ii, exists, key);
-    if (!exists)
+
+    if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
     {
-
-        if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
-        {
-            QColor col;
-            QString cname = _mdl->getOwner()->property("ChannelsColor" + QString("%1").arg(ii));
-            col.setNamedColor(cname);
-            info->setColor(col, false);
-        }
-        else
-            info->setDefaultColor(ii);
-
-        // Also setup the channel names if needed
-        if (!_mdl->getChannelNames().isEmpty())
-        {
-            QString name = _mdl->getChannelNames()[ii-1];
-            info->setChannelName(name);
-        }
-        //        qDebug() << "Set with color"<< exp << ii << file << info->getColor().name();
+        QColor col;
+        QString cname = _mdl->getOwner()->property(QString("ChannelsColor%1").arg(ii));
+        col.setNamedColor(cname);
+        info->setColor(col, false);
     }
+    else
+        info->setDefaultColor(ii, false);
 
+// Also setup the channel names if needed
+    if (!_mdl->getChannelNames().isEmpty())
+    {
+        QString name = _mdl->getChannelNames()[ii - 1];
+        info->setChannelName(name);
+    }
     return info;
 }
 
@@ -530,7 +525,7 @@ double mse(cv::Mat i1, cv::Mat i2)
 {
     double ms = 0;
 
-    int rows  = i1.rows, cols = i1.cols;
+    int rows = i1.rows, cols = i1.cols;
     assert(i1.rows == i2.rows && i1.cols == i2.cols);
 
     for (int i = 0; i < rows; ++i)
@@ -538,15 +533,15 @@ double mse(cv::Mat i1, cv::Mat i2)
         unsigned short* l = i1.ptr<unsigned short>(i);
         unsigned short* r = i2.ptr<unsigned short>(i);
 
-        for (int j = 0; j < cols; ++j, ++l,++r)
+        for (int j = 0; j < cols; ++j, ++l, ++r)
         {
             double d = (*l - *r);
-            ms += d*d;
+            ms += d * d;
         }
 
     }
 
-    return ms / (cols*rows);
+    return ms / (cols * rows);
 }
 
 std::tuple< double, QPoint> refineLeft(cv::Mat& left, cv::Mat& right, int overlap, bool first = true)
@@ -561,14 +556,14 @@ std::tuple< double, QPoint> refineLeft(cv::Mat& left, cv::Mat& right, int overla
         {
             if (first)
             {
-                cv::Rect2d le( left.cols-c, 0, c, left.rows-r);
-                cv::Rect2d ri(0,r,  c, left.rows-r);
+                cv::Rect2d le(left.cols - c, 0, c, left.rows - r);
+                cv::Rect2d ri(0, r, c, left.rows - r);
 
                 double s = mse(left(le), right(ri));
                 if (s < mii)
                 {
-                    mii  = s;
-                    res = QPoint(-c,-r);
+                    mii = s;
+                    res = QPoint(-c, -r);
                 }
             }
             else
@@ -610,7 +605,7 @@ std::tuple<double, QPoint> refineLower(cv::Mat& up, cv::Mat& down, int overlap, 
             }
             else
             {
-                cv::Rect2d u = cv::Rect2d(c, up.rows - r,  up.cols - c, r);
+                cv::Rect2d u = cv::Rect2d(c, up.rows - r, up.cols - c, r);
                 cv::Rect2d l = cv::Rect2d(0, 0, down.cols - c, r);
                 double s = mse(up(u), down(l));;
                 if (s < mii)
@@ -634,7 +629,7 @@ void SequenceInteractor::refinePacking()
     //for (unsigned i = 0; i < _mdl->getFieldCount(); ++i)
     cv::Mat ref;
 
-    QList<std::tuple<int, cv::Mat, cv::Mat, bool /*left/up*/,  bool/*1st/2nd step*/> > data_mapping;
+    QList<std::tuple<int, cv::Mat, cv::Mat, bool /*left/up*/, bool/*1st/2nd step*/> > data_mapping;
 
     this->pixOffset.resize(_mdl->getFieldCount());
 
@@ -655,11 +650,11 @@ void SequenceInteractor::refinePacking()
             QString file = _mdl->getFile(_timepoint, sit.value(), _zpos, 1);
             cv::Mat right = imageInfos(file, -1, loadkey)->image();
 
-            std::tuple<int, cv::Mat, cv::Mat, bool /*left/up*/,  bool/*1st/2nd step*/> tuple;
+            std::tuple<int, cv::Mat, cv::Mat, bool /*left/up*/, bool/*1st/2nd step*/> tuple;
 
-            tuple = std::make_tuple(sit.value()-1, ref, right, sit == it.value().begin(), true);
+            tuple = std::make_tuple(sit.value() - 1, ref, right, sit == it.value().begin(), true);
             data_mapping.push_back(tuple);
-            tuple = std::make_tuple(sit.value()-1, ref, right, sit == it.value().begin(), false);
+            tuple = std::make_tuple(sit.value() - 1, ref, right, sit == it.value().begin(), false);
             data_mapping.push_back(tuple);
 
         }
@@ -668,11 +663,11 @@ void SequenceInteractor::refinePacking()
     }
 
     // Now i'd like to use the QtConcurrent Map function !!!
-    struct Mapping{
+    struct Mapping {
 
         typedef std::tuple<int, double, QPoint> result_type;
 
-        std::tuple<int, double, QPoint> operator()(std::tuple<int, cv::Mat, cv::Mat, bool /*left/up*/,  bool/*1st/2nd step*/> data)
+        std::tuple<int, double, QPoint> operator()(std::tuple<int, cv::Mat, cv::Mat, bool /*left/up*/, bool/*1st/2nd step*/> data)
         {
             int xp = std::get<0>(data);
 
@@ -684,9 +679,9 @@ void SequenceInteractor::refinePacking()
 
             std::tuple<double, QPoint> res;
             if (left)
-                res = refineLeft(a,b, 200, first);
+                res = refineLeft(a, b, 200, first);
             else
-                res = refineLower(a,b, 200, first);
+                res = refineLower(a, b, 200, first);
 
             qDebug() << xp << (int)first << (left ? "RefineLeft" : "RefineLower") << std::get<0>(res) << std::get<1>(res);
             return std::make_tuple(xp, std::get<0>(res), std::get<1>(res));
@@ -695,13 +690,13 @@ void SequenceInteractor::refinePacking()
     };
 
     QList< std::tuple<int, double, QPoint> > res
-            = QtConcurrent::blockingMapped(data_mapping, Mapping()); //apply the mapping
+        = QtConcurrent::blockingMapped(data_mapping, Mapping()); //apply the mapping
 
-    //    for (auto d : data_mapping)
-    //    {
-    //        Mapping m;
-    //        res.append(m(d));
-    //    }
+//    for (auto d : data_mapping)
+//    {
+//        Mapping m;
+//        res.append(m(d));
+//    }
 
 
     QMap<int, QPair<double, QPoint> > proj;
@@ -725,11 +720,11 @@ void SequenceInteractor::refinePacking()
     {
         for (int c = 0; c < toField[r].size(); ++c)
         {
-            if (start) { start = false; continue;  }
+            if (start) { start = false; continue; }
             int field = toField[r][c] - 1;
             QPoint of = proj[field].second;
-            if (r == 0) offset = pixOffset[toField[r][c - 1]-1];
-            if (c > 0) offset = pixOffset[toField[r][c]-1];
+            if (r == 0) offset = pixOffset[toField[r][c - 1] - 1];
+            if (c > 0) offset = pixOffset[toField[r][c] - 1];
             this->pixOffset[field] = offset + of;
         }
     }
@@ -748,12 +743,12 @@ void SequenceInteractor::preloadImage()
 }
 
 
-QPoint getMatrixSize(SequenceFileModel* seq, unsigned fieldc,  int z, int t, int c)
+QPoint getMatrixSize(SequenceFileModel* seq, unsigned fieldc, int z, int t, int c)
 {
 
-    QSet<double> x,y;
+    QSet<double> x, y;
 
-    for (unsigned field = 1; field < fieldc; ++ field)
+    for (unsigned field = 1; field < fieldc; ++field)
     {
         QString k = QString("f%1s%2t%3c%4%5").arg(field).arg(z).arg(t).arg(c).arg("X");
         x.insert(seq->property(k).toDouble());
@@ -769,7 +764,7 @@ QPoint getMatrixSize(SequenceFileModel* seq, unsigned fieldc,  int z, int t, int
 
 struct StitchStruct
 {
-    StitchStruct(SequenceInteractor* seq, bool bias_cor, float scale): _sc(scale),  bias_correction(bias_cor), seq(seq)
+    StitchStruct(SequenceInteractor* seq, bool bias_cor, float scale) : _sc(scale), bias_correction(bias_cor), seq(seq)
     {}
 
     typedef QPair<int, QImage> result_type;
@@ -808,8 +803,8 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
 
         QList<int> perf;
         for (unsigned i = 0; i < _mdl->getFieldCount(); ++i) {
-            initImageInfos(i+1);
-            perf.append( i+1);
+            initImageInfos(i + 1);
+            perf.append(i + 1);
         }
 
 
@@ -825,18 +820,18 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
         auto li = _mdl->getOwner()->getFieldPosition();
 
         int rows = 0, cols = 0;
-        for (int i = 0; i < toStitch.size() ; ++i)
+        for (int i = 0; i < toStitch.size(); ++i)
         {
             auto d = toStitch[i];
             rows = std::max(rows, li.size() * d.second.width());
             cols = std::max(cols, li.first().size() * d.second.height());
         }
 
-      
+
         QVector<QPoint> proj(perf.size());
         for (auto a = li.begin(), ae = li.end(); a != ae; ++a)
             for (auto b = a->begin(), be = a->end(); b != be; ++b)
-                proj[b.value()-1] = QPoint(a.key(), b.key());
+                proj[b.value() - 1] = QPoint(a.key(), b.key());
 
 
         QImage toPix(rows, cols, QImage::Format_RGBA8888);
@@ -852,9 +847,9 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
             int y = p.y();
 
             QPainter pa(&toPix);
-            QPoint offset = QPoint(x*toStitch[i].second.width(), y * toStitch[i].second.height());
+            QPoint offset = QPoint(x * toStitch[i].second.width(), y * toStitch[i].second.height());
             //qDebug() << "Field" << i << toStitch[i].first << "X Y:" << x << y << "Offset:" << offset;
-            if (pixOffset.size()  > 0)
+            if (pixOffset.size() > 0)
                 offset += pixOffset[i];
 
             pa.drawImage(offset, toStitch[i].second);
@@ -868,7 +863,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
 
 struct Loader
 {
-    Loader(float scale, bool changed_scale): _scale(scale), ch_sc(changed_scale)
+    Loader(float scale, bool changed_scale) : _scale(scale), ch_sc(changed_scale)
     {}
     float _scale;
     bool ch_sc;
@@ -884,24 +879,24 @@ void paletizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
 {
     QVector<QColor> pa = imifo->getPalette();
     QVector<int> state = imifo->getState();
-    int ncolors = imifo->nbColors() ;
+    int ncolors = imifo->nbColors();
 
     if (state.size() < 16) state.resize(16);
     //            QRgb black = QColor(0,0,0).rgb();
     for (int i = 0; i < rows; ++i)
     {
-        unsigned short *p = image.ptr<unsigned short>(i);
-        QRgb *pix = (QRgb*)toPix.scanLine(i);
+        unsigned short* p = image.ptr<unsigned short>(i);
+        QRgb* pix = (QRgb*)toPix.scanLine(i);
         for (int j = 0; j < cols; ++j, ++p)
         {
             const unsigned short v = *p;
             if (v != 0 && state[v]) // FIXME Need to fuse the image data and not clear it....
-                pix[j] = qRgb(std::min(255, qRed  (pix[j]) + pa[(v+lastPal)%16].red()),
-                        std::min(255, qGreen(pix[j]) + pa[(v+lastPal)%16].green()),
-                        std::min(255, qBlue (pix[j]) + pa[(v+lastPal)%16].blue()));
-            else pix[j] = qRgb(std::min(255, qRed  (pix[j]) + 0),
+                pix[j] = qRgb(std::min(255, qRed(pix[j]) + pa[(v + lastPal) % 16].red()),
+                              std::min(255, qGreen(pix[j]) + pa[(v + lastPal) % 16].green()),
+                              std::min(255, qBlue(pix[j]) + pa[(v + lastPal) % 16].blue()));
+            else pix[j] = qRgb(std::min(255, qRed(pix[j]) + 0),
                                std::min(255, qGreen(pix[j]) + 0),
-                               std::min(255, qBlue (pix[j]) + 0));
+                               std::min(255, qBlue(pix[j]) + 0));
         }
     }
     lastPal += ncolors;
@@ -911,7 +906,7 @@ template <bool Saturate, bool Inverted>
 void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols, bool binarize)
 {
     const float mi = imifo->getDispMin(),
-            ma = imifo->getDispMax();
+        ma = imifo->getDispMax();
     const int R = imifo->Red();
     const int G = imifo->Green();
     const int B = imifo->Blue();
@@ -924,7 +919,7 @@ void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
         QRgb* pix = (QRgb*)toPix.scanLine(i);
         for (int j = 0; j < cols; ++j, ++p)
         {
-            unsigned short v = *p  ;
+            unsigned short v = *p;
             if (!Saturate)
                 v = v > ma ? mi : v;
             if (binarize)
@@ -940,13 +935,13 @@ void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
 }
 
 template <bool Saturate, bool Inverted>
-void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image,  cv::Mat& bias, QImage& toPix, int rows, int cols, bool binarize)
+void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image, cv::Mat& bias, QImage& toPix, int rows, int cols, bool binarize)
 {
     if (bias.empty())
         colorizeImage<Saturate, Inverted>(imifo, image, toPix, rows, cols, binarize);
 
     const float mi = imifo->getDispMin(),
-            ma = imifo->getDispMax();
+        ma = imifo->getDispMax();
     const int R = imifo->Red();
     const int G = imifo->Green();
     const int B = imifo->Blue();
@@ -958,9 +953,9 @@ void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image,  cv::Mat& bias, QIma
         unsigned short* b = bias.ptr<unsigned short>(i);
 
         QRgb* pix = (QRgb*)toPix.scanLine(i);
-        for (int j = 0; j < cols; ++j, ++p,++b)
+        for (int j = 0; j < cols; ++j, ++p, ++b)
         {
-            unsigned short v = *p  / (*b/10000.);
+            unsigned short v = *p / (*b / 10000.);
             if (!Saturate)
                 v = v > ma ? mi : v;
             if (binarize)
@@ -995,19 +990,19 @@ void randomMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, 
         QRgb* pix = (QRgb*)toPix.scanLine(i);
         for (int j = 0; j < cols; ++j, ++p)
         {
-            unsigned short v = *p  ;
+            unsigned short v = *p;
             if (v == 0)
             {
-                pix[j] = qRgb(0,0,0);
+                pix[j] = qRgb(0, 0, 0);
             }
             else
             {
                 std::minstd_rand0 nb(v);
                 int r = nb(), g = nb(), b = nb(); // get a random value
 
-                pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + (float)(r&0xFF)),
-                              std::min(255.f, qGreen(pix[j])+ (float)(g&0xFF)),
-                              std::min(255.f, qBlue(pix[j]) + (float)(b&0xFF)));
+                pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + (float)(r & 0xFF)),
+                              std::min(255.f, qGreen(pix[j]) + (float)(g & 0xFF)),
+                              std::min(255.f, qBlue(pix[j]) + (float)(b & 0xFF)));
             }
         }
     }
@@ -1019,8 +1014,8 @@ void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
 
     // Should get the colormap
     const float mi = imifo->getDispMin(),
-            ma = imifo->getDispMax();
-    using namespace colormap ;
+        ma = imifo->getDispMax();
+    using namespace colormap;
 
     if (imifo->colormap() == "random")
     {
@@ -1042,7 +1037,7 @@ void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
         QRgb* pix = (QRgb*)toPix.scanLine(i);
         for (int j = 0; j < cols; ++j, ++p)
         {
-            unsigned short v = *p  ;
+            unsigned short v = *p;
             if (!Saturate)
                 v = v > ma ? mi : v;
             float f = std::min(1.f, std::max(0.f, (v - mi) / (mami)));
@@ -1050,8 +1045,8 @@ void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
 
             auto colo = pal(f);
             pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + (float)colo[0]),
-                    std::min(255.f, qGreen(pix[j])+ (float)colo[1]),
-                    std::min(255.f, qBlue(pix[j]) + (float)colo[2]));
+                          std::min(255.f, qGreen(pix[j]) + (float)colo[1]),
+                          std::min(255.f, qBlue(pix[j]) + (float)colo[2]));
         }
     }
 }
@@ -1064,9 +1059,9 @@ void SequenceInteractor::initImageInfos(int field)
     {
         QString file = it->second;
         int channel = it->first;
-        int ii = channel < 0  ? getChannelsFromFileName(file) : channel;
+        int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
         bool exists;
-        ImageInfos::getInstance(this, file, getExperimentName() + QString("%1").arg(ii),ii, exists, loadkey);
+        ImageInfos::getInstance(this, file, getExperimentName() + QString("%1").arg(ii), ii, exists, loadkey);
     }
 }
 
@@ -1079,7 +1074,7 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
     QList<ImageInfos*> img;
     QList<cv::Mat> images;//(list.size());
     int ii = 0;
-    for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it,++ii)
+    for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it, ++ii)
     {
         img.append(imageInfos(it->second, it->first, loadkey)); // Auto channel determination
     }
@@ -1118,7 +1113,7 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
     {
         if (images[c].empty()) continue;
 
-        int ncolors = img[c]->nbColors() ;
+        int ncolors = img[c]->nbColors();
         bool saturate = img[c]->isSaturated();
         bool inverted = img[c]->isInverted();
         bool binarize = img[c]->isBinarized();
@@ -1136,38 +1131,39 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
             {
                 if (bias_correction)
                 {
-                    cv::Mat bias = img[c]->bias(c+1);
+                    cv::Mat bias = img[c]->bias(c + 1);
 
-                    if (saturate && inverted )
+                    if (saturate && inverted)
                         colorizeImageUnbias<true, true>(img[c], images[c], bias, toPix, rows, cols, binarize);
-                    if (saturate && !inverted )
+                    if (saturate && !inverted)
                         colorizeImageUnbias<true, false>(img[c], images[c], bias, toPix, rows, cols, binarize);
-                    if (!saturate && inverted )
+                    if (!saturate && inverted)
                         colorizeImageUnbias<false, true>(img[c], images[c], bias, toPix, rows, cols, binarize);
-                    if (!saturate && !inverted )
+                    if (!saturate && !inverted)
                         colorizeImageUnbias<false, false>(img[c], images[c], bias, toPix, rows, cols, binarize);
 
                 }
                 else
                 {
-                    if (saturate && inverted )
+                    if (saturate && inverted)
                         colorizeImage<true, true>(img[c], images[c], toPix, rows, cols, binarize);
-                    if (saturate && !inverted )
+                    if (saturate && !inverted)
                         colorizeImage<true, false>(img[c], images[c], toPix, rows, cols, binarize);
-                    if (!saturate && inverted )
+                    if (!saturate && inverted)
                         colorizeImage<false, true>(img[c], images[c], toPix, rows, cols, binarize);
-                    if (!saturate && !inverted )
+                    if (!saturate && !inverted)
                         colorizeImage<false, false>(img[c], images[c], toPix, rows, cols, binarize);
 
                 }
-            } else {
-                if (saturate && inverted )
+            }
+            else {
+                if (saturate && inverted)
                     colorMapImage<true, true>(img[c], images[c], toPix, rows, cols);
-                if (saturate && !inverted )
+                if (saturate && !inverted)
                     colorMapImage<true, false>(img[c], images[c], toPix, rows, cols);
-                if (!saturate && inverted )
+                if (!saturate && inverted)
                     colorMapImage<false, true>(img[c], images[c], toPix, rows, cols);
-                if (!saturate && !inverted )
+                if (!saturate && !inverted)
                     colorMapImage<false, false>(img[c], images[c], toPix, rows, cols);
 
             }
@@ -1179,7 +1175,7 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
 
 /* endregion */
 
-QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed, bool bias)
+QList<unsigned> SequenceInteractor::getData(QPointF d, int& field, bool packed, bool bias)
 {
     Q_UNUSED(bias);
 
@@ -1203,7 +1199,7 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
     {
         // Find out in what cadran we are in
 
-        cv::Mat m = imageInfos( getFile(), -1, loadkey)->image();
+        cv::Mat m = imageInfos(getFile(), -1, loadkey)->image();
         int cx = floor(d.x() / m.cols);
         int cy = floor(d.y() / m.rows);
 
@@ -1218,7 +1214,7 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field,  bool packed,
             /*  qDebug() << "Field not found for displaying value:"
                 << "intial coordinates: " << origD
                 << "Searching pixel pos: " << d << " Pos correction " << cx << cy;*/
-            field=-1;
+            field = -1;
             res << -1;
         }
         else
@@ -1259,11 +1255,11 @@ QColor randCol(float v)
 {
     std::minstd_rand0 nb(v);
     int r = nb(), g = nb(), b = nb(); // get a random value
-    return qRgb((float)(r&0xFF),(float)(g&0xFF),(float)(b&0xFF));
+    return qRgb((float)(r & 0xFF), (float)(g & 0xFF), (float)(b & 0xFF));
 }
 
 
-void getMinMax(cv::Mat &ob, int f, float& cmin, float& cmax)
+void getMinMax(cv::Mat& ob, int f, float& cmin, float& cmax)
 {
     if (f < 0)
         return;
@@ -1272,7 +1268,7 @@ void getMinMax(cv::Mat &ob, int f, float& cmin, float& cmax)
 
     for (int r = 0; r < ob.rows; ++r)
     {
-        float v = ob.at<float>(r,f);
+        float v = ob.at<float>(r, f);
         if (v < cmin) cmin = v;
         else if (v > cmax) cmax = v;
     }
@@ -1286,7 +1282,7 @@ QList<QString> SequenceInteractor::getMetaList()
     QStringList l;
     int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
 
-    for (int c = 1; c <= cns;++c)
+    for (int c = 1; c <= cns; ++c)
     {
         QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
         // We can add some selectors
@@ -1300,7 +1296,7 @@ int SequenceInteractor::getOverlayMax(QString name)
 {
     int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
     //qDebug() << _timepoint << _field << _zpos << cns;
-    for (int c = 1; c <= cns;++c)
+    for (int c = 1; c <= cns; ++c)
     {
         QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
         if (data.contains(name))
@@ -1333,15 +1329,15 @@ QList<QString> SequenceInteractor::getMetaOptionsList(QString meta)
     int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
     QStringList l;
 
-    auto sub = QStringList() << "_X" << "_Y" << "_Top" << "_Left" << "_Width"<< "_Height";
+    auto sub = QStringList() << "_X" << "_Y" << "_Top" << "_Left" << "_Width" << "_Height";
 
-    for (int c = 1; c <= cns;++c)
+    for (int c = 1; c <= cns; ++c)
     {
         QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
         // We can add some selectors
         if (data.contains(meta))
         {
-            auto k= data[meta];
+            auto k = data[meta];
 
             QString cols = k.property("ChannelNames");
 
@@ -1369,7 +1365,7 @@ QList<QString> SequenceInteractor::getMetaOptionsList(QString meta)
 typedef struct dispType {
     dispType(int t_, int l_,
              int w_, int h_, int a_,
-             int f_,  colormap::map<colormap::rgb> pal_):
+             int f_, colormap::map<colormap::rgb> pal_) :
         r(0),
         t(t_), l(l_),
         w(w_), h(h_), a(a_),
@@ -1378,7 +1374,7 @@ typedef struct dispType {
     {
     }
 
-    int r, t, l , w ,h, a, f;
+    int r, t, l, w, h, a, f;
 
     colormap::map<colormap::rgb> pal;
     QColor color;
@@ -1429,17 +1425,17 @@ void drawItem(cv::Mat& feat, QStringList lcols, QString name, QList<int> feats,
     if (d.r < feat.rows)
     {
         float x = feat.at<float>(d.r, d.t),
-                y = feat.at<float>(d.r, d.l),
-                width= feat.at<float>(d.r, d.w),
-                height= feat.at<float>(d.r, d.h);
-        QString tip= QString("Id: %1\r\n").arg(d.r);
+            y = feat.at<float>(d.r, d.l),
+            width = feat.at<float>(d.r, d.w),
+            height = feat.at<float>(d.r, d.h);
+        QString tip = QString("Id: %1\r\n").arg(d.r);
         for (auto p : feats)
         {
-            float fea = feat.at<float>(d.r,p);
+            float fea = feat.at<float>(d.r, p);
             tip += QString("%1: %2\r\n").arg(lcols[p].trimmed()).arg(fea);
         }
 
-        float fea = d.f >=  0  ? feat.at<float>(d.r, d.f) : 0;
+        float fea = d.f >= 0 ? feat.at<float>(d.r, d.f) : 0;
 
         auto colo = d.pal(fea);
 
@@ -1456,34 +1452,34 @@ void drawItem(cv::Mat& feat, QStringList lcols, QString name, QList<int> feats,
         switch (d.shape) {
         case   dispType::Rectangle:
             adaptItem(new QGraphicsRectItem(group), tip, name,
-                      QRectF(x,y,width,height),
-                      QPointF(x+width/2., y+height/2.),
+                      QRectF(x, y, width, height),
+                      QPointF(x + width / 2., y + height / 2.),
                       d.a >= 0 ? feat.at<float>(d.r, d.a) : 0, p, d.r);
             break;
         case dispType::Ellispse:
             adaptItem(new QGraphicsEllipseItem(group), tip, name,
-                      QRectF(x,y,width,height),
-                      QPointF(x+width/2., y+height/2.),
+                      QRectF(x, y, width, height),
+                      QPointF(x + width / 2., y + height / 2.),
                       d.a >= 0 ? feat.at<float>(d.r, d.a) : 0, p, d.r);
             break;
 
         case dispType::Line:
             adaptItem(new QGraphicsLineItem(group), tip, name,
-                      QRectF(x,y,width,height),
+                      QRectF(x, y, width, height),
                       QPointF(0, 0), 0, p, d.r);
             break;
 
         case dispType::Point:
             adaptItem(new QGraphicsEllipseItem(group), tip, name,
-                      QRectF(x-d.overlay_width/2., y-d.overlay_width/2., d.overlay_width, d.overlay_width),
-                      QPointF(d.overlay_width/2., d.overlay_width/2.), 0, p, d.r);
+                      QRectF(x - d.overlay_width / 2., y - d.overlay_width / 2., d.overlay_width, d.overlay_width),
+                      QPointF(d.overlay_width / 2., d.overlay_width / 2.), 0, p, d.r);
             break;
         }
 
     }
 }
 
-QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
+QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
 {
     // The interactor will filter / scale & analyse the meta data to be generated
     QList<QGraphicsItem*> res;
@@ -1497,20 +1493,20 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
         int tile_id = disp_overlay["Tile"].second;
 
         int rx = set.value("TileSizeX", 256).toInt() / 2,
-                ry = set.value("TileSizeX", 216).toInt() / 2;
+            ry = set.value("TileSizeX", 216).toInt() / 2;
 
 
         auto item = new QGraphicsRectItem(parent);
 
         float x = rx * rint(tile_id % 19);
-        float l = (tile_id-(tile_id % 19));
+        float l = (tile_id - (tile_id % 19));
         float y = ry * rint(l / 19);
 
         float  width = rx * 2,
-                height= ry * 2;
+            height = ry * 2;
 
         item->setBrush(QBrush());
-        item->setRect(QRectF(x,y,width,height));
+        item->setRect(QRectF(x, y, width, height));
         QPen p(Qt::yellow);
         p.setWidthF(_overlay_width);
         item->setPen(p);
@@ -1544,7 +1540,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                 QPen p(Qt::yellow);
                 p.setWidthF(_overlay_width);
                 item->setPen(p);
-                QPointF x1(key.x()-size-50, key.y()-20), x2( key.x()-50, key.y()-20);
+                QPointF x1(key.x() - size - 50, key.y() - 20), x2(key.x() - 50, key.y() - 20);
                 QLineF line(x1, x2);
                 item->setLine(line);
                 // Now write text above
@@ -1552,7 +1548,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                 auto t = new QGraphicsTextItem(parent);
 
                 t->setPlainText(QString("%1 µm").arg(len));
-                t->setPos(key.x()-size/2-50, key.y()-25);
+                t->setPos(key.x() - size / 2 - 50, key.y() - 25);
 
                 res << item << t;
             }
@@ -1565,7 +1561,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
 
     int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
     //    qDebug() << "Overlays :" << _timepoint << _field << _zpos << cns;
-    for (int c = 1; c <= cns;++c)
+    for (int c = 1; c <= cns; ++c)
     {
         QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
         // We can add some selectors
@@ -1582,7 +1578,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                 QStringList lcols = cols.split(";").mid(0, feat.cols);
                 QList<int> feats;
 
-                int t=0,l=0,w=0,h=0, f = -1, a = -1;
+                int t = 0, l = 0, w = 0, h = 0, f = -1, a = -1;
 
 
                 for (int i = 0; i < lcols.size(); ++i)
@@ -1595,13 +1591,13 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                     else if (s.contains("_Width")) w = i;
                     else if (s.contains("_Height")) h = i;
                     else if (s.contains("_Angle")) a = i;
-                    else { feats << i;  }
+                    else { feats << i; }
 
                     if (overlay_coding.contains(it.key()) && s == overlay_coding[it.key()].first)
                         f = i;
                 }
 
-                float cmin= 0, cmax=1;
+                float cmin = 0, cmax = 1;
                 if (f < 0 && feats.size())
                     f = feats.first();
                 getMinMax(feat, f, cmin, cmax);
@@ -1612,7 +1608,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                 {
                     pal = colormap::palettes.at(overlay_coding[it.key()].second.toStdString()).rescale(cmin, cmax);
                 }
-                t_dispType disp(t,l,w,h,a,f, pal);
+                t_dispType disp(t, l, w, h, a, f, pal);
 
                 if (overlay_coding[it.key()].second.startsWith("#"))
                     disp.color = QColor(overlay_coding[it.key()].second);
@@ -1638,10 +1634,10 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
                         for (int i = 0; i < lcols.size(); ++i)
                         {
                             QString s = lcols[i];
-                            if (s.contains("_X"))  {
+                            if (s.contains("_X")) {
                                 disp.t = i;
                                 disp.l = findY(lcols, s);
-                                for (int j = i+1; j < lcols.size(); ++j)
+                                for (int j = i + 1; j < lcols.size(); ++j)
                                     if (lcols[j].contains("_X"))
                                     {
                                         disp.w = j;
@@ -1654,7 +1650,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
 
                     }
                     else
-                        disp.shape= dispType::Point;
+                        disp.shape = dispType::Point;
                 }
 
                 disp.overlay_width = _overlay_width;
@@ -1678,7 +1674,7 @@ QList<QGraphicsItem *> SequenceInteractor::getMeta(QGraphicsItem *parent)
     return res;
 }
 
-void SequenceInteractor::getResolution(float &x, float &y)
+void SequenceInteractor::getResolution(float& x, float& y)
 {
     static float _x = 0, _y = 0;
     if (_x == 0)
