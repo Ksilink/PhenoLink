@@ -183,8 +183,6 @@ int main(int ac, char** av)
     }
 
     PluginManager::loadPlugins(true);
-
-
     Server server;
 
 #ifndef WIN32
@@ -199,6 +197,35 @@ int main(int ac, char** av)
         server.setDriveMap("/mnt/shares");
     }
 #endif
+    if (data.contains("-a"))
+    {
+        int idx = data.indexOf("-a")+1;
+        QString affinity;
+        if (data.size() > idx) affinity = data.at(idx);
+        server.affinity(affinity)        ;
+    }
+
+
+    if (data.contains("-proxy"))
+    {
+        int idx = data.indexOf("-proxy")+1;
+        QString  proxy;
+        if (data.size() > idx) proxy = data.at(idx);
+        QStringList ps = proxy.split(":");
+        if (ps.size() > 2)
+        {
+            qDebug() << "Error parsing proxy string, should be server:port or server (if port assumed to be 13378)"
+    << proxy;
+            exit(-1);
+        }
+        else
+            qDebug() << "Proxy server :" << proxy;
+
+        server.proxyAdvert(ps[0], ps.size() == 2 ? ps[1].toInt() : 13378 );
+
+
+
+    }
 
 
 
@@ -214,7 +241,7 @@ int main(int ac, char** av)
 
 void Server::setDriveMap(QString map)
 {
-   CheckoutProcess::handler().setDriveMap(map);
+    CheckoutProcess::handler().setDriveMap(map);
 }
 
 #endif
@@ -271,7 +298,7 @@ void Server::setHttpResponse(QJsonObject& ob,  qhttp::server::QHttpResponse* res
 {
     QByteArray body =  binary ? QCborValue::fromJsonValue(ob).toCbor() :
                                 QJsonDocument(ob).toJson();
-    res->addHeader("Connection", "keep-alive");
+//    res->addHeader("Connection", "keep-alive");
 
     if (binary)
         res->addHeader("Content-Type", "application/cbor");
@@ -423,7 +450,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         root["args"] = total;
 
         QByteArray body = QJsonDocument(root).toJson();
-        res->addHeader("connection", "keep-alive");
+//        res->addHeader("connection", "keep-alive");
         res->addHeaderValue("content-length", body.length());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body);
@@ -443,9 +470,38 @@ uint Server::serverPort()
     return this->tcpServer()->serverPort();
 }
 
+void Server::affinity(QString projects)
+{
+    affinity_list = projects.split(',');
+}
+
+
+#include "qhttp/qhttpclient.hpp"
+#include "qhttp/qhttpclientrequest.hpp"
+#include "qhttp/qhttpclientresponse.hpp"
+
+
+void Server::proxyAdvert(QString host, int port)
+{
+    // send /Ready/ command to proxy
+    int processor_count = (int)std::thread::hardware_concurrency();
+    qhttp::client::QHttpClient  iclient;
+
+
+    for (int i = 0; i < processor_count; ++i)
+    {
+        QUrl url(QString("http://%1:%2/").arg(host).arg(port));
+        url.setPath(QString("/Ready/%1").arg(i));
+        url.setQuery(QString("affinity=%1").arg(affinity_list.join(",")));
+        iclient.request(qhttp::EHTTP_POST, url);
+
+    }
+
+}
+
 void Server::finished(QString hash, QJsonObject ob)
 {
-//    qDebug() << "Finishing on server side";
+    //    qDebug() << "Finishing on server side";
     NetworkProcessHandler::handler().finishedProcess(hash, ob);
 }
 

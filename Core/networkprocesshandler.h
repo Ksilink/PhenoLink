@@ -34,7 +34,7 @@ struct Req
     QByteArray data;
     bool keepalive;
 
-    Req(QUrl u, QByteArray d, bool ka = true):
+    Req(QUrl u, QByteArray d, bool ka = false):
         url(u), data(d), keepalive(ka)
     {
 
@@ -52,8 +52,8 @@ public:
     CheckoutHttpClient(QString host, quint16 port);
     ~CheckoutHttpClient();
     void send(QString path, QString query=QString());
-    void send(QString path, QString query, QJsonArray ob = QJsonArray(), bool keepalive = true) ;
-    void send(QString path, QString query, QByteArray ob = QByteArray(), bool keepalive = true) ;
+    void send(QString path, QString query, QJsonArray ob = QJsonArray(), bool keepalive = false) ;
+    void send(QString path, QString query, QByteArray ob = QByteArray(), bool keepalive = false) ;
     void onIncomingData(const QByteArray& data) ;
     void finalize();
 

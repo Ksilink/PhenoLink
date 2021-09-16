@@ -25,10 +25,11 @@ add_library(CheckoutCore SHARED
 
             )
 
+include_directories(${ARROW_INCLUDE_DIR})
 
 target_include_directories(CheckoutCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(CheckoutCore  QHttp Qt::Widgets Qt::Core Qt::Network Qt::Sql Qt::Xml Qt::XmlPatterns  Qt::Concurrent ${OpenCV_LIBS} )
+target_link_libraries(CheckoutCore  QHttp Qt::Widgets Qt::Core Qt::Network Qt::Sql Qt::Xml Qt::XmlPatterns  Qt::Concurrent ${OpenCV_LIBS} arrow_shared )
 
 #add_custom_command(TARGET CheckoutCore   PRE_BUILD
 #    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
