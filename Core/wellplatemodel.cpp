@@ -11,6 +11,18 @@
 #include <QFile>
 #include <QtConcurrent>
 #include <QTextStream>
+#include <iostream>
+#include <vector>
+
+#undef signals
+#include <arrow/api.h>
+#include <arrow/filesystem/filesystem.h>
+#include <arrow/ipc/writer.h>
+#include <arrow/util/iterator.h>
+
+
+namespace fs = arrow::fs;
+
 
 
 void stringToPos(QString pos, int& row, int& col);
@@ -577,7 +589,7 @@ void ExperimentFileModel::reloadDatabaseData()
 
         reloadDatabaseData(file, t, false);
     }
-    for (auto file: (dbs.first))
+    for (auto file: (dbs.second))
     {
         QString t = file;
         QStringList spl = t.split("/");
@@ -681,6 +693,30 @@ void getDBs(QString ddir, QString hash, QStringList& raw, QStringList& ag)
     }
 }
 
+
+void getDBFeather(QString ddir, QString hash, QStringList& raw, QStringList& ag)
+{
+    QDir dir(ddir);
+    QFileInfoList dirs = dir.entryInfoList(QStringList() << "*", QDir::Dirs);
+    foreach (QFileInfo d, dirs)
+    {
+        if (QFile::exists(d.filePath() + "/"+hash+".fth"))
+        {
+            QString t =  d.absoluteFilePath().remove(dir.absolutePath()+"/");
+            if (t.isEmpty()) continue;
+            raw += d.filePath() + "/"+hash+".fth";
+        }
+        if (QFile::exists(d.filePath() + "/ag"+hash+".fth"))
+        {
+            QString t =  d.absoluteFilePath().remove(dir.absolutePath()+"/");
+            if (t.isEmpty()) continue;
+            ag += d.filePath() + "/ag"+hash+".fth";
+        }
+
+    }
+}
+
+
 QPair<QStringList, QStringList> ExperimentFileModel::databases()
 {
     QSettings set;
@@ -701,7 +737,13 @@ QPair<QStringList, QStringList> ExperimentFileModel::databases()
                 .arg(property("project"));
         getDBs(writePath, name(), raw, ag);
     }
+    if (false) // Arrow Feather
+    { // shou
 
+        QString writePath = QString("%1/%2/Checkout_Results/").arg(set.value("databaseDir").toString())
+                .arg(property("project"));
+        getDBFeather(writePath, name(), raw, ag);
+    }
     return qMakePair(raw, ag);
 }
 
@@ -1036,8 +1078,8 @@ QString SequenceFileModel::property(QString tag) const
     QString r = DataProperty::property(tag);
     if (r.isEmpty() && this->getOwner())
         r = this->getOwner()->property(tag);
-//    if (r.isEmpty())
-  //      qDebug() << "Searching Tag" << tag << "failed" << this->Pos();
+    //    if (r.isEmpty())
+    //      qDebug() << "Searching Tag" << tag << "failed" << this->Pos();
     return r;
 }
 
@@ -3014,6 +3056,17 @@ double Aggregate(QList<double>& f, QString& ag)
     return -1.;
 }
 
+
+#define ABORT_ON_FAILURE(expr)                     \
+    do {                                             \
+    arrow::Status status_ = (expr);                \
+    if (!status_.ok()) {                           \
+    std::cerr << status_.message() << std::endl; \
+    abort();                                     \
+    }                                              \
+    } while (0);
+
+
 int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 {
     //    qDebug() << "Should save to " << prefix << "state" << modified;
@@ -3034,6 +3087,171 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
         dataname += QString(",%1").arg(key);
     }
 
+
+    bool csv = true, feather = false;
+
+    if (feather)
+    { // Feather writing of the Non Aggregated
+        std::vector<std::shared_ptr<arrow::Field> > fields;
+        fields.push_back(arrow::field("Plate", arrow::utf8()));
+        fields.push_back(arrow::field("Well",arrow::utf8()));
+
+        fields.push_back(arrow::field("fieldId", arrow::int16()));
+        fields.push_back(arrow::field("sliceId",arrow::int16()));
+        fields.push_back(arrow::field("timepoint",arrow::int16()));
+        fields.push_back(arrow::field("channel",arrow::int16()));
+        fields.push_back(arrow::field("tags", arrow::utf8()));
+
+        std::string prj = _owner->getProjectName().toStdString(), dt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss").toStdString();
+        std::shared_ptr<arrow::KeyValueMetadata>  meta = arrow::KeyValueMetadata::Make({"Project", "GenerationDate"}, {prj, dt});
+        int nbfl = datas.size();
+
+        foreach (QString key, datas)
+        {
+            fields.push_back(arrow::field(key.toStdString(), arrow::float32()));
+        }
+
+        std::vector<std::shared_ptr<arrow::Array> > data(datas.size() + 7);
+        std::vector<std::string> st1, st2, st3;
+        std::vector<std::vector<uint16_t> > v16(4);
+        std::vector<std::vector<float> > fl(nbfl);
+
+#define StringBuild(data, holder, dest ) { arrow::StringBuilder bldr;        \
+    for (QList<DataHolder>::iterator it = _dataset.begin(), e = _dataset.end(); it != e; ++it) \
+        { DataHolder& h = *it; h=h; data.push_back(holder);    \
+    ABORT_ON_FAILURE(bldr.Append(data.back()));   } \
+    ABORT_ON_FAILURE(bldr.Finish(&dest));  bldr.Reset(); }
+
+#define Int16Build(data, holder, dest){ arrow::NumericBuilder<arrow::Int16Type> bldr;        \
+    for (QList<DataHolder>::iterator it = _dataset.begin(), e = _dataset.end(); it != e; ++it) \
+        { DataHolder& h = *it; h=h; data.push_back(holder);    \
+    ABORT_ON_FAILURE(bldr.Append(data.back()));   } \
+    ABORT_ON_FAILURE(bldr.Finish(&dest));  bldr.Reset(); }
+
+#define FloatBuild(_data, key, dest){ arrow::NumericBuilder<arrow::FloatType> bldr; \
+    for (QList<DataHolder>::iterator it = _dataset.begin(), e = _dataset.end(); it !=e ; ++it) { \
+    DataHolder& h = *it; if (h.data[key].size()) { _data.push_back(h.data[key].first()); \
+    ABORT_ON_FAILURE(bldr.Append(_data.back())); factor[posToInt(h.pos)][key] << _data.back();  }  else { \
+    ABORT_ON_FAILURE(bldr.AppendNull());  } } ABORT_ON_FAILURE(bldr.Finish(&dest));  bldr.Reset(); }
+
+        StringBuild(st1, _owner->name().toStdString(), data[0]);
+        StringBuild(st2, posToString(h.pos).toStdString(), data[1]);
+        Int16Build(v16[0], h.field, data[2]);
+        Int16Build(v16[1], h.stackZ, data[3]);
+        Int16Build(v16[2], h.time, data[4]);
+        Int16Build(v16[3], h.chan, data[5]);
+        StringBuild(st3, (_owner->getTags(h.pos).join(";")).toStdString(), data[6]);
+
+        int off = 7;
+        int p = 0;
+        foreach (QString key, datas)
+        {
+            FloatBuild(fl[p], key, data[p+off]);
+            p++;
+        }
+
+
+        auto schema =
+                arrow::schema(fields,meta);
+        auto table =arrow::Table::Make(schema, data);
+        QDir dir(set.value("databaseDir").toString());
+        QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
+                ;
+        QString fname =  writePath + _owner->name() +".fth";
+
+        std::string uri = fname.toStdString();
+        std::string root_path;
+
+        auto fs = fs::FileSystemFromUriOrPath(uri, &root_path).ValueOrDie();
+
+        auto output = fs->OpenOutputStream(uri).ValueOrDie();
+        arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
+//        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+
+        auto writer = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options).ValueOrDie();
+
+        writer->WriteTable(*table.get());
+        writer->Close();
+
+    }
+
+    if (feather)
+    {
+#undef StringBuild
+#define StringBuild(data, access, dest){ arrow::StringBuilder bldr;        \
+    for (QMap<unsigned, QMap<QString, QList<double> >    >::iterator it = factor.begin(), e = factor.end(); it != e; ++it) \
+        {   data.push_back(access.toStdString());    \
+    ABORT_ON_FAILURE(bldr.Append(data.back()));   } \
+    ABORT_ON_FAILURE(bldr.Finish(&dest));  bldr.Reset(); }
+
+
+#define FloatBuildAgg(_data, key, dest) { arrow::NumericBuilder<arrow::FloatType> bldr; \
+    for (QMap<unsigned, QMap<QString, QList<double> >    >::iterator it = factor.begin(), e = factor.end(); it != e; ++it) \
+        { \
+    _data.push_back(Aggregate(it.value()[key], getAggregationMethod(key))); \
+    ABORT_ON_FAILURE(bldr.Append(_data.back())); \
+    }   ABORT_ON_FAILURE(bldr.Finish(&dest)); bldr.Reset(); }
+
+        // Feather Writing of the aggregated:
+        std::vector<std::shared_ptr<arrow::Field> > fields;
+        fields.push_back(arrow::field("Plate", arrow::utf8()));
+        fields.push_back(arrow::field("Well",arrow::utf8()));
+        fields.push_back(arrow::field("tags", arrow::utf8()));
+
+        std::string prj = _owner->getProjectName().toStdString(), dt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss").toStdString();
+        std::shared_ptr<arrow::KeyValueMetadata>  meta = arrow::KeyValueMetadata::Make({"Project", "GenerationDate"}, {prj, dt});
+        int nbfl = datas.size();
+
+        foreach (QString key, datas)
+        {
+            fields.push_back(arrow::field(key.toStdString(), arrow::float32()));
+        }
+
+        std::vector<std::shared_ptr<arrow::Array> > data(datas.size() + 3);
+        std::vector<std::string> st1, st2, st3;
+        std::vector<std::vector<float> > fl(nbfl);
+
+
+        StringBuild(st1, _owner->name()                     , data[0]);
+        StringBuild(st2, posToString(intToPos(it.key()))    , data[1]);
+        StringBuild(st3, (_owner->getTags(intToPos(it.key())).join(";")) , data[2]);
+
+        int p = 0, off = 3;
+        foreach (QString key, datas)
+        {
+            FloatBuildAgg(fl[p], key, data[p+off]);
+            p++;
+        }
+
+
+        auto schema =
+                arrow::schema(fields,meta);
+        auto table =arrow::Table::Make(schema, data);
+        QDir dir(set.value("databaseDir").toString());
+        QString writePath = QString("%1/%2/Checkout_Results/%3/ag").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
+                ;
+        QString fname =  writePath + _owner->name() +".fth";
+
+        std::string uri = fname.toStdString();
+        std::string root_path;
+
+        auto fs = fs::FileSystemFromUriOrPath(uri, &root_path).ValueOrDie();
+
+        auto output = fs->OpenOutputStream(uri).ValueOrDie();
+        arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
+//        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie();
+
+        auto writer = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options).ValueOrDie();
+
+        writer->WriteTable(*table.get());
+        writer->Close();
+
+
+
+    }
+
+
+    if (csv)
     {
         QDir dir(set.value("databaseDir").toString());
         // 20201210: Large behaviour change
@@ -3051,7 +3269,8 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
         QTextStream resFile(&file);
 
-        resFile << _owner->getProjectName() <<"#" << QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss") << ",Plate,Well,fieldId,sliceId,timepoint,channel,tags" << dataname << Qt::endl;
+        resFile << _owner->getProjectName() <<"#" << QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss")
+                << ",Plate,Well,fieldId,sliceId,timepoint,channel,tags" << dataname << Qt::endl;
 
         for (QList<DataHolder>::iterator it = _dataset.begin(), e = _dataset.end(); it !=e ; ++it)
         {
@@ -3066,8 +3285,8 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
             {
                 double v = h.data[key].size() ? h.data[key].first() : std::numeric_limits<double>::quiet_NaN();
                 resFile << "," << v ;
-
-                factor[posToInt(h.pos)][key] << v;
+                if (!feather)
+                    factor[posToInt(h.pos)][key] << v;
             }
             resFile << Qt::endl;
             linecounter++;
@@ -3076,7 +3295,7 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
         file.close();
     }
 
-
+    if (csv)
     {
         QDir dir(set.value("databaseDir").toString());
 

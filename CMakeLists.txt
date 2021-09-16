@@ -52,30 +52,6 @@ execute_process(
   OUTPUT_VARIABLE   plugin_hash_short)
 string(STRIP "${plugin_hash_short}" plugin_hash_short)
 
-#execute_process(
-#   COMMAND           "${GIT_EXECUTABLE}"
-#                     diff
-#                     --no-ext-diff
-#                     --quiet
-#                     --exit-code
-#   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-#   RESULT_VARIABLE   git_return)
-#if (git_return)
-#   set(git_dirty "-dirtyApp")
-#endif ()
-#execute_process(
-#   COMMAND           "${GIT_EXECUTABLE}"
-#                     diff
-#                     --no-ext-diff
-#                     --quiet
-#                     --exit-code
-#   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/../CheckoutPlugins"
-#   RESULT_VARIABLE   git_return)
-#if (git_return)
-#       set(git_dirty "${git_dirty}-dirtyPlugins")
-#endif ()
-
-
 message(STATUS "With App git hash ${app_hash_short}-${plugin_hash_short}${git_dirty}")
 set(Checkout_VERSION_RELEASE "${Checkout_VERSION_RELEASE}-${app_hash_short}-${plugin_hash_short}${git_dirty}")
 
@@ -95,6 +71,9 @@ set(PLUGIN_NWD_OLY OFF)
 
 set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../CheckoutPlugins")
 
+find_package(Arrow REQUIRED)
+include_directories(${ARROW_INCLUDE_DIR})
+set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
