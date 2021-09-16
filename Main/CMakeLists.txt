@@ -21,7 +21,7 @@ add_executable(ckcli  mainCli.cpp mainCli.h ${AppRCFILE} )
 
 target_include_directories(ckcli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(ckcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network Qt::Sql Qt::Concurrent Qt::WinExtras Qt::WebView ${OpenCV_LIBS} )
+target_link_libraries(ckcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network Qt::Sql Qt::Concurrent ${OpenCV_LIBS} )
 
 install(TARGETS ckcli COMPONENT applications DESTINATION bin)
 
@@ -57,12 +57,16 @@ endif(WIN32)
 
 install(TARGETS CheckoutHttpServer COMPONENT applications DESTINATION bin)
 
+add_executable(CheckoutQueueServer mainQueueServer.cpp checkouqueuserver.h ${SrvRCFILE} )
+target_include_directories(CheckoutQueueServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-#add_executable(CheckoutHttpServerT mainHttpServerTests.cpp)
-#target_include_directories(CheckoutHttpServerT PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-#target_link_libraries( CheckoutHttpServerT ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Sql Qt::WinExtras ${OpenCV_LIBS})
-#install(TARGETS CheckoutHttpServerT COMPONENT applications DESTINATION bin)
+if (WIN32)
+    target_link_libraries( CheckoutQueueServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Sql Qt::WinExtras ${OpenCV_LIBS})
+else()
+    target_link_libraries( CheckoutQueueServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Sql ${OpenCV_LIBS})
+endif(WIN32)
+
+install(TARGETS CheckoutHttpServer COMPONENT applications DESTINATION bin)
 
 
-# Let's add a "Data storage server" prototype
 

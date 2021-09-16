@@ -78,8 +78,6 @@ public:
     void setHttpResponse(QJsonObject& ob, QHttpResponse* res, bool binary = true);
     void process(QHttpRequest* req, QHttpResponse* res);
     uint serverPort();
-    void affinity(QString projects);
-    void proxyAdvert(QString host, int port);
 
 public slots:
     void finished(QString hash, QJsonObject ob);
@@ -98,7 +96,18 @@ public:
 
 protected:
    void HTMLstatus(qhttp::server::QHttpResponse *res);
-   QStringList affinity_list;
+   void WorkerMonitor();
+
+   QQueue<QJsonObject> &getHighestPriorityJob(QString server);
+
+    // We need to maintain a worker list
+    QQueue<QPair<QString, int> > workers;
+    // We need a priority queue of processes
+    QMap<QString, QMap< int, QQueue<QJsonObject> > > jobs;
+
+    // Project Affinity map
+    QMap<QString, QString> project_affinity; // projection of project name to server name
+
 };
 
 
