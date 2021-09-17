@@ -739,8 +739,11 @@ void MainWindow::on_wellSelectionChanged()
         if (i != cur)
         {
             ScreensGraphicsView* view = (ScreensGraphicsView*)ui->wellPlateViewTab->widget(i);
-            view->getExperimentModel()->clearState(ExperimentFileModel::IsSelected);
-            view->update();
+            if (assoc_WellPlateWidget.contains(view))
+            {
+                view->getExperimentModel()->clearState(ExperimentFileModel::IsSelected);
+                view->update();
+            }
         }
     //    qDebug() << "Well Selection Changed";
 

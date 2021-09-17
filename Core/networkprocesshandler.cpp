@@ -21,6 +21,7 @@ using namespace qhttp::client;
 
 CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(false), icpus(0)
 {
+    iclient.setTimeOut(500);
     QObject::connect(&iclient, &QHttpClient::disconnected, [this]() {
         finalize();
     });
@@ -32,7 +33,7 @@ CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(fa
 
 CheckoutHttpClient::~CheckoutHttpClient()
 {
-    qDebug() << "CheckoutHttpClient : I've been killed ";
+    qDebug() << "CheckoutHttpClient : I've been killed";
 }
 
 void CheckoutHttpClient::send(QString path, QString query)

@@ -721,10 +721,11 @@ void MainWindow::updateCurrentSelection()
     bvl->setContentsMargins(0,0,0,0);
     QSize pix;
     //  qDebug() << "Creating Controls" << channels;
-    for (unsigned i = 0; i < channels; ++i)
+    int i = 0;
+    for (auto trueChan : _channelsIds)
+//    for (unsigned i = 0; i < channels; ++i)
     {
-
-        ImageInfos* fo = inter->getChannelImageInfos(i + 1);
+        ImageInfos* fo = inter->getChannelImageInfos(trueChan);
 
         //          qDebug() << "Adding " << i << QString("Channel%1").arg(i);
         pix = fo->imSize();
@@ -770,8 +771,8 @@ void MainWindow::updateCurrentSelection()
 
 
 
-        //        bvl->addWidget(wid);
         _imageControls[inter->getExperimentName()].append(wwid);
+        ++i;
     }
 
     // Add FrameRate control if it makes sense

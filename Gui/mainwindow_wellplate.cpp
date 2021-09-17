@@ -428,7 +428,7 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
     foreach (ExperimentFileModel* mdl, data)
     {
 
-        unsigned fieldc = 0; for (auto sf : mdl->getAllSequenceFiles()) fieldc = std::max(fieldc, sf->getFieldCount()); 
+        unsigned fieldc = 0; for (auto sf : mdl->getAllSequenceFiles()) fieldc = std::max(fieldc, sf->getFieldCount());
 
         multifield |= (fieldc > 1);
 
@@ -707,7 +707,9 @@ void MainWindow::wellplateClose(int tabId)
 
     foreach (SequenceFileModel* sfm, lsfm)
         if (sfm->getOwner() == tmdl)
-            erase << sfm;    _scrollArea->removeSequences(erase);
+            erase << sfm;
+
+    _scrollArea->removeSequences(erase);
     delete tmdl;
 }
 
