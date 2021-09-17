@@ -353,8 +353,6 @@ void ImageInfos::propagate()
 
     }
     _parent->modifiedImage();
-
-
 }
 
 QList<CoreImage*> ImageInfos::getCoreImages()
