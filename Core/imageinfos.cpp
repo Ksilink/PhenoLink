@@ -107,7 +107,7 @@ ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QStr
     else
         exists = true;
 
-    
+
     return ifo;
 }
 
@@ -374,9 +374,11 @@ double ImageInfos::getFps() const
 void ImageInfos::setColor(QColor c, bool refresh)
 {
     _modified = true;
-    c.setHsv(c.hsvHue(), c.hsvSaturation(), 255);
+    //qDebug() << "Setting color" << this << c.toRgb();
 
-    //    qDebug() << "Setting color" << this << c;
+//    c.setHsv(c.hsvHue(), c.hsvSaturation(), 255);
+
+  //      qDebug() << "Setting color" << this << c.toRgb();
 
     _ifo._platename_to_colorCode[_plate]._r = c.red();
     _ifo._platename_to_colorCode[_plate]._g = c.green();

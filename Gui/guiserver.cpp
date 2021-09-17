@@ -41,8 +41,9 @@ GuiServer::GuiServer(MainWindow* par): win(par)
     });
 });
 
-
     if ( !isListening ) {
+        // should tell the user !!!
+
         qDebug() << "can not listen on" <<  port;
     }
     //    else
