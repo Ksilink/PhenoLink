@@ -170,7 +170,7 @@ public:
 
     virtual QString property(QString tag) const;
     virtual QString property(QRegExp& tag) const;
-   
+
     void setInvalid();
     bool isValid();
     void checkValidity();
@@ -396,6 +396,8 @@ public:
 
     void reloadDatabaseData();
     void reloadDatabaseData(QString file, QString t, bool aggregat);
+    void reloadDatabaseDataCSV(QString file, QString t, bool aggregat);
+    void reloadDatabaseDataFeather(QString file, QString t, bool aggregat);
 
     QPair<QStringList, QStringList> databases();
 

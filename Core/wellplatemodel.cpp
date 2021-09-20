@@ -239,13 +239,13 @@ void ExperimentFileModel::setFieldPosition()
 
 QMap<int, QMap<int, int> > ExperimentFileModel::getFieldPosition()
 {
-   // setFieldPosition();
+    // setFieldPosition();
     return toField;
 }
 
 QPair<QList<double>, QList<double> > ExperimentFileModel::getFieldSpatialPositions()
 {
-   // setFieldPosition();
+    // setFieldPosition();
     return fields_pos;
 }
 
@@ -596,17 +596,28 @@ void ExperimentFileModel::reloadDatabaseData()
 
         reloadDatabaseData(file, t, false);
     }
-    for (auto file: (dbs.second))
-    {
-        QString t = file;
-        QStringList spl = t.split("/");
-        t=spl[spl.size() -2];
-        reloadDatabaseData(file, t, true);
-    }
+    // No loading of the aggregated, they are useless for display purposes
+    //    for (auto file: (dbs.second))
+    //    {
+    //        QString t = file;
+    //        QStringList spl = t.split("/");
+    //        t=spl[spl.size() -2];
+    //        reloadDatabaseData(file, t, true);
+    //    }
 }
 
 
+
+
 void ExperimentFileModel::reloadDatabaseData(QString file, QString t, bool aggregat)
+{
+    if (file.endsWith(".csv"))
+        reloadDatabaseDataCSV(file, t, aggregat);
+    else
+        reloadDatabaseDataFeather(file, t, aggregat);
+
+}
+void ExperimentFileModel::reloadDatabaseDataCSV(QString file, QString t, bool aggregat)
 {
     ExperimentDataModel* data = databaseDataModel(t);
 
@@ -653,6 +664,93 @@ void ExperimentFileModel::reloadDatabaseData(QString file, QString t, bool aggre
         }
 
     }
+}
+
+#include <arrow/filesystem/filesystem.h>
+#include <arrow/ipc/writer.h>
+#include <arrow/util/iterator.h>
+#include <arrow/ipc/reader.h>
+#include <arrow/ipc/api.h>
+
+#define ABORT_ON_FAILURE(expr)                     \
+    do {                                             \
+    arrow::Status status_ = (expr);                \
+    if (!status_.ok()) {                           \
+    std::cerr << status_.message() << std::endl; \
+    abort();                                     \
+    }                                              \
+    } while (0);
+
+
+void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, bool  )
+{
+    ExperimentDataModel* data = databaseDataModel(t);
+
+
+    std::string uri = file.toStdString(), root_path;
+    auto fs = fs::FileSystemFromUriOrPath(uri, &root_path).ValueOrDie();
+
+    auto input = fs->OpenInputFile(uri).ValueOrDie();
+
+    auto reader = arrow::ipc::RecordBatchFileReader::Open(input).ValueOrDie();
+
+    auto schema = reader->schema();
+
+    if (schema->HasMetadata())
+    {
+        auto meta = schema->metadata();
+        qDebug() << "Metadatas";
+        for (auto key: meta->keys())
+        {
+            qDebug() << QString::fromStdString(key) << QString::fromStdString(meta->Get(key).ValueOrDie());
+
+        }
+    }
+
+    qDebug() << "Nb Rows: " << reader->CountRows().ValueOrDie();
+
+    qDebug() << "Fields content";
+
+    std::list<std::string> fields;
+    for (auto f : schema->fields())
+    {
+        int count = 0;
+        for (auto r: {"Plate", "tags", "fieldId", "sliceId", "timepoint", "channel"}) if (f->name() == r) count++;
+        if (count) continue;
+
+        fields.push_back(f->name());
+    }
+
+
+    for (int record = 0; record < reader->num_record_batches(); ++record)
+    {
+        auto rb = reader->ReadRecordBatch(record).ValueOrDie();
+        auto well = std::static_pointer_cast<arrow::StringArray>(rb->GetColumnByName("Well"));
+        auto  fieldid = std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("fieldId")),
+                sliceId =  std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("sliceId")),
+                tp =  std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("timepoint")),
+                chan =  std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("channel"));
+
+        for (auto field : fields)
+        {
+            auto array = std::static_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(field));
+
+            for (int s = 0; s < array->length(); ++s)
+            {
+                QPoint pos = ExperimentDataTableModel::stringToPos(QString::fromStdString(well->GetString(s)));
+
+                if (array->IsValid(s))
+                    data->addData(QString::fromStdString(field), fieldid->Value(s), sliceId->Value(s), tp->Value(s), chan->Value(s), pos, array->Value(s));
+            }
+        }
+
+    }
+
+
+
+
+
+
 }
 
 
@@ -704,7 +802,7 @@ void getDBs(QString ddir, QString hash, QStringList& raw, QStringList& ag)
 void getDBFeather(QString ddir, QString hash, QStringList& raw, QStringList& ag)
 {
     QDir dir(ddir);
-    QFileInfoList dirs = dir.entryInfoList(QStringList() << "*", QDir::Dirs);
+    QFileInfoList dirs = dir.entryInfoList(QStringList() << "*", QDir::Dirs | QDir::NoDotAndDotDot);
     foreach (QFileInfo d, dirs)
     {
         if (QFile::exists(d.filePath() + "/"+hash+".fth"))
@@ -744,7 +842,7 @@ QPair<QStringList, QStringList> ExperimentFileModel::databases()
                 .arg(property("project"));
         getDBs(writePath, name(), raw, ag);
     }
-    if (false) // Arrow Feather
+    if (true) // Arrow Feather
     { // shou
 
         QString writePath = QString("%1/%2/Checkout_Results/").arg(set.value("databaseDir").toString())
@@ -1074,7 +1172,7 @@ QString SequenceFileModel::property(QRegExp& tag) const
     QString r = DataProperty::property(tag);
     if (r.isEmpty() && this->getOwner())
         r = this->getOwner()->property(tag);
-  /*  if (r.isEmpty())
+    /*  if (r.isEmpty())
         qDebug() << "Searching Tag" << tag << "failed" << this->Pos();*/
     return r;
 
@@ -2028,10 +2126,10 @@ QString ScreensHandler::findPlate(QString plate, QString project)
     QDir dir;
 
     QStringList searchpaths = sets.value("SearchPlate", QStringList() << "U:/BTSData/MeasurementData/"
-                                << "Z:/BTSData/MeasurementData/"
-                                << "W:/BTSData/MeasurementData/"
-                                << "K:/BTSData/MeasurementData/"
-                                << "C:/Data/").toStringList();
+                                         << "Z:/BTSData/MeasurementData/"
+                                         << "W:/BTSData/MeasurementData/"
+                                         << "K:/BTSData/MeasurementData/"
+                                         << "C:/Data/").toStringList();
 
     if (!project.isEmpty())
     {
@@ -3095,7 +3193,7 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
     }
 
 
-    bool csv = true, feather = false;
+    bool csv = false, feather = true;
 
     if (feather)
     { // Feather writing of the Non Aggregated
@@ -3173,7 +3271,7 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
         auto output = fs->OpenOutputStream(uri).ValueOrDie();
         arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-//        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+        //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
         auto writer = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options).ValueOrDie();
 
@@ -3246,7 +3344,7 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
 
         auto output = fs->OpenOutputStream(uri).ValueOrDie();
         arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-//        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie();
+        //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie();
 
         auto writer = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options).ValueOrDie();
 
