@@ -136,7 +136,7 @@ protected:
   QStringList channel_names;
 
   //QList<ImageForm*> linked_images;
-  //QMap<QString, ImageInfos*> _infos;
+  QMap<QString, ImageInfos*> _infos;
   QVector<QPoint> pixOffset;
 
   QList<CoreImage*> _ImageList;
