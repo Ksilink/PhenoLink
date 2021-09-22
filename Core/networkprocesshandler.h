@@ -58,7 +58,8 @@ public:
     void finalize();
 
     void sendQueue();
-
+protected:
+    void timerEvent(QTimerEvent *event) override;
 public:
     QQueue<Req> reqs;
     QUrl         iurl;

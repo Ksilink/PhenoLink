@@ -298,7 +298,7 @@ void Server::setHttpResponse(QJsonObject& ob,  qhttp::server::QHttpResponse* res
 {
     QByteArray body =  binary ? QCborValue::fromJsonValue(ob).toCbor() :
                                 QJsonDocument(ob).toJson();
-//    res->addHeader("Connection", "keep-alive");
+    res->addHeader("Connection", "close"); //"keep-alive");
 
     if (binary)
         res->addHeader("Content-Type", "application/cbor");

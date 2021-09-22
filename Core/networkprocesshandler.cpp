@@ -29,6 +29,9 @@ CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(fa
     iurl.setScheme("http");
     iurl.setHost(host);
     iurl.setPort(port);
+
+
+    startTimer(500);
 }
 
 CheckoutHttpClient::~CheckoutHttpClient()
@@ -105,6 +108,11 @@ void CheckoutHttpClient::sendQueue()
     if (iclient.tcpSocket()->error() != QTcpSocket::UnknownSocketError)
         qDebug() << "Send" << iclient.tcpSocket()->errorString();
 
+}
+
+void CheckoutHttpClient::timerEvent(QTimerEvent *event)
+{
+     sendQueue();
 }
 
 void CheckoutHttpClient::onIncomingData(const QByteArray& data)
