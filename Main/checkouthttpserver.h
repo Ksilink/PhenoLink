@@ -98,6 +98,7 @@ public:
 
 protected:
    void HTMLstatus(qhttp::server::QHttpResponse *res);
+   QString proxy;
    QStringList affinity_list;
 };
 

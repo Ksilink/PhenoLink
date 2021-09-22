@@ -445,6 +445,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         return;
     }
 
+    if (urlpath.startsWith("") )
+    {}
+
     if (urlpath.startsWith("/Start/"))
     {
         QString refIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
