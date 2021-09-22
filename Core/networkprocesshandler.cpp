@@ -83,7 +83,7 @@ void CheckoutHttpClient::sendQueue()
                 req.url,
                 [ob, keepalive](QHttpRequest* req){
         auto body = ob;
-        req->addHeader("connection", keepalive ? "keep-alive" : "close");
+//        req->addHeader("connection", keepalive ? "keep-alive" : "close");
         req->addHeader("Content-Type", "application/cbor");
         req->addHeaderValue("content-length", body.length());
         req->end(body);

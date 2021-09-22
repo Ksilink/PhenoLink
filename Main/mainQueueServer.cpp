@@ -273,7 +273,7 @@ void Server::setHttpResponse(QJsonObject& ob,  qhttp::server::QHttpResponse* res
 {
     QByteArray body =  binary ? QCborValue::fromJsonValue(ob).toCbor() :
                                 QJsonDocument(ob).toJson();
-    res->addHeader("Connection", "keep-alive");
+//    res->addHeader("Connection", "keep-alive");
 
     if (binary)
         res->addHeader("Content-Type", "application/cbor");
@@ -522,7 +522,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         root["args"] = total;
 
         QByteArray body = QJsonDocument(root).toJson();
-        res->addHeader("connection", "keep-alive");
+//        res->addHeader("connection", "keep-alive");
         res->addHeaderValue("content-length", body.length());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body);
@@ -530,7 +530,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     else
     {
         QString body = QString("Server Query received, with empty content (%1)").arg(urlpath);
-        res->addHeader("connection", "close");
+//        res->addHeader("connection", "close");
         res->addHeaderValue("content-length", body.length());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body.toLatin1());

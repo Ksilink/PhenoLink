@@ -231,7 +231,7 @@ void GuiServer::setHttpResponse(QJsonObject ob, qhttp::server::QHttpResponse* re
 {
     QByteArray body =  binary ? QCborValue::fromJsonValue(ob).toCbor() :
                                 QJsonDocument(ob).toJson();
-    res->addHeader("Connection", "keep-alive");
+    //res->addHeader("Connection", "keep-alive");
 
     if (binary)
         res->addHeader("Content-Type", "application/cbor");
