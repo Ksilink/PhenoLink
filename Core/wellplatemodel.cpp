@@ -3177,7 +3177,8 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
     //    qDebug() << "Should save to " << prefix << "state" << modified;
     if (prefix.isEmpty()) return 0;
     if (!modified) return 0;
-
+    if (prefix == "Default") return 0;
+    
     int linecounter = 0;
 
     QSettings set;
