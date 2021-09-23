@@ -3179,7 +3179,7 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
     if (prefix == "Default") return 0;
     if (!modified) return 0;
     if (prefix == "Default") return 0;
-    
+
     int linecounter = 0;
 
     QSettings set;
@@ -3195,7 +3195,7 @@ int ExperimentDataTableModel::commitToDatabase(QString , QString prefix)
     }
 
 
-    bool csv = false, feather = true;
+    bool csv = true, feather = true;
 
     if (feather)
     { // Feather writing of the Non Aggregated
