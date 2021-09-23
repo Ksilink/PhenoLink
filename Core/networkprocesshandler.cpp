@@ -21,7 +21,7 @@ using namespace qhttp::client;
 
 CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(false), icpus(0)
 {
-    iclient.setTimeOut(500);
+    iclient.setTimeOut(5000);
     QObject::connect(&iclient, &QHttpClient::disconnected, [this]() {
         finalize();
     });
@@ -63,15 +63,15 @@ void CheckoutHttpClient::send(QString path, QString query, QByteArray ob, bool k
     url.setQuery(query);
 
     reqs.append(Req(url, ob, keepalive));
- //   if (reqs.isEmpty())
-    sendQueue();
+    if (reqs.isEmpty())
+       sendQueue();
 }
 void CheckoutHttpClient::sendQueue()
 {
     if (reqs.isEmpty())
         return;
-    if (awaiting)
-        return;
+//    if (awaiting)
+//        return;
 
 
     auto req = reqs.takeFirst();
@@ -90,9 +90,9 @@ void CheckoutHttpClient::sendQueue()
         req->addHeader("Content-Type", "application/cbor");
         req->addHeaderValue("content-length", body.length());
         req->end(body);
-//        qDebug() << "Request" << req->connection()->tcpSocket()->peerAddress()
-//                 << req->connection()->tcpSocket()->peerPort() << (keepalive ? "keep-alive" : "close");
-//                    ;
+        qDebug() << "Request" << req->connection()->tcpSocket()->peerAddress()
+                 << req->connection()->tcpSocket()->peerPort() << (keepalive ? "keep-alive" : "close");
+                    ;
 
     },
 
@@ -101,7 +101,8 @@ void CheckoutHttpClient::sendQueue()
         res->onEnd([this, res](){
             onIncomingData(res->collectedData());
             awaiting = false; // finished current send
-            sendQueue(); // send next message
+      //      sendQueue(); // send next message
+            qDebug() << "Response received";
         });
     });
 
