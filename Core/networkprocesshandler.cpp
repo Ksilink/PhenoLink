@@ -21,7 +21,7 @@ using namespace qhttp::client;
 
 CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(false), icpus(0)
 {
-    iclient.setTimeOut(5000);
+//    iclient.setTimeOut(5000);
     QObject::connect(&iclient, &QHttpClient::disconnected, [this]() {
         finalize();
     });
