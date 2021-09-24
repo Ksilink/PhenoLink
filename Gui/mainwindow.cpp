@@ -298,7 +298,7 @@ void MainWindow::channelCheckboxMenu(const QPoint & pos)
 
     int chan = sender()->objectName().replace("box", "").toInt();
     SequenceInteractor* inter = _sinteractor.current();
-    ImageInfos* fo = inter->getChannelImageInfos(chan+1);
+    ImageInfos* fo = inter->getChannelImageInfos(chan);
 
 
     QMenu myMenu;
@@ -330,10 +330,11 @@ void MainWindow::channelCheckboxMenu(const QPoint & pos)
     if (selectedItem)
     {
         if (selectedItem == select) {
+
             // Loop over all other channels & unselect
-            for (unsigned i = 0; i < inter->getChannels(); ++i)
+            for (auto i: inter->getChannelsIds())
             {
-                ImageInfos* fo = inter->getChannelImageInfos(i+1);
+                ImageInfos* fo = inter->getChannelImageInfos(i);
                 fo->setActive(false, false);
 
                 auto box = ui->imageControl->findChild<QCheckBox*>(QString("box%1").arg(i));
@@ -344,7 +345,7 @@ void MainWindow::channelCheckboxMenu(const QPoint & pos)
                     box->blockSignals(false);
                 }
             }
-            ImageInfos* fo = inter->getChannelImageInfos(chan + 1);
+            ImageInfos* fo = inter->getChannelImageInfos(chan);
             fo->setActive(true);
 
             auto box = ui->imageControl->findChild<QCheckBox*>(sender()->objectName());
@@ -722,7 +723,7 @@ void MainWindow::updateCurrentSelection()
     QSize pix;
     //  qDebug() << "Creating Controls" << channels;
     int i = 0;
-    std::list<int> chList(_channelsIds.begin(), _channelsIds.end());   
+    std::list<int> chList(_channelsIds.begin(), _channelsIds.end());
     //std::sort(chList.begin(), chList.end()); // sort channel number
     chList.sort();
     for (auto trueChan : chList)

@@ -244,6 +244,13 @@ unsigned SequenceInteractor::getChannels()
 
 }
 
+QSet<int> SequenceInteractor::getChannelsIds()
+{
+    return _mdl->getChannelsIds();
+}
+
+
+
 unsigned SequenceInteractor::getTimePoint()
 {
     return _timepoint;
@@ -515,7 +522,7 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
             info->setChannelName(name);
         }
     }
-    
+
 
     return info;
 }

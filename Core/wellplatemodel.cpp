@@ -990,6 +990,8 @@ unsigned SequenceFileModel::getZCount() const
     return _data.cbegin()->size();
 }
 
+
+
 unsigned SequenceFileModel::getChannels() const
 {
 

@@ -19,7 +19,7 @@ InstallDir "$PROGRAMFILES64\Checkout"
 Section -Prerequisites
   SetOutPath $INSTDIR\Prerequisites
 
-  MessageBox MB_YESNO "Install the Microsoft Visual C++ 2015 Redistribual (x64) - 14 ?" /SD IDYES IDNO endNetCF
+  MessageBox MB_YESNO "Install the Microsoft Visual C++ 2015-2019 Redistribual (x64) - 14 ?" /SD IDYES IDNO endNetCF
     File "C:\Work\GitHub\redist\VC_redist.x64.exe"
     ExecWait "$INSTDIR\VC_redist.x64.exe"
   endNetCF:
