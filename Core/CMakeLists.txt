@@ -1,4 +1,4 @@
-
+set(CMAKE_CXX_STANDARD 17)
 
 add_definitions(-DExportCoreSymbols)
 add_definitions(-DExportPluginManagerSymbols)
@@ -22,7 +22,6 @@ add_library(CheckoutCore SHARED
             ImageContainers.cpp ImageContainers.h
             matrixdatamodel.cpp matrixdatamodel.h
             checkouterrorhandler.cpp checkouterrorhandler.h
-
             )
 
 include_directories(${ARROW_INCLUDE_DIR})

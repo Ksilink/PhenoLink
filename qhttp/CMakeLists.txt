@@ -1,3 +1,5 @@
+set(CMAKE_CXX_STANDARD 17)
+
 
 if (WIN32)
     add_definitions(-DQHTTP_EXPORT)
