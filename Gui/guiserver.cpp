@@ -41,8 +41,9 @@ GuiServer::GuiServer(MainWindow* par): win(par)
     });
 });
 
-
     if ( !isListening ) {
+        // should tell the user !!!
+
         qDebug() << "can not listen on" <<  port;
     }
     //    else
@@ -71,7 +72,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
         QString commit=urlpath.mid((int)strlen("/addData/"));
 
-        //qDebug() << "Adding data" << ob;
+        qDebug() << "Client Adding data" << ob.size();
         for (auto item: (ob))
         {
             auto oj = item.toObject();
@@ -230,7 +231,7 @@ void GuiServer::setHttpResponse(QJsonObject ob, qhttp::server::QHttpResponse* re
 {
     QByteArray body =  binary ? QCborValue::fromJsonValue(ob).toCbor() :
                                 QJsonDocument(ob).toJson();
-    res->addHeader("Connection", "keep-alive");
+    res->addHeader("Connection", "close");//keep-alive");
 
     if (binary)
         res->addHeader("Content-Type", "application/cbor");

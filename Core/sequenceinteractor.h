@@ -17,98 +17,101 @@ class ImageForm;
 
 class DllCoreExport SequenceInteractor: public QObject
 {
-  Q_OBJECT
+    Q_OBJECT
 public:
     SequenceInteractor();
     SequenceInteractor(SequenceFileModel* mdl, QString key);
 
-  unsigned getTimePointCount();
-  unsigned getFieldCount();
-  unsigned getZCount();
-  unsigned getChannels();
-
-  unsigned getTimePoint();
-  unsigned getField();
-  unsigned getZ();
-  unsigned getChannel();
+    unsigned getTimePointCount();
+    unsigned getFieldCount();
+    unsigned getZCount();
+    unsigned getChannels();
 
 
 
-  double getFps();
-
-  QString getFileName();
-
-
-  // Returns file for current selection
-  QString getFile();
-  void preloadImage();
-  QPixmap getPixmap(bool packed = true, bool bias_correction = false, float scale = 1.);
-  QImage getPixmapChannels(int field, bool bias_correction = false, float scale = 1.);
-  QList<unsigned> getData(QPointF d, int& field, bool packed = true, bool bias = false);
-
-   QList<QGraphicsItem*> getMeta(QGraphicsItem* parent);
-
-   void getResolution(float& x, float &y);
+    unsigned getTimePoint();
+    unsigned getField();
+    unsigned getZ();
+    unsigned getChannel();
 
 
-  // Return all channels file for current selection
-  QList<QPair<int, QString> > getAllChannel(int field = -1);
-  int getChannelsFromFileName(QString file);
 
-  QStringList getAllTimeFieldSameChannel();
+    double getFps();
+
+    QString getFileName();
 
 
-  QImage getAllChannelsImage();
+    // Returns file for current selection
+    QString getFile();
+    void preloadImage();
+    QPixmap getPixmap(bool packed = true, bool bias_correction = false, float scale = 1.);
+    QImage getPixmapChannels(int field, bool bias_correction = false, float scale = 1.);
+    QList<unsigned> getData(QPointF d, int& field, bool packed = true, bool bias = false);
 
-//  void connectChannelRange(ctkDoubleRangeSlider* sld, unsigned channel);
-  ImageInfos* getChannelImageInfos(unsigned channel);
+    QList<QGraphicsItem*> getMeta(QGraphicsItem* parent);
 
-  void setCurrent(SequenceInteractor* i);
+    void getResolution(float& x, float &y);
 
-  SequenceFileModel* getSequenceFileModel();
 
-  SequenceInteractor* current();
+    // Return all channels file for current selection
+    QList<QPair<int, QString> > getAllChannel(int field = -1);
+    int getChannelsFromFileName(QString file);
 
-  QString getExperimentName();
-  QString getProjectName();
+    QStringList getAllTimeFieldSameChannel();
 
-  void addImage(CoreImage*ci);
-  void clearMemory(CoreImage *im);
 
-//signals:
-  void modifiedImage();
-  QPointF getFieldPosition(int field = -1);
-//protected:
-  ImageInfos *imageInfos(QString file, int channel = -1, QString key = QString());
-  void refinePacking();
+    QImage getAllChannelsImage();
 
-  bool overlayDisplayed(QString name);
-  int getOverlayId(QString name);
-  int getOverlayMax(QString name);
+    //  void connectChannelRange(ctkDoubleRangeSlider* sld, unsigned channel);
+    ImageInfos* getChannelImageInfos(unsigned channel);
 
-  double getOverlayWidth();
-  void setOverlayWidth(double v);
+    void setCurrent(SequenceInteractor* i);
 
-  bool currentChanged();
-  QList<QString> getMetaList();
-  QList<QString> getMetaOptionsList(QString meta);
-  void overlayChange(QString name, QString id);
-  QString getOverlayCode(QString name);
-  QString getOverlayColor(QString name);
-  void exportOverlay(QString name, QString tofile);
+    SequenceFileModel* getSequenceFileModel();
 
-  void initImageInfos(int field);
+    SequenceInteractor* current();
 
+    QString getExperimentName();
+    QString getProjectName();
+
+    void addImage(CoreImage*ci);
+    void clearMemory(CoreImage *im);
+
+    //signals:
+    void modifiedImage();
+    QPointF getFieldPosition(int field = -1);
+    //protected:
+    ImageInfos *imageInfos(QString file, int channel = -1, QString key = QString());
+    void refinePacking();
+
+    bool overlayDisplayed(QString name);
+    int getOverlayId(QString name);
+    int getOverlayMax(QString name);
+
+    double getOverlayWidth();
+    void setOverlayWidth(double v);
+
+    bool currentChanged();
+    QList<QString> getMetaList();
+    QList<QString> getMetaOptionsList(QString meta);
+    void overlayChange(QString name, QString id);
+    QString getOverlayCode(QString name);
+    QString getOverlayColor(QString name);
+    void exportOverlay(QString name, QString tofile);
+
+    void initImageInfos(int field);
+
+    QSet<int> getChannelsIds();
 public slots:
 
-  void setTimePoint(unsigned t);
-  void setField(unsigned t);
-  void setZ(unsigned z);
-  void setChannel(unsigned c);
-  void setFps(double fps);
+    void setTimePoint(unsigned t);
+    void setField(unsigned t);
+    void setZ(unsigned z);
+    void setChannel(unsigned c);
+    void setFps(double fps);
 
-  void setOverlayId(QString name,  int tile);
-  void toggleOverlay(QString name, bool disp);
+    void setOverlayId(QString name,  int tile);
+    void toggleOverlay(QString name, bool disp);
 
     QStringList getChannelNames();
 
@@ -117,35 +120,35 @@ public slots:
 
     bool isUpdating() {
         return _updating
-            ;
+                ;
     }
     void overlayChangeCmap(QString name, QString id);
 protected:
 
-  SequenceFileModel* _mdl;
-  unsigned _timepoint, _field, _zpos, _channel;
-  double _fps;
+    SequenceFileModel* _mdl;
+    unsigned _timepoint, _field, _zpos, _channel;
+    double _fps;
 
-  QMap<QString, QPair<bool, int> > disp_overlay; // Toggle / tile id
-  QMap<QString, QPair<QString, QString> > overlay_coding; // Feature / Colormap
+    QMap<QString, QPair<bool, int> > disp_overlay; // Toggle / tile id
+    QMap<QString, QPair<QString, QString> > overlay_coding; // Feature / Colormap
 
-//  bool disp_tile;
-//x  int tile_id;
+    //  bool disp_tile;
+    //x  int tile_id;
 
-  QString loadkey;
-  QStringList channel_names;
+    QString loadkey;
+    QStringList channel_names;
 
-  //QList<ImageForm*> linked_images;
-  //QMap<QString, ImageInfos*> _infos;
-  QVector<QPoint> pixOffset;
+    //QList<ImageForm*> linked_images;
+    QMap<QString, ImageInfos*> _infos;
+    QVector<QPoint> pixOffset;
 
-  QList<CoreImage*> _ImageList;
-  QPixmap           _cachePixmap; // Cache temporary image, pixmap are implicitly shared
-  static SequenceInteractor* _current;
-  float last_scale;
-  bool _updating, _changed;
-  double _overlay_width;
- };
+    QList<CoreImage*> _ImageList;
+    QPixmap           _cachePixmap; // Cache temporary image, pixmap are implicitly shared
+    static SequenceInteractor* _current;
+    float last_scale;
+    bool _updating, _changed;
+    double _overlay_width;
+};
 
 
 #endif // SEQUENCEINTERACTOR_H

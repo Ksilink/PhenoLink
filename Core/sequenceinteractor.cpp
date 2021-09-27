@@ -244,6 +244,13 @@ unsigned SequenceInteractor::getChannels()
 
 }
 
+QSet<int> SequenceInteractor::getChannelsIds()
+{
+    return _mdl->getChannelsIds();
+}
+
+
+
 unsigned SequenceInteractor::getTimePoint()
 {
     return _timepoint;
@@ -485,37 +492,38 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
     // FIXME: Change image infos key : use XP / Workbench / deposit group
 
     // qDebug() << "Get interactor for file object: " << file << channel << getExperimentName();
-    /* lock_infos.lock();
+    lock_infos.lock();
     ImageInfos* info = _infos[file];
     lock_infos.unlock();
 
-    if (!info)*/
-    //{ // Change behavior: Linking data at the XP level
-    // To be added workbench Id + selectionModifier
-    QString exp = getExperimentName();// +_mdl->Pos();
-    int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
+    if (!info)
+    { // Change behavior: Linking data at the XP level
+        // To be added workbench Id + selectionModifier
+        QString exp = getExperimentName();// +_mdl->Pos();
+        int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
 
-    // getWellPos();
-    //        qDebug() << "Building Image info" << file << exp << ii;
-    bool exists = false;
-    ImageInfos* info = ImageInfos::getInstance(this, file, exp + QString("%1").arg(ii), ii, exists, key);
+        bool exists = false;
+        info = ImageInfos::getInstance(this, file, exp + QString("%1").arg(ii), ii, exists, key);
+        _infos[file] = info;
+        if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
+        {
+            QColor col;
+            QString cname = _mdl->getOwner()->property(QString("ChannelsColor%1").arg(ii));
+            col.setNamedColor(cname);
+            info->setColor(col, false);
+        }
+        else
+            info->setDefaultColor(ii, false);
 
-    if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
-    {
-        QColor col;
-        QString cname = _mdl->getOwner()->property(QString("ChannelsColor%1").arg(ii));
-        col.setNamedColor(cname);
-        info->setColor(col, false);
+    // Also setup the channel names if needed
+        if (!_mdl->getChannelNames().isEmpty())
+        {
+            QString name = _mdl->getChannelNames()[ii-1];
+            info->setChannelName(name);
+        }
     }
-    else
-        info->setDefaultColor(ii, false);
 
-// Also setup the channel names if needed
-    if (!_mdl->getChannelNames().isEmpty())
-    {
-        QString name = _mdl->getChannelNames()[ii - 1];
-        info->setChannelName(name);
-    }
+
     return info;
 }
 

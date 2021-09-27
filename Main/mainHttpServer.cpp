@@ -298,7 +298,7 @@ void Server::setHttpResponse(QJsonObject& ob,  qhttp::server::QHttpResponse* res
 {
     QByteArray body =  binary ? QCborValue::fromJsonValue(ob).toCbor() :
                                 QJsonDocument(ob).toJson();
-//    res->addHeader("Connection", "keep-alive");
+    res->addHeader("Connection", "close"); //"keep-alive");
 
     if (binary)
         res->addHeader("Content-Type", "application/cbor");
@@ -391,6 +391,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QString refIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
         QString proc = urlpath.mid(7);
 
+
+
         auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
         QJsonArray Core,Run;
 
@@ -427,6 +429,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QtConcurrent::run(&procs, &CheckoutProcess::startProcessServer,
                           proc, ob);
 
+        if (!proxy.startsWith(refIP)) {
+            // Shall tell the proxy we have process ongoing that where not sent from his side
+        }
     }
 
     if (data.size())
@@ -487,6 +492,7 @@ void Server::proxyAdvert(QString host, int port)
     int processor_count = (int)std::thread::hardware_concurrency();
     qhttp::client::QHttpClient  iclient;
 
+    proxy = QString("%1:%2").arg(host).arg(port); // Set proxy name
 
     for (int i = 0; i < processor_count; ++i)
     {
@@ -494,7 +500,6 @@ void Server::proxyAdvert(QString host, int port)
         url.setPath(QString("/Ready/%1").arg(i));
         url.setQuery(QString("affinity=%1").arg(affinity_list.join(",")));
         iclient.request(qhttp::EHTTP_POST, url);
-
     }
 
 }

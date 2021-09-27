@@ -832,6 +832,15 @@ void MainWindow::on_pluginhistory(QString )
     }
 
     reloaded = QJsonDocument::fromJson(jfile.readAll()).object();
+    // Check file contains Path & that this path is our process :p
+    if (!reloaded.contains("Path") || reloaded["Path"] != this->_preparedProcess )
+        return;
+
+    // Quick & dirty check for file content if missing skip history reload
+    for (auto str: { "Parameters" , "PluginVersion", "Project", "Experiments" })
+        if (!reloaded.contains(QString(str)))
+            return;
+    //if (reloaded.contains())
     qDebug() << reloaded;
 
     setupProcessCall(reloaded, cb->currentIndex());

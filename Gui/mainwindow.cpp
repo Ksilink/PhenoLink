@@ -298,7 +298,7 @@ void MainWindow::channelCheckboxMenu(const QPoint & pos)
 
     int chan = sender()->objectName().replace("box", "").toInt();
     SequenceInteractor* inter = _sinteractor.current();
-    ImageInfos* fo = inter->getChannelImageInfos(chan+1);
+    ImageInfos* fo = inter->getChannelImageInfos(chan);
 
 
     QMenu myMenu;
@@ -330,10 +330,11 @@ void MainWindow::channelCheckboxMenu(const QPoint & pos)
     if (selectedItem)
     {
         if (selectedItem == select) {
+
             // Loop over all other channels & unselect
-            for (unsigned i = 0; i < inter->getChannels(); ++i)
+            for (auto i: inter->getChannelsIds())
             {
-                ImageInfos* fo = inter->getChannelImageInfos(i+1);
+                ImageInfos* fo = inter->getChannelImageInfos(i);
                 fo->setActive(false, false);
 
                 auto box = ui->imageControl->findChild<QCheckBox*>(QString("box%1").arg(i));
@@ -344,7 +345,7 @@ void MainWindow::channelCheckboxMenu(const QPoint & pos)
                     box->blockSignals(false);
                 }
             }
-            ImageInfos* fo = inter->getChannelImageInfos(chan + 1);
+            ImageInfos* fo = inter->getChannelImageInfos(chan);
             fo->setActive(true);
 
             auto box = ui->imageControl->findChild<QCheckBox*>(sender()->objectName());
@@ -419,7 +420,7 @@ void MainWindow::active_Channel(bool c)
     SequenceInteractor* inter = _sinteractor.current();
 
     QString name = sender()->objectName().replace("box", "");
-    ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
+    ImageInfos* fo = inter->getChannelImageInfos(name.toInt() );
     fo->setActive(c);
 
 
@@ -552,7 +553,7 @@ void MainWindow::setColor(QColor c)
     SequenceInteractor* inter = _sinteractor.current();
 
     QString name = sender()->objectName().replace("ColorChannel", "");
-    ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
+    ImageInfos* fo = inter->getChannelImageInfos(name.toInt() );
     fo->setColor(c);
 }
 
@@ -690,7 +691,7 @@ void MainWindow::updateCurrentSelection()
 
     SequenceViewContainer & container = SequenceViewContainer::getHandler();
     container.setCurrent(inter->getSequenceFileModel());
-
+    _channelsIds = inter->getSequenceFileModel()->getChannelsIds();
     /// Change the plate tab widget to focus on the proper plate view
 
     QList<QWidget*> toDel;
@@ -721,10 +722,14 @@ void MainWindow::updateCurrentSelection()
     bvl->setContentsMargins(0,0,0,0);
     QSize pix;
     //  qDebug() << "Creating Controls" << channels;
-    for (unsigned i = 0; i < channels; ++i)
+    int i = 0;
+    std::list<int> chList(_channelsIds.begin(), _channelsIds.end());
+    //std::sort(chList.begin(), chList.end()); // sort channel number
+    chList.sort();
+    for (auto trueChan : chList)
+//    for (unsigned i = 0; i < channels; ++i)
     {
-
-        ImageInfos* fo = inter->getChannelImageInfos(i + 1);
+        ImageInfos* fo = inter->getChannelImageInfos(trueChan);
 
         //          qDebug() << "Adding " << i << QString("Channel%1").arg(i);
         pix = fo->imSize();
@@ -761,17 +766,17 @@ void MainWindow::updateCurrentSelection()
         }
         else
         {
-            bvl->addWidget(setupActiveBox(new QCheckBox(wwid), fo, i), i, 0);
-            bvl->addWidget(setupMinMaxRanges(new QDoubleSpinBox(wwid), fo, QString("vMin%1").arg(i), true), i, 1);
-            bvl->addWidget(RangeWidgetSetup(new ctkDoubleRangeSlider(Qt::Horizontal, wwid), fo, i), i, 2);
-            bvl->addWidget(setupMinMaxRanges(new QDoubleSpinBox(wwid), fo, QString("vMax%1").arg(i), false), i, 3);
-            bvl->addWidget(colorWidgetSetup(new ctkColorPickerButton(wwid), fo, i), i, 4);
+            bvl->addWidget(setupActiveBox(new QCheckBox(wwid), fo, trueChan), i, 0);
+            bvl->addWidget(setupMinMaxRanges(new QDoubleSpinBox(wwid), fo, QString("vMin%1").arg(trueChan), true), i, 1);
+            bvl->addWidget(RangeWidgetSetup(new ctkDoubleRangeSlider(Qt::Horizontal, wwid), fo, trueChan), i, 2);
+            bvl->addWidget(setupMinMaxRanges(new QDoubleSpinBox(wwid), fo, QString("vMax%1").arg(trueChan), false), i, 3);
+            bvl->addWidget(colorWidgetSetup(new ctkColorPickerButton(wwid), fo, trueChan), i, 4);
         }
 
 
 
-        //        bvl->addWidget(wid);
         _imageControls[inter->getExperimentName()].append(wwid);
+        ++i;
     }
 
     // Add FrameRate control if it makes sense
@@ -783,7 +788,7 @@ void MainWindow::updateCurrentSelection()
 
 
     { // Overlay control
-        ImageInfos* fo = inter->getChannelImageInfos(1);
+        ImageInfos* fo = inter->getChannelImageInfos(*_channelsIds.begin());
 
         auto wwid = new QWidget;
 
@@ -2032,7 +2037,7 @@ void MainWindow::rangeChange(double mi, double ma)
         if (vma.size()) lockedChangeValue(vma.first(), ma);
 
 
-        ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
+        ImageInfos* fo = inter->getChannelImageInfos(name.toInt() );
         fo->rangeChanged(mi, ma);
     }
 
@@ -2103,7 +2108,7 @@ void MainWindow::changeRangeValueMax(double val)
         if (crs.size()) crs.first()->setMaximumValue(val);
         if (crs.size() && crs.first()->maximum() < val) crs.first()->setMaximum(val);
 
-        ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
+        ImageInfos* fo = inter->getChannelImageInfos(name.toInt());
         fo->forceMaxValue(val);
     }
     if (_syncmapper.contains(sender()->objectName()))
@@ -2133,7 +2138,7 @@ void MainWindow::changeRangeValueMin(double val)
         if (crs.size()) crs.first()->setMinimumValue(val);
         if (crs.size() && crs.first()->minimum() > val) crs.first()->setMinimum(val);
 
-        ImageInfos* fo = inter->getChannelImageInfos(name.toInt() + 1);
+        ImageInfos* fo = inter->getChannelImageInfos(name.toInt());
         fo->forceMinValue(val);
     }
 

@@ -75,8 +75,8 @@ public:
     Server();
 
     int start(quint16 port) ;
-    void setHttpResponse(QJsonObject& ob, QHttpResponse* res, bool binary = true);
-    void process(QHttpRequest* req, QHttpResponse* res);
+    void setHttpResponse(QJsonObject& ob, qhttp::server::QHttpResponse* res, bool binary = true);
+    void process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res);
     uint serverPort();
     void affinity(QString projects);
     void proxyAdvert(QString host, int port);
@@ -98,6 +98,7 @@ public:
 
 protected:
    void HTMLstatus(qhttp::server::QHttpResponse *res);
+   QString proxy;
    QStringList affinity_list;
 };
 

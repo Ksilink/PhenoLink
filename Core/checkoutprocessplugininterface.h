@@ -215,11 +215,6 @@ public:
     }
 
 
-    QStringList channelNames()
-    { // FIXME: get channel Names from plugin
-        return QStringList();
-    }
-
     cv::Mat& getBiasField(int i)
     { // "datahash"
         static cv::Mat empty;

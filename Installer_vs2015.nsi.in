@@ -19,7 +19,7 @@ InstallDir "$PROGRAMFILES64\Checkout"
 Section -Prerequisites
   SetOutPath $INSTDIR\Prerequisites
 
-  MessageBox MB_YESNO "Install the Microsoft Visual C++ 2015 Redistribual (x64) - 14 ?" /SD IDYES IDNO endNetCF
+  MessageBox MB_YESNO "Install the Microsoft Visual C++ 2015-2019 Redistribual (x64) - 14 ?" /SD IDYES IDNO endNetCF
     File "C:\Work\GitHub\redist\VC_redist.x64.exe"
     ExecWait "$INSTDIR\VC_redist.x64.exe"
   endNetCF:
@@ -36,9 +36,9 @@ RMDir /r $INSTDIR
 SetOutPath $INSTDIR\bin
 
 # specify file to go in output path
-File "@CMAKE_BINARY_DIR@\bin\Checkout.exe"
-File "@CMAKE_BINARY_DIR@\bin\CheckoutHttpServer.exe"
-File "@CMAKE_BINARY_DIR@\bin\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\Checkout.exe"
+File "@CMAKE_BINARY_DIR@\bin\Release\CheckoutHttpServer.exe"
+File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
 File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 
 File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
@@ -77,7 +77,7 @@ Section "Plugin Installer Section"
 
 # define output path
 SetOutPath $INSTDIR\bin\plugins
-File "@CMAKE_BINARY_DIR@\bin\plugins\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll"
 
 ;SetOutPath $INSTDIR\bin\Release\accessible
 ;File "@CMAKE_BINARY_DIR@\bin\accessible\*.dll"
