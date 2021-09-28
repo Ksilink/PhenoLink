@@ -62,8 +62,9 @@ class DllCoreExport StackedImage: public ImageContainer
 {
 public:
     virtual void loadFromJSON(QJsonObject data);
-    virtual cv::Mat getImage(size_t i);
+    virtual cv::Mat getImage(size_t i, int chann);
     virtual QString basePath(QJsonObject json);
+    virtual size_t getChannelCount();
 
 };
 
@@ -147,7 +148,7 @@ public:
     virtual QString basePath(QJsonObject json);
     virtual void storeJson(QJsonObject json);
     StackedImage getImage(size_t i);
-
+    virtual size_t getChannelCount();
     virtual void  deallocate();
 
 protected:
