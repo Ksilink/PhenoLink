@@ -53,7 +53,6 @@ public:
     virtual void read(const QJsonObject& json)
     {
         RegistrableParent::read(json);
-//        qDebug() << "Reading Meta:" << json;
         setProperties(json);
 
         if (json.contains("splitted"))
@@ -151,9 +150,10 @@ public:
 
     QString getMeta(QString me)
     {
-        qDebug() << "Searching  Meta nfo";
-        for (auto i = _metaData.begin(), e = _metaData.end(); i != e; ++i)
-            qDebug() << i.key() << i.value();
+
+
+        //        for (auto i = _metaData.begin(), e = _metaData.end(); i != e; ++i)
+        //            qDebug() << i.key() << i.value();
 
         return _metaData[me];
     }
@@ -621,6 +621,7 @@ public:
     virtual void read(const QJsonObject& json)
     {
         RegistrableImageParent::read(json);
+        setProperties(json);
 
 
         QJsonArray data = json["Data"].toArray();
@@ -654,7 +655,7 @@ public:
         RegistrableImageParent::write(json);
         json["ImageType"] = QString("TimeImage");
 
-//        qDebug() << "Should store TimeImage" << _value->count();
+        //        qDebug() << "Should store TimeImage" << _value->count();
 
         if (!_value || _value->count() == 0)
         { //qDebug() << "Empty image !!!!";
@@ -1323,6 +1324,23 @@ public:
 
                 }
             }
+            auto sdata = d["Data"].toArray();
+            {
+                for (int j = 0; j < sdata.size(); j++)
+                {
+
+                    auto d = sdata.at(i).toObject();
+                    setProperties(d, QString("f%1").arg(j));
+
+                    if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
+                    {
+                        QJsonArray t = d["ChannelNames"].toArray();
+                        for (int i = 0; i < t.size(); ++i)
+                            _vectorNames << t[i].toString();
+                    }
+
+                }
+            }
 
         }
     }
@@ -1435,6 +1453,8 @@ public:
     virtual void read(const QJsonObject& json)
     {
         RegistrableImageParent::read(json);
+        setProperties(json);
+
         auto data = json["Data"].toArray();
         for (int i = 0; i < data.size(); i++)
         {
@@ -1560,6 +1580,8 @@ public:
     virtual void read(const QJsonObject& json)
     {
         RegistrableImageParent::read(json);
+        setProperties(json);
+
         auto data = json["Data"].toArray();
         for (int i = 0; i < data.size(); i++)
         {

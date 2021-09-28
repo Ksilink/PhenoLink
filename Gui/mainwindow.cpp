@@ -740,7 +740,7 @@ void MainWindow::updateCurrentSelection()
 
         if (fo->getMin() >= 0 && fo->getMax() - fo->getMin() < 16)
         {
-            bvl->addWidget(setupActiveBox(new QCheckBox(wwid), fo, i), i, 0);
+            bvl->addWidget(setupActiveBox(new QCheckBox(wwid), fo, trueChan), i, 0);
             auto tw = new QWidget(wwid);
             tw->setLayout(new QHBoxLayout());
 
