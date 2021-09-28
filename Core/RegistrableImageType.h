@@ -1324,24 +1324,6 @@ public:
 
                 }
             }
-            auto sdata = d["Data"].toArray();
-            {
-                for (int j = 0; j < sdata.size(); j++)
-                {
-
-                    auto d = sdata.at(i).toObject();
-                    setProperties(d, QString("f%1").arg(j));
-
-                    if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
-                    {
-                        QJsonArray t = d["ChannelNames"].toArray();
-                        for (int i = 0; i < t.size(); ++i)
-                            _vectorNames << t[i].toString();
-                    }
-
-                }
-            }
-
         }
     }
 
