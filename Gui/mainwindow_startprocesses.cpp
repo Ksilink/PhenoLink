@@ -159,8 +159,6 @@ void setData(QJsonObject& obj, QString tag, bool list, ctkPathLineEdit* s)
 
 void MainWindow::getValue(QWidget* wid, QJsonObject& obj, QString tag, bool list)
 {
-
-    if (wid->isHidden()) return; // Skip hidden widget,
     // to handle the case where a single input is dependent on the context :)
     // For instance unit of measurement, where you can use the same input with different meaning, or different default value
     // Say a surface can be expressed in px² or µm² but in the plugin code it is just a matter of adapting the value with respect to single parameter

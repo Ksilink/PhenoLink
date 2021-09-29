@@ -1673,21 +1673,17 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
 
 
-            if (show)
-            {
                 wid->setAttribute(Qt::WA_DeleteOnClose, true);
                 wid->setObjectName(par["Tag"].toString());
                 //            qDebug() << par["Tag"].toString();
-                if (par["PerChannelParameter"].toBool())
+                if (par["PerChannelParameter"].toBool() || !show)
                     lay->addRow(wid);
                 else
                     lay->addRow(par["Tag"].toString(), wid);
                 wid->setToolTip(par["Comment"].toString());
-            }
-            else
-            {
-                delete wid;
-            }
+
+                if (!show) wid->hide();
+
         }
     }
 
@@ -1851,9 +1847,13 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     //    layo->addRow(_shareTags);
 
     if (_preparedProcess.endsWith("Generate BirdView"))
+    {
         _commitName->setText("BirdView");
-
-    layo->addRow("Commit Name:", _commitName);
+        layo->addRow(_commitName);
+        _commitName->hide();
+    }
+    else
+        layo->addRow("Commit Name:", _commitName);
 
     QPushButton* button = new QPushButton("Start");
     connect(button, SIGNAL(pressed()), this, SLOT(startProcess()));
