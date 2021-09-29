@@ -41,7 +41,7 @@ public:
             {
                 if (!ob[ks].toString().isEmpty())
                 {
-                    qDebug() << "Property" << prefix << ks << ob[ks].toString();
+//                    qDebug() << "Property" << prefix << ks << ob[ks].toString();
                     _metaData[prefix + ks] = ob[ks].toString();
                 }
             }
@@ -49,7 +49,7 @@ public:
     }
 
 
- 
+
     virtual void read(const QJsonObject& json)
     {
         RegistrableParent::read(json);
@@ -148,12 +148,11 @@ public:
     bool imageAutoloading() { return _autoload; }
 
 
-    QString getMeta(QString me)
+    QString getMeta(QString me, bool debug = false)
     {
-
-
-        //        for (auto i = _metaData.begin(), e = _metaData.end(); i != e; ++i)
-        //            qDebug() << i.key() << i.value();
+        if (debug)
+            for (auto i = _metaData.begin(), e = _metaData.end(); i != e; ++i)
+                qDebug() << i.key() << i.value();
 
         return _metaData[me];
     }
@@ -1313,8 +1312,10 @@ public:
                 {
 
                     auto d = sdata.at(z).toObject();
-                    setProperties(d, QString("f%1%2").arg(f).arg(z));
-
+                    if (z!=0)
+                        setProperties(d, QString("f%1z%2").arg(f).arg(z));
+                    else
+                        setProperties(d, QString("f%1").arg(f));
                     if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
                     {
                         QJsonArray t = d["ChannelNames"].toArray();

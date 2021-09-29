@@ -1294,6 +1294,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
     if (wid == nullptr)
         qDebug() << "Not handled" << par;
 
+
     return wid;
 }
 
@@ -1667,6 +1668,11 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                     show=false;
             }
 
+            if (par.contains("hidden") && par["hidden"].toBool())
+                  show = false;
+
+
+
             if (show)
             {
                 wid->setAttribute(Qt::WA_DeleteOnClose, true);
@@ -1843,6 +1849,10 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
     layo->addRow(_typeOfprocessing);
     //    layo->addRow(_shareTags);
+
+    if (_preparedProcess.endsWith("Generate BirdView"))
+        _commitName->setText("BirdView");
+
     layo->addRow("Commit Name:", _commitName);
 
     QPushButton* button = new QPushButton("Start");
