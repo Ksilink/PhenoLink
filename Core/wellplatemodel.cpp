@@ -1312,12 +1312,12 @@ QString SequenceFileModel::getFile(int timePoint, int fieldIdx, int Zindex, int 
     if (si->size() < timePoint - 1) return QString();
     TimeLapse::iterator ti = si->begin(); std::advance(ti, timePoint-1);
     if (ti->size() < channel - 1) return QString();
-    Channel::iterator ci = ti->begin(); 
+    Channel::iterator ci = ti->begin();
     if (ci==ti->end())
     {
         return QString();
     }
-    
+
     std::advance(ci, channel-1);
     if (ci==ti->end())
     {
@@ -1990,7 +1990,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
                 {
                     QString ctag = it.key();
                     ctag = ctag.replace(';', ' ');
-                    tags << ctag;
+                    tags << ctag.simplified();
                     auto wells = it.value().toObject();
                     for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
                     {
