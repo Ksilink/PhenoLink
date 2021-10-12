@@ -1329,6 +1329,11 @@ void SequenceInteractor::setOverlayWidth(double v)
     modifiedImage();
 }
 
+QStringList SequenceInteractor::getMetaTags(int idx)
+{
+    return QStringList();
+}
+
 
 // Return selectable color coded displays
 

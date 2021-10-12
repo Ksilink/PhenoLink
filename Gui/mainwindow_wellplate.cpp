@@ -346,7 +346,7 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
     if (!err.isEmpty())
     {
         ui->textLog->append(err);
-//        ui->textLog->show();
+        ui->textLog->show();
 
 //        err.truncate(80);
 //        QMessageBox::StandardButton reply;

@@ -39,7 +39,7 @@ class QCloseEvent;
 class DllGuiExport MainWindow : public QMainWindow
 {
     Q_OBJECT
-         
+
     QProcess* server;
 public:
     explicit MainWindow(QProcess* serverProc, QWidget *parent = 0);
@@ -123,7 +123,7 @@ protected:
     QComboBox *setupOverlayColor(QComboBox *box, QString itemName, ImageInfos *ifo, bool reconnect = false);
 
 
-	void conditionChanged(QWidget* sen, int val);
+    void conditionChanged(QWidget* sen, int val);
     void closeEvent(QCloseEvent *ev);
 
 
@@ -177,7 +177,7 @@ private slots:
 
     void changeColorState(QString link);
 
-	QJsonArray sortParameters(QJsonArray& arr);
+    QJsonArray sortParameters(QJsonArray& arr);
 
     void startProcessRun();
     void channelCheckboxMenu(const QPoint&);
@@ -186,6 +186,16 @@ private slots:
 
     void on_sync_zstack_toggled(bool arg1);
 
+
+    void on_start_process_triggered();
+
+    void on_prevOverlay_clicked();
+
+    void on_nextOverlay_clicked();
+
+    void on_addTag_clicked();
+
+    void on_delTag_clicked();
 
 public slots:
 
@@ -243,6 +253,10 @@ public slots:
     void exportContent();
     void finishedEditMinValue();
     void finishedEditMaxValue();
+
+    void overlay_selection(const QString &text);
+
+    void change_overlay_details(QString, QString, int);
 
 protected slots:
     void updateProcessStatusMessage(QJsonArray ob);
@@ -322,6 +336,10 @@ private:
     QElapsedTimer run_time;
 
     QMap<QString , QDoubleSpinBox*> _syncmapper;
+
+
+    QShortcut *shrt_startR, *shrt_startEnt;
+    QVector<QShortcut *> shrt_binarize;
 
 };
 

@@ -65,6 +65,7 @@ protected:
 
 signals:
     void interactorModified();
+    void overlayInfos(QString, QString, int);
 
 protected slots:
 

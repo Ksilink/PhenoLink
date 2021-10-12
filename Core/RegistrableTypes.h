@@ -128,10 +128,14 @@ public:
         {
             json["hidden"] = true;
         }
+        if (!_path.isEmpty())
+            json["SavePath"] = _path;
 
-
-        json["isOptional"] = _isOptional;
-        json["optionalState"] = _optionalDefault;
+        if (_isOptional)
+        {
+            json["isOptional"] = _isOptional;
+            json["optionalState"] = _optionalDefault;
+        }
 
         if (!_group.isEmpty())
         {
@@ -197,6 +201,12 @@ public:
         return *this;
     }
 
+    Self& setPath(QString p)
+    {
+        _path = p;
+        return *this;
+    }
+
     //    virtual void clone()  = 0;
     virtual RegistrableParent* dup() = 0;
     void setHash(QString s) {_hash = s; /*qDebug() << "Data Hash" << _tag << _hash; */}
@@ -210,6 +220,10 @@ public:
     void attachPayload(std::vector<unsigned char> arr, size_t pos = 0) const;
     void attachPayload(QString hash, std::vector<unsigned char> arr, size_t pos = 0) const;
 
+    QString getPath()
+    {
+        return _path;
+    }
 
 
 protected:
@@ -226,6 +240,7 @@ protected:
     bool _keepInMem;
     bool _duped;
     bool _hidden;
+    QString _path;
 
 };
 

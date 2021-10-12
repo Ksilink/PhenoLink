@@ -343,14 +343,14 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     ob["Path"] = getPath();
     ob["Pos"] = getPosition();
     ob["ElapsedTime"] = QString("%1").arg(time);
-    ob["Parameters"] = _callParams["Parameters"].toArray();
-    ob["StartTime"] = _callParams["StartTime"];
     ob["State"] = QString(_state == Running ? "Running" : (_state == Finished ? "Finished" : "NotStarted"));
     ob["Pos"] = getPosition();
     ob["shallDisplay"] = _shallDisplay;
     ob["ProcessStartId"] = processStartId;
-    ob["CommitName"] = _callParams["CommitName"].toString();
-    ob["ReplyTo"] = _callParams["ReplyTo"].toString();
+    auto d = QStringList() << "XP" << "CommitName" << "ReplyTo" << "Parameters" << "StartTime" ;
+    for (auto s: d)
+        ob[s] = _callParams[s];
+
 
     if (_state == Finished)
         ob["Result"] = _result;

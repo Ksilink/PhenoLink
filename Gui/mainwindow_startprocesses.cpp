@@ -799,7 +799,7 @@ void MainWindow::startProcessRun()
     startProcessOtherStates(selectedChanns, lsfm, started, tags_map);
 
 
-    QPushButton* s = qobject_cast<QPushButton*>(sender());
+    QPushButton* s = ui->processingArea->findChild<QPushButton*>("ProcessStartButton");
     if (s) s->setDisabled(true);
 
 }

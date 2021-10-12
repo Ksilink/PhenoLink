@@ -229,15 +229,19 @@ void ScrollZone::insertImage(SequenceFileModel* sfm, SequenceInteractor* iactor)
         else
     {
         intr = new SequenceInteractor(sfm, ImageInfos::key("0"));
-    
+
     }
-    
+
     intr->moveToThread(thread());
 
     f->setModelView(sfm, intr);
 
     setupImageFormInteractor(f);
     f->scale(0);
+
+    connect(f, SIGNAL(overlayInfos(QString, QString,int)),
+            _mainwin, SLOT(change_overlay_details(QString, QString, int)));
+
 
     qApp->processEvents();
 }

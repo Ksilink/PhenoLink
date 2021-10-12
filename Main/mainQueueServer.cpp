@@ -241,7 +241,7 @@ int Server::start(quint16 port)
 {
     connect(this, &QHttpServer::newConnection, [this](QHttpConnection*){
         Q_UNUSED(this);
-        printf("a new connection has occured!\n");
+//        printf("a new connection has occured!\n");
     });
 
 
