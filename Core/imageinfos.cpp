@@ -29,18 +29,20 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     int l = QString("%1").arg(channel+1).length();
     pl=pl.left(pl.length()-l);
 
-//        qDebug() << "Searching plate params" << pl;
-//        qDebug() << ob.keys();
+    //        qDebug() << "Searching plate params" << pl;
+    //        qDebug() << ob.keys();
     if (ob.contains(pl))
     {
         auto ar = ob[pl].toArray();
         if (channel <= ar.size())
         {
             auto mima = ar[channel-1].toObject();
-            _ifo._platename_to_colorCode[_plate]._dispMin = mima["min"].toDouble();
-            _ifo._platename_to_colorCode[_plate]._dispMax = mima["max"].toDouble();
+            if (_ifo._platename_to_colorCode[_plate]._dispMin == std::numeric_limits<double>::infinity())
+            {
+                _ifo._platename_to_colorCode[_plate]._dispMin = mima["min"].toDouble();
+                _ifo._platename_to_colorCode[_plate]._dispMax = mima["max"].toDouble();
+            }
         }
-
     }
 
     _ifo._platename_to_infos[_plate].append(this);
@@ -48,6 +50,8 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
 
 ImageInfos::~ImageInfos()
 {
+    if (range_timerId>=0)
+        killTimer(range_timerId);
     _ifo._platename_to_infos[_plate].removeAll(this);
 }
 
@@ -111,7 +115,7 @@ ImageInfos* ImageInfos::getInstance(SequenceInteractor* par, QString fname, QStr
     return ifo;
 }
 
- QMap<QString, ImageInfos*> ImageInfos::getInstances()
+QMap<QString, ImageInfos*> ImageInfos::getInstances()
 {
     QPair<ImageInfosShared*, QMap<QString, ImageInfos*>*> t = instanceHolder();
     return *t.second;
@@ -196,7 +200,7 @@ cv::Mat ImageInfos::image(float scale, bool reload)
                 else if ( v > max) max = v;
             }
 
-//        qDebug() << "Plate is: " << _plate;
+        //        qDebug() << "Plate is: " << _plate;
 
         _ifo._platename_to_colorCode[_plate].min = std::min(min, _ifo._platename_to_colorCode[_plate].min);
         _ifo._platename_to_colorCode[_plate].max = std::max(max, _ifo._platename_to_colorCode[_plate].max);
@@ -376,9 +380,9 @@ void ImageInfos::setColor(QColor c, bool refresh)
     _modified = true;
     //qDebug() << "Setting color" << this << c.toRgb();
 
-//    c.setHsv(c.hsvHue(), c.hsvSaturation(), 255);
+    //    c.setHsv(c.hsvHue(), c.hsvSaturation(), 255);
 
-       qDebug() << "Setting color" << this << c.toRgb();
+    // qDebug() << "Setting color" << this << c.toRgb();
 
     _ifo._platename_to_colorCode[_plate]._r = c.red();
     _ifo._platename_to_colorCode[_plate]._g = c.green();
@@ -578,31 +582,31 @@ void ImageInfos::setDefaultColor(int channel, bool refresh )
         setColor(Qt::magenta, refresh); return;
     }
     if (channel == 7) { setColor(Qt::darkRed, refresh); return;
- }
-        if (channel == 8) {
-            setColor(Qt::darkGreen, refresh); return;
-        }
-     if (channel == 9) {
-         setColor(Qt::darkBlue, refresh); return;
-     }
-        if (channel == 10) {
-            setColor(Qt::darkCyan, refresh); return;
-        }
-        if (channel == 11) {
-            setColor(Qt::darkMagenta, refresh); return;
-        }
-        if (channel == 12) {
-            setColor(Qt::darkYellow, refresh); return;
-        }
-        if (channel == 13) {
-            setColor(Qt::gray, refresh); return;
-        }
-        if (channel == 14) {
-            setColor(Qt::lightGray, refresh); return;
-        }
-        if (channel == 15) {
-            setColor(Qt::darkGray, refresh); return;
-        }
+    }
+    if (channel == 8) {
+        setColor(Qt::darkGreen, refresh); return;
+    }
+    if (channel == 9) {
+        setColor(Qt::darkBlue, refresh); return;
+    }
+    if (channel == 10) {
+        setColor(Qt::darkCyan, refresh); return;
+    }
+    if (channel == 11) {
+        setColor(Qt::darkMagenta, refresh); return;
+    }
+    if (channel == 12) {
+        setColor(Qt::darkYellow, refresh); return;
+    }
+    if (channel == 13) {
+        setColor(Qt::gray, refresh); return;
+    }
+    if (channel == 14) {
+        setColor(Qt::lightGray, refresh); return;
+    }
+    if (channel == 15) {
+        setColor(Qt::darkGray, refresh); return;
+    }
 
     setColor(QColor(255, 255, 255), refresh); // Default to white
 
@@ -629,7 +633,7 @@ void ImageInfos::rangeChanged(double mi, double ma)
 
     if (mi != _ifo._platename_to_colorCode[_plate]._dispMin
             ||
-        ma != _ifo._platename_to_colorCode[_plate]._dispMax)
+            ma != _ifo._platename_to_colorCode[_plate]._dispMax)
     {
         _modified = true;
         _ifo._platename_to_colorCode[_plate]._dispMin = mi;
@@ -661,7 +665,7 @@ void ImageInfos::changeFps(double fps)
 void ImageInfos::rangeMinValueChanged(double mi)
 {
     _modified = true;
-//    qDebug() << "Image infos range min" << this << mi ;
+    //    qDebug() << "Image infos range min" << this << mi ;
     _ifo._platename_to_colorCode[_plate]._dispMin = mi;
 
     Update();
@@ -670,7 +674,7 @@ void ImageInfos::rangeMinValueChanged(double mi)
 void ImageInfos::rangeMaxValueChanged(double ma)
 {
     _modified = true;
-//    qDebug() << "Image infos Range max" << this << ma;
+    //    qDebug() << "Image infos Range max" << this << ma;
     _ifo._platename_to_colorCode[_plate]._dispMax = ma;
 
     Update();
