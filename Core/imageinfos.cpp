@@ -361,7 +361,9 @@ void ImageInfos::propagate()
 
 QList<CoreImage*> ImageInfos::getCoreImages()
 {
-    return _ifo._infos_to_coreimage[this];
+    if (_ifo._infos_to_coreimage.contains(this))
+        return _ifo._infos_to_coreimage[this];
+    return QList<CoreImage*>();
 }
 
 bool ImageInfos::isTime() const
