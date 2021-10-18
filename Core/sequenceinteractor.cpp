@@ -516,7 +516,8 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
             info->setDefaultColor(ii, false);
 
     // Also setup the channel names if needed
-        if (!_mdl->getChannelNames().isEmpty())
+        //qDebug() << " --> DEBUG = " << _mdl->getChannelNames().size()<< _mdl->getChannelNames();
+        if (_mdl->getChannelNames().size()>=ii)
         {
             QString name = _mdl->getChannelNames()[ii-1];
             info->setChannelName(name);

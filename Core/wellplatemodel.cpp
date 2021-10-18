@@ -2679,7 +2679,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
             //            qDebug() << "Data handling object" << data.size();
 
             auto datasizes = payload.value("DataSizes").toArray();
-            int size = 0;
+            uint64 size = 0;
             for (int i = 0; i < datasizes.size(); ++i)
                 size += datasizes.at(i).toInteger();
             if (size == 0 || data.size() != size)

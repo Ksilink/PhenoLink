@@ -712,7 +712,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                         qDebug() << "Got binary data: " << dhash << buf.size() << data.size();
                         mm.insert(QCborValue("BinaryData"), QCborValue(data));
 
-                        exportBinary(ds, obj, mm);
+                        //exportBinary(ds, obj, mm);
 
                     }
                     else
@@ -752,7 +752,7 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
     client->send(QString("/addData/%1").arg(commitname), QString(), data);
 
     QCborArray bin = filterBinary(hash, res);
-    QString temp = QJsonDocument(bin.toJsonArray()).toJson();
+    //QString temp = QJsonDocument(bin.toJsonArray()).toJson();
 
     for (auto b: bin)
     {
