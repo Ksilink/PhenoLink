@@ -2065,6 +2065,7 @@ void MainWindow::rangeChange(double mi, double ma)
 {
 
     SequenceInteractor* inter = _sinteractor.current();
+    if (!inter) return;
 
     foreach(QWidget* wwid, _imageControls[inter->getExperimentName()])
     {

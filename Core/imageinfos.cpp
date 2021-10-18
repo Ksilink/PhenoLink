@@ -125,6 +125,8 @@ QMap<QString, ImageInfos*> ImageInfos::getInstances()
 void ImageInfos::deleteInstance()
 {
 
+//    qDebug() << "Deleting the CoreImage" << this;
+
     _ifo._infos_to_coreimage[this].clear();
     _ifo._infos_to_coreimage.remove(this);
 
@@ -141,6 +143,7 @@ void ImageInfos::deleteInstance()
     }
     _image.release();
     stored.remove(key);
+
 }
 
 

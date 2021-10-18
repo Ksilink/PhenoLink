@@ -359,7 +359,11 @@ QString SequenceInteractor::getExperimentName()
 
 void SequenceInteractor::addImage(CoreImage* ci)
 {
-    this->_ImageList << ci;
+
+//    qDebug() << "Interactor" << this << "Adding image" << ci;
+
+    if (!_ImageList.contains(ci))
+        this->_ImageList << ci;
     //
     QString nm = _mdl->getFile(_timepoint, _field, _zpos, _channel);
 
@@ -374,8 +378,7 @@ void SequenceInteractor::addImage(CoreImage* ci)
 
 void SequenceInteractor::clearMemory(CoreImage* im)
 {
-
-    _ImageList.removeAll(static_cast<CoreImage*>(im));
+    _ImageList.removeAll(im);
 
     QString exp = getExperimentName();// +_mdl->Pos();
 
@@ -387,7 +390,9 @@ void SequenceInteractor::clearMemory(CoreImage* im)
         ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), ii, exists, loadkey);
         info->deleteInstance();
         delete info;
+        _infos.remove(nm);
     }
+
     //    qDebug() << "FIXME: Clear Memory called for SequenceInteractor, but may not be honored";
 }
 
@@ -1330,7 +1335,7 @@ void SequenceInteractor::setOverlayWidth(double v)
     modifiedImage();
 }
 
-QStringList SequenceInteractor::getMetaTags(int idx)
+QStringList SequenceInteractor::getMetaTags(int )
 {
     return QStringList();
 }
