@@ -65,6 +65,7 @@ public:
 
     Screens findPlate(QString plate, QString project);
 
+    void resetSelection();
 
 protected:
 
@@ -196,6 +197,8 @@ private slots:
     void on_addTag_clicked();
 
     void on_delTag_clicked();
+
+    void on_actionPlate_Tag_triggered();
 
 public slots:
 

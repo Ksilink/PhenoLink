@@ -507,6 +507,7 @@ Screens MainWindow::findPlate(QString plate, QString project)
 
 
 
+
 void MainWindow::displayWellSelection()
 {
     if (_scrollArea)

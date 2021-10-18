@@ -2788,6 +2788,18 @@ void MainWindow::on_sync_zstack_toggled(bool arg1)
 }
 
 
+void MainWindow::resetSelection()
+{
+    //
+    foreach(QList<QWidget*> widl, _imageControls.values())
+        foreach(QWidget* wid, widl)
+        {
+            if (wid) wid->hide(); // hide everything
+        }
+
+}
+
+
 
 void MainWindow::on_start_process_triggered()
 {
@@ -2800,4 +2812,10 @@ void MainWindow::on_start_process_triggered()
 
 
 
+
+
+void MainWindow::on_actionPlate_Tag_triggered()
+{
+    // Launch the inner plate tagger
+}
 

@@ -1326,4 +1326,7 @@ void ImageForm::removeFromView()
     this->_pix = QPixmap(); // force empty pixmap, shall clear previous data
     this->pixItem->setPixmap(_pix); // remove links to pixmap in case...
     deleteLater();
+
+//    imageControl
+
 }

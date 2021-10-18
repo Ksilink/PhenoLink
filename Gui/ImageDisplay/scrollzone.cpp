@@ -63,6 +63,9 @@ void ScrollZone::removeSequences(QList<SequenceFileModel *> &lsfm)
         _seq_toImg.remove(sfm);
 
     }
+
+   _mainwin->resetSelection();
+
 }
 
 
@@ -79,6 +82,7 @@ void ScrollZone::removeImageForm(ImageForm* im)
     for (auto s: sfm)
         _seq_toImg.remove(s);
     // qDebug() << "Removing Image Form" << im << sfm;
+    _mainwin->resetSelection();
 }
 
 
