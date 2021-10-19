@@ -707,10 +707,18 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                     {
                         QString dhash = pay["DataHash"].toString();
                         auto buf = CheckoutProcess::handler().detachPayload(dhash);
-                        auto data = QByteArray(reinterpret_cast<const char*>(buf.data()), (int)buf.size());
-                        QString temp = QJsonDocument(ds).toJson();
-                        qDebug() << "Got binary data: " << dhash << buf.size() << data.size();
-                        mm.insert(QCborValue("BinaryData"), QCborValue(data));
+                        QCborArray ar;                        size_t pos = 0;
+                        while (pos < buf.size())
+                        {
+                            static const size_t mlen = 1073741824; // chunk size
+                            size_t end = std::min(mlen, buf.size() - pos);
+                            ar.append(QByteArray(reinterpret_cast<const char*>(&buf.data()[pos]), (int)end));
+                            pos += end;
+                        }
+
+
+                        qDebug() << "Got binary data: " << dhash << buf.size() << ar.size() << pos;
+                        mm.insert(QCborValue("BinaryData"), ar);//QCborValue(data));
 
                         //exportBinary(ds, obj, mm);
 

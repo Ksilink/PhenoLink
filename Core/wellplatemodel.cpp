@@ -2674,14 +2674,25 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
         { //
             auto payload = ar[item].toMap();
 
-            QByteArray data = payload.value(QCborValue("BinaryData")).toByteArray();
-
-            //            qDebug() << "Data handling object" << data.size();
 
             auto datasizes = payload.value("DataSizes").toArray();
-            uint64 size = 0;
+            size_t size = 0;
             for (int i = 0; i < datasizes.size(); ++i)
                 size += datasizes.at(i).toInteger();
+
+            std::vector<unsigned char> data(size);
+
+            auto vdata = payload.value(QCborValue("BinaryData")).toArray();
+
+            size_t pos = 0;
+            for (auto t: vdata)
+            {
+                auto temp = t.toByteArray();
+                for (int i = 0; i < temp.size(); ++i, ++pos)
+                    data[i]=temp.data()[i];
+            }
+
+
             if (size == 0 || data.size() != size)
             {
                 qDebug() << "Error while gathering data (expected" << size << "received" << data.size() << ")";
@@ -2768,13 +2779,24 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
         {
             auto payload = ar[item].toMap();
 
-            QByteArray data = payload.take(QCborValue("BinaryData")).toByteArray();
-
             //            qDebug() << payload.toJsonObject();
             auto datasizes = payload.value("DataSizes").toArray();
-            int size = 0;
+            size_t size = 0;
             for (int i = 0; i < datasizes.size(); ++i)
                 size += datasizes.at(i).toInteger();
+
+            std::vector<unsigned char> data(size);
+
+            auto vdata = payload.value(QCborValue("BinaryData")).toArray();
+
+            size_t pos = 0;
+            for (auto t: vdata)
+            {
+                auto temp = t.toByteArray();
+                for (int i = 0; i < temp.size(); ++i, ++pos)
+                    data[i]=temp.data()[i];
+            }
+
 
             if (size == 0 || data.size() != size)
             {

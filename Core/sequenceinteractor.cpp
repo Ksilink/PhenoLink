@@ -476,14 +476,6 @@ SequenceInteractor* SequenceInteractor::current()
 SequenceInteractor* SequenceInteractor::_current = 0;
 
 
-
-//QPixmap SequenceInteractor::getPixmap(float scale)
-//{
-////  _cachePixmap ;
-
-//  return QPixmap::fromImage(getImage(scale));
-//}
-
 void callImage(ImageInfos* img)
 {
     img->image();
