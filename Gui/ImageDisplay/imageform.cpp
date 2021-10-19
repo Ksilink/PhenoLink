@@ -54,7 +54,7 @@ ImageForm::ImageForm(QWidget *parent, bool packed) :
     if (!ui->graphicsView->scene())
         ui->graphicsView->setScene(new QGraphicsScene(this));
 
-    QGraphicsScene* scene = ui->graphicsView->scene();   
+    QGraphicsScene* scene = ui->graphicsView->scene();
     scene->addItem(pixItem);
     connect(pixItem, SIGNAL(mouseClick(QPointF)), this, SLOT(changeCurrentSelection()));
 
@@ -872,8 +872,10 @@ void ImageForm::imageClick(QPointF pos)
     for(auto item : items)
         if (!item->toolTip().isEmpty())
         {
-            qDebug() << "Found item at: " << pos << items.size();
+          //  qDebug() << "Found item at: " << pos << items.size();
             qDebug() << item->toolTip() << item->data(1) << item->data(2);
+            // how to set this in MainWindow ?
+            emit overlayInfos(item->toolTip(), item->data(1).toString(),item->data(2).toInt());
         }
 }
 
@@ -1315,6 +1317,7 @@ void ImageForm::popImage()
 void ImageForm::removeFromView()
 {
     _interactor->clearMemory(this);
+
     if (sz)
     {
         sz->widget()->layout()->removeWidget(this);
@@ -1324,4 +1327,5 @@ void ImageForm::removeFromView()
     this->_pix = QPixmap(); // force empty pixmap, shall clear previous data
     this->pixItem->setPixmap(_pix); // remove links to pixmap in case...
     deleteLater();
+
 }

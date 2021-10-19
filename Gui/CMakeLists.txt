@@ -5,6 +5,7 @@ add_definitions(-DQHTTP_HAS_CLIENT)
 set(CheckoutGui_SRC
                 mainwindow.cpp mainwindow_wellplate.cpp
                 mainwindow_datatables.cpp mainwindow_startprocesses.cpp
+                mainwindow_overlay.cpp
                 mainwindow.h  mainwindow.ui
                 guiserver.cpp guiserver.h
                 screensmodel.cpp  screensmodel.h

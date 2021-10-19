@@ -229,6 +229,7 @@ private:
 
 
     QJsonObject getMeta(MetaDataHandler& h);
+    QJsonObject getMeta(QStringList& keys, QString prefix);
 
 };
 

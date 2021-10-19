@@ -30,7 +30,7 @@ endif(WIN32)
 set(Checkout_VERSION_MAJOR 1)
 set(Checkout_VERSION_MINOR 9)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 13)
+set(Checkout_VERSION_RELEASE 16)
 
 message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
 
@@ -75,6 +75,9 @@ set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../CheckoutPlugins")
 
 find_package(Arrow REQUIRED)
 include_directories(${ARROW_INCLUDE_DIR})
+
+message(STATUS "Found Arrow: ${ARROW_INCLUDE_DIR} ")
+
 set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_AUTOMOC ON)
@@ -96,10 +99,13 @@ ENDIF(WIN32)
 
 
 find_package(OpenCV REQUIRED )
-
 message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} ${OpenCV_LIBS} ")
 
 include_directories( ${OpenCV_INCLUDE_DIRS})
+
+find_package(libmongocxx  REQUIRED)
+message(STATUS "Found Mongo cxx : ${LIBMONGOCXX_INCLUDE_DIRS} ${LIBMONGOCXX_LIBRARIES}")
+
 
 if(BUILD_WITH_VTK)
     find_package(VTK)

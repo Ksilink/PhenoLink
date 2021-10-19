@@ -111,7 +111,7 @@ void CheckoutHttpClient::sendQueue()
 
 }
 
-void CheckoutHttpClient::timerEvent(QTimerEvent *event)
+void CheckoutHttpClient::timerEvent(QTimerEvent * )
 {
      sendQueue();
 }
@@ -366,6 +366,10 @@ void NetworkProcessHandler::startProcess(CheckoutHttpClient *h, QString process,
 // Large image sets are at risk for the handling of data this may lock the user interface with heavy processing
 QJsonArray ProcessMessageStatusFunctor(CheckoutHost* h, QList<QString > hash, NetworkProcessHandler* owner)
 {
+    Q_UNUSED(h);
+    Q_UNUSED(hash);
+    Q_UNUSED(owner);
+
 #if FIXME_HTTP
     // qDebug()  << "Status Query" << hash.size() << h->address << h->port;
     // First Create the socket
@@ -458,6 +462,9 @@ QJsonArray ProcessMessageStatusFunctor(CheckoutHost* h, QList<QString > hash, Ne
 // the message at threaded approach would be better of handling this network information
 void NetworkProcessHandler::getProcessMessageStatus(QString process, QList<QString > hash)
 {
+    Q_UNUSED(process);
+    Q_UNUSED(hash);
+
 #if FIXME_HTTP
     QSettings set;
     int Server_query_max_hash = set.value("maxRefreshQuery", 2000).toInt();
@@ -578,12 +585,51 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
     res << ob;
     return res;
 }
+/* "Meta": [
+{
+    "CommitName": "",
+        "DataHash" : "6720e3901999886bbbf948ec48683880",
+        "FieldId" : -1,
+        "Pos" : "C03",
+        "TimePos" : 1,
+        "channel" : -1,
+        "zPos" : 1
+}
+    ],
+*/
 
+void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like to serialize this one
+{
+    QString plate = ds["XP"].toString(), commit = ds["CommitName"].toString();
+
+    auto tmp = QJsonDocument(ob.toJsonObject()).toJson();
+    auto tmp2 = QJsonDocument(par).toJson();
+    auto tmp3 = QJsonDocument(ds).toJson();
+
+    if (par.contains(QString("SavePath")) && !par.value("SavePath").toString().isEmpty())
+    {
+        QString pos = par["Meta"].toArray().first().toObject()["Pos"].toString();
+
+        QString path = QString("%1/%2/%3_%4_%5.fth").arg(par.value("SavePath").toString(),
+                                                         commit, plate,
+                                                         par.value("Tag").toString(),
+                                                         pos);
+        qDebug() << "Saving Generated Meta to" << path;
+
+
+
+
+    }
+}
 
 QCborArray filterBinary(QString hash, QJsonObject ds)
 {
+
+    QString tmp = QJsonDocument(ds).toJson();
+
     QCborArray res;
 
+    QString commitName = ds["CommitName"].toString();
 
     if (ds.contains("Data"))
     {
@@ -613,7 +659,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
 
                 QCborMap ob;
                 auto txt = QStringList() << "ContentType" << "ImageType" << "ChannelNames"
-                                         << "Tag";
+                                         << "Tag" ;
                 for (auto s: txt)
                     if (obj.contains(s))
                     {
@@ -640,7 +686,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                             << obj;
                     continue;
                 }
-                qDebug() << "Ready data" << ob.toJsonObject();
+//                qDebug() << "Ready data" << ob.toJsonObject();
                 // Now add Image info:
                 auto ps = obj["Payload"].toArray();
                 QCborArray cbar;
@@ -661,9 +707,21 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                     {
                         QString dhash = pay["DataHash"].toString();
                         auto buf = CheckoutProcess::handler().detachPayload(dhash);
-                        auto data = QByteArray(reinterpret_cast<const char*>(buf.data()), (int)buf.size());
-                        qDebug() << "Got binary data: " << dhash << buf.size() << data.size();
-                        mm.insert(QCborValue("BinaryData"), QCborValue(data));
+                        QCborArray ar;                        size_t pos = 0;
+                        while (pos < buf.size())
+                        {
+                            static const size_t mlen = 1073741824; // chunk size
+                            size_t end = std::min(mlen, buf.size() - pos);
+                            ar.append(QByteArray(reinterpret_cast<const char*>(&buf.data()[pos]), (int)end));
+                            pos += end;
+                        }
+
+
+                        qDebug() << "Got binary data: " << dhash << buf.size() << ar.size() << pos;
+                        mm.insert(QCborValue("BinaryData"), ar);//QCborValue(data));
+
+                        //exportBinary(ds, obj, mm);
+
                     }
                     else
                     {
@@ -683,6 +741,8 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
 }
 
 
+
+
 void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
 {
     QString address=res["ReplyTo"].toString();
@@ -699,15 +759,13 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
    // qDebug() << "Sending dataset" << data;
     client->send(QString("/addData/%1").arg(commitname), QString(), data);
 
-
-
     QCborArray bin = filterBinary(hash, res);
+    //QString temp = QJsonDocument(bin.toJsonArray()).toJson();
+
     for (auto b: bin)
     {
         client->send(QString("/addImage/"), QString(), b.toCbor());
     }
-
-
 }
 
 void NetworkProcessHandler::removeHash(QString hash)

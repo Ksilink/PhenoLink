@@ -359,7 +359,11 @@ QString SequenceInteractor::getExperimentName()
 
 void SequenceInteractor::addImage(CoreImage* ci)
 {
-    this->_ImageList << ci;
+
+//    qDebug() << "Interactor" << this << "Adding image" << ci;
+
+    if (!_ImageList.contains(ci))
+        this->_ImageList << ci;
     //
     QString nm = _mdl->getFile(_timepoint, _field, _zpos, _channel);
 
@@ -374,8 +378,7 @@ void SequenceInteractor::addImage(CoreImage* ci)
 
 void SequenceInteractor::clearMemory(CoreImage* im)
 {
-
-    _ImageList.removeAll(static_cast<CoreImage*>(im));
+    _ImageList.removeAll(im);
 
     QString exp = getExperimentName();// +_mdl->Pos();
 
@@ -387,7 +390,9 @@ void SequenceInteractor::clearMemory(CoreImage* im)
         ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), ii, exists, loadkey);
         info->deleteInstance();
         delete info;
+        _infos.remove(nm);
     }
+
     //    qDebug() << "FIXME: Clear Memory called for SequenceInteractor, but may not be honored";
 }
 
@@ -471,14 +476,6 @@ SequenceInteractor* SequenceInteractor::current()
 SequenceInteractor* SequenceInteractor::_current = 0;
 
 
-
-//QPixmap SequenceInteractor::getPixmap(float scale)
-//{
-////  _cachePixmap ;
-
-//  return QPixmap::fromImage(getImage(scale));
-//}
-
 void callImage(ImageInfos* img)
 {
     img->image();
@@ -516,7 +513,8 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
             info->setDefaultColor(ii, false);
 
     // Also setup the channel names if needed
-        if (!_mdl->getChannelNames().isEmpty())
+        //qDebug() << " --> DEBUG = " << _mdl->getChannelNames().size()<< _mdl->getChannelNames();
+        if (_mdl->getChannelNames().size()>=ii)
         {
             QString name = _mdl->getChannelNames()[ii-1];
             info->setChannelName(name);
@@ -1327,6 +1325,11 @@ void SequenceInteractor::setOverlayWidth(double v)
 {
     _overlay_width = v;
     modifiedImage();
+}
+
+QStringList SequenceInteractor::getMetaTags(int )
+{
+    return QStringList();
 }
 
 

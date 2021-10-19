@@ -102,6 +102,9 @@ public:
     void initImageInfos(int field);
 
     QSet<int> getChannelsIds();
+    QStringList getMetaTags(int idx);
+    void addMetaTags(int idx);
+
 public slots:
 
     void setTimePoint(unsigned t);

@@ -86,6 +86,7 @@
 #include <guiserver.h>
 
 #include <QColorDialog>
+#include <QShortcut>
 
 DllGuiExport QFile _logFile;
 
@@ -117,6 +118,8 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
 
     ui->dockImageControl->hide();
     ui->dockExperimentControl->hide();
+
+    tabifyDockWidget(ui->dockWidget, ui->dockWidget_3);
 
 
     QSettings q;
@@ -247,6 +250,18 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     //QProgressBar
     //    _progress = new QWinTaskbarProgress(this);
     //    _progress->setVisible(true);
+
+    ui->overlayInfos->hide();
+    connect(ui->pickOverlay, SIGNAL(currentTextChanged(const QString &)), this, SLOT(overlay_selection(const QString&)));
+
+    shrt_startR = new QShortcut(this);
+    shrt_startR->setKey(Qt::CTRL + Qt::Key_Return);
+    connect(shrt_startR, SIGNAL(activated()), this, SLOT(startProcess()));
+
+    shrt_startEnt = new QShortcut(this);
+    shrt_startEnt->setKey(Qt::CTRL + Qt::Key_Enter);
+    connect(shrt_startEnt, SIGNAL(activated()), this, SLOT(startProcess()));
+
 
 
 }
@@ -726,8 +741,12 @@ void MainWindow::updateCurrentSelection()
     std::list<int> chList(_channelsIds.begin(), _channelsIds.end());
     //std::sort(chList.begin(), chList.end()); // sort channel number
     chList.sort();
+
+    for (auto s: shrt_binarize) delete s;
+    shrt_binarize.clear();
+    int lastPal = 0;
+
     for (auto trueChan : chList)
-//    for (unsigned i = 0; i < channels; ++i)
     {
         ImageInfos* fo = inter->getChannelImageInfos(trueChan);
 
@@ -736,11 +755,11 @@ void MainWindow::updateCurrentSelection()
         if (Q_UNLIKELY(!fo))        return;
 
         int ncolors = fo->getMax() - fo->getMin();
-        int lastPal = 0;
+
 
         if (fo->getMin() >= 0 && fo->getMax() - fo->getMin() < 16)
         {
-            bvl->addWidget(setupActiveBox(new QCheckBox(wwid), fo, i), i, 0);
+            bvl->addWidget(setupActiveBox(new QCheckBox(wwid), fo, trueChan), i, 0);
             auto tw = new QWidget(wwid);
             tw->setLayout(new QHBoxLayout());
 
@@ -771,6 +790,14 @@ void MainWindow::updateCurrentSelection()
             bvl->addWidget(RangeWidgetSetup(new ctkDoubleRangeSlider(Qt::Horizontal, wwid), fo, trueChan), i, 2);
             bvl->addWidget(setupMinMaxRanges(new QDoubleSpinBox(wwid), fo, QString("vMax%1").arg(trueChan), false), i, 3);
             bvl->addWidget(colorWidgetSetup(new ctkColorPickerButton(wwid), fo, trueChan), i, 4);
+
+            shrt_binarize.append(new QShortcut(this));
+            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, Qt::Key_0+i));
+            shrt_binarize.last()->setObjectName(QString("%1").arg(trueChan));
+            connect(shrt_binarize.last(), &QShortcut::activated, this, [this](){
+                int trueChan = this->sender()->objectName().toInt();
+                this->_sinteractor.current()->getChannelImageInfos(trueChan)->toggleBinarized();
+            });
         }
 
 
@@ -814,8 +841,14 @@ void MainWindow::updateCurrentSelection()
 
         QStringList overlays = inter->getMetaList();
         int itms = 3;
-        for (auto ov : overlays)
+
+        ui->pickOverlay->clear();
+        ui->pickOverlay->insertItems(0, overlays);
+
+
+        for (auto & ov : overlays)
         {
+            if (ui->overlayInfos->isHidden()) ui->overlayInfos->show();
             bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), ov, fo), itms, 0);
             bvl->addWidget(new QLabel(ov, wwid), itms, 1);
             bvl->addWidget(setupTilePosition(new QSpinBox(wwid), ov, fo), itms, 2);
@@ -1294,6 +1327,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
     if (wid == nullptr)
         qDebug() << "Not handled" << par;
 
+
     return wid;
 }
 
@@ -1667,21 +1701,22 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                     show=false;
             }
 
-            if (show)
-            {
+            if (par.contains("hidden") && par["hidden"].toBool())
+                  show = false;
+
+
+
                 wid->setAttribute(Qt::WA_DeleteOnClose, true);
                 wid->setObjectName(par["Tag"].toString());
                 //            qDebug() << par["Tag"].toString();
-                if (par["PerChannelParameter"].toBool())
+                if (par["PerChannelParameter"].toBool() || !show)
                     lay->addRow(wid);
                 else
                     lay->addRow(par["Tag"].toString(), wid);
                 wid->setToolTip(par["Comment"].toString());
-            }
-            else
-            {
-                delete wid;
-            }
+
+                if (!show) wid->hide();
+
         }
     }
 
@@ -1843,9 +1878,18 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
     layo->addRow(_typeOfprocessing);
     //    layo->addRow(_shareTags);
-    layo->addRow("Commit Name:", _commitName);
+
+    if (_preparedProcess.endsWith("Generate BirdView"))
+    {
+        _commitName->setText("BirdView");
+        layo->addRow(_commitName);
+        _commitName->hide();
+    }
+    else
+        layo->addRow("Commit Name:", _commitName);
 
     QPushButton* button = new QPushButton("Start");
+    button->setObjectName("ProcessStartButton");
     connect(button, SIGNAL(pressed()), this, SLOT(startProcess()));
     layo->addRow(button);
 }
@@ -2021,6 +2065,7 @@ void MainWindow::rangeChange(double mi, double ma)
 {
 
     SequenceInteractor* inter = _sinteractor.current();
+    if (!inter) return;
 
     foreach(QWidget* wwid, _imageControls[inter->getExperimentName()])
     {
@@ -2743,4 +2788,35 @@ void MainWindow::on_sync_zstack_toggled(bool arg1)
     set.setValue("SyncZstack", arg1);
 }
 
+
+void MainWindow::resetSelection()
+{
+    //
+    foreach(QList<QWidget*> widl, _imageControls.values())
+        foreach(QWidget* wid, widl)
+        {
+            if (wid) wid->hide(); // hide everything
+        }
+
+}
+
+
+
+void MainWindow::on_start_process_triggered()
+{
+    // Ctrl + Enter
+    startProcess();
+}
+
+
+
+
+
+
+
+
+void MainWindow::on_actionPlate_Tag_triggered()
+{
+    // Launch the inner plate tagger
+}
 

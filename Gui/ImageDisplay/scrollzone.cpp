@@ -63,6 +63,9 @@ void ScrollZone::removeSequences(QList<SequenceFileModel *> &lsfm)
         _seq_toImg.remove(sfm);
 
     }
+
+   _mainwin->resetSelection();
+
 }
 
 
@@ -79,6 +82,7 @@ void ScrollZone::removeImageForm(ImageForm* im)
     for (auto s: sfm)
         _seq_toImg.remove(s);
     // qDebug() << "Removing Image Form" << im << sfm;
+    _mainwin->resetSelection();
 }
 
 
@@ -229,15 +233,19 @@ void ScrollZone::insertImage(SequenceFileModel* sfm, SequenceInteractor* iactor)
         else
     {
         intr = new SequenceInteractor(sfm, ImageInfos::key("0"));
-    
+
     }
-    
+
     intr->moveToThread(thread());
 
     f->setModelView(sfm, intr);
 
     setupImageFormInteractor(f);
     f->scale(0);
+
+    connect(f, SIGNAL(overlayInfos(QString, QString,int)),
+            _mainwin, SLOT(change_overlay_details(QString, QString, int)));
+
 
     qApp->processEvents();
 }

@@ -241,7 +241,7 @@ int Server::start(quint16 port)
 {
     connect(this, &QHttpServer::newConnection, [this](QHttpConnection*){
         Q_UNUSED(this);
-        printf("a new connection has occured!\n");
+//        printf("a new connection has occured!\n");
     });
 
 
@@ -367,10 +367,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     const QByteArray data = req->collectedData();
     QString urlpath = req->url().path(), query = req->url().query();
 
-    qDebug() << qhttp::Stringify::toString(req->method())
-             << qPrintable(urlpath)
-             << qPrintable(query)
-             << data.size();
 
     CheckoutProcess& procs = CheckoutProcess::handler();
 
@@ -404,6 +400,12 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         HTMLstatus(res);
         return;
     }
+
+    qDebug() << qhttp::Stringify::toString(req->method())
+             << qPrintable(urlpath)
+             << qPrintable(query)
+             << data.size();
+
 
     if (urlpath.startsWith("/Ready")) // Server is ready /Ready/{port}
     {

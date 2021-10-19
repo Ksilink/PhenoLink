@@ -128,6 +128,7 @@ cv::Mat ImageContainer::getImage(size_t i)
 }
 
 
+
 void ImageContainer::setCount(size_t s)
 {
     images = std::vector<cv::Mat>(s);
@@ -197,16 +198,35 @@ void StackedImage::loadFromJSON(QJsonObject data)
     //        qDebug() << "LoadFromJSON not implemented for StackedImage";
 }
 
-cv::Mat StackedImage::getImage(size_t i)
+cv::Mat StackedImage::getImage(size_t i, int chann)
 {
     if (_loaded) return (*this)[i];
+
+    if (!images.empty())
+    {
+        if (chann < 0 || images[i].depth() == 1)
+            return images[i];
+        else
+        {
+            cv::Mat spl;
+            cv::extractChannel(images[i], spl, chann);
+            return spl;
+        }        
+    }
+
 
     QJsonArray times =    _data["Data"].toArray();
     QJsonObject ob = times.at((int)i).toObject();
     QJsonArray chans = ob["Data"].toArray();
 
-    return loadImage(chans);
+    return loadImage(chans, chann);
 }
+
+size_t StackedImage::getChannelCount()
+{
+    return _data["Data"].toArray().first().toObject()["Data"].toArray().size();
+}
+
 
 QString StackedImage::basePath(QJsonObject data)
 {
@@ -429,6 +449,17 @@ QString StackedImageXP::basePath(QJsonObject data)
 
 }
 
+
+ size_t StackedImageXP::getChannelCount()
+{
+     QJsonArray stack = _data["Data"].toArray();
+     QJsonObject ob = stack.at((int)0).toObject();
+     StackedImage im;
+     im.storeJson(ob);
+     return im.getChannelCount();
+}
+
+
 void StackedImageXP::storeJson(QJsonObject json)
 {
     _data = json;
@@ -441,9 +472,10 @@ StackedImage StackedImageXP::getImage(size_t i)
     QJsonArray stack =    _data["Data"].toArray();
     QJsonObject ob = stack.at((int)i).toObject();
     StackedImage im;
-    im.loadFromJSON(ob);
+    im.storeJson(ob);
     return im;
 }
+
 
 void StackedImageXP::deallocate()
 {

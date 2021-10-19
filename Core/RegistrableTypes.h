@@ -18,7 +18,8 @@ public:
 
 
     RegistrableParent():  _position(-1), _wasSet(false), _level(Basic), _isProduct(false),
-        _isOptional(false), _isFinished(false), _isPerChannel(false),_isSync(false), _keepInMem(false), _optionalDefault(false), _duped(false)
+        _isOptional(false), _isFinished(false), _isPerChannel(false),_isSync(false),
+        _keepInMem(false), _optionalDefault(false), _duped(false), _hidden(false)
     {
     }
 
@@ -77,6 +78,9 @@ public:
         if (json.contains("PerChannelParameter"))
             _isPerChannel  = json["PerChannelParameter"].toBool();
 
+        if (json.contains("hidden"))
+            _hidden = json["hidden"].toBool();
+
         //        _tag = json["Tag"].toString();
         //        _comment = json["Comment"].toString();
         //        _position = json["Position"].toInt();
@@ -120,9 +124,18 @@ public:
             json["enableIf"] = en;
         }
 
+        if (_hidden)
+        {
+            json["hidden"] = true;
+        }
+        if (!_path.isEmpty())
+            json["SavePath"] = _path;
 
-        json["isOptional"] = _isOptional;
-        json["optionalState"] = _optionalDefault;
+        if (_isOptional)
+        {
+            json["isOptional"] = _isOptional;
+            json["optionalState"] = _optionalDefault;
+        }
 
         if (!_group.isEmpty())
         {
@@ -182,6 +195,18 @@ public:
         return *this;
     }
 
+    Self& isHidden(bool val = true)
+    {
+        _hidden = val;
+        return *this;
+    }
+
+    Self& setPath(QString p)
+    {
+        _path = p;
+        return *this;
+    }
+
     //    virtual void clone()  = 0;
     virtual RegistrableParent* dup() = 0;
     void setHash(QString s) {_hash = s; /*qDebug() << "Data Hash" << _tag << _hash; */}
@@ -195,6 +220,10 @@ public:
     void attachPayload(std::vector<unsigned char> arr, size_t pos = 0) const;
     void attachPayload(QString hash, std::vector<unsigned char> arr, size_t pos = 0) const;
 
+    QString getPath()
+    {
+        return _path;
+    }
 
 
 protected:
@@ -210,6 +239,8 @@ protected:
     QString _group;
     bool _keepInMem;
     bool _duped;
+    bool _hidden;
+    QString _path;
 
 };
 
