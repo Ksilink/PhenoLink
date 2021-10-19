@@ -163,6 +163,7 @@ private:
     //  static ImageForm* _selectedForm;
     bool isRunning, fromButton;
     int timer_id;
+    bool removing;
 
     //  static SequenceInteractor* _current_interactor;
     Q_DISABLE_COPY(ImageForm);

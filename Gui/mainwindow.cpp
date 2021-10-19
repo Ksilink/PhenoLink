@@ -2800,23 +2800,34 @@ void MainWindow::resetSelection()
 
 }
 
-
-
 void MainWindow::on_start_process_triggered()
 {
     // Ctrl + Enter
     startProcess();
 }
 
-
-
-
-
-
-
-
 void MainWindow::on_actionPlate_Tag_triggered()
 {
     // Launch the inner plate tagger
 }
+
+
+void MainWindow::graySelection()
+{
+    foreach(QList<QWidget*> widl, _imageControls.values())
+        foreach(QWidget* wid, widl)
+        {
+            if (wid) wid->setDisabled(true); // hide everything
+        }
+}
+
+void MainWindow::ungraySelection()
+{
+    foreach(QList<QWidget*> widl, _imageControls.values())
+        foreach(QWidget* wid, widl)
+        {
+            if (wid) wid->setDisabled(false); // hide everything
+        }
+}
+
 

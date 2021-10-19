@@ -66,6 +66,8 @@ public:
     Screens findPlate(QString plate, QString project);
 
     void resetSelection();
+    void graySelection();
+    void ungraySelection();
 
 protected:
 
@@ -126,6 +128,7 @@ protected:
 
     void conditionChanged(QWidget* sen, int val);
     void closeEvent(QCloseEvent *ev);
+
 
 
 private slots:

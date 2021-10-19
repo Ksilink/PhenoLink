@@ -13,6 +13,7 @@
 
 
 QMutex sequence_interactorMutex(QMutex::NonRecursive);
+QMutex lock_infos(QMutex::NonRecursive);
 
 SequenceInteractor::SequenceInteractor() :
     _mdl(0),
@@ -360,7 +361,7 @@ QString SequenceInteractor::getExperimentName()
 void SequenceInteractor::addImage(CoreImage* ci)
 {
 
-//    qDebug() << "Interactor" << this << "Adding image" << ci;
+    //    qDebug() << "Interactor" << this << "Adding image" << ci;
 
     if (!_ImageList.contains(ci))
         this->_ImageList << ci;
@@ -378,6 +379,7 @@ void SequenceInteractor::addImage(CoreImage* ci)
 
 void SequenceInteractor::clearMemory(CoreImage* im)
 {
+    lock_infos.lock();
     _ImageList.removeAll(im);
 
     QString exp = getExperimentName();// +_mdl->Pos();
@@ -392,13 +394,14 @@ void SequenceInteractor::clearMemory(CoreImage* im)
         delete info;
         _infos.remove(nm);
     }
-
+    lock_infos.unlock();
     //    qDebug() << "FIXME: Clear Memory called for SequenceInteractor, but may not be honored";
 }
 
 
 void SequenceInteractor::modifiedImage()
 {
+   // lock_infos.lock();
     //    qDebug() << "Interactor Modified Image";
     foreach(CoreImage * ci, _ImageList)
     {
@@ -411,6 +414,7 @@ void SequenceInteractor::modifiedImage()
     {
         ci->modifiedImage();
     }
+   // lock_infos.unlock();
 }
 
 QPointF SequenceInteractor::getFieldPosition(int field)
@@ -425,20 +429,12 @@ QPointF SequenceInteractor::getFieldPosition(int field)
 
 ImageInfos* SequenceInteractor::getChannelImageInfos(unsigned channel)
 {
-    //  if (!_mdl->hasChannel(_timepoint, _field, _zpos, channel))
-    //    return getChannelImageInfos(channel+1);
 
     QString nm = _mdl->getFile(_timepoint, _field, _zpos, channel);
 
-    //  qDebug() << "Channel Image infos" << nm;
-    //if (!_infos.contains(nm))
-    //    _infos[nm] =
-
     ImageInfos* res = imageInfos(nm, channel, loadkey);
 
-    //   qDebug() << "Channel info" << res << channel;
     return res;
-    //return _infos[nm];
 }
 
 
@@ -482,8 +478,6 @@ void callImage(ImageInfos* img)
 }
 
 
-QMutex lock_infos(QMutex::NonRecursive);
-
 ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString key)
 {
     // FIXME: Change image infos key : use XP / Workbench / deposit group
@@ -501,7 +495,9 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
 
         bool exists = false;
         info = ImageInfos::getInstance(this, file, exp + QString("%1").arg(ii), ii, exists, key);
+
         _infos[file] = info;
+
         if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
         {
             QColor col;
@@ -512,7 +508,7 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
         else
             info->setDefaultColor(ii, false);
 
-    // Also setup the channel names if needed
+        // Also setup the channel names if needed
         //qDebug() << " --> DEBUG = " << _mdl->getChannelNames().size()<< _mdl->getChannelNames();
         if (_mdl->getChannelNames().size()>=ii)
         {
@@ -696,13 +692,13 @@ void SequenceInteractor::refinePacking()
     };
 
     QList< std::tuple<int, double, QPoint> > res
-        = QtConcurrent::blockingMapped(data_mapping, Mapping()); //apply the mapping
+            = QtConcurrent::blockingMapped(data_mapping, Mapping()); //apply the mapping
 
-//    for (auto d : data_mapping)
-//    {
-//        Mapping m;
-//        res.append(m(d));
-//    }
+    //    for (auto d : data_mapping)
+    //    {
+    //        Mapping m;
+    //        res.append(m(d));
+    //    }
 
 
     QMap<int, QPair<double, QPoint> > proj;
@@ -898,8 +894,8 @@ void paletizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
             const unsigned short v = *p;
             if (v != 0 && state[v]) // FIXME Need to fuse the image data and not clear it....
                 pix[j] = qRgb(std::min(255, qRed(pix[j]) + pa[(v + lastPal) % 16].red()),
-                              std::min(255, qGreen(pix[j]) + pa[(v + lastPal) % 16].green()),
-                              std::min(255, qBlue(pix[j]) + pa[(v + lastPal) % 16].blue()));
+                        std::min(255, qGreen(pix[j]) + pa[(v + lastPal) % 16].green()),
+                        std::min(255, qBlue(pix[j]) + pa[(v + lastPal) % 16].blue()));
             else pix[j] = qRgb(std::min(255, qRed(pix[j]) + 0),
                                std::min(255, qGreen(pix[j]) + 0),
                                std::min(255, qBlue(pix[j]) + 0));
@@ -912,7 +908,7 @@ template <bool Saturate, bool Inverted>
 void colorizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, int cols, bool binarize)
 {
     const float mi = imifo->getDispMin(),
-        ma = imifo->getDispMax();
+            ma = imifo->getDispMax();
     const int R = imifo->Red();
     const int G = imifo->Green();
     const int B = imifo->Blue();
@@ -947,7 +943,7 @@ void colorizeImageUnbias(ImageInfos* imifo, cv::Mat& image, cv::Mat& bias, QImag
         colorizeImage<Saturate, Inverted>(imifo, image, toPix, rows, cols, binarize);
 
     const float mi = imifo->getDispMin(),
-        ma = imifo->getDispMax();
+            ma = imifo->getDispMax();
     const int R = imifo->Red();
     const int G = imifo->Green();
     const int B = imifo->Blue();
@@ -1020,7 +1016,7 @@ void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
 
     // Should get the colormap
     const float mi = imifo->getDispMin(),
-        ma = imifo->getDispMax();
+            ma = imifo->getDispMax();
     using namespace colormap;
 
     if (imifo->colormap() == "random")
@@ -1051,8 +1047,8 @@ void colorMapImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
 
             auto colo = pal(f);
             pix[j] = qRgb(std::min(255.f, qRed(pix[j]) + (float)colo[0]),
-                          std::min(255.f, qGreen(pix[j]) + (float)colo[1]),
-                          std::min(255.f, qBlue(pix[j]) + (float)colo[2]));
+                    std::min(255.f, qGreen(pix[j]) + (float)colo[1]),
+                    std::min(255.f, qBlue(pix[j]) + (float)colo[2]));
         }
     }
 }
@@ -1436,9 +1432,9 @@ void drawItem(cv::Mat& feat, QStringList lcols, QString name, QList<int> feats,
     if (d.r < feat.rows)
     {
         float x = feat.at<float>(d.r, d.t),
-            y = feat.at<float>(d.r, d.l),
-            width = feat.at<float>(d.r, d.w),
-            height = feat.at<float>(d.r, d.h);
+                y = feat.at<float>(d.r, d.l),
+                width = feat.at<float>(d.r, d.w),
+                height = feat.at<float>(d.r, d.h);
         QString tip = QString("Id: %1\r\n").arg(d.r);
         for (auto p : feats)
         {
@@ -1504,7 +1500,7 @@ QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
         int tile_id = disp_overlay["Tile"].second;
 
         int rx = set.value("TileSizeX", 256).toInt() / 2,
-            ry = set.value("TileSizeX", 216).toInt() / 2;
+                ry = set.value("TileSizeX", 216).toInt() / 2;
 
 
         auto item = new QGraphicsRectItem(parent);
@@ -1514,7 +1510,7 @@ QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
         float y = ry * rint(l / 19);
 
         float  width = rx * 2,
-            height = ry * 2;
+                height = ry * 2;
 
         item->setBrush(QBrush());
         item->setRect(QRectF(x, y, width, height));
