@@ -610,13 +610,29 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
     {
         QString pos = par["Meta"].toArray().first().toObject()["Pos"].toString();
 
-        QString path = QString("%1/%2/%3_%4_%5.fth").arg(par.value("SavePath").toString(),
+        QString tofile = QString("%1/%2/%3_%4_%5.fth").arg(par.value("SavePath").toString(),
                                                          commit, plate,
                                                          par.value("Tag").toString(),
                                                          pos);
-        qDebug() << "Saving Generated Meta to" << path;
+        qDebug() << "Saving Generated Meta to" << tofile;
 
 
+//        cv::Mat feat;// = k.content();
+//        QFile of(tofile);
+//        if (of.open(QIODevice::WriteOnly | QIODevice::Text))
+//        {
+//            QTextStream str(&of);
+//            str << cols << "\r\n";
+//            for (int r = 0; r < feat.rows; ++r)
+//            {
+//                for (int c = 0; c < feat.cols; ++c)
+//                {
+//                    if (c != 0) str << ',';
+//                    str << feat.at<float>(r, c);
+//                }
+//                str << "\r\n";
+//            }
+//        }
 
 
     }

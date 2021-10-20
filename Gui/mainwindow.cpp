@@ -792,12 +792,22 @@ void MainWindow::updateCurrentSelection()
             bvl->addWidget(colorWidgetSetup(new ctkColorPickerButton(wwid), fo, trueChan), i, 4);
 
             shrt_binarize.append(new QShortcut(this));
-            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, Qt::Key_0+i));
+            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, (Qt::Key_0+i) + Qt::KeypadModifier));
             shrt_binarize.last()->setObjectName(QString("%1").arg(trueChan));
             connect(shrt_binarize.last(), &QShortcut::activated, this, [this](){
                 int trueChan = this->sender()->objectName().toInt();
                 this->_sinteractor.current()->getChannelImageInfos(trueChan)->toggleBinarized();
             });
+            shrt_binarize.append(new QShortcut(this));
+            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, (Qt::Key_0+i) ));
+            shrt_binarize.last()->setObjectName(QString("%1").arg(trueChan));
+            connect(shrt_binarize.last(), &QShortcut::activated, this, [this](){
+                int trueChan = this->sender()->objectName().toInt();
+                this->_sinteractor.current()->getChannelImageInfos(trueChan)->toggleBinarized();
+            });
+
+
+
         }
 
 
