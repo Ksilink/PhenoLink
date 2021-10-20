@@ -628,30 +628,31 @@ void ExperimentFileModel::reloadDatabaseDataCSV(QString file, QString t, bool ag
     QTextStream in(&files);
     QString line = in.readLine();
     QStringList header = line.split(",");
+    int well = header.indexOf("Well");
 
     while (!in.atEnd()) {
         line = in.readLine();
         QStringList vals = line.split(",");
 
-        QPoint pos = ExperimentDataTableModel::stringToPos(vals.at(1));
+        QPoint pos = ExperimentDataTableModel::stringToPos(vals.at(well));
 
         if (aggregat)
         {
-            QStringList tags = vals.at(2).split(";");
+            //QStringList tags = vals.at(header.indexOf("tags").split(";");
 
-            for (int i = 3; i < vals.size(); ++i)
-            {
-                double d = vals.at(i).toDouble();
-                data->addData(header.at(i), 0, 0, 0, 0, pos, d);
-            }
+            //for (int i = 3; i < vals.size(); ++i)
+            //{
+            //    double d = vals.at(i).toDouble();
+            //    data->addData(header.at(i), 0, 0, 0, 0, pos, d);
+            //}
         }
         else
         {
-            int field = vals.at(2).toInt();
-            int stackZ = vals.at(3).toInt();
-            int time = vals.at(4).toInt();
-            int chan = vals.at(5).toInt();
-            QStringList tags = vals.at(6).split(";");
+            int field = vals.at(header.indexOf("fieldId")).toInt();
+            int stackZ = vals.at(header.indexOf("sliceId")).toInt();
+            int time = vals.at(header.indexOf("timepoint")).toInt();
+            int chan = vals.at(header.indexOf("channel")).toInt();
+            QStringList tags = vals.at(header.indexOf("tags")).split(";");
 
             for (int i = 7; i < vals.size(); ++i)
             {
@@ -3039,8 +3040,9 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
         saveTimer = startTimer(seconds(30));
     }
 
+    if (x <= 0 || y <= 0)
+        qDebug() << "add Data" << XP << field << stackZ << time << chan << x << y;
 
-    //  qDebug() << "add Data" << XP << field << stackZ << time << chan << x << y;
     static quint64 MaxY = 50, MaxChan = 30, MaxTime = 1000, MaxField = 100, MaxZ = 1000;
     DataHolder h;
     bool newCol = false;

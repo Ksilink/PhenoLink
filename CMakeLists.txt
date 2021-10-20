@@ -141,14 +141,6 @@ if(BUILD_PYTHON_SCRIPTING)
 
 endif(BUILD_PYTHON_SCRIPTING)
 
-#find_package(Git REQUIRED)
-
-#if(GIT_FOUND)
-#    GIT_WC_INFO(${PROJECT_SOURCE_DIR} Checkout)
-#    message("Current revision is  ${Checkout_WC_REVISION_HASH}")
-#endif()
-
-#DEFINE_SYMBOL()
 
 set(CheckoutCore_lib_path ${OpenCV_LIB_DIR} )
 link_directories(${OpenCV_LIB_DIR})
