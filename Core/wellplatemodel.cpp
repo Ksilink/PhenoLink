@@ -2690,7 +2690,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
             {
                 auto temp = t.toByteArray();
                 for (int i = 0; i < temp.size(); ++i, ++pos)
-                    data[i]=temp.data()[i];
+                    data[pos]=temp.data()[i];
             }
 
 
