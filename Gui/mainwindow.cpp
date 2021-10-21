@@ -2682,6 +2682,8 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
         auto mm = menu.addMenu("Load && Display");
         mm->addAction("first well", this, SLOT(loadPlateFirst()));
         mm->addAction("3 wells", this, SLOT(loadPlateDisplay3()));
+        mm->addAction("Sample from tags", this, SLOT(loadPlateDisplaySample()));
+
         menu.addSeparator();
         menu.addAction("export for CP", this, SLOT(exportToCellProfiler()));
         menu.addSeparator();

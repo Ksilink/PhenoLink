@@ -26,6 +26,9 @@ add_library(CheckoutCore SHARED
             )
 
 include_directories(${ARROW_INCLUDE_DIR})
+if (MSVC)
+    target_compile_options(CheckoutCore PRIVATE /WX)
+endif()
 
 target_include_directories(CheckoutCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

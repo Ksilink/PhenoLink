@@ -1316,6 +1316,9 @@ void ImageForm::popImage()
 
 void ImageForm::removeFromView()
 {
+    blockSignals(true);
+    this->pixItem->blockSignals(true);
+
     removing = true;
     _interactor->clearMemory(this);
 
