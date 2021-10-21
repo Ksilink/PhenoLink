@@ -7,6 +7,9 @@ SET(SrvRCFILE "../Gui/SrvIcon.rc" "../Gui/rcs.qrc")
 
 
 add_executable(Checkout ${GUI_TYPE} main.cpp ${AppRCFILE} )
+if (MSVC)
+    target_compile_options(Checkout PRIVATE /WX)
+endif()
 
 target_include_directories(Checkout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

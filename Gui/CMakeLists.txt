@@ -81,6 +81,9 @@ QT5_WRAP_UI(mainwindow.ui ctkWidgets/ctkPathListButtonsWidget.ui)
 #    )
 
 target_include_directories(CheckoutGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if (MSVC)
+    target_compile_options(CheckoutGui PRIVATE /WX)
+endif()
 
 
 IF(WIN32)
