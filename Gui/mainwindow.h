@@ -33,6 +33,7 @@ class ctkPopupWidget;
 class CheckoutCorePythonInterface;
 class QWinTaskbarProgress;
 class QCloseEvent;
+class QShortcut;
 
 #include "experimentworkbenchcontrol.h"
 
