@@ -42,7 +42,7 @@ ImageForm::ImageForm(QWidget *parent, bool packed) :
     video_status(VideoStop),
     packed(packed),wasPacked(true), bias_correction(false),
     sz(0),
-    ui(new Ui::ImageForm), aspectRatio(0.0), currentScale(1.0f),  isRunning(false)
+    ui(new Ui::ImageForm), aspectRatio(0.0), currentScale(1.0f),  isRunning(false), removing(false)
 {
     ui->setupUi(this);
     // Set scrollbar to disabled to avoid the interpretation of wheel events
@@ -253,7 +253,7 @@ struct GetPixmap
 void ImageForm::redrawPixmap()
 {
     //qDebug() << "Redraw Pixmap started";
-    if (!isRunning)
+    if (!isRunning && !removing)
     {
         //qDebug() << "Redraw Pixmap running";
         isRunning = true;
@@ -1316,7 +1316,12 @@ void ImageForm::popImage()
 
 void ImageForm::removeFromView()
 {
+    blockSignals(true);
+    this->pixItem->blockSignals(true);
+
+    removing = true;
     _interactor->clearMemory(this);
+
 
     if (sz)
     {

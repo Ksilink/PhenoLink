@@ -27,10 +27,10 @@ set(CMAKE_CXX_FLAGS "-Wno-deprecated")
 set(CMAKE_C_FLAGS "-Wno-deprecated")
 endif(WIN32)
 
-set(Checkout_VERSION_MAJOR 1)
-set(Checkout_VERSION_MINOR 9)
+set(Checkout_VERSION_MAJOR 2)
+set(Checkout_VERSION_MINOR 0)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 16)
+set(Checkout_VERSION_RELEASE 1)
 
 message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
 
@@ -141,14 +141,6 @@ if(BUILD_PYTHON_SCRIPTING)
 
 endif(BUILD_PYTHON_SCRIPTING)
 
-#find_package(Git REQUIRED)
-
-#if(GIT_FOUND)
-#    GIT_WC_INFO(${PROJECT_SOURCE_DIR} Checkout)
-#    message("Current revision is  ${Checkout_WC_REVISION_HASH}")
-#endif()
-
-#DEFINE_SYMBOL()
 
 set(CheckoutCore_lib_path ${OpenCV_LIB_DIR} )
 link_directories(${OpenCV_LIB_DIR})

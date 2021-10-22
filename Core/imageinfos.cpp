@@ -53,6 +53,8 @@ ImageInfos::~ImageInfos()
     if (range_timerId>=0)
         killTimer(range_timerId);
     _ifo._platename_to_infos[_plate].removeAll(this);
+
+
 }
 
 QString ImageInfos::key(QString k)

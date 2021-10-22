@@ -602,21 +602,37 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
 {
     QString plate = ds["XP"].toString(), commit = ds["CommitName"].toString();
 
-    auto tmp = QJsonDocument(ob.toJsonObject()).toJson();
-    auto tmp2 = QJsonDocument(par).toJson();
-    auto tmp3 = QJsonDocument(ds).toJson();
+//    auto tmp = QJsonDocument(ob.toJsonObject()).toJson();
+//    auto tmp2 = QJsonDocument(par).toJson();
+//    auto tmp3 = QJsonDocument(ds).toJson();
 
     if (par.contains(QString("SavePath")) && !par.value("SavePath").toString().isEmpty())
     {
         QString pos = par["Meta"].toArray().first().toObject()["Pos"].toString();
 
-        QString path = QString("%1/%2/%3_%4_%5.fth").arg(par.value("SavePath").toString(),
+        QString tofile = QString("%1/%2/%3_%4_%5.fth").arg(par.value("SavePath").toString(),
                                                          commit, plate,
                                                          par.value("Tag").toString(),
                                                          pos);
-        qDebug() << "Saving Generated Meta to" << path;
+        qDebug() << "Saving Generated Meta to" << tofile;
 
 
+//        cv::Mat feat;// = k.content();
+//        QFile of(tofile);
+//        if (of.open(QIODevice::WriteOnly | QIODevice::Text))
+//        {
+//            QTextStream str(&of);
+//            str << cols << "\r\n";
+//            for (int r = 0; r < feat.rows; ++r)
+//            {
+//                for (int c = 0; c < feat.cols; ++c)
+//                {
+//                    if (c != 0) str << ',';
+//                    str << feat.at<float>(r, c);
+//                }
+//                str << "\r\n";
+//            }
+//        }
 
 
     }
@@ -720,7 +736,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                         qDebug() << "Got binary data: " << dhash << buf.size() << ar.size() << pos;
                         mm.insert(QCborValue("BinaryData"), ar);//QCborValue(data));
 
-                        //exportBinary(ds, obj, mm);
+                        exportBinary(ds, obj, mm);
 
                     }
                     else

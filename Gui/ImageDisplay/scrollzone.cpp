@@ -95,6 +95,9 @@ void ScrollZone::dragEnterEvent(QDragEnterEvent *event)
 
 void ScrollZone::dropEvent(QDropEvent *event)
 {
+
+    _mainwin->graySelection();
+
     static int groupId = 0;
     //  qDebug() << "Drop event" << this->objectName();
 
@@ -126,6 +129,10 @@ void ScrollZone::dropEvent(QDropEvent *event)
         QMessageBox::critical(this, "Drop file yielded errors", err);
         CheckoutErrorHandler::getInstance().resetErrors();
     }
+
+
+    _mainwin->ungraySelection();
+
 }
 
 void ScrollZone::addSelectedWells()

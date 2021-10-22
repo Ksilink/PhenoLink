@@ -792,12 +792,22 @@ void MainWindow::updateCurrentSelection()
             bvl->addWidget(colorWidgetSetup(new ctkColorPickerButton(wwid), fo, trueChan), i, 4);
 
             shrt_binarize.append(new QShortcut(this));
-            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, Qt::Key_0+i));
+            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, (Qt::Key_0+i) + Qt::KeypadModifier));
             shrt_binarize.last()->setObjectName(QString("%1").arg(trueChan));
             connect(shrt_binarize.last(), &QShortcut::activated, this, [this](){
                 int trueChan = this->sender()->objectName().toInt();
                 this->_sinteractor.current()->getChannelImageInfos(trueChan)->toggleBinarized();
             });
+            shrt_binarize.append(new QShortcut(this));
+            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, (Qt::Key_0+i) ));
+            shrt_binarize.last()->setObjectName(QString("%1").arg(trueChan));
+            connect(shrt_binarize.last(), &QShortcut::activated, this, [this](){
+                int trueChan = this->sender()->objectName().toInt();
+                this->_sinteractor.current()->getChannelImageInfos(trueChan)->toggleBinarized();
+            });
+
+
+
         }
 
 
@@ -2672,6 +2682,8 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
         auto mm = menu.addMenu("Load && Display");
         mm->addAction("first well", this, SLOT(loadPlateFirst()));
         mm->addAction("3 wells", this, SLOT(loadPlateDisplay3()));
+        mm->addAction("Sample from tags", this, SLOT(loadPlateDisplaySample()));
+
         menu.addSeparator();
         menu.addAction("export for CP", this, SLOT(exportToCellProfiler()));
         menu.addSeparator();
@@ -2800,23 +2812,34 @@ void MainWindow::resetSelection()
 
 }
 
-
-
 void MainWindow::on_start_process_triggered()
 {
     // Ctrl + Enter
     startProcess();
 }
 
-
-
-
-
-
-
-
 void MainWindow::on_actionPlate_Tag_triggered()
 {
     // Launch the inner plate tagger
 }
+
+
+void MainWindow::graySelection()
+{
+    foreach(QList<QWidget*> widl, _imageControls.values())
+        foreach(QWidget* wid, widl)
+        {
+            if (wid) wid->setDisabled(true); // hide everything
+        }
+}
+
+void MainWindow::ungraySelection()
+{
+    foreach(QList<QWidget*> widl, _imageControls.values())
+        foreach(QWidget* wid, widl)
+        {
+            if (wid) wid->setDisabled(false); // hide everything
+        }
+}
+
 
