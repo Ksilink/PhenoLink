@@ -4,6 +4,7 @@ add_definitions(-DExportCoreSymbols)
 add_definitions(-DExportPluginManagerSymbols)
 add_definitions(-DQHTTP_MEMORY_LOG=0)
 add_definitions(-DQHTTP_HAS_CLIENT)
+add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 add_library(CheckoutCore SHARED
             sequenceinteractor.cpp sequenceinteractor.h
             imageinfos.cpp imageinfos.h
