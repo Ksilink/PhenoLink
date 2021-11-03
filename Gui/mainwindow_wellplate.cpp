@@ -691,7 +691,7 @@ void MainWindow::createWellPlateViews(ExperimentFileModel* data)
 void MainWindow::wellplateClose(int tabId)
 {
 
-    Screens& data = ScreensHandler::getHandler().getScreens();
+//    Screens& data = ScreensHandler::getHandler().getScreens();
     ExperimentFileModel* tmdl = assoc_WellPlateWidget[ui->wellPlateViewTab->widget(tabId)];
     if (!tmdl) return;
 

@@ -82,12 +82,18 @@ class DllCoreExport StructuredMetaData: public DataProperty
 
 public:
     StructuredMetaData(Dictionnary dict = Dictionnary());
+    ~StructuredMetaData();
 
     cv::Mat& content();
     void setContent(cv::Mat cont);
+    void setTag(int id, QStringList d);
+    QStringList getTag(int id);
+    size_t length();
+    void exportData();
 
    protected:
     cv::Mat _content;
+    QVector<QStringList> _tags;
 
 };
 
@@ -140,7 +146,7 @@ public:
 //    QStringList getMetaNames(int timePoint, int fieldIdx, int Zindex, int channel);
 //    bool hasMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name = QString());
 
-
+    void removeMeta();
 
     void setOwner(ExperimentFileModel* ow);
 

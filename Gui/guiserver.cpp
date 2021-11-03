@@ -72,7 +72,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
         QString commit=urlpath.mid((int)strlen("/addData/"));
 
-        qDebug() << "Client Adding data" << ob.size();
+//        qDebug() << "Client Adding data" << ob.size();
         for (auto item: (ob))
         {
             auto oj = item.toObject();

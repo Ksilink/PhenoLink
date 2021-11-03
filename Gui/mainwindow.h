@@ -130,7 +130,7 @@ protected:
     void conditionChanged(QWidget* sen, int val);
     void closeEvent(QCloseEvent *ev);
 
-
+    void overlayClearTags();
 
 private slots:
     void deleteDirectoryPath();
@@ -158,6 +158,7 @@ private slots:
     void loadPlate();
     void loadPlateFirst();
     void loadPlateDisplay3();
+    void loadPlateDisplaySample();
     void exportToCellProfiler();
 
     void databaseModified();
@@ -258,6 +259,8 @@ public slots:
     void setOverlayWidth(double w);
     void renameWorkbench();
     void exportContent();
+    void importOverlay();
+
     void finishedEditMinValue();
     void finishedEditMaxValue();
 

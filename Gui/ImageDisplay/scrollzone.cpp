@@ -49,6 +49,7 @@ void ScrollZone::removeSequences(QList<SequenceFileModel *> &lsfm)
     foreach (SequenceFileModel* sfm, lsfm)
     {
         sfm->setAsShowed(false);
+        sfm->removeMeta();
 
         QList<ImageForm*> lif = findChildren<ImageForm*>();
         foreach (ImageForm* imf, lif)

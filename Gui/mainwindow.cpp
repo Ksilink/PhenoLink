@@ -487,19 +487,6 @@ void MainWindow::overlayChangedCmap(QString id)
 }
 
 
-void MainWindow::exportContent()
-{
-    if (sender())
-    {
-        QString name = sender()->objectName();
-        QString fname = QFileDialog::getSaveFileName(this, "Save File",
-                                                     QDir::homePath(), tr("csv File (*.csv)"));
-        if (!fname.isEmpty())
-        {
-            _sinteractor.current()->exportOverlay(name, fname);
-        }
-    }
-}
 
 
 void MainWindow::setTile(int tile)
@@ -718,6 +705,9 @@ void MainWindow::updateCurrentSelection()
             toDel << wid;
         }
 
+
+
+
     unsigned channels = inter->getChannels();
     // qDebug() << "#of Channels" << channels;
 
@@ -834,6 +824,10 @@ void MainWindow::updateCurrentSelection()
         bvl->setContentsMargins(0, 0, 0, 0);
         bvl->addWidget(new QLabel("Overlay width", wwid), 0, 1);
         bvl->addWidget(setupOverlayWidth(new QDoubleSpinBox(wwid), "OverlayWidth", fo), 0, 2, 1, -1);
+        auto imp = new QPushButton("Import", wwid);
+        bvl->addWidget(imp, 0, 3);
+        imp->setObjectName("overlay_import");
+        connect(imp, SIGNAL(clicked()), this, SLOT(importOverlay()));
 
 
         bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), "Tile", fo), 1, 0);
@@ -2349,6 +2343,7 @@ void MainWindow::loadPlate()
 void MainWindow::loadPlateFirst()
 {
     // Set selection
+    mdl->clearCheckedDirectories();
     mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
     on_loadSelection_clicked();
 
@@ -2367,6 +2362,7 @@ void MainWindow::loadPlateFirst()
 
 void MainWindow::loadPlateDisplay3()
 {
+    mdl->clearCheckedDirectories();
     mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
     on_loadSelection_clicked();
 
@@ -2391,6 +2387,38 @@ void MainWindow::loadPlateDisplay3()
     this->_scrollArea->addSelectedWells();
 
 }
+
+
+void MainWindow::loadPlateDisplaySample()
+{
+    mdl->clearCheckedDirectories();
+    mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
+    on_loadSelection_clicked();
+
+    ScreensHandler& h = ScreensHandler::getHandler();
+    Screens& s = h.getScreens();
+    if (s.front())
+    {
+        auto l = s.front()->getValidSequenceFiles();
+        if (l.size())
+        {
+
+            l.front()->setSelectState(true);
+            l.back()->setSelectState(true);
+            int ss = l.size();
+            if (ss > 3)
+            {
+                auto it = l.begin();
+                std::advance(it, ss/2);
+                (*it)->setSelectState(true);
+            }
+        }
+    }
+    this->_scrollArea->addSelectedWells();
+
+}
+
+
 
 int longestMatch(QString a, QString b)
 {
@@ -2682,7 +2710,7 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
         auto mm = menu.addMenu("Load && Display");
         mm->addAction("first well", this, SLOT(loadPlateFirst()));
         mm->addAction("3 wells", this, SLOT(loadPlateDisplay3()));
-        mm->addAction("Sample from tags", this, SLOT(loadPlateDisplaySample()));
+        mm->addAction("sample from tags", this, SLOT(loadPlateDisplaySample()));
 
         menu.addSeparator();
         menu.addAction("export for CP", this, SLOT(exportToCellProfiler()));
@@ -2809,6 +2837,10 @@ void MainWindow::resetSelection()
         {
             if (wid) wid->hide(); // hide everything
         }
+
+
+
+
 
 }
 

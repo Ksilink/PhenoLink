@@ -319,7 +319,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
             }
 
             if (wids.empty()) {
-                qDebug() << "Searching " << tag << "Params not found";
+//                qDebug() << "Searching " << tag << "Params not found";
                 continue;
             }
 

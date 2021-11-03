@@ -17,8 +17,10 @@
 #undef signals
 #include <arrow/api.h>
 #include <arrow/filesystem/filesystem.h>
-#include <arrow/ipc/writer.h>
 #include <arrow/util/iterator.h>
+#include <arrow/ipc/writer.h>
+#include <arrow/ipc/reader.h>
+#include <arrow/ipc/api.h>
 
 
 namespace fs = arrow::fs;
@@ -28,7 +30,7 @@ namespace fs = arrow::fs;
 void stringToPos(QString pos, int& row, int& col);
 
 ExperimentFileModel::ExperimentFileModel(Dictionnary dict) : DataProperty(dict),
-_cols(0), _rows(0), _hasTag(false), _owner(0), _computedData(0)
+    _cols(0), _rows(0), _hasTag(false), _owner(0), _computedData(0)
 {
 }
 
@@ -157,12 +159,12 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
         y.insert(v);
 
     }
-    qDebug() << "Get Well Pos: Unpack well pos sorted" << x << y;
+//    qDebug() << "Get Well Pos: Unpack well pos sorted" << x << y;
 
     QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
     std::sort(xl.begin(), xl.end());
     std::sort(yl.begin(), yl.end());
-    qDebug() << "Get Well Pos: Unpack well pos sorted" << xl << yl;
+//    qDebug() << "Get Well Pos: Unpack well pos sorted" << xl << yl;
     //    xl.indexOf(), yl.indexOf()
     return qMakePair(xl, yl);
 }
@@ -219,7 +221,7 @@ void ExperimentFileModel::setFieldPosition()
     QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
     std::sort(xl.begin(), xl.end());// , std::greater<double>());
     std::sort(yl.begin(), yl.end(), std::greater<double>());
-    qDebug() << "Unpack well pos sorted" << xl << yl;
+//    qDebug() << "Unpack well pos sorted" << xl << yl;
 
 
     fields_pos = qMakePair(xl, yl);
@@ -348,8 +350,8 @@ void ExperimentFileModel::addToDatabase()
     if (!tables.contains(QString("WellMeasurements_%1").arg(hash)))
     {
         if (!q.exec(QString("create table WellMeasurements_%1 (id text,"
-            "timePointCount integer, fieldCount integer,"
-            "sliceCount integer, channels integer);").arg(hash)))
+                            "timePointCount integer, fieldCount integer,"
+                            "sliceCount integer, channels integer);").arg(hash)))
             qDebug() << q.lastError();
         table_exists = false;
     }
@@ -367,15 +369,15 @@ void ExperimentFileModel::addToDatabase()
                     SequenceFileModel& fm = (*this)(r, c);
 
                     if (!q.exec(QString("insert or replace into WellMeasurements_%1 (id ,"
-                        "timePointCount , fieldCount ,"
-                        "sliceCount , channels ) values ('%2', '%3', '%4', '%5', '%6');")
-                        .arg(hash)
-                        .arg(QString("%1%2").arg(QChar(key[r])).arg(c + 1, 2, 10, QLatin1Char('0')))
-                        .arg(fm.getTimePointCount())
-                        .arg(fm.getFieldCount())
-                        .arg(fm.getZCount())
-                        .arg(fm.getChannels())
-                        ))
+                                        "timePointCount , fieldCount ,"
+                                        "sliceCount , channels ) values ('%2', '%3', '%4', '%5', '%6');")
+                                .arg(hash)
+                                .arg(QString("%1%2").arg(QChar(key[r])).arg(c + 1, 2, 10, QLatin1Char('0')))
+                                .arg(fm.getTimePointCount())
+                                .arg(fm.getFieldCount())
+                                .arg(fm.getZCount())
+                                .arg(fm.getChannels())
+                                ))
                         qDebug() << q.lastError();
                 }
             }
@@ -384,17 +386,17 @@ void ExperimentFileModel::addToDatabase()
 
     if (!tables.contains(QString("WellParameters_%1").arg(hash)))
         if (!q.exec(QString("create table WellParameters_%1 (id text,"
-            "timepoint integer, fieldId integer,"
-            "sliceId integer, channel integer,"
-            "Imagehash text,"
-            "MinIntensity real, MaxIntensity real,"
-            "DispMinIntensity real, DispMaxIntensity real);").arg(hash)))
+                            "timepoint integer, fieldId integer,"
+                            "sliceId integer, channel integer,"
+                            "Imagehash text,"
+                            "MinIntensity real, MaxIntensity real,"
+                            "DispMinIntensity real, DispMaxIntensity real);").arg(hash)))
             qDebug() << q.lastError();
 
     if (!tables.contains(QString("WellMeasurement_details_%1").arg(hash)))
         if (!q.exec(QString("create table WellMeasurement_details_%1 (id text,"
-            "timepoint integer, fieldId integer,"
-            "sliceId integer, channel integer);").arg(hash)))
+                            "timepoint integer, fieldId integer,"
+                            "sliceId integer, channel integer);").arg(hash)))
             qDebug() << q.lastError();
 
 
@@ -667,12 +669,6 @@ void ExperimentFileModel::reloadDatabaseDataCSV(QString file, QString t, bool ag
     }
 }
 
-#include <arrow/filesystem/filesystem.h>
-#include <arrow/ipc/writer.h>
-#include <arrow/util/iterator.h>
-#include <arrow/ipc/reader.h>
-#include <arrow/ipc/api.h>
-
 #define ABORT_ON_FAILURE(expr)                     \
     do {                                             \
     arrow::Status status_ = (expr);                \
@@ -716,7 +712,7 @@ void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, boo
     for (auto f : schema->fields())
     {
         int count = 0;
-        for (auto r : { "Plate", "tags", "fieldId", "sliceId", "timepoint", "channel" }) if (f->name() == r) count++;
+        for (auto r : { "Plate", "tags", "fieldId", "sliceId", "timepoint", "channel", "Well" }) if (f->name() == r) count++;
         if (count) continue;
 
         fields.push_back(f->name());
@@ -728,11 +724,11 @@ void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, boo
         auto rb = reader->ReadRecordBatch(record).ValueOrDie();
         auto well = std::static_pointer_cast<arrow::StringArray>(rb->GetColumnByName("Well"));
         auto  fieldid = std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("fieldId")),
-            sliceId = std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("sliceId")),
-            tp = std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("timepoint")),
-            chan = std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("channel"));
+                sliceId = std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("sliceId")),
+                tp = std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("timepoint")),
+                chan = std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("channel"));
 
-        for (auto field : fields)
+        for (auto & field : fields)
         {
             auto array = std::static_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(field));
 
@@ -840,14 +836,14 @@ QPair<QStringList, QStringList> ExperimentFileModel::databases()
 
     { // New settings
         QString writePath = QString("%1/%2/Checkout_Results/").arg(set.value("databaseDir").toString())
-            .arg(property("project"));
+                .arg(property("project"));
         getDBs(writePath, name(), raw, ag);
     }
     if (true) // Arrow Feather
     { // shou
 
         QString writePath = QString("%1/%2/Checkout_Results/").arg(set.value("databaseDir").toString())
-            .arg(property("project"));
+                .arg(property("project"));
         getDBFeather(writePath, name(), raw, ag);
     }
     return qMakePair(raw, ag);
@@ -1110,6 +1106,18 @@ QMap<QString, StructuredMetaData>& SequenceFileModel::getMetas(int timePoint, in
     return r;
 }
 
+void SequenceFileModel::removeMeta()
+{
+    for (auto& f: _sdata)
+        for (auto& z : f)
+            for (auto& t: z)
+                for (auto & c : t)
+                    for (auto & m : c)
+                    {
+                        m.exportData();
+                    }
+    _sdata.clear();
+}
 
 bool SequenceFileModel::hasChannel(int timePoint, int fieldIdx, int Zindex, int channel)
 {
@@ -1138,6 +1146,7 @@ bool SequenceFileModel::isAlreadyShowed()
 {
     return _isShowed;
 }
+
 
 void SequenceFileModel::setAsShowed(bool showed)
 {
@@ -1468,7 +1477,7 @@ QJsonObject SequenceFileModel::getMeta(SequenceFileModel::MetaDataHandler& h)
     {
 
         QString mtag = QString("f%1s%2t%3c%4%5").arg(h.fieldIdx).arg(h.zindex)
-            .arg(h.timepoint).arg(h.channel).arg(k);
+                .arg(h.timepoint).arg(h.channel).arg(k);
         QString t = this->property(mtag);
         if (!t.isEmpty())
             props[k] = t;
@@ -1635,10 +1644,10 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(TimeLapse time
             QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, h);
             for (QMap<int, QList<QJsonObject> >::iterator cit = v.begin(), e = v.end(); cit != e; ++cit)
                 foreach(QJsonObject o, cit.value())
-            {
-                o["TimePos"] = it.key();
-                data[cit.key()].append(o);
-            }
+                {
+                    o["TimePos"] = it.key();
+                    data[cit.key()].append(o);
+                }
         }
 
         for (QMap<int, QJsonArray >::iterator cit = data.begin(), e = data.end(); cit != e; ++cit)
@@ -1684,10 +1693,10 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(ImageStack sta
             QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, h);
             for (QMap<int, QList<QJsonObject> >::iterator cit = v.begin(), e = v.end(); cit != e; ++cit)
                 foreach(QJsonObject o, cit.value())
-            {
-                o["zPos"] = it.key();
-                data[cit.key()].append(o);
-            }
+                {
+                    o["zPos"] = it.key();
+                    data[cit.key()].append(o);
+                }
         }
 
         for (QMap<int, QJsonArray >::iterator cit = data.begin(), e = data.end(); cit != e; ++cit)
@@ -1739,7 +1748,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
             handler.metaData << x;
         else
             searchingMeta << x;
-//    handler.metaData = metaData;
+    //    handler.metaData = metaData;
 
 
 
@@ -1810,13 +1819,13 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
                 QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, handler);
                 for (QMap<int, QList<QJsonObject> >::iterator cit = v.begin(), e = v.end(); cit != e; ++cit)
                     foreach(QJsonObject o, cit.value())
-                {
-                    o["FieldId"] = it.key();
-                    o["Properties"] = getMeta(searchingMeta, QString("f%1").arg(f + 1));
+                    {
+                        o["FieldId"] = it.key();
+                        o["Properties"] = getMeta(searchingMeta, QString("f%1").arg(f + 1));
 
-                    data[cit.key()].append(o);
-                    f++;
-                }
+                        data[cit.key()].append(o);
+                        f++;
+                    }
             }
 
             for (QMap<int, QJsonArray>::iterator cit = data.begin(), e = data.end(); cit != e; ++cit)
@@ -2379,22 +2388,22 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject& ob)
                             return rmdl;
                         }
                         int t = payload.contains("Time") ? payload["Time"].toInt() : meta["TimePos"].toInt(),
-                            f = meta["FieldId"].toInt(),
-                            z = meta["zPos"].toInt(),
-                            ch = meta["channel"].toInt();
+                                f = meta["FieldId"].toInt(),
+                                z = meta["zPos"].toInt(),
+                                ch = meta["channel"].toInt();
 
                         int cc = datasizes.size() > 1 ? i + 1 : ch;
 
                         QString fname = QString(":/mem/%1_%2_%3_%4_T%5F%6Z%7C%8.png")
-                            .arg(hash)
-                            .arg(ob["Tag"].toString())
-                            .arg(processHash)
-                            .arg(meta["Pos"].toString())
-                            .arg(t)
-                            .arg(f)
-                            .arg(z)
-                            .arg(cc)
-                            ;
+                                .arg(hash)
+                                .arg(ob["Tag"].toString())
+                                .arg(processHash)
+                                .arg(meta["Pos"].toString())
+                                .arg(t)
+                                .arg(f)
+                                .arg(z)
+                                .arg(cc)
+                                ;
 
                         MemoryHandler::handler().addData(fname, m);
                         seq.addFile(t, f, z, cc, fname);
@@ -2474,25 +2483,38 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject& ob)
                         chans += len;
 
                         int t = payload.contains("Time") ? payload["Time"].toInt() : meta["TimePos"].toInt(),
-                            f = meta["FieldId"].toInt(),
-                            z = meta["zPos"].toInt(),
-                            ch = meta["channel"].toInt();
+                                f = meta["FieldId"].toInt(),
+                                z = meta["zPos"].toInt(),
+                                ch = meta["channel"].toInt();
 
                         int cc = datasizes.size() > 1 ? i + 1 : ch;
 
                         QString fname = QString(":/mem/%1_%2_%3_%4_T%5F%6Z%7C%8.png")
-                            .arg(hash)
-                            .arg(ob["Tag"].toString())
-                            .arg(processHash)
-                            .arg(meta["Pos"].toString())
-                            .arg(t)
-                            .arg(f)
-                            .arg(z)
-                            .arg(cc)
-                            ;
+                                .arg(hash)
+                                .arg(ob["Tag"].toString())
+                                .arg(processHash)
+                                .arg(meta["Pos"].toString())
+                                .arg(t)
+                                .arg(f)
+                                .arg(z)
+                                .arg(cc)
+                                ;
+
+
 
 
                         StructuredMetaData data;
+                        {
+                            QSettings set;
+                            QString dbP=set.value("databaseDir").toString();
+                            seq.getOwner()->getProjectName();
+                            // do we have commitname ?
+                            //if (comm)
+                            //data.setProperties("Filename", file);
+                            qDebug() << ob.keys();
+                        }
+
+
                         data.setContent(im.clone());
                         if (ob.contains("ChannelNames"))
                         {
@@ -2574,9 +2596,9 @@ ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, Q
 
     QString id = data.take("Pos").toString();
     int fieldId = data.take("FieldId").toInt(),
-        timepoint = data.take("TimePos").toInt(),
-        sliceId = data.take("zPos").toInt(),
-        channel = data.take("channel").toInt();
+            timepoint = data.take("TimePos").toInt(),
+            sliceId = data.take("zPos").toInt(),
+            channel = data.take("channel").toInt();
 
     data.take("hash");
     data.take("DataHash");
@@ -2648,7 +2670,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
     }
 
     int col, row;
-    QString pos = ob.take(QCborValue("Pos")).toString();
+    QString pos = ob.value(QCborValue("Pos")).toString();
     stringToPos(pos, row, col);
 
 
@@ -2720,22 +2742,22 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
                 }
 
                 int t = ob.value(QCborValue("TimePos")).toInteger(),
-                    f = ob.value(QCborValue("FieldId")).toInteger(),
-                    z = ob.value(QCborValue("zPos")).toInteger(),
-                    ch = ob.value(QCborValue("channel")).toInteger();
+                        f = ob.value(QCborValue("FieldId")).toInteger(),
+                        z = ob.value(QCborValue("zPos")).toInteger(),
+                        ch = ob.value(QCborValue("channel")).toInteger();
 
                 int cc = datasizes.size() > 1 ? i + 1 : ch;
 
                 QString fname = QString(":/mem/%1_%2_%3_%4_T%5F%6Z%7C%8.png")
-                    .arg(hash)
-                    .arg(tag)
-                    .arg(ob.value(QCborValue("Hash")).toString())
-                    .arg(pos)
-                    .arg(t)
-                    .arg(f)
-                    .arg(z)
-                    .arg(cc)
-                    ;
+                        .arg(hash)
+                        .arg(tag)
+                        .arg(ob.value(QCborValue("Hash")).toString())
+                        .arg(pos)
+                        .arg(t)
+                        .arg(f)
+                        .arg(z)
+                        .arg(cc)
+                        ;
 
                 MemoryHandler::handler().addData(fname, m);
                 seq.addFile(t, f, z, cc, fname);
@@ -2818,15 +2840,36 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
                 chans += len;
 
                 int t = ob.value(QCborValue("TimePos")).toInteger(),
-                    f = ob.value(QCborValue("FieldId")).toInteger(),
-                    z = ob.value(QCborValue("zPos")).toInteger(),
-                    ch = ob.value(QCborValue("channel")).toInteger();
+                        f = ob.value(QCborValue("FieldId")).toInteger(),
+                        z = ob.value(QCborValue("zPos")).toInteger(),
+                        ch = ob.value(QCborValue("channel")).toInteger();
 
                 int cc = datasizes.size() > 1 ? i + 1 : ch;
 
                 StructuredMetaData data;
                 data.setContent(im.clone());
-                if (ob.contains(QCborValue("ChannelNames")))
+
+                QString filename;
+                if (!ob.value("CommitName").toString().isEmpty() &&
+                        ob.value("CommitName").toString() != "Default")
+                {
+                    QSettings set;
+                    QString dbP=set.value("databaseDir").toString();
+
+                    filename = QString("%1/%2/Checkout_Results/%3/%4_%5_%6.fth")
+                            .arg(dbP,
+                                 seq.getOwner()->getProjectName(),
+                                 ob.value("CommitName").toString(),
+                                 seq.getOwner()->name(),
+                                 ob.value(QCborValue("Pos")).toString(),
+                                 tag);
+
+
+                }
+
+
+                data.setProperties("Filename", filename);
+
                 {
                     QStringList names;
                     auto ar = ob.value(QCborValue("ChannelNames")).toArray();
@@ -3064,11 +3107,11 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
 
     // Compute signature:
     h.signature = x + y * MaxY
-        + chan * MaxChan * MaxY
-        + time * MaxChan * MaxY * MaxTime
-        + stackZ * MaxChan * MaxY * MaxTime * MaxZ
-        + field * MaxChan * MaxY * MaxTime * MaxZ * MaxField;
-//  qDebug() << h.signature;
+            + chan * MaxChan * MaxY
+            + time * MaxChan * MaxY * MaxTime
+            + stackZ * MaxChan * MaxY * MaxTime * MaxZ
+            + field * MaxChan * MaxY * MaxTime * MaxZ * MaxField;
+    //  qDebug() << h.signature;
 
     int pos = 0;
     for (QList<DataHolder>::iterator it = _dataset.begin(), e = _dataset.end(); it != e; ++it, ++pos)
@@ -3126,10 +3169,10 @@ QVector<double> ExperimentDataTableModel::getData(QString XP, int field, int sta
 
     // Compute signature:
     h.signature = x + y * MaxY
-        + chan * MaxChan * MaxY
-        + time * MaxChan * MaxY * MaxTime
-        + stackZ * MaxChan * MaxY * MaxTime * MaxZ
-        + field * MaxChan * MaxY * MaxTime * MaxZ * MaxField;
+            + chan * MaxChan * MaxY
+            + time * MaxChan * MaxY * MaxTime
+            + stackZ * MaxChan * MaxY * MaxTime * MaxZ
+            + field * MaxChan * MaxY * MaxTime * MaxZ * MaxField;
 
     for (QList<DataHolder>::iterator it = _dataset.begin(), e = _dataset.end(); it != e; ++it)
         if (it->signature == h.signature)
@@ -3356,11 +3399,11 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
 
 
         auto schema =
-            arrow::schema(fields, meta);
+                arrow::schema(fields, meta);
         auto table = arrow::Table::Make(schema, data);
         QDir dir(set.value("databaseDir").toString());
         QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
-            ;
+                ;
         QString fname = writePath + _owner->name() + ".fth";
 
         std::string uri = fname.toStdString();
@@ -3429,11 +3472,11 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
 
 
         auto schema =
-            arrow::schema(fields, meta);
+                arrow::schema(fields, meta);
         auto table = arrow::Table::Make(schema, data);
         QDir dir(set.value("databaseDir").toString());
         QString writePath = QString("%1/%2/Checkout_Results/%3/ag").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
-            ;
+                ;
         QString fname = writePath + _owner->name() + ".fth";
 
         std::string uri = fname.toStdString();
@@ -3463,7 +3506,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
         // dir + {tag.project} + Checkout_Results/ + prefix + / PlateName + .csv
         // If file exists move previous file with a post_fix info
         QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
-            ;
+                ;
         QString fname = _owner->name() + ".csv";
 
         dir.mkpath(writePath);
@@ -3474,15 +3517,15 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
         QTextStream resFile(&file);
 
         resFile << _owner->getProjectName() << "#" << QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss")
-            << ",Plate,Well,fieldId,sliceId,timepoint,channel,tags" << dataname << Qt::endl;
+                << ",Plate,Well,fieldId,sliceId,timepoint,channel,tags" << dataname << Qt::endl;
 
         for (QList<DataHolder>::iterator it = _dataset.begin(), e = _dataset.end(); it != e; ++it)
         {
             DataHolder& h = *it;
             QString pos = posToString(h.pos);
             resFile << "," << _owner->name() << "," << pos << "," << h.field << ","
-                << h.stackZ << "," << h.time << ","
-                << h.chan << "," << (_owner->getTags(h.pos).join(";"));
+                    << h.stackZ << "," << h.time << ","
+                    << h.chan << "," << (_owner->getTags(h.pos).join(";"));
 
 
             foreach(QString key, datas)
@@ -3830,8 +3873,85 @@ void MemoryHandler::release(QString vfs)
         _cmap.remove(vfs);
 }
 
+
+
+
 StructuredMetaData::StructuredMetaData(Dictionnary dict) : DataProperty(dict)
 {
+}
+
+
+#include <iostream>
+#define ABORT_ON_FAILURE(expr)                     \
+    do {                                             \
+    arrow::Status status_ = (expr);                \
+    if (!status_.ok()) {                           \
+    std::cerr << status_.message() << std::endl; \
+    abort();                                     \
+    }                                              \
+    } while (0);
+
+StructuredMetaData::~StructuredMetaData()
+{
+
+}
+
+void StructuredMetaData::exportData()
+{
+    if (!hasProperty("Filename")) return;
+
+    QStringList cols = property("ChannelNames").split(';');
+    std::vector<std::shared_ptr<arrow::Field> > fields;
+
+
+    for (int c = 0; c < _content.cols; ++c)
+        if (c < cols.size())
+            fields.push_back(arrow::field(cols[c].toStdString(), arrow::float32()));
+        else
+            fields.push_back(arrow::field((QString("%1").arg(c)).toStdString(), arrow::float32()));
+    fields.push_back(arrow::field("tags", arrow::utf8()));
+
+    std::vector<std::shared_ptr<arrow::Array> > dat(fields.size());
+
+    for (int c = 0; c < _content.cols; ++c)
+    {
+        arrow::NumericBuilder<arrow::FloatType> bldr;
+        for (int r = 0; r <_content.rows; ++r)
+        {
+            ABORT_ON_FAILURE(bldr.Append(_content.at<float>(r,c)));
+
+        }
+        ABORT_ON_FAILURE(bldr.Finish(&dat[c]));
+    }
+
+    arrow::StringBuilder bldr;
+    for (int r = 0; r <_content.rows; ++r)
+    {
+        if (_tags.at(r).isEmpty())
+        {
+            ABORT_ON_FAILURE(bldr.AppendNull());
+        }
+        else
+        {
+            ABORT_ON_FAILURE(bldr.Append(_tags.at(r).join(";").toStdString()));
+        }
+    }
+    ABORT_ON_FAILURE(bldr.Finish(&dat[_content.cols]));
+
+    auto schema =
+        arrow::schema(fields);
+    auto table = arrow::Table::Make(schema, dat);
+    std::string uri = property("Filename").toStdString();
+    std::string root_path;
+
+    auto fs = fs::FileSystemFromUriOrPath(uri, &root_path).ValueOrDie();
+
+    auto output = fs->OpenOutputStream(uri).ValueOrDie();
+    arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
+    auto writer = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options).ValueOrDie();
+
+    writer->WriteTable(*table.get());
+    writer->Close();
 }
 
 cv::Mat& StructuredMetaData::content() { return _content; }
@@ -3843,4 +3963,27 @@ void StructuredMetaData::setContent(cv::Mat cont)
         cont.convertTo(_content, CV_32F);
     else
         _content = cont;
+
+    _tags.resize(_content.rows);
+}
+
+
+
+void StructuredMetaData::setTag(int id, QStringList d)
+{
+    if (id < _tags.size())
+        _tags[id] = d;
+}
+
+QStringList StructuredMetaData::getTag(int id)
+{
+    if (id < _tags.size())
+        return _tags[id];
+    return QStringList();
+}
+
+
+size_t StructuredMetaData::length()
+{
+    return _tags.size();
 }
