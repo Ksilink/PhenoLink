@@ -823,7 +823,7 @@ void MainWindow::updateCurrentSelection()
         bvl->setSpacing(1);
         bvl->setContentsMargins(0, 0, 0, 0);
         bvl->addWidget(new QLabel("Overlay width", wwid), 0, 1);
-        bvl->addWidget(setupOverlayWidth(new QDoubleSpinBox(wwid), "OverlayWidth", fo), 0, 2, 1, -1);
+        bvl->addWidget(setupOverlayWidth(new QDoubleSpinBox(wwid), "OverlayWidth", fo), 0, 2);
         auto imp = new QPushButton("Import", wwid);
         bvl->addWidget(imp, 0, 3);
         imp->setObjectName("overlay_import");
@@ -2657,6 +2657,8 @@ bool MainWindow::close()
 
     for (auto frm: inters)
     {
+        if (frm->modelView()) frm->modelView()->removeMeta();
+
         auto xp = frm->getInteractor()->getExperimentName();
         QJsonArray mima;
         for (unsigned i = 0; i < frm->getInteractor()->getChannels(); ++i)
@@ -2681,7 +2683,7 @@ bool MainWindow::close()
 
 void MainWindow::on_action_Exit_triggered()
 {
-    emit close();
+    close();
 }
 
 void MainWindow::closeEvent(QCloseEvent *ev)

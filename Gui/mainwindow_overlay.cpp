@@ -298,14 +298,14 @@ void ReadFeather(QString file, StructuredMetaData& data)
     for (int record = 0; record < reader->num_record_batches(); ++record)
     {
         auto rb = reader->ReadRecordBatch(record).ValueOrDie();
-        int mr = 0;
         auto tag = std::static_pointer_cast<arrow::StringArray>(rb->GetColumnByName("tags"));
 
         for (int s = 0; s < tag->length(); ++s)
             if (tag->IsValid(s))
             {
                 std::string t = tag->GetString(s);
-                data.setTag(r+mr, QString::fromStdString(t).split(";"));
+//                qDebug() << "Reading:" << r+s << QString::fromStdString(t);
+                data.setTag(r+s, QString::fromStdString(t).split(";"));
             }
         r+=tag->length();
     }
@@ -328,8 +328,6 @@ void MainWindow::importOverlay()
     {
         if (QFile::exists(ent.absoluteFilePath()+"/"+inter->getSequenceFileModel()->getOwner()->name()+".fth"))
         {
-//            qDebug() << "Found entry" << ent.absoluteFilePath()+"/"+inter->getSequenceFileModel()->getOwner()->name()+".fth";
-
             QString commitName = ent.absoluteFilePath().replace(QString("%1/%2/Checkout_Results/").arg(dbP,inter->getProjectName()) , "");
             QDir dir(ent.absoluteFilePath());
             for (auto item: dir.entryInfoList( QStringList() << QString("%1_%2_*.fth").arg(inter->getSequenceFileModel()->getOwner()->name(),inter->getSequenceFileModel()->Pos()), QDir::Files | QDir::NoDotAndDotDot))
@@ -339,8 +337,7 @@ void MainWindow::importOverlay()
         }
     }
 
-//    QDialog
-    bool ok;
+   bool ok;
    QString scom = QInputDialog::getItem(this, "Select Commit Name data", "Commit Name:", coms.keys(), 0, false, &ok);
 
     if (ok & !scom.isEmpty())
