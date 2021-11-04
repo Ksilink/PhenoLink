@@ -873,7 +873,7 @@ void ImageForm::imageClick(QPointF pos)
         if (!item->toolTip().isEmpty())
         {
           //  qDebug() << "Found item at: " << pos << items.size();
-            qDebug() << item->toolTip() << item->data(1) << item->data(2);
+          //  qDebug() << item->toolTip() << item->data(1) << item->data(2);
             // how to set this in MainWindow ?
             emit overlayInfos(item->toolTip(), item->data(1).toString(),item->data(2).toInt());
         }

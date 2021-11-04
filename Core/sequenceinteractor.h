@@ -45,6 +45,12 @@ public:
     QString getFile();
     void preloadImage();
     QPixmap getPixmap(bool packed = true, bool bias_correction = false, float scale = 1.);
+
+    QPixmap getSubPixmap(QString overlay, int id);
+    void setTag(QString overlay, int id, QStringList tags);
+    QStringList getTag(QString overlay, int id);
+
+
     QImage getPixmapChannels(int field, bool bias_correction = false, float scale = 1.);
     QList<unsigned> getData(QPointF d, int& field, bool packed = true, bool bias = false);
 
@@ -92,6 +98,7 @@ public:
     void setOverlayWidth(double v);
 
     bool currentChanged();
+    void changed();
     QList<QString> getMetaList();
     QList<QString> getMetaOptionsList(QString meta);
     void overlayChange(QString name, QString id);

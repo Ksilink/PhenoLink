@@ -379,6 +379,7 @@ void SequenceInteractor::addImage(CoreImage* ci)
 
 void SequenceInteractor::clearMemory(CoreImage* im)
 {
+    blockSignals(true);
     lock_infos.lock();
     _ImageList.removeAll(im);
 
@@ -395,13 +396,14 @@ void SequenceInteractor::clearMemory(CoreImage* im)
         _infos.remove(nm);
     }
     lock_infos.unlock();
+    blockSignals(false);
     //    qDebug() << "FIXME: Clear Memory called for SequenceInteractor, but may not be honored";
 }
 
 
 void SequenceInteractor::modifiedImage()
 {
-   // lock_infos.lock();
+    // lock_infos.lock();
     //    qDebug() << "Interactor Modified Image";
     foreach(CoreImage * ci, _ImageList)
     {
@@ -414,7 +416,7 @@ void SequenceInteractor::modifiedImage()
     {
         ci->modifiedImage();
     }
-   // lock_infos.unlock();
+    // lock_infos.unlock();
 }
 
 QPointF SequenceInteractor::getFieldPosition(int field)
@@ -456,6 +458,11 @@ bool SequenceInteractor::currentChanged()
     bool res = _changed;
     _changed = false;
     return res;
+}
+
+void SequenceInteractor::changed()
+{
+    _changed = true;
 }
 
 SequenceFileModel* SequenceInteractor::getSequenceFileModel()
@@ -861,6 +868,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
         return _cachePixmap;
     }
 }
+
 
 
 struct Loader
@@ -1439,7 +1447,7 @@ void drawItem(cv::Mat& feat, QStringList lcols, QString name, QList<int> feats,
         for (auto p : feats)
         {
             float fea = feat.at<float>(d.r, p);
-            tip += QString("%1: %2\r\n").arg(lcols[p].trimmed()).arg(fea);
+            tip += QString("%1: %2\r\n").arg(lcols[p].simplified()).arg(fea);
         }
 
         float fea = d.f >= 0 ? feat.at<float>(d.r, d.f) : 0;
@@ -1582,6 +1590,7 @@ QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
                 QString cols = k.property("ChannelNames");
 
                 cv::Mat& feat = k.content();
+
                 QStringList lcols = cols.split(";").mid(0, feat.cols);
                 QList<int> feats;
 
@@ -1692,4 +1701,82 @@ void SequenceInteractor::getResolution(float& x, float& y)
     x = _x;
     y = _y;
 }
+
+
+
+QPixmap SequenceInteractor::getSubPixmap(QString overlay, int id)
+{
+    // _cachePixmap
+    int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
+
+    for (int c = 1; c <= cns; ++c)
+    {
+        QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
+        if (data.contains(overlay))
+        {
+            StructuredMetaData& k = data[overlay];
+            QString cols = k.property("ChannelNames");
+            cv::Mat& feat = k.content();
+            if (id > feat.rows) return QPixmap();
+
+            QStringList lcols = cols.split(";").mid(0, feat.cols);
+
+            int t = 0, l = 0, w = 0, h = 0;
+
+
+            for (int i = 0; i < lcols.size(); ++i)
+            {
+                QString s = lcols[i];
+                if (s.contains("_Top"))   l = i;
+                else if (s.contains("_Left"))  t = i;
+                else if (s.contains("_X"))   t = i;
+                else if (s.contains("_Y"))  l = i;
+                else if (s.contains("_Width")) w = i;
+                else if (s.contains("_Height")) h = i;
+            }
+            float x = feat.at<float>(id, t),
+                    y = feat.at<float>(id, l),
+                    width = feat.at<float>(id, w),
+                    height = feat.at<float>(id, h);
+
+            return QPixmap::fromImage(_cachePixmap.toImage().copy((int)x,(int)y, (int)width, (int)height));
+        }
+    }
+    return QPixmap();
+}
+
+void SequenceInteractor::setTag(QString overlay, int id, QStringList tags)
+{
+    int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
+
+    for (int c = 1; c <= cns; ++c)
+    {
+        QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
+        if (data.contains(overlay))
+        {
+            StructuredMetaData& k = data[overlay];
+            k.setTag(id, tags);
+            return;
+        }
+    }
+}
+
+QStringList SequenceInteractor::getTag(QString overlay, int id)
+{
+    int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
+
+    for (int c = 1; c <= cns; ++c)
+    {
+        QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
+        if (data.contains(overlay))
+        {
+            StructuredMetaData& k = data[overlay];
+
+            return k.getTag(id);
+        }
+    }
+
+    return QStringList();
+}
+
 
