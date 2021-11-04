@@ -183,6 +183,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                     }
                 }
 
+                win->displayWellSelection();
                 for (auto po: (wells) )
                 {
                     auto pos = xpmdl->stringToPos(po);
