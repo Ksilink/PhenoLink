@@ -783,8 +783,10 @@ void MainWindow::startProcessRun()
     connect(watcher, SIGNAL(finished()), this, SLOT(setProgressBar()));
 
     lsfm = QSet<SequenceFileModel*>(lsfm.begin(), lsfm.end()).values(); // To remove duplicates
-    qDebug() << "Starting" << lsfm.size() << "# of processes";
-    this->statusBar()->showMessage(QString("Starting %1 # of processes").arg(lsfm.size()));
+
+    qDebug() << "Starting" << lsfm.size() << "# of processes" << QDateTime::currentDateTime().toString("yyyyMMdd hh:m:ss.z");
+
+    this->statusBar()->showMessage(QString("Starting %1 processes %2").arg(lsfm.size()).arg(QDateTime::currentDateTime().toString("yyyyMMdd hh:m:ss.z")));
     // Start the computation.
     if (!_StatusProgress)
     {
