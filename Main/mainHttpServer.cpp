@@ -348,7 +348,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
 
     CheckoutProcess& procs = CheckoutProcess::handler();
-
+    qDebug() << qhttp::Stringify::toString(req->method())
+        << qPrintable(urlpath)
+        << qPrintable(query)
+        << data.size();
     if (urlpath == "/ListProcesses")
     {
         // If not using cbor outputs the version also
@@ -387,10 +390,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         setHttpResponse(ob, res, !query.contains("json"));
     }
 
-    qDebug() << qhttp::Stringify::toString(req->method())
-             << qPrintable(urlpath)
-             << qPrintable(query)
-             << data.size();
+
 
     if (urlpath.startsWith("/Cancel/"))
     {

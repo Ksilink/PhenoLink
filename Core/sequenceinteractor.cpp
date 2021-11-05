@@ -550,7 +550,7 @@ double mse(cv::Mat i1, cv::Mat i2)
 
     }
 
-    return ms / (cols * rows);
+    return ms / ((double)cols * rows);
 }
 
 std::tuple< double, QPoint> refineLeft(cv::Mat& left, cv::Mat& right, int overlap, bool first = true)
