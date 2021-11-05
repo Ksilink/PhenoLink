@@ -158,6 +158,20 @@ int main(int ac, char** av)
         qDebug() << "Changing server port to :" << port;
     }
 
+
+    int nb_Threads = QThreadPool::globalInstance()->maxThreadCount() - 1;
+
+    if (data.contains("-c"))
+    {
+        int idx = data.indexOf("-c")+1;
+        if (data.size() > idx) nb_Threads = data.at(idx).toInt();
+        qDebug() << "Changing max threads :" << nb_Threads;
+    }
+
+    qDebug() << "Max number of threads : " << nb_Threads;
+    QThreadPool::globalInstance()->setMaxThreadCount(nb_Threads);
+
+
 #if WIN32
     if (data.contains("-n"))
     {
