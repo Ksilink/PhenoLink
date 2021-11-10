@@ -131,7 +131,7 @@ void WellRepresentationItem::setGraphicsScreensItem(GraphicsScreensItem *g)
 }
 
 void WellRepresentationItem::setColorizer(WellColorisation *c)
-{  
+{
     _colorizer = c;
 
     update(); // colorizer changed => the data needs to be redrawn
@@ -245,21 +245,21 @@ void WellRepresentationItem::tagSelection(QString tag)
         auto ltags = s->getTags();
         tags.unite(QSet<QString>(ltags.begin(), ltags.end())); //::fromList( s->getTags()));
     }
-    //  qDebug() << tags;
-    QSettings set;
-    QDir dir(set.value("databaseDir").toString());
+//    //  qDebug() << tags;
+//    QSettings set;
+//    QDir dir(set.value("databaseDir").toString());
 
-    QFile file(dir.absolutePath() + "/"+ r->hash() + ".tagmap");
-    if (file.open(QIODevice::ReadWrite | QIODevice::Text))
-    {
-        QTextStream ex(&file);
+//    QFile file(dir.absolutePath() + "/"+ r->hash() + ".tagmap");
+//    if (file.open(QIODevice::ReadWrite | QIODevice::Text))
+//    {
+//        QTextStream ex(&file);
 
-        ex << tags.values().join(';') << Qt::endl;
+//        ex << tags.values().join(';') << Qt::endl;
 
-        foreach (SequenceFileModel* m, alls)
-            ex << m->Pos() << ';' << m->getTags().join(";") << Qt::endl;
-        file.close();
-    }
+//        foreach (SequenceFileModel* m, alls)
+//            ex << m->Pos() << ';' << m->getTags().join(";") << Qt::endl;
+//        file.close();
+//    }
 }
 
 void WellRepresentationItem::untagSelection(QString tag)
@@ -281,21 +281,21 @@ void WellRepresentationItem::untagSelection(QString tag)
         tags.unite(QSet<QString>(ltags.begin(), ltags.end())); // ::fromList( s->getTags()));
     }
 
-    QSettings set;
-    QDir dir(set.value("databaseDir").toString());
+//    QSettings set;
+//    QDir dir(set.value("databaseDir").toString());
 
-    QFile file(dir.absolutePath() + "/"+ r->hash() + ".tagmap");
-    if (file.open(QIODevice::ReadWrite | QIODevice::Text))
-    {
-        QTextStream ex(&file);
+//    QFile file(dir.absolutePath() + "/"+ r->hash() + ".tagmap");
+//    if (file.open(QIODevice::ReadWrite | QIODevice::Text))
+//    {
+//        QTextStream ex(&file);
 
-        ex << tags.values().join(';') << Qt::endl;
+//        ex << tags.values().join(';') << Qt::endl;
 
-        foreach (SequenceFileModel* m, alls)
-            ex << m->Pos() << ';' << m->getTags().join(";") << Qt::endl;
+//        foreach (SequenceFileModel* m, alls)
+//            ex << m->Pos() << ';' << m->getTags().join(";") << Qt::endl;
 
-        file.close();
-    }
+//        file.close();
+//    }
 }
 
 

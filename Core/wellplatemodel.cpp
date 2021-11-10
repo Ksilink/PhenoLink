@@ -869,36 +869,36 @@ void ExperimentFileModel::setProperties(QString ttag, QString value)
 
         // Extract Tag selection from
 
-        QSettings set;
-        //        qDebug() << "Adding database:" << QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/databases/" + hash + ".db";
-        QDir dir(set.value("databaseDir").toString());
+//        QSettings set;
+//        //        qDebug() << "Adding database:" << QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/databases/" + hash + ".db";
+//        QDir dir(set.value("databaseDir").toString());
 
-        QFile file(dir.absolutePath() + "/" + _hash + ".tagmap");
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            QString line = file.readLine();
-            QStringList l = line.split(';');
+//        QFile file(dir.absolutePath() + "/" + _hash + ".tagmap");
+//        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+//        {
+//            QString line = file.readLine();
+//            QStringList l = line.split(';');
 
-            QStringList tt = set.value("Tags", QStringList()).toStringList();
+//            QStringList tt = set.value("Tags", QStringList()).toStringList();
 
-            foreach(QString s, l)
-                if (!tt.contains(s.simplified())) // Check we already have the tag in tag list...
-                    l << s.simplified();
+//            foreach(QString s, l)
+//                if (!tt.contains(s.simplified())) // Check we already have the tag in tag list...
+//                    l << s.simplified();
 
-            while (!file.atEnd()) {
-                QString line = file.readLine();
-                QStringList split = line.split(';');
-                QString Pos = split.at(0);
-                QPoint p;
-                stringToPos(Pos, p.rx(), p.ry());
+//            while (!file.atEnd()) {
+//                QString line = file.readLine();
+//                QStringList split = line.split(';');
+//                QString Pos = split.at(0);
+//                QPoint p;
+//                stringToPos(Pos, p.rx(), p.ry());
 
-                split.pop_front();
-                foreach(QString t, split)  setTag(p, t.simplified());
+//                split.pop_front();
+//                foreach(QString t, split)  setTag(p, t.simplified());
 
-            }
-        }
+//            }
+//        }
 
-        // Load database data here !
+//        // Load database data here !
         reloadDatabaseData();
     }
 
