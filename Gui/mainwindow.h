@@ -51,7 +51,8 @@ public:
     void adaptSelection(QTableView* tw, QItemSelectionModel* sm, QSet<QString> &rs);
 
     void startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                 bool started, QMap<QString, QSet<QString> > tags_map);
+                                 bool started);
+
     void on_actionRe_load_servers_triggered();
 
 
@@ -316,7 +317,7 @@ private:
     QComboBox* _typeOfprocessing; // Keep tracks of the user selected type of processing (current image, current well, all screens, etc...)
     QLineEdit* _commitName;       // If non empty shall be used to commit the data to a database
 
-    QCheckBox* _shareTags;
+//    QCheckBox* _shareTags;
 
     QModelIndex _icon_model;    // Variable used to keep track of the model for which we want to change the icon
 

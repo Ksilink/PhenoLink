@@ -99,7 +99,6 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     //    _numberOfChannels(0),
     //	_startingProcesses(false),
     _commitName(0),
-    _shareTags(0),
     _python_interface(0),
     //    _progress(0),
     _StatusProgress(0),
@@ -1868,20 +1867,11 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     if (_scrollArea->items() == 0)
         _typeOfprocessing->setCurrentText( "Selected Screens");//Index(_typeOfprocessing->setCurrentText())
 
-
-    if (_shareTags) delete _shareTags;
-    _shareTags = new QCheckBox("Share Tags");
-    // From now on, we force the transfert of tags to the server & back
-    _shareTags->setChecked(true);
-    _shareTags->hide();
-
-
     if (_commitName) delete _commitName;
     _commitName = new QLineEdit();
     _commitName->setToolTip("If non empty data will be saved to database with table having specified name");
 
     layo->addRow(_typeOfprocessing);
-    //    layo->addRow(_shareTags);
 
     if (_preparedProcess.endsWith("Generate BirdView"))
     {

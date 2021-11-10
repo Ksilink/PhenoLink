@@ -418,7 +418,7 @@ void MainWindow::startProcess()
 }
 
 void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                         bool started, QMap<QString, QSet<QString> > tags_map)
+                                         bool started)//, QMap<QString, QSet<QString> > tags_map)
 {
     Q_UNUSED(started);
     //    _startingProcesses = true;
@@ -450,11 +450,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
             QString s = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
             xps.insert(s);
         }
-        if (_shareTags && _shareTags->isChecked())
-        {
-            //            sfm->clearTags();
-            foreach (QString l, tags_map[sfm->Pos()]) sfm->setTag(l);
-        }
+
         // startProcess is more a prepare process list function now
         QJsonArray tmp  = startProcess(sfm, objR, selectedChanns);
         if (count == 0  && tmp.size())
@@ -551,9 +547,6 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         procArray = QJsonArray();
     }
 
-    //    qDebug() << "Sending " << count << " processes to servers";
-    // handler.startProcess(_preparedProcess, procArray);
-    //    _startingProcesses = false;
 }
 
 void MainWindow::startProcessRun()
@@ -577,20 +570,6 @@ void MainWindow::startProcessRun()
                                 "     you need to check at least 1 channel to be processed"
                                 ));
         return;
-    }
-
-
-    QMap<QString, QSet<QString> > tags_map;
-
-    if (_shareTags->isChecked())
-    {
-        QList<SequenceFileModel*> lsfm = hdl.getSequences();
-        foreach (SequenceFileModel* sfm, lsfm)
-        {
-            auto tags = sfm->getTags();
-            tags_map[sfm->Pos()].unite(QSet<QString>(tags.begin(), tags.end()));// ::fromList(tags));
-        }
-        lsfm.clear();
     }
 
     QList<SequenceFileModel*> lsfm ;
@@ -798,7 +777,7 @@ void MainWindow::startProcessRun()
     _StatusProgress->setRange(0,0);
 
     run_time.start();
-    startProcessOtherStates(selectedChanns, lsfm, started, tags_map);
+    startProcessOtherStates(selectedChanns, lsfm, started);
 
 
     QPushButton* s = ui->processingArea->findChild<QPushButton*>("ProcessStartButton");
