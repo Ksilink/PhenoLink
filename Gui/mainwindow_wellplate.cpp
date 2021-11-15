@@ -888,39 +888,7 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         }
 #endif
 
-
-        // Check if the birdview's plugin's has run or run it
-        //if (!QFile::exists(imgName))
-        //{
-        //    _preparedProcess = "Quality Control/Generate BirdView";
-        //    CheckoutProcess::handler().getParameters(_preparedProcess);
-        //    QThread::sleep(10);
-        //    //            startProcessOtherStates()
-        //    auto lsfm = mdl->getAllSequenceFiles();
-        //    QList<bool> selectedChanns;
-
-        //    foreach (QCheckBox* b, _ChannelPicker)
-        //        selectedChanns << (b->checkState() == Qt::Checked);
-        //    QMap<QString, QSet<QString> > tags_map;
-        //    this->statusBar()->showMessage(QString("Starting %1 # of processes").arg(lsfm.size()));
-        //    // Start the computation.
-        //    if (!_StatusProgress)
-        //    {
-        //        _StatusProgress = new QProgressBar(this);
-        //        this->statusBar()->addPermanentWidget(_StatusProgress);
-
-        //        _StatusProgress->setFormat("%v/%m");
-        //    }
-        //    _StatusProgress->setRange(0,0);
-
-        //    run_time.start();
-        //    startProcessOtherStates(selectedChanns, lsfm, false, tags_map);
-
-        //    QPushButton* s = qobject_cast<QPushButton*>(sender());
-        //    if (s) s->setDisabled(true);
-
-        //}
-        // Launch the HTML viewer on the birdview file
+          // Launch the HTML viewer on the birdview file
 
         QWebEngineView *view = new QWebEngineView(this);
         QUrl url(fpath);

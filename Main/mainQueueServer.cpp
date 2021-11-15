@@ -85,30 +85,6 @@ void show_console() {
 }
 
 
-
-int forceNumaAll(int node)
-{
-
-    HANDLE process = GetCurrentProcess();
-
-    DWORD_PTR processAffinityMask;
-    DWORD_PTR systemAffinityMask;
-    ULONGLONG  processorMask;
-
-    if (!GetProcessAffinityMask(process, &processAffinityMask, &systemAffinityMask))
-        return -1;
-
-    GetNumaNodeProcessorMask(node, &processorMask);
-
-    processAffinityMask = processAffinityMask & processorMask;
-
-    BOOL success = SetProcessAffinityMask(process, processAffinityMask);
-
-    qDebug() << success << GetLastError();
-
-    return success;
-}
-
 #endif
 
 void startup_execute(QString file)
@@ -159,15 +135,6 @@ int main(int ac, char** av)
     }
 
 #if WIN32
-    if (data.contains("-n"))
-    {
-        int idx = data.indexOf("-n")+1;
-        int node = 0;
-        if (data.size() > idx) node = data.at(idx).toInt();
-        qDebug() << "Forcing node :" << node;
-        forceNumaAll(node);
-
-    }
 
     if (data.contains("-d"))
         show_console();
@@ -182,25 +149,7 @@ int main(int ac, char** av)
         startup_execute(file);
     }
 
-    PluginManager::loadPlugins(true);
-
-
     Server server;
-
-#ifndef WIN32
-    if (data.contains("-m")) // to override the default path mapping !
-    {
-        int idx = data.indexOf("-m")+1;
-        QString map_path = data.at(idx);
-        server.setDriveMap(map_path);
-    }
-    else
-    { // We ain't on a windows system, so let's default the mapping to a default value
-        server.setDriveMap("/mnt/shares");
-    }
-#endif
-
-
 
     return server.start(port);
 
@@ -214,7 +163,7 @@ int main(int ac, char** av)
 
 void Server::setDriveMap(QString map)
 {
-   CheckoutProcess::handler().setDriveMap(map);
+    CheckoutProcess::handler().setDriveMap(map);
 }
 
 #endif
@@ -241,7 +190,7 @@ int Server::start(quint16 port)
 {
     connect(this, &QHttpServer::newConnection, [this](QHttpConnection*){
         Q_UNUSED(this);
-//        printf("a new connection has occured!\n");
+        //        printf("a new connection has occured!\n");
     });
 
 
@@ -273,7 +222,7 @@ void Server::setHttpResponse(QJsonObject& ob,  qhttp::server::QHttpResponse* res
 {
     QByteArray body =  binary ? QCborValue::fromJsonValue(ob).toCbor() :
                                 QJsonDocument(ob).toJson();
-//    res->addHeader("Connection", "keep-alive");
+    //    res->addHeader("Connection", "keep-alive");
 
     if (binary)
         res->addHeader("Content-Type", "application/cbor");
@@ -318,18 +267,31 @@ QQueue<QJsonObject>& Server::getHighestPriorityJob(QString server)
     QString maxserv;
     for (auto serv = jobs.begin(), e = jobs.end(); serv != e; ++serv)
     {
-          if (maxpriority < serv.value().lastKey())
-          {
-              maxpriority = serv.value().lastKey();
-              maxserv = serv.key();
-          }
+        if (maxpriority < serv.value().lastKey())
+        {
+            maxpriority = serv.value().lastKey();
+            maxserv = serv.key();
+        }
     }
 
 
     return jobs[maxserv][maxpriority];
 }
 
+void sendByteArray(qhttp::client::QHttpClient& iclient, QUrl& url, QByteArray ob)
+{
+    iclient.request(qhttp::EHTTP_POST, url,
+                    [ob]( qhttp::client::QHttpRequest* req){
+        auto body = ob;
+        req->addHeader("Content-Type", "application/cbor");
+        req->addHeaderValue("content-length", body.length());
+        req->end(body);
+    },
 
+    []( qhttp::client::QHttpResponse* res) {
+        res->collectData();
+    });
+}
 
 void Server::WorkerMonitor()
 {
@@ -345,12 +307,19 @@ void Server::WorkerMonitor()
                 auto next_worker = workers.dequeue();
                 workers_lock.unlock();
                 QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker.first);
-
                 // Hey hey look what we have here: the job to be run by next_worker let's call the start func then :
                 // start it :)
 
+                QJsonObject pr = queue.front();  queue.pop_front();
 
+                qhttp::client::QHttpClient  iclient;
+                QString srv = QString("%1:%2").arg(next_worker.first).arg(next_worker.second); // Set proxy name
 
+                QUrl url(QString("http://%1/").arg(srv));
+                url.setPath(QString("/Start/%1").arg(pr["Path"].toString()));
+                QByteArray ob =  QCborValue::fromJsonValue(pr).toCbor() ;
+
+                sendByteArray(iclient, url, ob);
             }
 
         }
@@ -379,7 +348,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QJsonObject ob;
 
         ob["CPU"] = processor_count;
-        ob["Processes"] = QJsonArray::fromStringList(prcs);
+        ob["Processes"] = QJsonArray::fromStringList(QStringList(proc_list.begin(), proc_list.end()));
+        // Need to keep track of processes list from servers
 
         setHttpResponse(ob, res, !query.contains("json"));
         return;
@@ -388,11 +358,16 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     if (urlpath.startsWith("/Process/"))
     {
         QString path = urlpath.mid(9);
+
         //          qDebug() << path;
-        QJsonObject ob;
-        procs.getParameters(path, ob);
+        //QJsonObject ob;
+        //procs.getParameters(path, ob);
         //            qDebug() << path << ob;
+        //setHttpResponse(ob, res, !query.contains("json"));
+
+        QJsonObject& ob = proc_params[path].first();
         setHttpResponse(ob, res, !query.contains("json"));
+
     }
 
     if (urlpath== "/status.html" || urlpath=="/index.html")
@@ -410,7 +385,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     if (urlpath.startsWith("/Ready")) // Server is ready /Ready/{port}
     {
         QString serverIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
-        QString port = urlpath.replace("/Ready/", "");
+
+        uint16_t port = req->connection()->tcpSocket()->peerPort();//urlpath.replace("/Ready/", "");
 
         QStringList queries = query.split("&");
         for (auto q : queries)
@@ -427,8 +403,29 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         }
 
         QMutexLocker lock(&workers_lock);
-        workers.enqueue(qMakePair(serverIP, port.toUInt()));
+        workers.enqueue(qMakePair(serverIP, port));
     }
+
+    if (urlpath.startsWith("/setProcessList")) // Server is ready /Ready/{port}
+    {
+        QString serverIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
+        uint16_t port = req->connection()->tcpSocket()->peerPort();//urlpath.replace("/Ready/", "");
+
+//        proc_list.append();
+        auto ob = QCborValue::fromCbor(data).toArray();
+        for (int i = 0; i < ob.size(); ++i)
+        {
+            auto obj = ob.at(i).toMap().toJsonObject();
+            QString pr = obj["Path"].toString();
+            proc_list.insert(pr);
+            proc_params[pr][QString("%1:%2").arg(serverIP).arg(port)] = obj;
+        }
+
+
+    }
+
+
+
 
     if (urlpath.startsWith("/Status"))
     {
@@ -480,7 +477,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             priority_lock.lock();
             if (project_affinity.contains(project))
             {
-                    jobs[project_affinity[project]][priority].enqueue(obj);
+                jobs[project_affinity[project]][priority].enqueue(obj);
             }
             else
                 jobs[""][priority].enqueue(obj); // Unmapped project goes to "global" path
@@ -496,8 +493,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         obj["ArrayRunProcess"] = Run;
 
         setHttpResponse(obj, res, !query.contains("json"));
-//        QtConcurrent::run(&procs, &CheckoutProcess::startProcessServer,
-//                          proc, ob);
+        //        QtConcurrent::run(&procs, &CheckoutProcess::startProcessServer,
+        //                          proc, ob);
 
 
 
@@ -524,7 +521,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         root["args"] = total;
 
         QByteArray body = QJsonDocument(root).toJson();
-//        res->addHeader("connection", "keep-alive");
+        //        res->addHeader("connection", "keep-alive");
         res->addHeaderValue("content-length", body.length());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body);
@@ -532,7 +529,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     else
     {
         QString body = QString("Server Query received, with empty content (%1)").arg(urlpath);
-//        res->addHeader("connection", "close");
+        //        res->addHeader("connection", "close");
         res->addHeaderValue("content-length", body.length());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body.toLatin1());
@@ -546,7 +543,7 @@ uint Server::serverPort()
 
 void Server::finished(QString hash, QJsonObject ob)
 {
-//    qDebug() << "Finishing on server side";
+    //    qDebug() << "Finishing on server side";
     NetworkProcessHandler::handler().finishedProcess(hash, ob);
 }
 

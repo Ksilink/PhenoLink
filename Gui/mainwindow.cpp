@@ -107,7 +107,8 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->logWindow->hide(); // Hide the log window, since the content display is hidden now
+//    ui->logWindow->hide(); // Hide the log window, since the content display is hidden now
+    tabifyDockWidget(ui->logWindow, ui->computed_features);
     // QErrorMessage::qtHandler();
 
 #ifndef CheckoutCoreWithPython
@@ -2866,4 +2867,12 @@ void MainWindow::ungraySelection()
         }
 }
 
+
+
+void MainWindow::on_actionDisplay_Remaining_Processes_triggered()
+{
+
+//    for (Process)
+//    ui->textLog->insertPlainText();
+}
 

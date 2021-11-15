@@ -206,6 +206,8 @@ private slots:
 
     void on_actionPlate_Tag_triggered();
 
+    void on_actionDisplay_Remaining_Processes_triggered();
+
 public slots:
 
     void updateCurrentSelection();
@@ -351,6 +353,9 @@ private:
 
     QShortcut *shrt_startR, *shrt_startEnt;
     QVector<QShortcut *> shrt_binarize;
+
+
+    QDateTime process_starttime;
 
 };
 

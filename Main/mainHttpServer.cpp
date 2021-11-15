@@ -348,10 +348,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
 
     CheckoutProcess& procs = CheckoutProcess::handler();
-    qDebug() << qhttp::Stringify::toString(req->method())
-        << qPrintable(urlpath)
-        << qPrintable(query)
-        << data.size();
+
     if (urlpath == "/ListProcesses")
     {
         // If not using cbor outputs the version also
@@ -390,7 +387,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         setHttpResponse(ob, res, !query.contains("json"));
     }
 
-
+    qDebug() << qhttp::Stringify::toString(req->method())
+        << qPrintable(urlpath)
+        << qPrintable(query)
+        << data.size();
 
     if (urlpath.startsWith("/Cancel/"))
     {
@@ -499,12 +499,29 @@ void Server::affinity(QString projects)
 #include "qhttp/qhttpclientrequest.hpp"
 #include "qhttp/qhttpclientresponse.hpp"
 
+void sendByteArray(qhttp::client::QHttpClient& iclient, QUrl& url, QByteArray ob)
+{
+    iclient.request(qhttp::EHTTP_POST, url,
+                    [ob]( qhttp::client::QHttpRequest* req){
+        auto body = ob;
+        req->addHeader("Content-Type", "application/cbor");
+        req->addHeaderValue("content-length", body.length());
+        req->end(body);
+    },
+
+    []( qhttp::client::QHttpResponse* res) {
+        res->collectData();
+    });
+}
+
 
 void Server::proxyAdvert(QString host, int port)
 {
     // send /Ready/ command to proxy
     int processor_count = (int)std::thread::hardware_concurrency();
     qhttp::client::QHttpClient  iclient;
+
+
 
     proxy = QString("%1:%2").arg(host).arg(port); // Set proxy name
 
@@ -515,6 +532,30 @@ void Server::proxyAdvert(QString host, int port)
         url.setQuery(QString("affinity=%1").arg(affinity_list.join(",")));
         iclient.request(qhttp::EHTTP_POST, url);
     }
+
+
+
+    CheckoutProcess& procs = CheckoutProcess::handler();
+
+    // If not using cbor outputs the version also
+    QStringList prcs = procs.pluginPaths();
+
+    QJsonArray pro;
+    for (auto &pr: prcs)
+    {
+        QJsonObject obj;
+        procs.getParameters(pr, obj);
+        pro.append(obj);
+    }
+
+
+    QByteArray by =  QCborArray::fromJsonArray(pro).toCborValue().toCbor() ;
+
+    QUrl url(QString("http://%1:%2/").arg(host).arg(port));
+    url.setPath(QString("/setProcessList"));
+    sendByteArray(iclient, url, by);
+
+
 
 }
 
@@ -581,11 +622,11 @@ void Control::timerEvent(QTimerEvent * event)
         tooltip = QString("CheckoutServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
 
     QStringList missing_users;
-    for (auto user : procs.users())
+    for (auto& user : procs.users())
     {
         tooltip = QString("%1\r\n%2").arg(tooltip).arg(user);
         bool missing = true;
-        for (auto me: _users)
+        for (auto& me: _users)
             if (me->text() == user)
             {
                 missing = false;
@@ -594,10 +635,10 @@ void Control::timerEvent(QTimerEvent * event)
         if (missing) missing_users << user;
     }
 
-    for (auto old: _users)
+    for (auto& old: _users)
     {
         bool rem = true;
-        for (auto ne: procs.users())
+        for (auto& ne: procs.users())
         {
             if (ne == old->text())
                 rem = false;
@@ -612,7 +653,7 @@ void Control::timerEvent(QTimerEvent * event)
 
     lastNpro = npro;
 
-    for (auto user: missing_users)
+    for (auto& user: missing_users)
         _users.append(_cancelMenu->addAction(user));
 }
 

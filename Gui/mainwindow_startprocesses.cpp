@@ -763,16 +763,20 @@ void MainWindow::startProcessRun()
 
     lsfm = QSet<SequenceFileModel*>(lsfm.begin(), lsfm.end()).values(); // To remove duplicates
 
-    qDebug() << "Starting" << lsfm.size() << "# of processes" << QDateTime::currentDateTime().toString("yyyyMMdd hh:m:ss.z");
+    process_starttime = QDateTime::currentDateTime();
 
-    this->statusBar()->showMessage(QString("Starting %1 processes %2").arg(lsfm.size()).arg(QDateTime::currentDateTime().toString("yyyyMMdd hh:m:ss.z")));
+    qDebug() << "Starting" << lsfm.size() << "# of processes" << process_starttime.toString("yyyyMMdd hh:m:ss.z");
+
+    this->statusBar()->showMessage(QString("Starting %1 processes %2").arg(lsfm.size()).arg(process_starttime.toString("yyyyMMdd hh:m:ss.z")));
+
     // Start the computation.
     if (!_StatusProgress)
     {
+
         _StatusProgress = new QProgressBar(this);
         this->statusBar()->addPermanentWidget(_StatusProgress);
+        _StatusProgress->setFormat("%v / %m");
 
-        _StatusProgress->setFormat("%v/%m");
     }
     _StatusProgress->setRange(0,0);
 

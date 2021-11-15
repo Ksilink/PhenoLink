@@ -18,6 +18,8 @@
 #include <Core/config.h>
 #include <core/checkoutprocess.h>
 
+
+
 struct Server;
 
 class Control: public QWidget
@@ -107,6 +109,10 @@ protected:
 
     // Project Affinity map
     QMap<QString, QString> project_affinity; // projection of project name to server name
+
+
+    QSet<QString> proc_list;
+    QMap<QString, QMap<QString, QJsonObject> >  proc_params; // Process name, server name => Proc descr
 
 };
 
