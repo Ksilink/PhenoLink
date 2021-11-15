@@ -502,9 +502,9 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
 
         bool exists = false;
         info = ImageInfos::getInstance(this, file, exp + QString("%1").arg(ii), ii, exists, key);
-
+        lock_infos.lock();
         _infos[file] = info;
-
+        lock_infos.unlock();
         if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
         {
             QColor col;
