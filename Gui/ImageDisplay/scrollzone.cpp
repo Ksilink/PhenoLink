@@ -187,7 +187,7 @@ void ScrollZone::addSelectedWells()
         typedef SequenceInteractor* result_type;
 
         SequenceInteractor* operator()(SequenceFileModel* sfm) {
-            SequenceInteractor* intr = new SequenceInteractor(sfm, ImageInfos::key("0"));
+            SequenceInteractor* intr = new SequenceInteractor(sfm, QString("0"));
             intr->preloadImage();
             intr->moveToThread(sz->thread());
             return intr;
