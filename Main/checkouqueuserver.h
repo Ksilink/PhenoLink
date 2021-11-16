@@ -101,6 +101,7 @@ protected:
    void WorkerMonitor();
 
    QQueue<QJsonObject> &getHighestPriorityJob(QString server);
+   unsigned int njobs();
 
     // We need to maintain a worker list
     QQueue<QPair<QString, int> > workers;

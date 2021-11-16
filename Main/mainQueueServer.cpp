@@ -133,28 +133,18 @@ int main(int ac, char** av)
         if (data.size() > idx) port = data.at(idx).toInt();
         qDebug() << "Changing server port to :" << port;
     }
+    else
+        qDebug() << "Server port :" << port;
 
 #if WIN32
 
     if (data.contains("-d"))
         show_console();
-
 #endif
-    if (data.contains("-s"))
-    {
-        int idx = data.indexOf("-s")+1;
-        QString file;
-        if (data.size() > idx) file = data.at(idx);
-        qDebug() << "Loading startup script :" << file;
-        startup_execute(file);
-    }
 
     Server server;
 
     return server.start(port);
-
-
-
 }
 
 
@@ -190,7 +180,7 @@ int Server::start(quint16 port)
 {
     connect(this, &QHttpServer::newConnection, [this](QHttpConnection*){
         Q_UNUSED(this);
-        //        printf("a new connection has occured!\n");
+        qDebug() << "a new connection has occured!";
     });
 
 
@@ -200,6 +190,7 @@ int Server::start(quint16 port)
                 [this]( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpResponse* res){
             req->collectData();
             req->onEnd([this, req, res](){
+        qDebug() << "Processing query";
         process(req, res);
     });
 });
@@ -209,11 +200,9 @@ int Server::start(quint16 port)
         return -1;
     }
 
+    qDebug() << "Starting monitor thread";
     QtConcurrent::run(this, &Server::WorkerMonitor);
-
-    CheckoutProcess& procs = CheckoutProcess::handler();
-    connect(&procs, SIGNAL(finishedJob(QString,QJsonObject)),
-            this, SLOT(finished(QString, QJsonObject)));
+    qDebug() << "Done";
 
     return qApp->exec();
 }
@@ -240,9 +229,11 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
 
     QString message;
 
-    CheckoutProcess& procs = CheckoutProcess::handler();
+    //    CheckoutProcess& procs = CheckoutProcess::handler();
+    //    message = procs.dumpHtmlStatus();
 
-    message = procs.dumpHtmlStatus();
+
+
 
     res->setStatusCode(qhttp::ESTATUS_OK);
     res->addHeaderValue("content-length", message.size());
@@ -250,6 +241,20 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
 }
 
 QMutex priority_lock, workers_lock;
+
+unsigned int Server::njobs()
+{
+    unsigned int count = 0;
+
+    for (auto& srv: jobs)
+    {
+        for (auto& q: srv)
+            count += q.size();
+    }
+
+    return count;
+}
+
 
 QQueue<QJsonObject>& Server::getHighestPriorityJob(QString server)
 {
@@ -298,35 +303,39 @@ void Server::WorkerMonitor()
 
     while (true) // never ending run
     {
-        if (jobs.count() && ! workers.isEmpty()) // If we have some jobs left and some workers available
+        if (njobs() && ! workers.isEmpty()) // If we have some jobs left and some workers available
 
         {
             while (!workers.isEmpty())
             {
                 workers_lock.lock();
-                auto next_worker = workers.dequeue();
+                auto next_worker = workers.back();
                 workers_lock.unlock();
                 QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker.first);
                 // Hey hey look what we have here: the job to be run by next_worker let's call the start func then :
                 // start it :)
+                if (queue.size())
+                {
+                    QJsonObject pr = queue.dequeue();
 
-                QJsonObject pr = queue.front();  queue.pop_front();
+                    qhttp::client::QHttpClient  iclient;
+                    QString srv = QString("%1:%2").arg(next_worker.first).arg(next_worker.second); // Set proxy name
 
-                qhttp::client::QHttpClient  iclient;
-                QString srv = QString("%1:%2").arg(next_worker.first).arg(next_worker.second); // Set proxy name
+                    QUrl url(QString("http://%1/").arg(srv));
+                    url.setPath(QString("/Start/%1").arg(pr["Path"].toString()));
+                    QByteArray ob =  QCborValue::fromJsonValue(pr).toCbor() ;
 
-                QUrl url(QString("http://%1/").arg(srv));
-                url.setPath(QString("/Start/%1").arg(pr["Path"].toString()));
-                QByteArray ob =  QCborValue::fromJsonValue(pr).toCbor() ;
+                    sendByteArray(iclient, url, ob);
 
-                sendByteArray(iclient, url, ob);
+                    workers_lock.lock(); workers.pop_back(); workers_lock.unlock();
+                }
             }
-
         }
         else
         {
-            QThread::msleep(300); // Wait for 300ms at least
+            QThread::msleep(5000); // Wait for 300ms at least
         }
+        //qDebug() << "Worker Monitor Loop";
     }
 }
 
@@ -335,6 +344,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     const QByteArray data = req->collectedData();
     QString urlpath = req->url().path(), query = req->url().query();
+
 
 
     CheckoutProcess& procs = CheckoutProcess::handler();
@@ -350,7 +360,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         ob["CPU"] = processor_count;
         ob["Processes"] = QJsonArray::fromStringList(QStringList(proc_list.begin(), proc_list.end()));
         // Need to keep track of processes list from servers
-
         setHttpResponse(ob, res, !query.contains("json"));
         return;
     }
@@ -359,11 +368,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
         QString path = urlpath.mid(9);
 
-        //          qDebug() << path;
-        //QJsonObject ob;
-        //procs.getParameters(path, ob);
-        //            qDebug() << path << ob;
-        //setHttpResponse(ob, res, !query.contains("json"));
 
         QJsonObject& ob = proc_params[path].first();
         setHttpResponse(ob, res, !query.contains("json"));
@@ -384,6 +388,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     if (urlpath.startsWith("/Ready")) // Server is ready /Ready/{port}
     {
+        qDebug() << proc_params;
         QString serverIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
 
         uint16_t port = req->connection()->tcpSocket()->peerPort();//urlpath.replace("/Ready/", "");
@@ -411,7 +416,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QString serverIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
         uint16_t port = req->connection()->tcpSocket()->peerPort();//urlpath.replace("/Ready/", "");
 
-//        proc_list.append();
+        //        proc_list.append();
         auto ob = QCborValue::fromCbor(data).toArray();
         for (int i = 0; i < ob.size(); ++i)
         {
@@ -421,6 +426,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             proc_params[pr][QString("%1:%2").arg(serverIP).arg(port)] = obj;
         }
 
+        qDebug() << proc_params;
 
     }
 
@@ -572,17 +578,13 @@ Control::Control(Server* serv): QWidget(), _serv(serv), lastNpro(0)
 
 
     trayIconMenu = new QMenu(this);
-    //       trayIconMenu->addAction(minimizeAction);
-    //       trayIconMenu->addAction(maximizeAction);
-    //       trayIconMenu->addAction(restoreAction);
-    //       trayIconMenu->addSeparator();
     _cancelMenu = trayIconMenu->addMenu("Cancel Processes:");
     trayIconMenu->addAction(quitAction);
 
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setContextMenu(trayIconMenu);
     trayIcon->setIcon(QIcon(":/ServerIcon.png"));
-    trayIcon->setToolTip(QString("Checkout Server %2 (%1)").arg(sets.value("ServerPort", 13378).toUInt()).arg(CHECKOUT_VERSION));
+    trayIcon->setToolTip(QString("Checkout Proxy %2 (%1)").arg(sets.value("ServerPort", 13378).toUInt()).arg(CHECKOUT_VERSION));
     trayIcon->show();
 
     startTimer(2000);
@@ -599,9 +601,9 @@ void Control::timerEvent(QTimerEvent * event)
     int npro = procs.numberOfRunningProcess();
     QString tooltip;
     if (npro != 0)
-        tooltip = QString("CheckoutServer %2 (%1 requests").arg(npro).arg(CHECKOUT_VERSION);
+        tooltip = QString("CheckoutQueueServer %2 (%1 requests").arg(npro).arg(CHECKOUT_VERSION);
     else
-        tooltip = QString("CheckoutServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
+        tooltip = QString("CheckoutQueueServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
 
     QStringList missing_users;
     for (auto user : procs.users())

@@ -79,9 +79,6 @@ void CheckoutHttpClient::sendQueue()
 {
     if (reqs.isEmpty())
         return;
-//    if (awaiting)
-//        return;
-
 
     auto req = reqs.takeFirst();
     QUrl url = req.url;
@@ -89,14 +86,13 @@ void CheckoutHttpClient::sendQueue()
     auto keepalive = req.keepalive;
 
     qDebug() << "Sending Queued" << url;
-    awaiting = true;
     iclient.request(
                 qhttp::EHTTP_POST,
                 req.url,
                 [ob, keepalive](QHttpRequest* req){
         auto body = ob;
-//        req->addHeader("connection", keepalive ? "keep-alive" : "close");
         req->addHeader("Content-Type", "application/cbor");
+
         req->addHeaderValue("content-length", body.length());
         req->end(body);
         qDebug() << "Request" << req->connection()->tcpSocket()->peerAddress()
@@ -109,14 +105,11 @@ void CheckoutHttpClient::sendQueue()
         res->collectData();
         res->onEnd([this, res](){
             onIncomingData(res->collectedData());
-            awaiting = false; // finished current send
-      //      sendQueue(); // send next message
-            qDebug() << "Response received";
         });
     });
 
-    if (iclient.tcpSocket()->error() != QTcpSocket::UnknownSocketError)
-        qDebug() << "Send" << iclient.tcpSocket()->errorString();
+    if (iclient.tcpSocket()->error() >= 0)
+        qDebug() << "Error Send" << iclient.tcpSocket()->errorString();
 
 }
 
@@ -158,7 +151,7 @@ void CheckoutHttpClient::onIncomingData(const QByteArray& data)
 }
 
 void CheckoutHttpClient::finalize() {
-    qDebug() << "Disconnected";    //        qDebug("totally %d request/response pairs have been transmitted in %lld [mSec].\n",
+  //  qDebug() << "Disconnected";    //        qDebug("totally %d request/response pairs have been transmitted in %lld [mSec].\n",
     ////               istan, itick.tock()
     //               );
 }

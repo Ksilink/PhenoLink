@@ -765,9 +765,9 @@ void MainWindow::startProcessRun()
 
     process_starttime = QDateTime::currentDateTime();
 
-    qDebug() << "Starting" << lsfm.size() << "# of processes" << process_starttime.toString("yyyyMMdd hh:m:ss.z");
+    qDebug() << "Starting" << lsfm.size() << "# of processes" << process_starttime.toString("yyyyMMdd hh:mm:ss.z");
 
-    this->statusBar()->showMessage(QString("Starting %1 processes %2").arg(lsfm.size()).arg(process_starttime.toString("yyyyMMdd hh:m:ss.z")));
+    this->statusBar()->showMessage(QString("Starting %1 processes %2").arg(lsfm.size()).arg(process_starttime.toString("yyyyMMdd hh:mm:ss.z")));
 
     // Start the computation.
     if (!_StatusProgress)

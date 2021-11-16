@@ -174,7 +174,7 @@ void MainWindow::exportData()
 {
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/export.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                     | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                           | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -315,7 +315,7 @@ void MainWindow::on_wellPlateViewTab_tabBarClicked(int index)
 
     foreach (QString db, tmdl->getDatabaseNames())
     {
-//        qDebug() << "List of DBs" << db;
+        //        qDebug() << "List of DBs" << db;
         QTableView* tv = new QTableView(ui->databases);
         tv->setSortingEnabled(true);
         tv->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -425,6 +425,16 @@ void MainWindow::finishedJob()
     {
         _StatusProgress->setValue(_StatusProgress->value()+1);
 
+        uint64_t ms = process_starttime.addMSecs(-QDateTime::currentMSecsSinceEpoch()).currentMSecsSinceEpoch();
+        QTime y(0,0); y = y.addMSecs(ms/_StatusProgress->value());
+        QDateTime z = process_starttime; z = z.addMSecs(y.msec() * _StatusProgress->maximum());
+
+        this->statusBar()->showMessage(QString("Starting Time %1 (Per sample run time: %2)").arg(process_starttime.toString("yyyyMMdd hh:mm:ss.zz"),
+                                                                                                 y.toString("mm:ss.zzz"),
+                                                                                                 z.toString("mm:ss.zzz")
+                                                                                                 ));
+
+
         if (_StatusProgress->value() == _StatusProgress->maximum())
         {
             QList<QPushButton*> list = ui->processingArea->findChildren<QPushButton*>();
@@ -522,7 +532,7 @@ void MainWindow::networkProcessFinished(QJsonArray dat)
             v->setModel(proxyModel);
         }
 
-//    qDebug() << msg;
+    //    qDebug() << msg;
 }
 
 void MainWindow::future_networkRetrieveImageFinished()
@@ -575,7 +585,7 @@ void MainWindow::networkRetrievedImage(QList<SequenceFileModel *> lsfm)
         if (!m) continue;
         if (!m->toDisplay()) continue;
 
-// First time drop from server, just need to create the image info
+        // First time drop from server, just need to create the image info
         ScrollZone* zone = qobject_cast<ScrollZone*>(ui->tabWidget->currentWidget());
         if (!zone) zone = _scrollArea;
         if (!m->isAlreadyShowed())

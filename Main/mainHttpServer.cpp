@@ -514,23 +514,20 @@ void sendByteArray(qhttp::client::QHttpClient& iclient, QUrl& url, QByteArray ob
     });
 }
 
+#include <Core/networkprocesshandler.h>
 
 void Server::proxyAdvert(QString host, int port)
 {
     // send /Ready/ command to proxy
     int processor_count = (int)std::thread::hardware_concurrency();
-    qhttp::client::QHttpClient  iclient;
 
-
-
-    proxy = QString("%1:%2").arg(host).arg(port); // Set proxy name
+    static CheckoutHttpClient* client = new CheckoutHttpClient(host, port);
 
     for (int i = 0; i < processor_count; ++i)
     {
-        QUrl url(QString("http://%1:%2/").arg(host).arg(port));
-        url.setPath(QString("/Ready/%1").arg(i));
-        url.setQuery(QString("affinity=%1").arg(affinity_list.join(",")));
-        iclient.request(qhttp::EHTTP_POST, url);
+       client->send(QString("/Ready/%1").arg(i),
+                    QString("affinity=%1").arg(affinity_list.join(",")), QJsonArray());
+       qApp->processEvents();
     }
 
 
@@ -548,15 +545,10 @@ void Server::proxyAdvert(QString host, int port)
         pro.append(obj);
     }
 
-
-    QByteArray by =  QCborArray::fromJsonArray(pro).toCborValue().toCbor() ;
-
-    QUrl url(QString("http://%1:%2/").arg(host).arg(port));
-    url.setPath(QString("/setProcessList"));
-    sendByteArray(iclient, url, by);
-
-
-
+    client->send(QString("/setProcessList"),
+                 QString(),
+                 pro);
+    qApp->processEvents();
 }
 
 void Server::finished(QString hash, QJsonObject ob)
