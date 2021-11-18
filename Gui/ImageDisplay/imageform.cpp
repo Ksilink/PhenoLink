@@ -898,6 +898,8 @@ void ImageForm::imageMouseMove(QPointF pos)
 
 void ImageForm::mouseOverImage(QPointF pos)
 {
+    if (!_interactor) return;
+
     _pos = pos;
     QString str = QString("(%1 x %2 : ").arg((int)pos.x()).arg((int)pos.y());
 
@@ -1019,6 +1021,8 @@ void ImageForm::closeEvent(QCloseEvent *event)
 
 void ImageForm::keyPressEvent(QKeyEvent *event)
 {
+    if (!_interactor) return;
+
     if (sz && event->key() == Qt::Key_Delete)
     {
         QList<ImageForm*> l = sz->currentSelection();
@@ -1032,6 +1036,7 @@ void ImageForm::timerEvent(QTimerEvent *event)
 {
     Q_UNUSED(event);
     // Use this to play videos....
+    if (!_interactor) return;
 
     if (video_status == ImageForm::VideoStop)
     {
@@ -1081,6 +1086,8 @@ void ImageForm::biasCorrection()
 
 void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
 {
+    if (!_interactor) return;
+
     QMenu menu(this);
 
 
@@ -1146,6 +1153,7 @@ void ImageForm::copyToClipboard()
 
 void ImageForm::captureToClipboard()
 {
+
     QPixmap pixmap(this->size());
     this->render(&pixmap);
     QApplication::clipboard()->setPixmap(pixmap);
@@ -1156,6 +1164,8 @@ void ImageForm::captureToClipboard()
 
 void ImageForm::copyCurrentImagePath()
 {
+    if (!_interactor) return;
+
     QList<QPair<int, QString> > chans = _interactor->getAllChannel();
     QStringList l;
     for (int i = 0; i < chans.size(); i++)
@@ -1165,6 +1175,8 @@ void ImageForm::copyCurrentImagePath()
 
 void ImageForm::copyCurrentSequencePath()
 {
+    if (!_interactor) return;
+
 
     SequenceFileModel* mdl = _interactor->getSequenceFileModel();
     QStringList data;
@@ -1320,7 +1332,8 @@ void ImageForm::removeFromView()
     this->pixItem->blockSignals(true);
 
     removing = true;
-    _interactor->clearMemory(this);
+    if (_interactor)
+        _interactor->clearMemory(this);
 
 
     if (sz)
@@ -1332,5 +1345,7 @@ void ImageForm::removeFromView()
     this->_pix = QPixmap(); // force empty pixmap, shall clear previous data
     this->pixItem->setPixmap(_pix); // remove links to pixmap in case...
     deleteLater();
+    _interactor = 0;
+
 
 }
