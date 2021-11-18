@@ -65,7 +65,7 @@ public:
     SequenceInteractor* getInteractor(SequenceFileModel* mdl);
     Screens loadSelection(QStringList checked, bool reload=true);
 
-    Screens findPlate(QString plate, QString project);
+    Screens findPlate(QString plate, QStringList project, QString drive);
 
     void resetSelection();
     void graySelection();

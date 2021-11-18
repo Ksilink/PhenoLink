@@ -196,7 +196,7 @@ protected:
     QString _name, _plate;
 
     cv::Mat _image;
-    QMutex _lockImage;
+    static QMutex _lockImage;
     double _fps;
     bool bias_correction;
     bool _saturate, _uninverted;

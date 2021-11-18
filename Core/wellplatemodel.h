@@ -527,7 +527,7 @@ public:
     Screens& getScreens();
     ExperimentFileModel* getScreenFromHash(QString hash);
 
-    QString findPlate(QString plate, QString project);
+    QString findPlate(QString plate, QStringList project, QString drives = QString());
 
 
     QList<SequenceFileModel *> addProcessResultImage(QJsonObject &data);

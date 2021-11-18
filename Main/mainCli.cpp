@@ -509,13 +509,14 @@ int main(int ac, char** av)
 
             ScreensHandler& handler = ScreensHandler::getHandler();
             QString project = find("project", ac, i+1, av);
+            QString drive = find("drive", ac, i+1, av);
 
             for (int p = i+1; p < ac; ++p)
             {
                 QString plate(av[p]);
                 if (!plate.contains("="))
                 {
-                    QString file = handler.findPlate(plate, project);
+                    QString file = handler.findPlate(plate, project.split(","), drive);
                     if (!file.isEmpty())
                     {
                         // Found a plate
@@ -565,6 +566,7 @@ int main(int ac, char** av)
             }
 
             QString project=find("project", ac, p+1, av);
+            QString drive = find("drive", ac, p+1, av);
             QStringList plates;
             ScreensHandler& handler = ScreensHandler::getHandler();
 
@@ -573,7 +575,7 @@ int main(int ac, char** av)
                 QString v(av[l]);
                 if (!v.contains("="))
                 {
-                    v = handler.findPlate(v, project);
+                    v = handler.findPlate(v, project.split(","), drive);
                     if (!v.isEmpty())
                         plates << v;
                 }

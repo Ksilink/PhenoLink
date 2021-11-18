@@ -2192,7 +2192,7 @@ QString globMatchFinder(QStringList paths, QString subplate, QString plate, QStr
     return QString();
 }
 
-QString ScreensHandler::findPlate(QString plate, QString project)
+QString ScreensHandler::findPlate(QString plate, QStringList projects, QString drives)
 {
 
     CheckoutDataLoader& loader = CheckoutDataLoader::handler();
@@ -2217,16 +2217,29 @@ QString ScreensHandler::findPlate(QString plate, QString project)
                                          << "W:/BTSData/MeasurementData/"
                                          << "K:/BTSData/MeasurementData/"
                                          << "C:/Data/").toStringList();
-
-    if (!project.isEmpty())
+    if (!drives.isEmpty())
     {
-        for (auto file : searchpaths)
-            if (dir.exists(file) && dir.exists(file + project))
-                searchPaths << file + project;
+        QStringList paths;
+        for (auto& c: searchpaths)
+            if (c.startsWith(drives))
+                paths.push_front(c);
+            else
+                paths.push_back(c);
+
+        searchPaths = paths;
+    }
+
+
+    if (!projects.isEmpty())
+    {
+        for (auto& file : searchpaths)
+            for (auto &project: projects)
+                if (dir.exists(file) && dir.exists(file + project))
+                        searchPaths.push_front(file + project);
     }
     else
     {
-        for (auto file : searchpaths)
+        for (auto &file : searchpaths)
             if (dir.exists(file))
                 searchPaths << file;
     }

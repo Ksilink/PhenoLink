@@ -5,6 +5,7 @@
 
 #include <Core/checkouterrorhandler.h>
 
+QMutex ImageInfos::_lockImage(QMutex::NonRecursive);
 
 ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString fname, QString platename, int channel):
     QObject(par),
@@ -13,7 +14,6 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     _modified(true),
     _name(fname),
     _plate(platename),
-    _lockImage(QMutex::NonRecursive),
     bias_correction(false),
     _saturate(true), _uninverted(true),
 

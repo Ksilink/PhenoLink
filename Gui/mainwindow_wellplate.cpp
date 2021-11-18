@@ -496,11 +496,11 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
     return data;
 }
 
-Screens MainWindow::findPlate(QString plate, QString project)
+Screens MainWindow::findPlate(QString plate, QStringList project, QString drive)
 {
     ScreensHandler& handler = ScreensHandler::getHandler();
 
-    QString file = handler.findPlate(plate, project);
+    QString file = handler.findPlate(plate, project, drive);
     if (file.isEmpty())   return Screens();
     return loadSelection(QStringList() << file, false);
 }

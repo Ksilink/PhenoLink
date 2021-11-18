@@ -111,6 +111,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile" << "project";
         QString tile;
         std::map<QString, QString> params;
+
         for (auto q : (queries) )
         {
             if (q.startsWith("plate="))
@@ -145,9 +146,12 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
         Screens sc;
 
-        for (auto plate: (plates) )
+        for (auto &_plate: (plates) )
         {
-            for (auto xp: ScreensHandler::getHandler().getScreens())
+            QStringList lpl = _plate.split(":");
+            QString plate = lpl[0];
+
+            for (auto &xp: ScreensHandler::getHandler().getScreens())
             {
                     if (xp->fileName().contains(plate))
                         sc << xp;
@@ -161,12 +165,13 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 }
                 else
                 {
-                    QString project = params["project"];
-                    sc= win->findPlate(plate, project);
+                    QStringList project = params["project"].split(",");// "project can be "," separated :D
+                    QString drive = params["drive"];
+                    sc= win->findPlate(plate, project, drive);
                 }
             }
 
-            for (auto mdl: (sc))
+            for (auto &mdl: (sc))
             {
                 mdl->clearState(ExperimentFileModel::IsSelected);
                 ExperimentDataTableModel* xpmdl = mdl->computedDataModel();
@@ -183,7 +188,12 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 }
 
                 win->displayWellSelection();
-                for (auto po: (wells) )
+                if (wells.isEmpty() && lpl.size() >= 1)
+                {
+                    wells = lpl[1].split("/");  // so we can do a query plate:well1/well2/well3,plate:well1/well2 etc...
+                }
+
+                for (auto& po: (wells) )
                 {
                     auto pos = xpmdl->stringToPos(po);
                     if ((*mdl)(pos).isValid())
@@ -191,7 +201,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 }
 
                 win->displayWellSelection();
-                for (auto sfm : mdl->getSelection())
+                for (auto &sfm : mdl->getSelection())
                     if (sfm->isValid())
                     {
                         auto inter = win->getInteractor(sfm);
