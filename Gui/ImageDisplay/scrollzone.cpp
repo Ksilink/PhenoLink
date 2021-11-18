@@ -240,7 +240,7 @@ void ScrollZone::insertImage(SequenceFileModel* sfm, SequenceInteractor* iactor)
     }
         else
     {
-        intr = new SequenceInteractor(sfm, ImageInfos::key("0"));
+        intr = new SequenceInteractor(sfm, QString("0"));
 
     }
 

@@ -105,9 +105,8 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
     if (urlpath.startsWith("/Load"))
     {
         //        "/Load/?plate=&wells=&field=&tile=&unpacked"
-
         QStringList queries = query.split("&"), wells, plates;
-        qDebug() << "Load" << queries;
+        //        qDebug() << "Load" << queries;
         bool unpacked=false;
         QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile" << "project";
         QString tile;
@@ -141,8 +140,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 }
         }
 
-    qDebug() << "Should handle" << plates << unpacked << wells;
-
+        //        qDebug() << "Should handle" << plates << unpacked << wells;
 
         Screens sc;
 
@@ -217,6 +215,9 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             }
 
         }
+
+        QJsonObject ob;
+        setHttpResponse(ob, res, !query.contains("json"));
 
         return;
     }

@@ -65,6 +65,7 @@ protected:
 #endif
 
 using namespace qhttp::server;
+struct CheckoutHttpClient;
 
 struct Server : public QHttpServer
 {
@@ -79,7 +80,7 @@ public:
     void process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res);
     uint serverPort();
     void affinity(QString projects);
-    void proxyAdvert(QString host, int port);
+    void proxyAdvert(QString host, int port, unsigned dport);
 
 public slots:
     void finished(QString hash, QJsonObject ob);
@@ -100,6 +101,10 @@ protected:
    void HTMLstatus(qhttp::server::QHttpResponse *res);
    QString proxy;
    QStringList affinity_list;
+   unsigned dport;
+
+   CheckoutHttpClient* client;
+
 };
 
 

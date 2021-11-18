@@ -434,7 +434,6 @@ void MainWindow::finishedJob()
                                                                                                  z.toString("mm:ss.zzz")
                                                                                                  ));
 
-
         if (_StatusProgress->value() == _StatusProgress->maximum())
         {
             QList<QPushButton*> list = ui->processingArea->findChildren<QPushButton*>();
@@ -443,7 +442,6 @@ void MainWindow::finishedJob()
             QTime y(0, 0);
             y = y.addMSecs(run_time.elapsed());
             this->statusBar()->showMessage(QString("Processing finished: %1").arg(y.toString("mm:ss.zzz")));
-
         }
     }
 }

@@ -420,6 +420,8 @@ void MainWindow::startProcess()
 void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
                                          bool started)//, QMap<QString, QSet<QString> > tags_map)
 {
+    static int WorkID = 1;
+
     Q_UNUSED(started);
     //    _startingProcesses = true;
     QJsonObject objR, stored;
@@ -427,6 +429,11 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     CheckoutProcess& handler = CheckoutProcess::handler();
 
     handler.getParameters(_preparedProcess, objR);
+
+
+    objR["WorkID"]=QString("%1").arg(WorkID);
+
+    WorkID++;
 
     handler.setProcessCounter(new int());
     QSettings set;

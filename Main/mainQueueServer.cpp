@@ -297,9 +297,12 @@ void sendByteArray(qhttp::client::QHttpClient& iclient, QUrl& url, QByteArray ob
         res->collectData();
     });
 }
-
+#include <Core/networkprocesshandler.h>
 void Server::WorkerMonitor()
 {
+
+    QMap<QString, CheckoutHttpClient* > clients;//
+
 
     while (true) // never ending run
     {
@@ -316,24 +319,30 @@ void Server::WorkerMonitor()
                 // start it :)
                 if (queue.size())
                 {
+
                     QJsonObject pr = queue.dequeue();
-
-                    qhttp::client::QHttpClient  iclient;
                     QString srv = QString("%1:%2").arg(next_worker.first).arg(next_worker.second); // Set proxy name
+                    CheckoutHttpClient* sr = nullptr;
+                    if (clients[srv])
+                       sr = clients[srv];
+                    else
+                    {
+                         clients[srv] = new CheckoutHttpClient(next_worker.first, next_worker.second);
+                         sr = clients[srv] ;
+                    }
 
-                    QUrl url(QString("http://%1/").arg(srv));
-                    url.setPath(QString("/Start/%1").arg(pr["Path"].toString()));
-                    QByteArray ob =  QCborValue::fromJsonValue(pr).toCbor() ;
-
-                    sendByteArray(iclient, url, ob);
-
+                    QJsonArray ar; ar.append(pr);
+                    sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
                     workers_lock.lock(); workers.pop_back(); workers_lock.unlock();
+                    qApp->processEvents();
+                    break;
                 }
             }
         }
         else
         {
-            QThread::msleep(5000); // Wait for 300ms at least
+            QThread::msleep(300); // Wait for 300ms at least
+            qApp->processEvents();
         }
         //qDebug() << "Worker Monitor Loop";
     }
@@ -388,10 +397,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     if (urlpath.startsWith("/Ready")) // Server is ready /Ready/{port}
     {
-        qDebug() << proc_params;
+//        qDebug() << proc_params;
         QString serverIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
 
-        uint16_t port = req->connection()->tcpSocket()->peerPort();//urlpath.replace("/Ready/", "");
+        uint16_t port;
 
         QStringList queries = query.split("&");
         for (auto q : queries)
@@ -404,6 +413,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                     project_affinity[p] = serverIP;
                 }
 
+            }
+            if (q.startsWith("port"))
+            {
+                port = q.replace("port=","").toUInt();
             }
         }
 
@@ -429,9 +442,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         qDebug() << proc_params;
 
     }
-
-
-
 
     if (urlpath.startsWith("/Status"))
     {
@@ -550,6 +560,9 @@ uint Server::serverPort()
 void Server::finished(QString hash, QJsonObject ob)
 {
     //    qDebug() << "Finishing on server side";
+
+
+
     NetworkProcessHandler::handler().finishedProcess(hash, ob);
 }
 

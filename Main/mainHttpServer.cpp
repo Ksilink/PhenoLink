@@ -146,7 +146,7 @@ int main(int ac, char** av)
 
     QSettings sets;
     uint port = sets.value("ServerPort", 13378).toUInt();
-    if (!sets.contains("ServerPort")) sets.setValue("ServerPort", 13378);
+    if (!sets.contains("ServerPort") || sets.value("ServerPort", 13378) != port ) sets.setValue("ServerPort", port);
 
 
     QStringList data;
@@ -235,7 +235,7 @@ int main(int ac, char** av)
         else
             qDebug() << "Proxy server :" << proxy;
 
-        server.proxyAdvert(ps[0], ps.size() == 2 ? ps[1].toInt() : 13378 );
+        server.proxyAdvert(ps[0], ps.size() == 2 ? ps[1].toInt() : 13378, port);
 
 
 
@@ -269,7 +269,7 @@ QString stringIP(quint32 ip)
             .arg((ip >> 24) & 0xFF);
 }
 
-Server::Server(): QHttpServer()
+Server::Server(): QHttpServer(), client(nullptr)
 {
 #ifdef WIN32
 
@@ -516,21 +516,20 @@ void sendByteArray(qhttp::client::QHttpClient& iclient, QUrl& url, QByteArray ob
 
 #include <Core/networkprocesshandler.h>
 
-void Server::proxyAdvert(QString host, int port)
+void Server::proxyAdvert(QString host, int port, unsigned _dport)
 {
     // send /Ready/ command to proxy
-    int processor_count = (int)std::thread::hardware_concurrency();
+    dport = _dport;
+    client = new CheckoutHttpClient(host, port);
 
-    static CheckoutHttpClient* client = new CheckoutHttpClient(host, port);
+    int processor_count = (int)std::thread::hardware_concurrency();
 
     for (int i = 0; i < processor_count; ++i)
     {
        client->send(QString("/Ready/%1").arg(i),
-                    QString("affinity=%1").arg(affinity_list.join(",")), QJsonArray());
+                    QString("affinity=%1&port=%2").arg(affinity_list.join(",")).arg(dport), QJsonArray());
        qApp->processEvents();
     }
-
-
 
     CheckoutProcess& procs = CheckoutProcess::handler();
 
@@ -554,6 +553,13 @@ void Server::proxyAdvert(QString host, int port)
 void Server::finished(QString hash, QJsonObject ob)
 {
     //    qDebug() << "Finishing on server side";
+
+    if (client)
+        client->send(QString("/Ready/%1").arg(0),
+                     QString("affinity=%1&port=%2").arg(affinity_list.join(",")).arg(dport), QJsonArray());
+
+
+
     NetworkProcessHandler::handler().finishedProcess(hash, ob);
 }
 
