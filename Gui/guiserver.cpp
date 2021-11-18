@@ -136,7 +136,8 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 if (q.startsWith(p))
                 {
                     q=q.mid(p.size()+1);
-                    params[p]=q;
+                    if (q.size() > 0)
+                        params[p]=q;
                 }
         }
 
