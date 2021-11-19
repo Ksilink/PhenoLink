@@ -522,16 +522,7 @@ void Server::proxyAdvert(QString host, int port, unsigned _dport)
     dport = _dport;
     client = new CheckoutHttpClient(host, port);
 
-    int processor_count = (int)std::thread::hardware_concurrency();
-
-    for (int i = 0; i < processor_count; ++i)
-    {
-       client->send(QString("/Ready/%1").arg(i),
-                    QString("affinity=%1&port=%2").arg(affinity_list.join(",")).arg(dport), QJsonArray());
-       qApp->processEvents();
-    }
-
-    CheckoutProcess& procs = CheckoutProcess::handler();
+       CheckoutProcess& procs = CheckoutProcess::handler();
 
     // If not using cbor outputs the version also
     QStringList prcs = procs.pluginPaths();
@@ -548,6 +539,15 @@ void Server::proxyAdvert(QString host, int port, unsigned _dport)
                  QString(),
                  pro);
     qApp->processEvents();
+
+
+    int processor_count = (int)std::thread::hardware_concurrency();
+    for (int i = 0; i < processor_count; ++i)
+    {
+       client->send(QString("/Ready/%1").arg(i),
+                    QString("affinity=%1&port=%2").arg(affinity_list.join(",")).arg(dport), QJsonArray());
+       qApp->processEvents();
+    }
 }
 
 void Server::finished(QString hash, QJsonObject ob)
@@ -556,7 +556,7 @@ void Server::finished(QString hash, QJsonObject ob)
 
     if (client)
         client->send(QString("/Ready/%1").arg(0),
-                     QString("affinity=%1&port=%2").arg(affinity_list.join(",")).arg(dport), QJsonArray());
+                     QString("affinity=%1&port=%2&workid=%3").arg(affinity_list.join(",")).arg(dport).arg(ob["TaskID"].toString()), QJsonArray());
 
 
 

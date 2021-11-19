@@ -108,6 +108,9 @@ protected:
     // We need a priority queue of processes
     QMap<QString, QMap< int, QQueue<QJsonObject> > > jobs;
 
+    // Pending
+    QMap<QString, QJsonObject > running;
+
     // Project Affinity map
     QMap<QString, QString> project_affinity; // projection of project name to server name
 

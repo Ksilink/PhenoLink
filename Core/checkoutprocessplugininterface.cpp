@@ -347,7 +347,7 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     ob["Pos"] = getPosition();
     ob["shallDisplay"] = _shallDisplay;
     ob["ProcessStartId"] = processStartId;
-    auto d = QStringList() << "XP" << "CommitName" << "ReplyTo" << "Parameters" << "StartTime" ;
+    auto d = QStringList() << "XP" << "CommitName" << "ReplyTo" << "Parameters" << "StartTime" << "TaskID" << "WorkID" ;
     for (auto s: d)
         ob[s] = _callParams[s];
 

@@ -331,9 +331,22 @@ void Server::WorkerMonitor()
                          sr = clients[srv] ;
                     }
 
+                    QString taskid =  QString("%1@%2#%3#%4#%5#%6")
+                            .arg(pr["Username"].toString(), pr["Computer"].toString(),
+                                 pr["Path"].toString(),  pr["WorkID"].toString(),
+                                 pr["XP"].toString(), pr["Pos"].toString());
+
+                    pr["TaskID"]= taskid;
+
+                    qDebug()  << "Taskid" << taskid << pr;
                     QJsonArray ar; ar.append(pr);
+
                     sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
                     workers_lock.lock(); workers.pop_back(); workers_lock.unlock();
+
+                    running[taskid] = pr;
+
+
                     qApp->processEvents();
                     break;
                 }
@@ -403,6 +416,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         uint16_t port;
 
         QStringList queries = query.split("&");
+        QString workid;
         for (auto q : queries)
         {
             if (q.startsWith("affinity"))
@@ -418,10 +432,22 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             {
                 port = q.replace("port=","").toUInt();
             }
+            if (q.startsWith("workid"))
+            {
+               workid = q.replace("workid=","");
+            }
+
         }
 
         QMutexLocker lock(&workers_lock);
         workers.enqueue(qMakePair(serverIP, port));
+
+        if (!workid.isEmpty())
+        {
+            qDebug() << "Finished " << workid;
+            running.remove(workid);
+        }
+
     }
 
     if (urlpath.startsWith("/setProcessList")) // Server is ready /Ready/{port}
@@ -439,7 +465,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             proc_params[pr][QString("%1:%2").arg(serverIP).arg(port)] = obj;
         }
 
-        qDebug() << proc_params;
+//        qDebug() << proc_params;
 
     }
 
