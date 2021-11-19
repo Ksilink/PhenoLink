@@ -445,6 +445,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         if (!proxy.startsWith(refIP)) {
             // Shall tell the proxy we have process ongoing that where not sent from his side
+            if (client)
+                client->send(QString("/UsedCPU/"),
+                             QString("port=%1").arg(dport), QJsonArray());
+
         }
     }
 

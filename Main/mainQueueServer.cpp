@@ -486,8 +486,26 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         return;
     }
 
-    if (urlpath.startsWith("") )
-    {}
+    if (urlpath.startsWith("/UsedCPU") )
+    {
+        uint16_t port;
+        QString serverIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
+
+
+        QStringList queries = query.split("&");
+        for (auto q : queries)
+        {
+            if (q.startsWith("port"))
+            {
+                port = q.replace("port=","").toUInt();
+            }
+        }
+
+        QMutexLocker lock(&workers_lock);
+//        workers.enqueue(qMakePair(serverIP, port));
+        workers.removeOne(qMakePair(serverIP, port));
+
+    }
 
     if (urlpath.startsWith("/Start/"))
     {
