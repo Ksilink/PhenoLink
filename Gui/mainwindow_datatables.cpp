@@ -429,7 +429,7 @@ void MainWindow::finishedJob()
         QTime y(0,0); y = y.addMSecs(ms/_StatusProgress->value());
         QDateTime z = process_starttime; z = z.addMSecs(y.msec() * _StatusProgress->maximum());
 
-        this->statusBar()->showMessage(QString("Starting Time %1 (Per sample run time: %2)").arg(process_starttime.toString("yyyyMMdd hh:mm:ss.zz"),
+        this->statusBar()->showMessage(QString("Starting Time %1 (Per sample run time: %2 - ETA %3)").arg(process_starttime.toString("yyyyMMdd hh:mm:ss.zz"),
                                                                                                  y.toString("mm:ss.zzz"),
                                                                                                  z.toString("mm:ss.zzz")
                                                                                                  ));
