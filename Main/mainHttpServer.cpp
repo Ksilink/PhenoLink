@@ -548,8 +548,12 @@ void Server::proxyAdvert(QString host, int port, unsigned _dport)
     int processor_count = (int)std::thread::hardware_concurrency();
     for (int i = 0; i < processor_count; ++i)
     {
-       client->send(QString("/Ready/%1").arg(i),
-                    QString("affinity=%1&port=%2").arg(affinity_list.join(",")).arg(dport), QJsonArray());
+        if (i == 0) // We are reconnecting the server, ask for clearing
+            client->send(QString("/Ready/%1").arg(i),
+                         QString("affinity=%1&port=%2&reset").arg(affinity_list.join(",")).arg(dport), QJsonArray());
+            else
+            client->send(QString("/Ready/%1").arg(i),
+                         QString("affinity=%1&port=%2").arg(affinity_list.join(",")).arg(dport), QJsonArray());
        qApp->processEvents();
     }
 }

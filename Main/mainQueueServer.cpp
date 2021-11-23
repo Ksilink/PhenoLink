@@ -417,6 +417,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         QStringList queries = query.split("&");
         QString workid;
+        bool reset = false;
         for (auto q : queries)
         {
             if (q.startsWith("affinity"))
@@ -434,12 +435,17 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             }
             if (q.startsWith("workid"))
             {
-               workid = q.replace("workid=","");
+                workid = q.replace("workid=","");
             }
+            if (q=="reset")
+                reset = true;
 
         }
 
         QMutexLocker lock(&workers_lock);
+        if (reset) // Occurs if servers reconnect
+            workers.removeAll(qMakePair(serverIP, port));
+
         workers.enqueue(qMakePair(serverIP, port));
 
         if (!workid.isEmpty())
@@ -614,6 +620,11 @@ void Server::finished(QString hash, QJsonObject ob)
 void Server::exit_func()
 {
 #ifdef WIN32
+
+
+
+
+
     _control->quit();
 #endif
     //  qApp->quit();
