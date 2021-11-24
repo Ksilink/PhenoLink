@@ -100,6 +100,8 @@ protected:
    void HTMLstatus(qhttp::server::QHttpResponse *res);
    void WorkerMonitor();
 
+
+   QPair<QString, int> pickWorker();
    QQueue<QJsonObject> &getHighestPriorityJob(QString server);
    unsigned int njobs();
 
