@@ -311,9 +311,7 @@ void Server::WorkerMonitor()
         {
             while (!workers.isEmpty())
             {
-                workers_lock.lock();
-                auto next_worker = workers.back();
-                workers_lock.unlock();
+                auto next_worker = pickWorker();
                 QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker.first);
                 // Hey hey look what we have here: the job to be run by next_worker let's call the start func then :
                 // start it :)
@@ -342,7 +340,7 @@ void Server::WorkerMonitor()
                     QJsonArray ar; ar.append(pr);
 
                     sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
-                    workers_lock.lock(); workers.pop_back(); workers_lock.unlock();
+                    workers_lock.lock(); workers.removeOne(next_worker); workers_lock.unlock();
 
                     running[taskid] = pr;
 
@@ -359,6 +357,30 @@ void Server::WorkerMonitor()
         }
         //qDebug() << "Worker Monitor Loop";
     }
+}
+
+QPair<QString, int> Server::pickWorker()
+{
+    static QString lastsrv;
+
+    QMutexLocker locker(&workers_lock);
+    if (lastsrv.isEmpty())
+    {
+        auto next_worker = workers.back();
+        lastsrv=next_worker.first;
+        return next_worker;
+    }
+    for(auto& nxt: workers)
+        if (lastsrv != nxt.first)
+        {
+            lastsrv = nxt.first;
+            return nxt;
+        }
+
+    auto next = workers.back();
+    lastsrv = next.first;
+    return next;
+
 }
 
 void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpResponse* res)
