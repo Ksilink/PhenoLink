@@ -80,8 +80,8 @@ public:
     void process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res);
     uint serverPort();
     void affinity(QString projects);
-    void proxyAdvert(QString host, int port, unsigned dport);
-
+    void proxyAdvert(QString host, int port);
+    void setPort(uint port) {dport = port;};
 public slots:
     void finished(QString hash, QJsonObject ob);
     void exit_func();

@@ -103,7 +103,12 @@ protected:
 
    QPair<QString, int> pickWorker();
    QQueue<QJsonObject> &getHighestPriorityJob(QString server);
+
+
+   QStringList pendingTasks();
+
    unsigned int njobs();
+   unsigned int nbUsers();
 
     // We need to maintain a worker list
     QQueue<QPair<QString, int> > workers;

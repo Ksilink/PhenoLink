@@ -148,8 +148,7 @@ int main(int ac, char** av)
     uint port = sets.value("ServerPort", 13378).toUInt();
     if (!sets.contains("ServerPort") || sets.value("ServerPort", 13378) != port ) sets.setValue("ServerPort", port);
 
-
-    QStringList data;
+ QStringList data;
     for (int i = 1; i < ac; ++i) { data << av[i];  }
     if (data.contains("-p"))
     {
@@ -199,6 +198,9 @@ int main(int ac, char** av)
     PluginManager::loadPlugins(true);
     Server server;
 
+    server.setPort(port);
+
+
 #ifndef WIN32
     if (data.contains("-m")) // to override the default path mapping !
     {
@@ -229,13 +231,13 @@ int main(int ac, char** av)
         if (ps.size() > 2)
         {
             qDebug() << "Error parsing proxy string, should be server:port or server (if port assumed to be 13378)"
-    << proxy;
+                     << proxy;
             exit(-1);
         }
         else
             qDebug() << "Proxy server :" << proxy;
 
-        server.proxyAdvert(ps[0], ps.size() == 2 ? ps[1].toInt() : 13378, port);
+        server.proxyAdvert(ps[0], ps.size() == 2 ? ps[1].toInt() : 13378);
 
 
 
@@ -282,7 +284,7 @@ int Server::start(quint16 port)
 {
     connect(this, &QHttpServer::newConnection, [this](QHttpConnection*){
         Q_UNUSED(this);
-//        printf("a new connection has occured!\n");
+        //        printf("a new connection has occured!\n");
     });
 
 
@@ -388,9 +390,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     }
 
     qDebug() << qhttp::Stringify::toString(req->method())
-        << qPrintable(urlpath)
-        << qPrintable(query)
-        << data.size();
+             << qPrintable(urlpath)
+             << qPrintable(query)
+             << data.size();
 
     if (urlpath.startsWith("/Cancel/"))
     {
@@ -398,6 +400,34 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         procs.cancelUser(user);
         HTMLstatus(res);
         return;
+    }
+
+    if (urlpath.startsWith("/Proxy"))
+    {
+
+       uint16_t port;
+       QString host = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
+
+
+        QStringList queries = query.split("&");
+        for (auto q : queries)
+        {
+            if (q.startsWith("port"))
+            {
+                port = q.replace("port=","").toUInt();
+            }
+        }
+
+
+        if (client)
+        {
+            delete client;
+            client = nullptr;
+        }
+
+
+        proxyAdvert(host, port);
+
     }
 
     if (urlpath.startsWith("/Start/"))
@@ -445,6 +475,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         if (!proxy.startsWith(refIP)) {
             // Shall tell the proxy we have process ongoing that where not sent from his side
+            qDebug() << "Warn the Proxy about used CPU " << proxy << refIP;
             if (client)
                 client->send(QString("/UsedCPU/"),
                              QString("port=%1").arg(dport), QJsonArray());
@@ -473,7 +504,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         root["args"] = total;
 
         QByteArray body = QJsonDocument(root).toJson();
-//        res->addHeader("connection", "keep-alive");
+        //        res->addHeader("connection", "keep-alive");
         res->addHeaderValue("content-length", body.length());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body);
@@ -520,13 +551,12 @@ void sendByteArray(qhttp::client::QHttpClient& iclient, QUrl& url, QByteArray ob
 
 #include <Core/networkprocesshandler.h>
 
-void Server::proxyAdvert(QString host, int port, unsigned _dport)
+void Server::proxyAdvert(QString host, int port)
 {
     // send /Ready/ command to proxy
-    dport = _dport;
     client = new CheckoutHttpClient(host, port);
 
-       CheckoutProcess& procs = CheckoutProcess::handler();
+    CheckoutProcess& procs = CheckoutProcess::handler();
 
     // If not using cbor outputs the version also
     QStringList prcs = procs.pluginPaths();
@@ -545,16 +575,16 @@ void Server::proxyAdvert(QString host, int port, unsigned _dport)
     qApp->processEvents();
 
 
-    int processor_count = (int)std::thread::hardware_concurrency();
+    int processor_count = QThreadPool::globalInstance()->maxThreadCount()-1;
     for (int i = 0; i < processor_count; ++i)
     {
         if (i == 0) // We are reconnecting the server, ask for clearing
             client->send(QString("/Ready/%1").arg(i),
                          QString("affinity=%1&port=%2&reset").arg(affinity_list.join(",")).arg(dport), QJsonArray());
-            else
+        else
             client->send(QString("/Ready/%1").arg(i),
                          QString("affinity=%1&port=%2").arg(affinity_list.join(",")).arg(dport), QJsonArray());
-       qApp->processEvents();
+        qApp->processEvents();
     }
 }
 
@@ -562,13 +592,16 @@ void Server::finished(QString hash, QJsonObject ob)
 {
     //    qDebug() << "Finishing on server side";
 
-    if (client)
+    if (client && CheckoutProcess::handler().numberOfRunningProcess() >  (unsigned)(QThreadPool::globalInstance()->maxThreadCount()-1))
         client->send(QString("/Ready/%1").arg(0),
                      QString("affinity=%1&port=%2&workid=%3").arg(affinity_list.join(",")).arg(dport).arg(ob["TaskID"].toString()), QJsonArray());
 
-
-
     NetworkProcessHandler::handler().finishedProcess(hash, ob);
+
+    if (client && CheckoutProcess::handler().numberOfRunningProcess() <= 1)
+        client->send(QString("/ServerDone"),
+                     QString("port=%2").arg(dport), QJsonArray());
+
 }
 
 

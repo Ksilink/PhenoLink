@@ -229,8 +229,39 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
 
     QString message;
 
-    //    CheckoutProcess& procs = CheckoutProcess::handler();
-    //    message = procs.dumpHtmlStatus();
+    QString body;
+
+    // jobs : priority to server  / Process name [call params]
+
+    body += QString("<h2>Connected Users : %1 / Number of Pending Jobs</h2>").arg(nbUsers()).arg(njobs());
+
+
+
+
+
+//    for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
+//    {
+//        body += QString("%1 : %2 <a href='/Cancel/%1'>Cancel User Processes</a><br>").arg(it.key()).arg(it.value().size());
+//        QMap<QString, int> counter;
+//        status_protect.lock();
+
+//        for (auto q: it.value())
+//        {
+//            auto pl = static_cast<PluginRunner*>(q);
+//            counter[pl->name()]++;
+//        }
+
+//        for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
+//            body += QString("<p>%1 : %2 </p>").arg(it.key()).arg(it.value());
+
+//        status_protect.unlock();
+//    }
+//    QHostInfo info;
+//    QStringList addresses;
+//    for (auto v : info.addresses())
+//        addresses.append(v.toString());
+
+//    message = QString("<html><title>Checkout Queue Status %2</title><body><p>%3</p>%1</body></html>").arg(body).arg(addresses.join(" ")).arg(CHECKOUT_VERSION);
 
 
 
@@ -254,6 +285,45 @@ unsigned int Server::njobs()
 
     return count;
 }
+
+
+unsigned int Server::nbUsers()
+{
+    QSet<QString> names;
+    for (auto& srv: jobs)
+    {
+        for (auto& q: srv)
+            for (auto& proc: q)
+            {
+                names.insert(QString("%1%2").arg(proc["Username"].toString())
+                        .arg(proc["Computer"].toString()));
+            }
+
+    }
+    return names.size();
+}
+
+
+QStringList Server::pendingTasks()
+{
+    QSet<QString> names;
+    for (auto& srv: jobs)
+    {
+        for (auto& q: srv)
+            for (auto& proc: q)
+            {
+                names.insert(QString("%1@%2 : %3")
+                             .arg(proc["Username"].toString(),
+                                    proc["Computer"].toString(),
+                                    proc["Path"].toString())
+                        );
+            }
+
+    }
+    return QStringList(names.begin(), names.end());
+}
+
+
 
 
 QQueue<QJsonObject>& Server::getHighestPriorityJob(QString server)
@@ -307,48 +377,44 @@ void Server::WorkerMonitor()
     while (true) // never ending run
     {
         if (njobs() && ! workers.isEmpty()) // If we have some jobs left and some workers available
-
         {
-            while (!workers.isEmpty())
+            auto next_worker = pickWorker();
+            QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker.first);
+            // Hey hey look what we have here: the job to be run by next_worker let's call the start func then :
+            // start it :)
+            if (queue.size())
             {
-                auto next_worker = pickWorker();
-                QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker.first);
-                // Hey hey look what we have here: the job to be run by next_worker let's call the start func then :
-                // start it :)
-                if (queue.size())
+
+                QJsonObject pr = queue.dequeue();
+                QString srv = QString("%1:%2").arg(next_worker.first).arg(next_worker.second); // Set proxy name
+                CheckoutHttpClient* sr = nullptr;
+                if (clients[srv])
+                    sr = clients[srv];
+                else
                 {
-
-                    QJsonObject pr = queue.dequeue();
-                    QString srv = QString("%1:%2").arg(next_worker.first).arg(next_worker.second); // Set proxy name
-                    CheckoutHttpClient* sr = nullptr;
-                    if (clients[srv])
-                       sr = clients[srv];
-                    else
-                    {
-                         clients[srv] = new CheckoutHttpClient(next_worker.first, next_worker.second);
-                         sr = clients[srv] ;
-                    }
-
-                    QString taskid =  QString("%1@%2#%3#%4#%5#%6")
-                            .arg(pr["Username"].toString(), pr["Computer"].toString(),
-                                 pr["Path"].toString(),  pr["WorkID"].toString(),
-                                 pr["XP"].toString(), pr["Pos"].toString());
-
-                    pr["TaskID"]= taskid;
-
-                    qDebug()  << "Taskid" << taskid << pr;
-                    QJsonArray ar; ar.append(pr);
-
-                    sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
-                    workers_lock.lock(); workers.removeOne(next_worker); workers_lock.unlock();
-
-                    running[taskid] = pr;
-
-
-                    qApp->processEvents();
-                    break;
+                    clients[srv] = new CheckoutHttpClient(next_worker.first, next_worker.second);
+                    sr = clients[srv] ;
                 }
+
+                QString taskid =  QString("%1@%2#%3#%4#%5#%6")
+                        .arg(pr["Username"].toString(), pr["Computer"].toString(),
+                        pr["Path"].toString(),  pr["WorkID"].toString(),
+                        pr["XP"].toString(), pr["Pos"].toString());
+
+                pr["TaskID"]= taskid;
+
+                //  qDebug()  << "Taskid" << taskid << pr;
+                QJsonArray ar; ar.append(pr);
+
+                sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
+                workers_lock.lock(); workers.removeOne(next_worker); workers_lock.unlock();
+
+                running[taskid] = pr;
+
+
+                qApp->processEvents();
             }
+
         }
         else
         {
@@ -505,6 +571,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         setHttpResponse(ob, res, !query.contains("json"));
     }
 
+    if (urlpath.startsWith("/ServerDone"))
+    { // if all servers are done & the task list is not empty
+        // empty the task list & re-run
+    }
+
 
     if (urlpath.startsWith("/Cancel/"))
     {
@@ -529,6 +600,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             }
         }
 
+        qDebug() << "Suspending" << serverIP << "CPU on port" << port;
         QMutexLocker lock(&workers_lock);
 //        workers.enqueue(qMakePair(serverIP, port));
         workers.removeOne(qMakePair(serverIP, port));
