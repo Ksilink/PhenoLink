@@ -575,7 +575,7 @@ void Server::proxyAdvert(QString host, int port)
     qApp->processEvents();
 
 
-    int processor_count = QThreadPool::globalInstance()->maxThreadCount()-1;
+    int processor_count = QThreadPool::globalInstance()->maxThreadCount();
     for (int i = 0; i < processor_count; ++i)
     {
         if (i == 0) // We are reconnecting the server, ask for clearing
