@@ -555,6 +555,7 @@ void Server::proxyAdvert(QString host, int port)
 {
     // send /Ready/ command to proxy
     client = new CheckoutHttpClient(host, port);
+    proxy = QString("%1:%2").arg(host).arg(port);
 
     CheckoutProcess& procs = CheckoutProcess::handler();
 
