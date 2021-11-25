@@ -257,11 +257,11 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
 //        status_protect.unlock();
 //    }
 //    QHostInfo info;
-//    QStringList addresses;
+    QStringList addresses;
 //    for (auto v : info.addresses())
 //        addresses.append(v.toString());
 
-//    message = QString("<html><title>Checkout Queue Status %2</title><body><p>%3</p>%1</body></html>").arg(body).arg(addresses.join(" ")).arg(CHECKOUT_VERSION);
+    message = QString("<html><title>Checkout Queue Status %2</title><body><p>%3</p>%1</body></html>").arg(body).arg(addresses.join(" ")).arg(CHECKOUT_VERSION);
 
 
 
