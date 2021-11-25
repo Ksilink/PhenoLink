@@ -233,37 +233,38 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
 
     // jobs : priority to server  / Process name [call params]
 
-    body += QString("<h2>Connected Users : %1 / Number of Pending Jobs</h2>").arg(nbUsers()).arg(njobs());
+    body += QString("<h2>Connected Users : %1 / Number of Pending Jobs %2</h2>").arg(nbUsers()).arg(njobs());
 
 
+    QMap<QString, int > servers;
 
+    for (auto& srv: workers)
+    {
+        auto id = QString("%1%2").arg(srv.first).arg(srv.second);
+        servers[id] ++;
+    }
 
+    body += "<h3>Cores Availability</h3>";
 
-//    for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
-//    {
-//        body += QString("%1 : %2 <a href='/Cancel/%1'>Cancel User Processes</a><br>").arg(it.key()).arg(it.value().size());
-//        QMap<QString, int> counter;
-//        status_protect.lock();
+    for (auto it = servers.begin(), e = servers.end(); it != e; ++it)
+    {
+        body += QString("Server %1 : %2 Cores<br>").arg(it.key()).arg(it.value());
+    }
 
-//        for (auto q: it.value())
-//        {
-//            auto pl = static_cast<PluginRunner*>(q);
-//            counter[pl->name()]++;
-//        }
+    body += "<h3>Awaiting Jobs</h3>";
 
-//        for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
-//            body += QString("<p>%1 : %2 </p>").arg(it.key()).arg(it.value());
+    body += pendingTasks().join("<br>") + "<br>";
 
-//        status_protect.unlock();
-//    }
-//    QHostInfo info;
-    QStringList addresses;
-//    for (auto v : info.addresses())
-//        addresses.append(v.toString());
+    body += "<h3>Running Jobs</h3>";
 
-    message = QString("<html><title>Checkout Queue Status %2</title><body><p>%3</p>%1</body></html>").arg(body).arg(addresses.join(" ")).arg(CHECKOUT_VERSION);
+    QMap<QString, int> runs;
+    for (auto task = running.begin(); task != running.end(); ++task)
+        runs[task.key().split("!").first()]++;
 
+    for (auto it = runs.begin(), e = runs.end(); it != e; ++it)
+        body += QString("%1 %2").arg(it.key()).arg(it.value());
 
+    message = QString("<html><title>Checkout Queue Status %2</title><body>%1</body></html>").arg(body).arg(CHECKOUT_VERSION);
 
 
     res->setStatusCode(qhttp::ESTATUS_OK);
@@ -306,21 +307,29 @@ unsigned int Server::nbUsers()
 
 QStringList Server::pendingTasks()
 {
-    QSet<QString> names;
+    QMap<QString, int> names;
     for (auto& srv: jobs)
     {
         for (auto& q: srv)
             for (auto& proc: q)
             {
-                names.insert(QString("%1@%2 : %3")
+                names[QString("%1@%2 : %3 (%3)")
                              .arg(proc["Username"].toString(),
                                     proc["Computer"].toString(),
-                                    proc["Path"].toString())
-                        );
+                                    proc["Path"].toString(),
+                                    proc["WorkID"].toString())
+                        ]++;
             }
 
     }
-    return QStringList(names.begin(), names.end());
+
+    QStringList res;
+    for (auto it = names.begin(), e = names.end(); it != e; ++it)
+    {
+        res << QString("%1 => %2").arg(it.key()).arg(it.value());
+    }
+
+    return res;
 }
 
 
@@ -396,7 +405,7 @@ void Server::WorkerMonitor()
                     sr = clients[srv] ;
                 }
 
-                QString taskid =  QString("%1@%2#%3#%4#%5#%6")
+                QString taskid =  QString("%1@%2#%3#%4!%5#%6")
                         .arg(pr["Username"].toString(), pr["Computer"].toString(),
                         pr["Path"].toString(),  pr["WorkID"].toString(),
                         pr["XP"].toString(), pr["Pos"].toString());
