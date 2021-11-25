@@ -515,6 +515,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QStringList queries = query.split("&");
         QString workid;
         bool reset = false;
+        bool avail = true;
         for (auto q : queries)
         {
             if (q.startsWith("affinity"))
@@ -534,6 +535,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             {
                 workid = q.replace("workid=","");
             }
+            if (q.startsWith("available="))
+                avail = (q == "available=1");
+
             if (q=="reset")
                 reset = true;
 
@@ -543,7 +547,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         if (reset) // Occurs if servers reconnect
             workers.removeAll(qMakePair(serverIP, port));
 
-        workers.enqueue(qMakePair(serverIP, port));
+        if (avail)
+            workers.enqueue(qMakePair(serverIP, port));
 
         if (!workid.isEmpty())
         {

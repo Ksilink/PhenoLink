@@ -592,9 +592,14 @@ void Server::finished(QString hash, QJsonObject ob)
 {
     //    qDebug() << "Finishing on server side";
 
-    if (client && CheckoutProcess::handler().numberOfRunningProcess() <  (unsigned)(QThreadPool::globalInstance()->maxThreadCount()-1))
-        client->send(QString("/Ready/%1").arg(0),
-                     QString("affinity=%1&port=%2&workid=%3").arg(affinity_list.join(",")).arg(dport).arg(ob["TaskID"].toString()), QJsonArray());
+    if (client)
+        client->send(QString("/Ready/0"),
+                     QString("affinity=%1&port=%2&workid=%3&available=%4")
+                        .arg(affinity_list.join(","))
+                        .arg(dport)
+                        .arg(ob["TaskID"].toString())
+                        .arg(CheckoutProcess::handler().numberOfRunningProcess() <  (unsigned)(QThreadPool::globalInstance()->maxThreadCount()-1)),
+                     QJsonArray());
 
     NetworkProcessHandler::handler().finishedProcess(hash, ob);
 
