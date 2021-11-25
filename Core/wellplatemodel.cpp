@@ -1016,6 +1016,17 @@ void SequenceFileModel::addFile(int timePoint, int fieldIdx, int Zindex, int cha
     _data[fieldIdx][Zindex][timePoint][channel] = file;
 }
 
+bool SequenceFileModel::hasFile(int timePoint, int fieldIdx, int Zindex, int Channel)
+{
+    if (_data.contains(fieldIdx))
+        if (_data[fieldIdx].contains(Zindex))
+            if (_data[fieldIdx][Zindex].contains(timePoint))
+                if (_data[fieldIdx][Zindex][timePoint].contains(Channel))
+                    return !_data[fieldIdx][Zindex][timePoint][Channel].isEmpty();
+
+    return false;
+}
+
 void SequenceFileModel::addMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name, StructuredMetaData meta)
 {
     channel = channel < 1 ? 1 : channel;

@@ -126,6 +126,9 @@ public:
     //  MeasurementRecordFileModel& getAcquisition(int Field);
 
     void addFile(int timePoint, int fieldIdx, int Zindex, int Channel, QString file);
+    bool hasFile(int timePoint, int fieldIdx, int Zindex, int Channel);
+
+
     void addMeta(int timePoint, int fieldIdx, int Zindex, int Channel, QString name, StructuredMetaData meta);
 
     QStringList getAllFiles();
