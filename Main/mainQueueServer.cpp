@@ -313,7 +313,7 @@ QStringList Server::pendingTasks()
         for (auto& q: srv)
             for (auto& proc: q)
             {
-                names[QString("%1@%2 : %3 (%3)")
+                names[QString("%1@%2 : %3 (%4)")
                         .arg(proc["Username"].toString(),
                         proc["Computer"].toString(),
                         proc["Path"].toString(),
