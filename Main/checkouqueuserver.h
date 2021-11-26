@@ -112,6 +112,10 @@ protected:
 
     // We need to maintain a worker list
     QQueue<QPair<QString, int> > workers;
+
+    // Who's connected
+    QMap<QString, int> workers_status;
+
     // We need a priority queue of processes
     QMap<QString, QMap< int, QQueue<QJsonObject> > > jobs;
 

@@ -314,10 +314,10 @@ QStringList Server::pendingTasks()
             for (auto& proc: q)
             {
                 names[QString("%1@%2 : %3 (%3)")
-                             .arg(proc["Username"].toString(),
-                                    proc["Computer"].toString(),
-                                    proc["Path"].toString(),
-                                    proc["WorkID"].toString())
+                        .arg(proc["Username"].toString(),
+                        proc["Computer"].toString(),
+                        proc["Path"].toString(),
+                        proc["WorkID"].toString())
                         ]++;
             }
 
@@ -416,7 +416,10 @@ void Server::WorkerMonitor()
                 QJsonArray ar; ar.append(pr);
 
                 sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
-                workers_lock.lock(); workers.removeOne(next_worker); workers_lock.unlock();
+                workers_lock.lock();
+                workers.removeOne(next_worker);
+                workers_status[QString("%1:%2").arg(next_worker.first).arg(next_worker.second)]--;
+                workers_lock.unlock();
 
                 running[taskid] = pr;
 
@@ -507,7 +510,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     if (urlpath.startsWith("/Ready")) // Server is ready /Ready/{port}
     {
-//        qDebug() << proc_params;
+        //        qDebug() << proc_params;
         QString serverIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
 
         uint16_t port;
@@ -545,10 +548,16 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         QMutexLocker lock(&workers_lock);
         if (reset) // Occurs if servers reconnect
+        {
             workers.removeAll(qMakePair(serverIP, port));
+            workers_status[QString("%1:%2").arg(serverIP).arg(port)]=0;
+        }
 
         if (avail)
+        {
             workers.enqueue(qMakePair(serverIP, port));
+            workers_status[QString("%1:%2").arg(serverIP).arg(port)]++;
+        }
 
         if (!workid.isEmpty())
         {
@@ -573,7 +582,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             proc_params[pr][QString("%1:%2").arg(serverIP).arg(port)] = obj;
         }
 
-//        qDebug() << proc_params;
+        //        qDebug() << proc_params;
 
     }
 
@@ -581,6 +590,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
         QStringList queries = query.split("&");
         QString srv, port;
+        srv = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
+
         for (auto q : queries)
         {
             if (q.startsWith("port="))
@@ -605,6 +616,45 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     if (urlpath.startsWith("/ServerDone"))
     { // if all servers are done & the task list is not empty
         // empty the task list & re-run
+        //next_worker
+        QString serverIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
+        QString port;
+
+        QStringList queries = query.split("&");
+        for (auto q : queries)
+        {
+            if (q.startsWith("port="))
+                port = q.replace("port=", "");
+        }
+
+        workers_status[QString("%1:%2").arg(serverIP, port)] = 0;
+
+        int sum = 0;
+        for (auto it = workers_status.begin(), e = workers_status.end(); it != e; ++it)
+            sum += it.value();
+
+        if (sum == 0 && running.size() > 0)
+        { // re start
+            qDebug() << "Restarting" << running.size() << "Jobs";
+            workers_lock.lock();
+            for (auto& obj: running.values())
+            {
+                auto project = obj["Project"].toString();
+                int priority = obj.contains("Priority") ? obj["Priority"].toInt() : 1;
+
+                priority_lock.lock();
+                if (project_affinity.contains(project))
+                {
+                    jobs[project_affinity[project]][priority].enqueue(obj);
+                }
+                else
+                    jobs[""][priority].enqueue(obj); // Unmapped project goes to "global" path
+
+                priority_lock.unlock();
+            }
+            running.clear();
+            workers_lock.unlock();
+        }
     }
 
 
@@ -613,7 +663,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         QStringList queries = query.split("&");
 
-        for (auto q : queries)
+        for (auto& q : queries)
         {
             if (q.startsWith("proc="))
             {
@@ -672,7 +722,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         qDebug() << "Suspending" << serverIP << "CPU on port" << port;
         QMutexLocker lock(&workers_lock);
-//        workers.enqueue(qMakePair(serverIP, port));
+        //        workers.enqueue(qMakePair(serverIP, port));
         workers.removeOne(qMakePair(serverIP, port));
 
     }
@@ -783,12 +833,8 @@ void Server::finished(QString hash, QJsonObject ob)
 
 void Server::exit_func()
 {
+
 #ifdef WIN32
-
-
-
-
-
     _control->quit();
 #endif
     //  qApp->quit();
