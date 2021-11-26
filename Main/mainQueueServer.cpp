@@ -240,7 +240,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
 
     for (auto& srv: workers)
     {
-        auto id = QString("%1%2").arg(srv.first).arg(srv.second);
+        auto id = QString("%1:%2").arg(srv.first).arg(srv.second);
         servers[id] ++;
     }
 
@@ -248,7 +248,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
 
     for (auto it = servers.begin(), e = servers.end(); it != e; ++it)
     {
-        body += QString("Server %1 : %2 Cores<br>").arg(it.key()).arg(it.value());
+        body += QString("Server %1 => %2 Cores<br>").arg(it.key()).arg(it.value());
     }
 
     body += "<h3>Awaiting Jobs</h3>";
@@ -262,7 +262,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
         runs[task.key().split("!").first()]++;
 
     for (auto it = runs.begin(), e = runs.end(); it != e; ++it)
-        body += QString("%1 %2").arg(it.key()).arg(it.value());
+        body += QString("%1 => %2 <a href='/Cancel/?proc=%1'>Cancel</a><br>").arg(it.key()).arg(it.value());
 
     message = QString("<html><title>Checkout Queue Status %2</title><body>%1</body></html>").arg(body).arg(CHECKOUT_VERSION);
 
@@ -577,6 +577,23 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     }
 
+    if (urlpath.startsWith("/Proxy"))
+    {
+        QStringList queries = query.split("&");
+        QString srv, port;
+        for (auto q : queries)
+        {
+            if (q.startsWith("port="))
+                port = q.replace("port=", "");
+            if (q.startsWith("host="))
+                srv = q.replace("host=", "");
+        }
+
+
+
+
+    }
+
     if (urlpath.startsWith("/Status"))
     {
         QJsonObject ob;
@@ -593,9 +610,48 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     if (urlpath.startsWith("/Cancel/"))
     {
-        QString user = urlpath.mid(8);
-        procs.cancelUser(user);
-        HTMLstatus(res);
+
+        QStringList queries = query.split("&");
+
+        for (auto q : queries)
+        {
+            if (q.startsWith("proc="))
+            {
+                QString proc = q.replace("proc=","");
+
+                QMutexLocker lock(&workers_lock);
+                // Clear up the jobs
+                QStringList job = proc.split("#");
+                QStringList name = job[0].split("@");
+                QString jobname  = job[1];
+                QString workid = job.back();
+
+                for (auto& srv: jobs)
+                {
+                    for (auto& q: srv)
+                    {
+                        QList<QJsonObject> torm;
+
+                        for (auto& item: q)
+                        {
+                            if (item["Username"].toString() == name[0] &&
+                                    item["Computer"].toString() == name[1] &&
+                                    item["Path"].toString() == jobname &&
+                                    item["WorkID"].toString() == workid)
+                                torm << item;
+                        }
+
+                        for (auto& it : torm)
+                            q.removeOne(it);
+
+
+                    }
+                }
+
+
+            }
+        }
+
         return;
     }
 

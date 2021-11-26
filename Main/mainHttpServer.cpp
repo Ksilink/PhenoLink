@@ -599,7 +599,7 @@ void Server::finished(QString hash, QJsonObject ob)
                         .arg(affinity_list.join(","))
                         .arg(dport)
                         .arg(ob["TaskID"].toString())
-                        .arg(CheckoutProcess::handler().numberOfRunningProcess() <  (unsigned)(QThreadPool::globalInstance()->maxThreadCount()-1)),
+                        .arg(QThreadPool::globalInstance()->activeThreadCount() <= QThreadPool::globalInstance()->maxThreadCount()),
                      QJsonArray());
 
     NetworkProcessHandler::handler().finishedProcess(hash, ob);
