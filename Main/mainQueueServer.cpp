@@ -143,6 +143,7 @@ int main(int ac, char** av)
 #endif
 
     Server server;
+    server.setPort(port);
 
     return server.start(port);
 }
