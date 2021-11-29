@@ -167,7 +167,7 @@ QString stringIP(quint32 ip)
             .arg((ip >> 24) & 0xFF);
 }
 
-Server::Server(): QHttpServer()
+Server::Server(): QHttpServer(), client(nullptr)
 {
 #ifdef WIN32
 
@@ -600,8 +600,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 srv = q.replace("host=", "");
         }
 
+        if (client)
+            delete client;
 
-
+        client = new CheckoutHttpClient(srv, port.toUInt());
+        client->send("/Proxy", QString("port=%1").arg(dport), QJsonArray());
 
     }
 

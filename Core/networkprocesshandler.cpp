@@ -668,16 +668,15 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
     // now we can setup the reply !
 
     QJsonArray data = FilterObject(hash, res);
-   // qDebug() << "Sending dataset" << data;
-    client->send(QString("/addData/%1").arg(commitname), QString(), data);
 
     QCborArray bin = filterBinary(hash, res);
-    //QString temp = QJsonDocument(bin.toJsonArray()).toJson();
-
     for (auto b: bin)
     {
         client->send(QString("/addImage/"), QString(), b.toCbor());
     }
+
+    client->send(QString("/addData/%1").arg(commitname), QString(), data);
+
 }
 
 void NetworkProcessHandler::removeHash(QString hash)

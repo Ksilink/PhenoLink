@@ -67,6 +67,7 @@ protected:
 #endif
 
 using namespace qhttp::server;
+struct CheckoutHttpClient;
 
 struct Server : public QHttpServer
 {
@@ -80,6 +81,7 @@ public:
     void setHttpResponse(QJsonObject& ob, QHttpResponse* res, bool binary = true);
     void process(QHttpRequest* req, QHttpResponse* res);
     uint serverPort();
+    void setPort(uint port) {dport = port;};
 
 public slots:
     void finished(QString hash, QJsonObject ob);
@@ -109,6 +111,8 @@ protected:
 
    unsigned int njobs();
    unsigned int nbUsers();
+    //
+    unsigned dport;
 
     // We need to maintain a worker list
     QQueue<QPair<QString, int> > workers;
@@ -129,6 +133,8 @@ protected:
     QSet<QString> proc_list;
     QMap<QString, QMap<QString, QJsonObject> >  proc_params; // Process name, server name => Proc descr
 
+
+    CheckoutHttpClient* client;
 };
 
 
