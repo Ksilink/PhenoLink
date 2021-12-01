@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\Checkout_2020\CheckoutApp\build\CMakeFiles\7e7eec23207ba11631fd217cb402eac7\PACKAGE_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{C39C75F3-D916-3D69-AB87-45C4C259172A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,78 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"include"
+		],
+		"files" : 
+		[
+			"C:/Program Files/CMake/share/cmake-3.21/Modules/InstallRequiredSystemLibraries.cmake",
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 203,
+				"parent" : 0
+			},
+			{
+				"file" : 0,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 778,
+				"parent" : 2
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 783,
+				"parent" : 2
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 3,
+			"component" : "Unspecified",
+			"destination" : "bin",
+			"paths" : 
+			[
+				"C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Redist/MSVC/14.30.30528/x64/Microsoft.VC142.CRT/msvcp140.dll",
+				"C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Redist/MSVC/14.30.30528/x64/Microsoft.VC142.CRT/msvcp140_1.dll",
+				"C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Redist/MSVC/14.30.30528/x64/Microsoft.VC142.CRT/msvcp140_2.dll",
+				"C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Redist/MSVC/14.30.30528/x64/Microsoft.VC142.CRT/msvcp140_atomic_wait.dll",
+				"C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Redist/MSVC/14.30.30528/x64/Microsoft.VC142.CRT/msvcp140_codecvt_ids.dll",
+				"C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Redist/MSVC/14.30.30528/x64/Microsoft.VC142.CRT/vcruntime140_1.dll",
+				"C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Redist/MSVC/14.30.30528/x64/Microsoft.VC142.CRT/vcruntime140.dll",
+				"C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Redist/MSVC/14.30.30528/x64/Microsoft.VC142.CRT/concrt140.dll"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "Unspecified",
+			"destination" : "bin",
+			"paths" : 
+			[
+				""
+			],
+			"type" : "directory"
+		}
+	],
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	}
+}

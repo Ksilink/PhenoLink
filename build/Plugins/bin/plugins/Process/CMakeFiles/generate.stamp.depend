@@ -1,0 +1,7 @@
+# CMake generation dependency list for this directory.
+C:/Program Files (x86)/dlib_project/lib/cmake/dlib/dlib-debug.cmake
+C:/Program Files (x86)/dlib_project/lib/cmake/dlib/dlib-release.cmake
+C:/Program Files (x86)/dlib_project/lib/cmake/dlib/dlib.cmake
+C:/Program Files (x86)/dlib_project/lib/cmake/dlib/dlibConfig.cmake
+C:/Program Files (x86)/dlib_project/lib/cmake/dlib/dlibConfigVersion.cmake
+D:/Checkout_2020/CheckoutPlugins/Process/CMakeLists.txt

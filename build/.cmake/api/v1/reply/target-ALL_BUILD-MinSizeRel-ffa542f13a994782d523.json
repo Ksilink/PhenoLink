@@ -1,0 +1,153 @@
+{
+	"backtrace" : 0,
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : 
+		[
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"id" : "CheckoutHttpServer::@e4405d0c4cf2df57c995"
+		},
+		{
+			"id" : "CheckoutCore::@94795ff35dabbbd3a8ca"
+		},
+		{
+			"id" : "QHttp::@0ceb9aeb58f48569fcea"
+		},
+		{
+			"id" : "CheckoutGui::@598a67d92975197df4f4"
+		},
+		{
+			"id" : "Checkout::@e4405d0c4cf2df57c995"
+		},
+		{
+			"id" : "CheckoutQueueServer::@e4405d0c4cf2df57c995"
+		},
+		{
+			"id" : "ckcli::@e4405d0c4cf2df57c995"
+		},
+		{
+			"id" : "DM1::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "Algo2Stitch::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "Algo2::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "CheckoutYokogawaLoader::@653de4b2c8152eb40bfb"
+		},
+		{
+			"id" : "CheckoutInCellLoader::@653de4b2c8152eb40bfb"
+		},
+		{
+			"id" : "MFM_QC::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "DL::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "SpeedTesting::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "Crop_Images::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "Crop_ImagesV2::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "ZA::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "Algo1::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "Algo1Stitch::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "OtsuThreshold::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "Read_Crops::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "ASD_Synapses::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "CheckoutDemoProcessPlugin::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "PluginCore::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "QCBirdViewPlugin::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "DCM_Ca::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "CheckoutPerkinElmerLoader::@653de4b2c8152eb40bfb"
+		},
+		{
+			"id" : "QC_TH_SNCA::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "Microglia::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "ASD_Nuclei::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "SCZD_MAP2_Neurites::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "SCZD_MAP2_Neurites_Field::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "SNCA_Analysis::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "DCM::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "CellStress::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "PS_2D_1_Channel::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "PS_2D::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "ASD_Neurites::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "PD_Mitochondria::@3f5deebcc70dd4ff73e8"
+		},
+		{
+			"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df"
+		}
+	],
+	"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+	"isGeneratorProvided" : true,
+	"name" : "ALL_BUILD",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

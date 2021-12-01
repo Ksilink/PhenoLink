@@ -1,0 +1,1107 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"add_plugin"
+		],
+		"files" : 
+		[
+			"D:/Checkout_2020/CheckoutPlugins/Process/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 80,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 90,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 2
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 98,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 4
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 106,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 6
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 122,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 126,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 9
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 143,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 148,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 12
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 154,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 14
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 165,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 16
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 176,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 18
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 184,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 20
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 190,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 22
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 203,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 24
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 26
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 222,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 28
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 234,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 30
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 245,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 32
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 257,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 34
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 269,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 36
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 281,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 38
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 304,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 40
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 315,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 42
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 326,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 44
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 334,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 46
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 345,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 48
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 356,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 50
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 365,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 52
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 374,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 54
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 382,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 50,
+				"parent" : 56
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/PluginCore.lib"
+			],
+			"targetId" : "PluginCore::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 30,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 3,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/CheckoutDemoProcessPlugin.lib"
+			],
+			"targetId" : "CheckoutDemoProcessPlugin::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 11,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 3,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/CheckoutDemoProcessPlugin.dll"
+			],
+			"targetId" : "CheckoutDemoProcessPlugin::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 11,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 5,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/QCBirdViewPlugin.lib"
+			],
+			"targetId" : "QCBirdViewPlugin::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 31,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 5,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/QCBirdViewPlugin.dll"
+			],
+			"targetId" : "QCBirdViewPlugin::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 31,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 7,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/Algo1.lib"
+			],
+			"targetId" : "Algo1::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 4,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 7,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/Algo1.dll"
+			],
+			"targetId" : "Algo1::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 4,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 8,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/Algo1Stitch.lib"
+			],
+			"targetId" : "Algo1Stitch::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 5,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 8,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/Algo1Stitch.dll"
+			],
+			"targetId" : "Algo1Stitch::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 5,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 10,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/Algo2.lib"
+			],
+			"targetId" : "Algo2::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 6,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 10,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/Algo2.dll"
+			],
+			"targetId" : "Algo2::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 6,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 11,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/Algo2Stitch.lib"
+			],
+			"targetId" : "Algo2Stitch::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 7,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 11,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/Algo2Stitch.dll"
+			],
+			"targetId" : "Algo2Stitch::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 7,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 13,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/OtsuThreshold.lib"
+			],
+			"targetId" : "OtsuThreshold::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 26,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 13,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/OtsuThreshold.dll"
+			],
+			"targetId" : "OtsuThreshold::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 26,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 15,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/DCM_Ca.lib"
+			],
+			"targetId" : "DCM_Ca::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 21,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 15,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/DCM_Ca.dll"
+			],
+			"targetId" : "DCM_Ca::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 21,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 17,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/MFM_QC.lib"
+			],
+			"targetId" : "MFM_QC::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 24,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 17,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/MFM_QC.dll"
+			],
+			"targetId" : "MFM_QC::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 24,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 19,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/DM1.lib"
+			],
+			"targetId" : "DM1::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 23,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 19,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/DM1.dll"
+			],
+			"targetId" : "DM1::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 23,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 21,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/ZA.lib"
+			],
+			"targetId" : "ZA::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 39,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 21,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/ZA.dll"
+			],
+			"targetId" : "ZA::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 39,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 23,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/SpeedTesting.lib"
+			],
+			"targetId" : "SpeedTesting::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 38,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 23,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/SpeedTesting.dll"
+			],
+			"targetId" : "SpeedTesting::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 38,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 25,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/Crop_Images.lib"
+			],
+			"targetId" : "Crop_Images::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 18,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 25,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/Crop_Images.dll"
+			],
+			"targetId" : "Crop_Images::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 18,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 27,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/Crop_ImagesV2.lib"
+			],
+			"targetId" : "Crop_ImagesV2::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 19,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 27,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/Crop_ImagesV2.dll"
+			],
+			"targetId" : "Crop_ImagesV2::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 19,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 29,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/Read_Crops.lib"
+			],
+			"targetId" : "Read_Crops::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 34,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 29,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/Read_Crops.dll"
+			],
+			"targetId" : "Read_Crops::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 34,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 31,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/SCZD_MAP2_Neurites.lib"
+			],
+			"targetId" : "SCZD_MAP2_Neurites::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 35,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 31,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/SCZD_MAP2_Neurites.dll"
+			],
+			"targetId" : "SCZD_MAP2_Neurites::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 35,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 33,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/SCZD_MAP2_Neurites_Field.lib"
+			],
+			"targetId" : "SCZD_MAP2_Neurites_Field::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 36,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 33,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/SCZD_MAP2_Neurites_Field.dll"
+			],
+			"targetId" : "SCZD_MAP2_Neurites_Field::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 36,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 35,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/ASD_Neurites.lib"
+			],
+			"targetId" : "ASD_Neurites::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 1,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 35,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/ASD_Neurites.dll"
+			],
+			"targetId" : "ASD_Neurites::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 1,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 37,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/ASD_Nuclei.lib"
+			],
+			"targetId" : "ASD_Nuclei::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 2,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 37,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/ASD_Nuclei.dll"
+			],
+			"targetId" : "ASD_Nuclei::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 2,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 39,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/ASD_Synapses.lib"
+			],
+			"targetId" : "ASD_Synapses::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 3,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 39,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/ASD_Synapses.dll"
+			],
+			"targetId" : "ASD_Synapses::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 3,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 41,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/QC_TH_SNCA.lib"
+			],
+			"targetId" : "QC_TH_SNCA::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 32,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 41,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/QC_TH_SNCA.dll"
+			],
+			"targetId" : "QC_TH_SNCA::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 32,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 43,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/SNCA_Analysis.lib"
+			],
+			"targetId" : "SNCA_Analysis::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 37,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 43,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/SNCA_Analysis.dll"
+			],
+			"targetId" : "SNCA_Analysis::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 37,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 45,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/CellStress.lib"
+			],
+			"targetId" : "CellStress::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 8,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 45,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/CellStress.dll"
+			],
+			"targetId" : "CellStress::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 8,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 47,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/PD_Mitochondria.lib"
+			],
+			"targetId" : "PD_Mitochondria::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 27,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 47,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/PD_Mitochondria.dll"
+			],
+			"targetId" : "PD_Mitochondria::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 27,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 49,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/Microglia.lib"
+			],
+			"targetId" : "Microglia::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 25,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 49,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/Microglia.dll"
+			],
+			"targetId" : "Microglia::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 25,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 51,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/DL.lib"
+			],
+			"targetId" : "DL::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 22,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 51,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/DL.dll"
+			],
+			"targetId" : "DL::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 22,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 53,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/PS_2D.lib"
+			],
+			"targetId" : "PS_2D::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 28,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 53,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/PS_2D.dll"
+			],
+			"targetId" : "PS_2D::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 28,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 55,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/PS_2D_1_Channel.lib"
+			],
+			"targetId" : "PS_2D_1_Channel::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 29,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 55,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/PS_2D_1_Channel.dll"
+			],
+			"targetId" : "PS_2D_1_Channel::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 29,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 57,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Process/RelWithDebInfo/DCM.lib"
+			],
+			"targetId" : "DCM::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 20,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 57,
+			"component" : "PluginProcess",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/DCM.dll"
+			],
+			"targetId" : "DCM::@3f5deebcc70dd4ff73e8",
+			"targetIndex" : 20,
+			"type" : "target"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "Plugins/bin/plugins/Process",
+		"source" : "D:/Checkout_2020/CheckoutPlugins/Process"
+	}
+}

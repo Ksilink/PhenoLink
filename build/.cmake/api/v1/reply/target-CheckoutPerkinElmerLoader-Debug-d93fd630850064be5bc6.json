@@ -1,0 +1,883 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "bin/plugins/Debug/CheckoutPerkinElmerLoader.dll"
+		},
+		{
+			"path" : "Plugins/bin/plugins/Loaders/Debug/CheckoutPerkinElmerLoader.lib"
+		},
+		{
+			"path" : "bin/plugins/Debug/CheckoutPerkinElmerLoader.pdb"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"install",
+			"target_link_libraries",
+			"add_definitions",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"D:/Checkout_2020/CheckoutPlugins/Loaders/CMakeLists.txt",
+			"CMakeLists.txt",
+			"Plugins/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 26,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 35,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 33,
+				"parent" : 0
+			},
+			{
+				"file" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 60,
+				"parent" : 4
+			},
+			{
+				"file" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 2,
+				"line" : 2,
+				"parent" : 6
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 150,
+				"parent" : 4
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 151,
+				"parent" : 4
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 172,
+				"parent" : 4
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 2,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 104,
+				"parent" : 4
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "CheckoutPerkinElmerLoader_EXPORTS"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "Checkout_Git_Hash=\"edf0b5b-1f20f28\""
+				},
+				{
+					"backtrace" : 7,
+					"define" : "ExportPluginSymbols"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "QT_CONCURRENT_LIB"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "QT_CORE_LIB"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "QT_GUI_LIB"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "QT_NETWORK_LIB"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "QT_SQL_LIB"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "QT_WIDGETS_LIB"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "QT_XMLPATTERNS_LIB"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "QT_XML_LIB"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"path" : "D:/Checkout_2020/CheckoutApp/build/Plugins/bin/plugins/Loaders"
+				},
+				{
+					"path" : "D:/Checkout_2020/CheckoutPlugins/Loaders"
+				},
+				{
+					"backtrace" : 0,
+					"path" : "D:/Checkout_2020/CheckoutApp/build/Plugins/bin/plugins/Loaders/CheckoutPerkinElmerLoader_autogen/include_Debug"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "D:/Checkout_2020/CheckoutApp"
+				},
+				{
+					"backtrace" : 9,
+					"path" : "D:/Checkout_2020/CheckoutApp/include"
+				},
+				{
+					"backtrace" : 10,
+					"path" : "D:/Checkout_2020/CheckoutApp/build"
+				},
+				{
+					"backtrace" : 11,
+					"path" : "D:/Checkout_2020/CheckoutApp/Core"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "D:/Checkout_2020/CheckoutApp/qhttp"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/OP_CV2017"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/core/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/flann/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/hdf/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/imgproc/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/intensity_transform/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/ml/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/phase_unwrapping/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/photo/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/plot/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/quality/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/reg/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/surface_matching/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/xphoto/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/dnn/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/dnn_superres/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/features2d/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/fuzzy/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/hfs/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/img_hash/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/imgcodecs/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/line_descriptor/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/saliency/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/text/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/videoio/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/calib3d/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/datasets/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/highgui/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/mcc/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/objdetect/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/rapid/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/rgbd/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/shape/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/structured_light/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/ts/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/video/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/videostab/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/xfeatures2d/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/ximgproc/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/xobjdetect/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/aruco/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/bgsegm/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/bioinspired/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/ccalib/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/dnn_objdetect/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/dpm/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/face/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/gapi/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/optflow/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv/modules/stitching/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/superres/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/tracking/include"
+				},
+				{
+					"backtrace" : 12,
+					"isSystem" : true,
+					"path" : "D:/LN/opencv-master/opencv_contrib/modules/stereo/include"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Qt/QT_04_2019/5.15.2/msvc2019_64/include"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Qt/QT_04_2019/5.15.2/msvc2019_64/include/QtCore"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Qt/QT_04_2019/5.15.2/msvc2019_64/./mkspecs/win32-msvc"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Qt/QT_04_2019/5.15.2/msvc2019_64/include/QtNetwork"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Qt/QT_04_2019/5.15.2/msvc2019_64/include/QtWidgets"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Qt/QT_04_2019/5.15.2/msvc2019_64/include/QtGui"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Qt/QT_04_2019/5.15.2/msvc2019_64/include/QtANGLE"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Qt/QT_04_2019/5.15.2/msvc2019_64/include/QtSql"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Qt/QT_04_2019/5.15.2/msvc2019_64/include/QtXml"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Qt/QT_04_2019/5.15.2/msvc2019_64/include/QtXmlPatterns"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Qt/QT_04_2019/5.15.2/msvc2019_64/include/QtConcurrent"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "C:/Program Files (x86)/arrow/include"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					3,
+					3
+				],
+				"standard" : "11"
+			},
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 3,
+			"id" : "CheckoutCore::@94795ff35dabbbd3a8ca"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "QHttp::@0ceb9aeb58f48569fcea"
+		},
+		{
+			"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df"
+		}
+	],
+	"id" : "CheckoutPerkinElmerLoader::@653de4b2c8152eb40bfb",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 2,
+				"path" : "bin/plugins"
+			},
+			{
+				"backtrace" : 2,
+				"path" : "bin/plugins"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "C:/Program Files/Checkout"
+		}
+	},
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "/machine:x64 /debug /INCREMENTAL",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "..\\..\\..\\..\\Core\\Debug\\CheckoutCore.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "C:\\Qt\\QT_04_2019\\5.15.2\\msvc2019_64\\lib\\Qt5Xmld.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "..\\..\\..\\..\\qhttp\\Debug\\QHttp.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "C:\\Qt\\QT_04_2019\\5.15.2\\msvc2019_64\\lib\\Qt5Widgetsd.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "C:\\Qt\\QT_04_2019\\5.15.2\\msvc2019_64\\lib\\Qt5Guid.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "C:\\Qt\\QT_04_2019\\5.15.2\\msvc2019_64\\lib\\Qt5Sqld.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "C:\\Qt\\QT_04_2019\\5.15.2\\msvc2019_64\\lib\\Qt5XmlPatternsd.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "C:\\Qt\\QT_04_2019\\5.15.2\\msvc2019_64\\lib\\Qt5Networkd.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "C:\\Qt\\QT_04_2019\\5.15.2\\msvc2019_64\\lib\\Qt5Concurrentd.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "C:\\Qt\\QT_04_2019\\5.15.2\\msvc2019_64\\lib\\Qt5Cored.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_gapi450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_stitching450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_aruco450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_bgsegm450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_bioinspired450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_ccalib450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_dnn_objdetect450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_dnn_superres450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_dpm450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_highgui450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_face450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_fuzzy450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_hdf450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_hfs450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_img_hash450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_intensity_transform450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_line_descriptor450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_mcc450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_quality450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_rapid450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_reg450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_rgbd450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_saliency450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_stereo450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_structured_light450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_phase_unwrapping450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_superres450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_optflow450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_surface_matching450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_tracking450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_datasets450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_plot450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_text450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_dnn450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_videostab450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_videoio450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_xfeatures2d450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_ml450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_shape450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_ximgproc450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_video450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_xobjdetect450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_imgcodecs450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_objdetect450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_calib3d450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_features2d450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_flann450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_xphoto450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_photo450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_imgproc450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "D:\\LN\\OP_CV2017\\lib\\Debug\\opencv_core450d.lib",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "\"C:\\Program Files (x86)\\arrow\\lib\\arrow.lib\"",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "CheckoutPerkinElmerLoader",
+	"nameOnDisk" : "CheckoutPerkinElmerLoader.dll",
+	"paths" : 
+	{
+		"build" : "Plugins/bin/plugins/Loaders",
+		"source" : "D:/Checkout_2020/CheckoutPlugins/Loaders"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		},
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				2
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 0,
+			"compileGroupIndex" : 0,
+			"isGenerated" : true,
+			"path" : "build/Plugins/bin/plugins/Loaders/CheckoutPerkinElmerLoader_autogen/mocs_compilation_Debug.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "D:/Checkout_2020/CheckoutPlugins/Loaders/perkinelmerloader.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "D:/Checkout_2020/CheckoutPlugins/Loaders/perkinelmerloader.h",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}

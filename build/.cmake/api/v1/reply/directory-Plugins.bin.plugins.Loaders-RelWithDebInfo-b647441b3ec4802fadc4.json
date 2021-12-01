@@ -1,0 +1,120 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"D:/Checkout_2020/CheckoutPlugins/Loaders/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 13,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 24,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 35,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "PluginLoader",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Loaders/RelWithDebInfo/CheckoutYokogawaLoader.lib"
+			],
+			"targetId" : "CheckoutYokogawaLoader::@653de4b2c8152eb40bfb",
+			"targetIndex" : 17,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 1,
+			"component" : "PluginLoader",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/CheckoutYokogawaLoader.dll"
+			],
+			"targetId" : "CheckoutYokogawaLoader::@653de4b2c8152eb40bfb",
+			"targetIndex" : 17,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "PluginLoader",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Loaders/RelWithDebInfo/CheckoutInCellLoader.lib"
+			],
+			"targetId" : "CheckoutInCellLoader::@653de4b2c8152eb40bfb",
+			"targetIndex" : 14,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "PluginLoader",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/CheckoutInCellLoader.dll"
+			],
+			"targetId" : "CheckoutInCellLoader::@653de4b2c8152eb40bfb",
+			"targetIndex" : 14,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 3,
+			"component" : "PluginLoader",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"Plugins/bin/plugins/Loaders/RelWithDebInfo/CheckoutPerkinElmerLoader.lib"
+			],
+			"targetId" : "CheckoutPerkinElmerLoader::@653de4b2c8152eb40bfb",
+			"targetIndex" : 15,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 3,
+			"component" : "PluginLoader",
+			"destination" : "bin/plugins",
+			"paths" : 
+			[
+				"bin/plugins/RelWithDebInfo/CheckoutPerkinElmerLoader.dll"
+			],
+			"targetId" : "CheckoutPerkinElmerLoader::@653de4b2c8152eb40bfb",
+			"targetIndex" : 15,
+			"type" : "target"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "Plugins/bin/plugins/Loaders",
+		"source" : "D:/Checkout_2020/CheckoutPlugins/Loaders"
+	}
+}

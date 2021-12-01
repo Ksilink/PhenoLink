@@ -1,0 +1,58 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"Core/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 41,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "applications",
+			"destination" : "bin",
+			"paths" : 
+			[
+				"Core/Debug/CheckoutCore.lib"
+			],
+			"targetId" : "CheckoutCore::@94795ff35dabbbd3a8ca",
+			"targetIndex" : 10,
+			"targetIsImportLibrary" : true,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 1,
+			"component" : "applications",
+			"destination" : "bin",
+			"paths" : 
+			[
+				"bin/Debug/CheckoutCore.dll"
+			],
+			"targetId" : "CheckoutCore::@94795ff35dabbbd3a8ca",
+			"targetIndex" : 10,
+			"type" : "target"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "Core",
+		"source" : "Core"
+	}
+}

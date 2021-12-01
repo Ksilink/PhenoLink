@@ -1,0 +1,99 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"Main/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 18,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 29,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 61,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 72,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "applications",
+			"destination" : "bin",
+			"paths" : 
+			[
+				"bin/Release/Checkout.exe"
+			],
+			"targetId" : "Checkout::@e4405d0c4cf2df57c995",
+			"targetIndex" : 9,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "applications",
+			"destination" : "bin",
+			"paths" : 
+			[
+				"bin/Release/ckcli.exe"
+			],
+			"targetId" : "ckcli::@e4405d0c4cf2df57c995",
+			"targetIndex" : 41,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 3,
+			"component" : "applications",
+			"destination" : "bin",
+			"paths" : 
+			[
+				"bin/Release/CheckoutHttpServer.exe"
+			],
+			"targetId" : "CheckoutHttpServer::@e4405d0c4cf2df57c995",
+			"targetIndex" : 13,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "applications",
+			"destination" : "bin",
+			"paths" : 
+			[
+				"bin/Release/CheckoutHttpServer.exe"
+			],
+			"targetId" : "CheckoutHttpServer::@e4405d0c4cf2df57c995",
+			"targetIndex" : 13,
+			"type" : "target"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "Main",
+		"source" : "Main"
+	}
+}
