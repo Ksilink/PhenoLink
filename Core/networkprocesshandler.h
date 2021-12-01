@@ -93,11 +93,6 @@ public:
 
     void getProcessMessageStatus(QString process, QList<QString> hash);
 
-//    void queryPayload(QString hash);
-
-//    void deletePayload(QString hash);
-//    void processFinished(QStringList hashes);
-
     void finishedProcess(QString hash, QJsonObject res);
 
     void removeHash(QString hash);

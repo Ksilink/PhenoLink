@@ -3111,8 +3111,8 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
         saveTimer = startTimer(seconds(30));
     }
 
-    if (x <= 0 || y <= 0)
-        qDebug() << "add Data" << XP << field << stackZ << time << chan << x << y;
+//    if (x <= 0 || y <= 0)
+//        qDebug() << "add Data" << XP << field << stackZ << time << chan << x << y;
 
     static quint64 MaxY = 50, MaxChan = 30, MaxTime = 1000, MaxField = 100, MaxZ = 1000;
     DataHolder h;
@@ -3128,7 +3128,7 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
         beginInsertColumns(idx, 5 + (int)_owner->hasTag() + col, 5 + (int)_owner->hasTag() + col);
 
         _datanames.insert(XP);
-        headerDataChanged(Qt::Horizontal, col, col);
+        this->headerDataChanged(Qt::Horizontal, col, col);
         newCol = true;
 
     }

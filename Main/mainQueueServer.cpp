@@ -556,7 +556,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         if (avail)
         {
-            workers.enqueue(qMakePair(serverIP, port));
+            if (workers_status[QString("%1:%2").arg(serverIP).arg(port)] > 0)
+                workers.enqueue(qMakePair(serverIP, port));
             workers_status[QString("%1:%2").arg(serverIP).arg(port)]++;
         }
 
@@ -728,6 +729,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QMutexLocker lock(&workers_lock);
         //        workers.enqueue(qMakePair(serverIP, port));
         workers.removeOne(qMakePair(serverIP, port));
+        workers_status[QString("%1:%2").arg(serverIP).arg(port)]--;
+
 
     }
 
