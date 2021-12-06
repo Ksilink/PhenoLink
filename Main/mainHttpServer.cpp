@@ -577,16 +577,8 @@ void Server::proxyAdvert(QString host, int port)
 
 
     int processor_count = QThreadPool::globalInstance()->maxThreadCount();
-    for (int i = 0; i < processor_count; ++i)
-    {
-        if (i == 0) // We are reconnecting the server, ask for clearing
-            client->send(QString("/Ready/%1").arg(i),
-                         QString("affinity=%1&port=%2&reset").arg(affinity_list.join(",")).arg(dport), QJsonArray());
-        else
-            client->send(QString("/Ready/%1").arg(i),
-                         QString("affinity=%1&port=%2").arg(affinity_list.join(",")).arg(dport), QJsonArray());
-        qApp->processEvents();
-    }
+    client->send(QString("/Ready/%1").arg(processor_count),
+                 QString("affinity=%1&port=%2&cpu=%3&reset").arg(affinity_list.join(",")).arg(dport).arg(processor_count), QJsonArray());
 }
 
 void Server::finished(QString hash, QJsonObject ob)
@@ -606,7 +598,7 @@ void Server::finished(QString hash, QJsonObject ob)
 
     if (client && CheckoutProcess::handler().numberOfRunningProcess() <= 1)
         client->send(QString("/ServerDone"),
-                     QString("port=%2").arg(dport), QJsonArray());
+                     QString("port=%1&cpu=%2").arg(dport).arg(QThreadPool::globalInstance()->maxThreadCount()), QJsonArray());
 
 }
 
