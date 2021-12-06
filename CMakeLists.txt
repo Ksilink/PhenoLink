@@ -103,16 +103,6 @@ message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} ${OpenCV_LIBS} ")
 
 include_directories( ${OpenCV_INCLUDE_DIRS})
 
-find_package(bsoncxx   REQUIRED)
-message(STATUS "Found Bsoncxx : ${LIBBSONCXX_INCLUDE_DIRS} ")
-find_package(mongocxx   REQUIRED)
-message(STATUS "Found Mongocxx : ${LIBMONGOCXX_INCLUDE_DIRS}")
-
-find_package(libmongocxx REQUIRED)
-find_package(libbsoncxx REQUIRED)
-
-include_directories( ${LIBBSONCXX_INCLUDE_DIRS})
-include_directories( ${LIBMONGOCXX_INCLUDE_DIRS})
 
 find_package(Boost 1.56.0 REQUIRED)
 
