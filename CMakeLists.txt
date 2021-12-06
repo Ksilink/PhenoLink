@@ -30,7 +30,7 @@ endif(WIN32)
 set(Checkout_VERSION_MAJOR 2)
 set(Checkout_VERSION_MINOR 0)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 3)
+set(Checkout_VERSION_RELEASE 4)
 
 message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
 
@@ -103,9 +103,18 @@ message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} ${OpenCV_LIBS} ")
 
 include_directories( ${OpenCV_INCLUDE_DIRS})
 
-find_package(libmongocxx  REQUIRED)
-message(STATUS "Found Mongo cxx : ${LIBMONGOCXX_INCLUDE_DIRS} ${LIBMONGOCXX_LIBRARIES}")
+find_package(bsoncxx   REQUIRED)
+message(STATUS "Found Bsoncxx : ${LIBBSONCXX_INCLUDE_DIRS} ")
+find_package(mongocxx   REQUIRED)
+message(STATUS "Found Mongocxx : ${LIBMONGOCXX_INCLUDE_DIRS}")
 
+find_package(libmongocxx REQUIRED)
+find_package(libbsoncxx REQUIRED)
+
+include_directories( ${LIBBSONCXX_INCLUDE_DIRS})
+include_directories( ${LIBMONGOCXX_INCLUDE_DIRS})
+
+find_package(Boost 1.56.0 REQUIRED)
 
 if(BUILD_WITH_VTK)
     find_package(VTK)
@@ -178,6 +187,7 @@ endif(PLUGIN_IN_CORE)
 #add_subdirectory(PluginManager)
 add_subdirectory(Core)
 add_subdirectory(qhttp)
+#add_subdirectory(Tags)
 add_subdirectory(Gui)
 
 if(BUILD_PYTHON_SCRIPTING)

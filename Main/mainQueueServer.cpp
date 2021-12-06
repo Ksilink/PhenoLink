@@ -263,7 +263,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
         runs[task.key().split("!").first()]++;
 
     for (auto it = runs.begin(), e = runs.end(); it != e; ++it)
-        body += QString("%1 => %2 <a href='/Cancel/?proc=%1'>Cancel</a><br>").arg(it.key()).arg(it.value());
+        body += QString("%1 => %2 <a href='/Cancel/?proc=%1'>Cancel</a><a href='/Restart'>Force Restart</a><br>").arg(it.key()).arg(it.value());
 
     message = QString("<html><title>Checkout Queue Status %2</title><body>%1</body></html>").arg(body).arg(CHECKOUT_VERSION);
 
@@ -517,7 +517,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         uint16_t port;
 
         QStringList queries = query.split("&");
-        QString workid;
+        QString workid, cpu;
+
         bool reset = false;
         bool avail = true;
         for (auto q : queries)
@@ -531,6 +532,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 }
 
             }
+            if (q.startsWith("cpu="))
+            {
+               cpu = q.replace("cpu=","");
+            }
+
             if (q.startsWith("port"))
             {
                 port = q.replace("port=","").toUInt();
@@ -557,9 +563,19 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         if (avail)
         {
             if (workers_status[QString("%1:%2").arg(serverIP).arg(port)] > 0)
-                workers.enqueue(qMakePair(serverIP, port));
-            workers_status[QString("%1:%2").arg(serverIP).arg(port)]++;
+            {
+               if (cpu.isEmpty())
+
+                    workers.enqueue(qMakePair(serverIP, port));
+                else
+                    for (int i= 0; i< cpu.toInt(); ++i)
+                        workers.enqueue(qMakePair(serverIP, port));
+            }
         }
+        if (!cpu.isEmpty())
+            workers_status[QString("%1:%2").arg(serverIP).arg(port)]+=cpu.toInt();
+        else
+            workers_status[QString("%1:%2").arg(serverIP).arg(port)]++;
 
         if (!workid.isEmpty())
         {
@@ -624,15 +640,18 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         //next_worker
         QString serverIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
         QString port;
+        int CPU;
 
         QStringList queries = query.split("&");
         for (auto q : queries)
         {
             if (q.startsWith("port="))
                 port = q.replace("port=", "");
+            if (q.startsWith("cpu="))
+                CPU = q.replace("cpu=", "").toInt();
         }
 
-        workers_status[QString("%1:%2").arg(serverIP, port)] = 0;
+        workers_status[QString("%1:%2").arg(serverIP, port)] = CPU;
 
         int sum = 0;
         for (auto it = workers_status.begin(), e = workers_status.end(); it != e; ++it)
@@ -660,6 +679,30 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             running.clear();
             workers_lock.unlock();
         }
+    }
+
+    if (urlpath.startsWith("/Restart"))
+    {
+        qDebug() << "Restarting" << running.size() << "Jobs";
+        workers_lock.lock();
+        for (auto& obj: running.values())
+        {
+            auto project = obj["Project"].toString();
+            int priority = obj.contains("Priority") ? obj["Priority"].toInt() : 1;
+
+            priority_lock.lock();
+            if (project_affinity.contains(project))
+            {
+                jobs[project_affinity[project]][priority].enqueue(obj);
+            }
+            else
+                jobs[""][priority].enqueue(obj); // Unmapped project goes to "global" path
+
+            priority_lock.unlock();
+        }
+        running.clear();
+        workers_lock.unlock();
+        return;
     }
 
 
