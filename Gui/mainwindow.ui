@@ -140,7 +140,6 @@
     <addaction name="sync_fields"/>
     <addaction name="sync_zstack"/>
     <addaction name="separator"/>
-    <addaction name="actionPlate_Tag"/>
     <addaction name="separator"/>
     <addaction name="menuInfos"/>
    </widget>
@@ -1039,11 +1038,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Enter</string>
-   </property>
-  </action>
-  <action name="actionPlate_Tag">
-   <property name="text">
-    <string>Plate Tag</string>
    </property>
   </action>
   <action name="actionDisplay_Remaining_Processes">

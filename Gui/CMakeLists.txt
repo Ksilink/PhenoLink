@@ -53,12 +53,9 @@ set(CheckoutGui_SRC
                 ctkWidgets/ctkCheckableComboBox.h ctkWidgets/ctkCheckableComboBox.cpp
                # ctkWidgets/ctkCheckableComboBoxEventPlayer.h ctkWidgets/ctkCheckableComboBoxEventPlayer.cpp
                # ctkWidgets/ctkCheckableComboBoxEventTranslator.h ctkWidgets/ctkCheckableComboBoxEventTranslator.cpp
-
-
-
-
-
-                rcs.qrc
+               Tags/tagger.h Tags/tagger.cpp  Tags/tagger.ui
+               Tags/taggerplate.h Tags/taggerplate.cpp Tags/taggerplate.ui
+               rcs.qrc
     )
 
 if(VTK_FOUND)
@@ -73,12 +70,21 @@ endif(BUILD_PYTHON_SCRIPTING)
 
 add_library(CheckoutGui SHARED ${CheckoutGui_SRC} )
 
-QT5_WRAP_UI(mainwindow.ui ctkWidgets/ctkPathListButtonsWidget.ui)
+QT5_WRAP_UI(mainwindow.ui Tags/tagger.ui ctkWidgets/ctkPathListButtonsWidget.ui)
 
 
 #add_custom_command(TARGET CheckoutGui   PRE_BUILD
 #    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
 #    )
+
+find_package(bsoncxx   REQUIRED)
+find_package(mongocxx   REQUIRED)
+find_package(Boost 1.56.0 REQUIRED)
+
+
+include_directories( ${LIBBSONCXX_INCLUDE_DIRS})
+include_directories( ${LIBMONGOCXX_INCLUDE_DIRS})
+
 
 target_include_directories(CheckoutGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if (MSVC)
@@ -87,9 +93,9 @@ endif()
 
 
 IF(WIN32)
-    target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt::Sql  Qt::WinExtras Qt::Charts Qt::WebEngineWidgets  ${OpenCV_LIBS} )
+    target_link_libraries(CheckoutGui ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt::Sql  Qt::WinExtras Qt::Charts Qt::WebEngineWidgets  ${OpenCV_LIBS}  mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost )
 ELSE()
-target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt::Sql ${OpenCV_LIBS} )
+target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt::Sql ${OpenCV_LIBS}  mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost)
 ENDIF(WIN32)
 
 

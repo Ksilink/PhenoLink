@@ -2327,8 +2327,13 @@ void MainWindow::rmDirectory()
 void MainWindow::loadPlate()
 {
     // Set selection
+    mdl->clearCheckedDirectories();
     mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
     on_loadSelection_clicked();
+
+
+
+
 }
 
 void MainWindow::loadPlateFirst()
@@ -2378,7 +2383,6 @@ void MainWindow::loadPlateDisplay3()
     this->_scrollArea->addSelectedWells();
 
 }
-
 
 void MainWindow::loadPlateDisplaySample()
 {
@@ -2694,17 +2698,20 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
 
     QModelIndex idx = ui->treeView->indexAt(pos);
 
-    if (ui->treeView->rootIndex() == idx.parent())
+//    if (ui->treeView->rootIndex() == idx.parent())
     {
         QMenu menu(this);
 
         auto *ico = menu.addMenu("Set Icon");
+        menu.addSeparator();
         menu.addAction("Load plate", this, SLOT(loadPlate()));
         auto mm = menu.addMenu("Load && Display");
         mm->addAction("first well", this, SLOT(loadPlateFirst()));
         mm->addAction("3 wells", this, SLOT(loadPlateDisplay3()));
         mm->addAction("sample from tags", this, SLOT(loadPlateDisplaySample()));
 
+        menu.addSeparator();
+        menu.addAction("Plate Map / Tags", this, SLOT(plateMap()));
         menu.addSeparator();
         menu.addAction("export for CP", this, SLOT(exportToCellProfiler()));
         menu.addSeparator();
@@ -2843,10 +2850,6 @@ void MainWindow::on_start_process_triggered()
     startProcess();
 }
 
-void MainWindow::on_actionPlate_Tag_triggered()
-{
-    // Launch the inner plate tagger
-}
 
 
 void MainWindow::graySelection()
@@ -2876,3 +2879,17 @@ void MainWindow::on_actionDisplay_Remaining_Processes_triggered()
 //    ui->textLog->insertPlainText();
 }
 
+#include <Tags/tagger.h>
+
+void MainWindow::plateMap()
+{
+    //
+//    mdl->clearCheckedDirectories();
+    mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
+    QStringList checked = mdl->getCheckedDirectories(false);
+    if (checked.size())
+    {
+        tagger t(checked);
+        t.exec();
+    }
+}

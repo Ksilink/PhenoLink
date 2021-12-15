@@ -181,7 +181,7 @@ int Server::start(quint16 port)
 {
     connect(this, &QHttpServer::newConnection, [this](QHttpConnection*){
         Q_UNUSED(this);
-        qDebug() << "a new connection has occured!";
+        //        qDebug() << "a new connection has occured!";
     });
 
 
@@ -191,7 +191,7 @@ int Server::start(quint16 port)
                 [this]( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpResponse* res){
             req->collectData();
             req->onEnd([this, req, res](){
-        qDebug() << "Processing query";
+        //        qDebug() << "Processing query";
         process(req, res);
     });
 });
@@ -388,8 +388,10 @@ void Server::WorkerMonitor()
     {
         if (njobs() && ! workers.isEmpty()) // If we have some jobs left and some workers available
         {
+            workers_lock.lock();
             auto next_worker = pickWorker();
             QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker.first);
+
             // Hey hey look what we have here: the job to be run by next_worker let's call the start func then :
             // start it :)
             if (queue.size())
@@ -417,16 +419,15 @@ void Server::WorkerMonitor()
                 QJsonArray ar; ar.append(pr);
 
                 sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
-                workers_lock.lock();
+
                 workers.removeOne(next_worker);
                 workers_status[QString("%1:%2").arg(next_worker.first).arg(next_worker.second)]--;
-                workers_lock.unlock();
 
                 running[taskid] = pr;
-
-
                 qApp->processEvents();
             }
+
+            workers_lock.unlock();
 
         }
         else
@@ -442,7 +443,7 @@ QPair<QString, int> Server::pickWorker()
 {
     static QString lastsrv;
 
-    QMutexLocker locker(&workers_lock);
+    //    QMutexLocker locker(&workers_lock);
     if (lastsrv.isEmpty())
     {
         auto next_worker = workers.back();
@@ -534,7 +535,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             }
             if (q.startsWith("cpu="))
             {
-               cpu = q.replace("cpu=","");
+                cpu = q.replace("cpu=","");
             }
 
             if (q.startsWith("port"))
@@ -564,7 +565,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         {
             if (workers_status[QString("%1:%2").arg(serverIP).arg(port)] > 0)
             {
-               if (cpu.isEmpty())
+                if (cpu.isEmpty())
 
                     workers.enqueue(qMakePair(serverIP, port));
                 else
@@ -745,7 +746,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
                     }
                 }
-
 
             }
         }

@@ -193,19 +193,13 @@ private slots:
 
     void on_sync_zstack_toggled(bool arg1);
 
-
     void on_start_process_triggered();
 
     void on_prevOverlay_clicked();
-
     void on_nextOverlay_clicked();
 
     void on_addTag_clicked();
-
     void on_delTag_clicked();
-
-    void on_actionPlate_Tag_triggered();
-
     void on_actionDisplay_Remaining_Processes_triggered();
 
 public slots:
@@ -292,6 +286,7 @@ protected slots:
     void setTile( int tile);
 
 
+    void plateMap();
 private:
 
     bool networking;

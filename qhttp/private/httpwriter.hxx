@@ -26,7 +26,7 @@ public:
         if ( ifinished )
             return false;
 
-        TBase::iheaders.insert(field.toLower(), value);
+        TBase::iheaders.insert(field, value);
         return true;
     }
 
