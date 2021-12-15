@@ -37,9 +37,9 @@ GuiServer::GuiServer(MainWindow* par): win(par)
             //            qDebug() << "Listenning to socket!";
             req->collectData();
             req->onEnd([this, req, res](){
-        this->process(req, res);
-    });
-});
+                    this->process(req, res);
+                    });
+            });
 
     if ( !isListening ) {
         // should tell the user !!!
@@ -92,13 +92,14 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
 
     if (urlpath.startsWith("/addImage/"))
-    { // Now let's do the fun part :)
+    { // Now let's do the fun part :)   
         auto ob = QCborValue::fromCbor(data);
 
         QList<SequenceFileModel*> lsfm;
         lsfm << ScreensHandler::getHandler().addProcessResultImage(ob);
 
         win->networkRetrievedImage(lsfm);
+        return;
     }
 
 

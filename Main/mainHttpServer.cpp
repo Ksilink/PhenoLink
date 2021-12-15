@@ -578,7 +578,7 @@ void Server::proxyAdvert(QString host, int port)
 
     int processor_count = QThreadPool::globalInstance()->maxThreadCount();
     client->send(QString("/Ready/%1").arg(processor_count),
-                 QString("affinity=%1&port=%2&cpu=%3&reset").arg(affinity_list.join(",")).arg(dport).arg(processor_count), QJsonArray());
+                 QString("affinity=%1&port=%2&cpu=%3&reset&available=1").arg(affinity_list.join(",")).arg(dport).arg(processor_count), QJsonArray());
 }
 
 void Server::finished(QString hash, QJsonObject ob)

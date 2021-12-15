@@ -245,6 +245,13 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
         servers[id] ++;
     }
 
+    body += "<h3>Cores Listing</h3>";
+    //for (auto it = runni)
+    for (auto it = workers_status.begin(), e = workers_status.end(); it != e; ++it)
+    {
+        body += QString("Server %1 => %2 Cores<br>").arg(it.key()).arg(it.value());
+    }
+
     body += "<h3>Cores Availability</h3>";
 
     for (auto it = servers.begin(), e = servers.end(); it != e; ++it)
@@ -263,7 +270,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
         runs[task.key().split("!").first()]++;
 
     for (auto it = runs.begin(), e = runs.end(); it != e; ++it)
-        body += QString("%1 => %2 <a href='/Cancel/?proc=%1'>Cancel</a><a href='/Restart'>Force Restart</a><br>").arg(it.key()).arg(it.value());
+        body += QString("%1 => %2 <a href='/Cancel/?proc=%1'>Cancel</a>&nbsp;<a href='/Restart'>Force Restart</a><br>").arg(it.key()).arg(it.value());
 
     message = QString("<html><title>Checkout Queue Status %2</title><body>%1</body></html>").arg(body).arg(CHECKOUT_VERSION);
 
@@ -554,6 +561,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         }
 
+        qDebug() << reset << avail << cpu << workid;
         QMutexLocker lock(&workers_lock);
         if (reset) // Occurs if servers reconnect
         {
@@ -563,7 +571,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         if (avail)
         {
-            if (workers_status[QString("%1:%2").arg(serverIP).arg(port)] > 0)
+            if (workers_status[QString("%1:%2").arg(serverIP).arg(port)] >= 0)
             {
                 if (cpu.isEmpty())
 
