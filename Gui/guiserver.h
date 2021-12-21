@@ -21,8 +21,8 @@ public:
     GuiServer(MainWindow* parent);
 
 private:
-    void process(QHttpRequest *req, QHttpResponse *res);
-    void setHttpResponse(QJsonObject ob, QHttpResponse *res, bool binary = true);
+    void process(qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res);
+    void setHttpResponse(QJsonObject ob, qhttp::server::QHttpResponse *res, bool binary = true);
 
 protected:
     MainWindow* win;

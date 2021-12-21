@@ -123,7 +123,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
         auto cursor = db["tags"].aggregate(pipe);
         for (auto & item: cursor)
         {
-            bsoncxx::stdx::string_view view = item["_id"].get_string().value;
+            bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
             QString pr = QString::fromStdString(view.to_string()).simplified();
             if (!pr.isEmpty())
                 _projects.insert(pr) ;
@@ -152,7 +152,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 auto cursor = db["tags"].aggregate(pipe);
                 for (auto & item: cursor)
                 {
-                    bsoncxx::stdx::string_view view = item["_id"].get_string().value;
+                    bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
                     _well_tags[prj].insert(QString::fromStdString(view.to_string()).simplified());
                 }
             }
@@ -220,7 +220,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             QStringList data;
             for (auto & item: cursor)
             {
-                bsoncxx::stdx::string_view view = item["_id"].get_string().value;
+                bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
                 data << QString::fromStdString(view.to_string()).simplified();
             }
 
@@ -237,7 +237,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             QSet<QString> data;
             for (auto & item: cursor)
             {
-                bsoncxx::stdx::string_view view = item["_id"].get_string().value;
+                bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
                 QString t = QString::fromStdString(view.to_string()).simplified();
                 if (!t.isEmpty())
                     data.insert(t);
