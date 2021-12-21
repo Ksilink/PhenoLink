@@ -3363,7 +3363,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
     }
 
 
-    bool csv = true, feather = true;
+    bool csv = false, feather = true;
 
     if (feather)
     { // Feather writing of the Non Aggregated

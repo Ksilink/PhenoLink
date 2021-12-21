@@ -450,7 +450,7 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
 {
     QString plate = ds["XP"].toString(), commit = ds["CommitName"].toString();
 
-    if (par.contains(QString("SavePath")) && !par.value("SavePath").toString().isEmpty())
+    if (!commit.isEmpty() && par.contains(QString("SavePath")) && !par.value("SavePath").toString().isEmpty())
     {
         QString pos = par["Meta"].toArray().first().toObject()["Pos"].toString();
 
