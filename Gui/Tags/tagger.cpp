@@ -55,6 +55,11 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 {
     ui->setupUi(this);
 
+
+    this->_tags_of_tags["DMSO"].insert("Drugs"); // Tags a compound corresponding tag as compound
+    this->_grouped_tags["Drugs"].insert("DMSO");
+
+
     http = getHttp();
     QString url("http://labcollector.ksilink.int/webservice/index.php?v=2&module=strains"),
             key("74a7d185e35ca33dc082f3e1605b914d1c6fc1c1add3ef4f96e6a284952199f2");
@@ -80,7 +85,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 if (!pr.isEmpty())
                 {
                     _projects.insert(pr);
-                    if (!obj["number"].toString().isEmpty())
+                    if (!obj["number"].toString().simplified().isEmpty())
                     {
                         this->_well_tags[pr].insert(obj["number"].toString());
                         this->_tags_of_tags[obj["number"].toString()].insert("CellLines"); // Tags the tag as a cell line
@@ -89,8 +94,13 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 }
             }
 
+            QString cur=this->ui->project->currentText();
             this->ui->project->clear();
-            this->ui->project->addItems(QStringList(_projects.begin(), _projects.end()));
+            QStringList lst(_projects.begin(), _projects.end()); lst.sort();
+
+            this->ui->project->addItems(lst);
+            if (!cur.isEmpty())
+                this->ui->project->setCurrentText(cur);
 
 
         });
@@ -118,8 +128,13 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             if (!pr.isEmpty())
                 _projects.insert(pr) ;
         }
+        QString cur=this->ui->project->currentText();
         this->ui->project->clear();
-        this->ui->project->addItems(QStringList(_projects.begin(), _projects.end()));
+        QStringList lst(_projects.begin(), _projects.end()); lst.sort();
+
+        this->ui->project->addItems(lst);
+        if (!cur.isEmpty())
+            this->ui->project->setCurrentText(cur);
 
         //        qDebug() << "Mongo" << _projects;
 
@@ -219,14 +234,16 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 
             auto cursor = db["tags"].aggregate(pipe);
 
-            QStringList data;
+            QSet<QString> data;
             for (auto & item: cursor)
             {
                 bsoncxx::stdx::string_view view = item["_id"].get_string().value;
-                data << QString::fromStdString(view.to_string()).simplified();
+                QString t = QString::fromStdString(view.to_string()).simplified();
+                if (!t.isEmpty())
+                    data.insert(t);
             }
-
-            ui->cell_lines->addItems(data);
+            _grouped_tags["CellLines"] |= data;
+            //ui->cell_lines->addItems(data);
         }
     }
     catch(...) {}
@@ -237,6 +254,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
         QStringList str = d.split("/");
         str.pop_back(); // remove the reference file name
         QString plate = str.last(); str.pop_back();// should be the plate name
+        QString plateDate = str.last();
         QStringList date = str.last().replace(plate+"_", "").split("_"); str.pop_back();
         proj = str.last().simplified();
 
@@ -244,16 +262,37 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             _projects.insert(proj);
 
         TaggerPlate* platet = new TaggerPlate(d, this);
-        platet->setObjectName("plate_tag");
-        ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(1)));
+        QJsonDocument& tags = platet->getTags();
 
         this->ui->project->clear();
-
         this->ui->experiment->setText(plate);
+        QStringList lst(_projects.begin(), _projects.end()); lst.sort();
+        this->ui->project->addItems(lst);
 
-        this->ui->project->addItems(QStringList(_projects.begin(), _projects.end()));
+
+        // Try to find in the mongo the corresponding plate ?
+        auto db = client["tags"];
+        auto fold = db["tags"].find_one(make_document(kvp("plateAcq",QString("%1/%2").arg(plateDate,plate).toStdString())));
+        if (fold)
+        {
+            QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).toLatin1();
+            tags=QJsonDocument::fromJson(arr);
+            QJsonObject ob = tags.object();
+            if (ob.contains("meta") && ob["meta"].toObject().contains("project"))
+            {
+                proj = ob["meta"].toObject()["project"].toString(); // mandatoringly :D
+                //   qDebug() << proj;
+            }
+
+            platet->updatePlate();
+        }
+        else qDebug() << "Plate Acq not found" << plateDate << "/" << plate;
+
+        ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(1)));
+
         if (!proj.isEmpty())
             this->ui->project->setCurrentText(proj);
+
         platet->setTags(_grouped_tags, _well_tags[proj]);
 
     }
@@ -288,17 +327,6 @@ void tagger::on_add_global_tags_clicked()
 }
 
 
-void tagger::on_add_cell_lines_clicked()
-{
-    QString str = ui->cell_lines->currentText();
-
-    for (int i = 0; i<  ui->cell_lines_list->count(); ++i)
-        if (ui->cell_lines_list->item(i)->text()==str)
-            return;
-
-    ui->cell_lines_list->addItem(str);
-
-}
 
 
 void tagger::on_global_tags_list_customContextMenuRequested(const QPoint &pos)
@@ -312,16 +340,6 @@ void tagger::on_global_tags_list_customContextMenuRequested(const QPoint &pos)
     menu.exec(ui->global_tags_list->mapToGlobal(pos));
 }
 
-void tagger::on_cell_lines_list_customContextMenuRequested(const QPoint &pos)
-{
-    QMenu menu(this);
-
-    QString text = ui->cell_lines_list->itemAt(pos)->text();
-
-    QAction* addWb = menu.addAction(tr("Remove cell line"), this, SLOT(removeCellLine()));
-    addWb->setData(text);
-    menu.exec(ui->cell_lines_list->mapToGlobal(pos));
-}
 
 
 void tagger::removeTag()
@@ -337,24 +355,12 @@ void tagger::removeTag()
     ui->global_tags_list->addItems(items);
 }
 
-void tagger::removeCellLine()
-{
-    QAction* s = qobject_cast<QAction*>(sender());
-
-    QStringList items;
-    for (int i = 0; i < ui->cell_lines_list->count(); ++i)
-        if (s->data().toString() != ui->cell_lines_list->item(i)->text())
-            items << ui->cell_lines_list->item(i)->text();
-
-    ui->cell_lines_list->clear();
-    ui->cell_lines_list->addItems(items);
-}
 
 
 
 void tagger::on_project_currentIndexChanged(const QString &arg1)
 {
-    qDebug() << "Setting project" << arg1;
+    //  qDebug() << "Setting project" << arg1;
     if (arg1.isEmpty())
         return;
 
@@ -362,7 +368,7 @@ void tagger::on_project_currentIndexChanged(const QString &arg1)
     proj = arg1;
     for (auto w: this->findChildren<TaggerPlate*>())
     {
-        qDebug() << w->objectName();
+        //        qDebug() << w->objectName();
 
         if (qobject_cast<TaggerPlate*>(w))
         {
@@ -370,5 +376,18 @@ void tagger::on_project_currentIndexChanged(const QString &arg1)
             platet->setTags(_grouped_tags, _well_tags[proj]);
         }
     }
+}
+
+
+void tagger::on_pushButton_2_clicked()
+{
+    this->close();
+}
+
+
+// Ok button clicked save to Mongo !!!
+void tagger::on_pushButton_clicked()
+{
+
 }
 

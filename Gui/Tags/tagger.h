@@ -50,15 +50,14 @@ public:
 private slots:
     void on_add_global_tags_clicked();
 
-    void on_add_cell_lines_clicked();
-
     void on_global_tags_list_customContextMenuRequested(const QPoint &pos);
 
-    void on_cell_lines_list_customContextMenuRequested(const QPoint &pos);
-
     void removeTag();
-    void removeCellLine();
     void on_project_currentIndexChanged(const QString &arg1);
+
+    void on_pushButton_2_clicked();
+
+    void on_pushButton_clicked();
 
 private:
     QStringList dataset;
