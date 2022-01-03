@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 
+#include <bsoncxx/config/version.hpp>
 #include <bsoncxx/json.hpp>
 #include <bsoncxx/types.hpp>
 #include <bsoncxx/stdx/string_view.hpp>
@@ -123,7 +124,11 @@ tagger::tagger(QStringList datas, QWidget *parent) :
         auto cursor = db["tags"].aggregate(pipe);
         for (auto & item: cursor)
         {
+#if (BSONCXX_VERSION_MAJOR >= 3 && BSONCXX_VERSION_MINOR >= 7)
+            bsoncxx::stdx::string_view view = item["_id"].get_string().value;
+#else
             bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
+#endif
             QString pr = QString::fromStdString(view.to_string()).simplified();
             if (!pr.isEmpty())
                 _projects.insert(pr) ;
@@ -152,8 +157,12 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 auto cursor = db["tags"].aggregate(pipe);
                 for (auto & item: cursor)
                 {
-                    bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
-                    _well_tags[prj].insert(QString::fromStdString(view.to_string()).simplified());
+#if (BSONCXX_VERSION_MAJOR >= 3 && BSONCXX_VERSION_MINOR >= 7)
+            bsoncxx::stdx::string_view view = item["_id"].get_string().value;
+#else
+            bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
+#endif
+            _well_tags[prj].insert(QString::fromStdString(view.to_string()).simplified());
                 }
             }
         }
@@ -220,7 +229,11 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             QStringList data;
             for (auto & item: cursor)
             {
-                bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
+#if (BSONCXX_VERSION_MAJOR >= 3 && BSONCXX_VERSION_MINOR >= 7)
+            bsoncxx::stdx::string_view view = item["_id"].get_string().value;
+#else
+            bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
+#endif
                 data << QString::fromStdString(view.to_string()).simplified();
             }
 
@@ -237,7 +250,11 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             QSet<QString> data;
             for (auto & item: cursor)
             {
-                bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
+#if (BSONCXX_VERSION_MAJOR >= 3 && BSONCXX_VERSION_MINOR >= 7)
+            bsoncxx::stdx::string_view view = item["_id"].get_string().value;
+#else
+            bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
+#endif
                 QString t = QString::fromStdString(view.to_string()).simplified();
                 if (!t.isEmpty())
                     data.insert(t);

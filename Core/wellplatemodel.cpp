@@ -2735,14 +2735,15 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
 
             auto vdata = payload.value(QCborValue("BinaryData")).toArray();
 
-            size_t pos = 0;
-            for (auto t: vdata)
             {
-                auto temp = t.toByteArray();
-                for (int i = 0; i < temp.size(); ++i, ++pos)
-                    data[pos]=temp.data()[i];
+                size_t pos = 0;
+                for (auto t: vdata)
+                {
+                    auto temp = t.toByteArray();
+                    for (int i = 0; i < temp.size(); ++i, ++pos)
+                        data[pos]=temp.data()[i];
+                }
             }
-
 
             if (size == 0 || data.size() != size)
             {
@@ -2791,7 +2792,8 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
                 seq.addFile(t, f, z, cc, fname);
 
                 rmdl = &seq;
-                seq.setAsShowed(false); // Force to not shown
+//                seq.setAsShowed(false); // Force to not shown
+                seq.setDisplayStatus(true);
                 _result_images << fname;
 
                 if (ob.contains(QCborValue("Colormap")))
