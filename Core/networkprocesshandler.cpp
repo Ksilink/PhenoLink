@@ -330,32 +330,45 @@ void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
     //        qDebug() << h->address << h->port;
 
     int lastItem = 0;
-    foreach(CheckoutHttpClient* h, procsList)
+    if (procsList.size() == 1)
     {
-        QJsonArray ar;
-        for (int i = 0; i < itemsPerServ && lastItem < ob.size(); ++i, ++lastItem)
+        CheckoutHttpClient* h = procsList.front();
+
+        for (int i = 0; i < ob.size(); i++)
         {
-            ar.append(ob.at(lastItem));
-            QJsonObject t = ar.at(i).toObject();
-            //            qDebug() << t["CoreProcess_hash"].toString();
+            QJsonObject t = ob.at(i).toObject();
             (*hash_logfile) << "Started Core "<< t["CoreProcess_hash"].toString() << Qt::endl;
             runningProcs[t["CoreProcess_hash"].toString()] = h;
         }
-        //        qDebug() << "Starting" << h->address << h->port << ar.size();
-        if (ar.size())
-        {
-            static const int subs = 10;
-            for (int i = 0; i < ar.size(); i += subs)
-            {
-                QJsonArray sub;
-                for (int l = 0; l < subs && i+l < ar.size(); ++l)
-                    sub.append(ar.at(i+l));
-                startProcess(h, process, sub);
-            }
-            last_serv_pos++;
-        }
-    }
 
+        startProcess(h, process, ob);
+    }
+    else
+        foreach(CheckoutHttpClient* h, procsList)
+        {
+            QJsonArray ar;
+            for (int i = 0; i < itemsPerServ && lastItem < ob.size(); ++i, ++lastItem)
+            {
+                ar.append(ob.at(lastItem));
+                QJsonObject t = ar.at(i).toObject();
+                //            qDebug() << t["CoreProcess_hash"].toString();
+                (*hash_logfile) << "Started Core "<< t["CoreProcess_hash"].toString() << Qt::endl;
+                runningProcs[t["CoreProcess_hash"].toString()] = h;
+            }
+            //        qDebug() << "Starting" << h->address << h->port << ar.size();
+            if (ar.size())
+            {
+                static const int subs = 10;
+                for (int i = 0; i < ar.size(); i += subs)
+                {
+                    QJsonArray sub;
+                    for (int l = 0; l < subs && i+l < ar.size(); ++l)
+                        sub.append(ar.at(i+l));
+                    startProcess(h, process, sub);
+                }
+                last_serv_pos++;
+            }
+        }
 }
 
 void NetworkProcessHandler::startProcess(CheckoutHttpClient *h, QString process, QJsonArray ob)
