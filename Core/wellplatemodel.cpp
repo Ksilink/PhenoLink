@@ -584,7 +584,7 @@ void ExperimentFileModel::setOwner(ExperimentFileModel* own)
 
 
 
-void ExperimentFileModel::reloadDatabaseData()
+void ExperimentFileModel::reloadDatabaseData(bool load)
 {
 
     QPair<QStringList, QStringList> dbs = databases();
@@ -611,7 +611,7 @@ void ExperimentFileModel::reloadDatabaseData()
 
 
 
-void ExperimentFileModel::reloadDatabaseData(QString file, QString t, bool aggregat)
+void ExperimentFileModel::reloadDatabaseData(QString file, QString t, bool aggregat, bool load)
 {
     if (file.endsWith(".csv"))
         reloadDatabaseDataCSV(file, t, aggregat);
@@ -619,10 +619,12 @@ void ExperimentFileModel::reloadDatabaseData(QString file, QString t, bool aggre
         reloadDatabaseDataFeather(file, t, aggregat);
 
 }
-void ExperimentFileModel::reloadDatabaseDataCSV(QString file, QString t, bool aggregat)
+void ExperimentFileModel::reloadDatabaseDataCSV(QString file, QString t, bool aggregat, bool load)
 {
     ExperimentDataModel* data = databaseDataModel(t);
 
+    if (!load)
+        return;
 
     QFile files(file);
     if (!files.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -679,10 +681,11 @@ void ExperimentFileModel::reloadDatabaseDataCSV(QString file, QString t, bool ag
     } while (0);
 
 
-void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, bool)
+void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, bool , bool load)
 {
     ExperimentDataModel* data = databaseDataModel(t);
-
+    if (!load)
+        return;
 
     std::string uri = file.toStdString(), root_path;
     auto fs = fs::FileSystemFromUriOrPath(uri, &root_path).ValueOrDie();
@@ -807,12 +810,14 @@ void getDBFeather(QString ddir, QString hash, QStringList& raw, QStringList& ag)
             QString t = d.absoluteFilePath().remove(dir.absolutePath() + "/");
             if (t.isEmpty()) continue;
             raw += d.filePath() + "/" + hash + ".fth";
+            raw.removeAll(d.filePath() + "/" + hash + ".csv");
         }
         if (QFile::exists(d.filePath() + "/ag" + hash + ".fth"))
         {
             QString t = d.absoluteFilePath().remove(dir.absolutePath() + "/");
             if (t.isEmpty()) continue;
             ag += d.filePath() + "/ag" + hash + ".fth";
+            ag.removeAll(d.filePath() + "/ag" + hash + ".csv");
         }
 
     }
@@ -839,8 +844,8 @@ QPair<QStringList, QStringList> ExperimentFileModel::databases()
                 .arg(property("project"));
         getDBs(writePath, name(), raw, ag);
     }
-    if (true) // Arrow Feather
-    { // shou
+
+    {
 
         QString writePath = QString("%1/%2/Checkout_Results/").arg(set.value("databaseDir").toString())
                 .arg(property("project"));
@@ -853,7 +858,6 @@ QPair<QStringList, QStringList> ExperimentFileModel::databases()
 void ExperimentFileModel::setProperties(QString ttag, QString value)
 {
     // If a dictionnary is to be used to convert properties into a comprehensible inside format
-    //  qDebug() <<ttag << value;
     QString tag = ttag;
     if (_dict.contains(tag))
         tag = _dict[tag];
@@ -866,39 +870,7 @@ void ExperimentFileModel::setProperties(QString ttag, QString value)
     if (ttag == "hash")
     {
         _hash = value;
-
-        // Extract Tag selection from
-
-//        QSettings set;
-//        //        qDebug() << "Adding database:" << QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/databases/" + hash + ".db";
-//        QDir dir(set.value("databaseDir").toString());
-
-//        QFile file(dir.absolutePath() + "/" + _hash + ".tagmap");
-//        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
-//        {
-//            QString line = file.readLine();
-//            QStringList l = line.split(';');
-
-//            QStringList tt = set.value("Tags", QStringList()).toStringList();
-
-//            foreach(QString s, l)
-//                if (!tt.contains(s.simplified())) // Check we already have the tag in tag list...
-//                    l << s.simplified();
-
-//            while (!file.atEnd()) {
-//                QString line = file.readLine();
-//                QStringList split = line.split(';');
-//                QString Pos = split.at(0);
-//                QPoint p;
-//                stringToPos(Pos, p.rx(), p.ry());
-
-//                split.pop_front();
-//                foreach(QString t, split)  setTag(p, t.simplified());
-
-//            }
-//        }
-
-//        // Load database data here !
+        // Load database data here !
         reloadDatabaseData();
     }
 
@@ -1223,7 +1195,6 @@ bool SequenceFileModel::isValid()
 
 void SequenceFileModel::checkValidity()
 {
-    //  qDebug() << "Check Validity" << Pos();
     FieldImaging::iterator fi = _data.begin();
     if (fi == _data.end()) { _isValid = false; return; }
 
@@ -1235,7 +1206,7 @@ void SequenceFileModel::checkValidity()
 
     Channel::iterator ci = ti->begin();
     if (ci == ti->end()) { _isValid = false; return; }
-    //qDebug() << true;
+
     _isValid = true;
 }
 
