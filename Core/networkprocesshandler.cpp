@@ -92,7 +92,8 @@ void CheckoutHttpClient::sendQueue()
 
     if (collapse.size() > 0)
     {
-        QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
+        qDebug() << "Collapsing responses " << collapse;
+         QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
 
         for (auto& i: collapse)
         {
@@ -108,6 +109,7 @@ void CheckoutHttpClient::sendQueue()
                     it != e; ++it)
             reqs.removeAt(*it);
 
+        ob = QCborValue::fromJsonValue(ar).toCbor();
     }
 
 
