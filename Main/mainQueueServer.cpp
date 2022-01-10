@@ -418,7 +418,7 @@ void Server::WorkerMonitor()
                 QString taskid =  QString("%1@%2#%3#%4!%5#%6:%7")
                         .arg(pr["Username"].toString(), pr["Computer"].toString(),
                         pr["Path"].toString(),  pr["WorkID"].toString(),
-                        pr["XP"].toString(), pr["Pos"].toString(), pr["Hash"].toString());
+                        pr["XP"].toString(), pr["Pos"].toString(), pr["Process_hash"].toString());
 
                 pr["TaskID"]= taskid;
 
