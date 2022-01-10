@@ -285,6 +285,7 @@ QMutex priority_lock, workers_lock;
 unsigned int Server::njobs()
 {
     unsigned int count = 0;
+    QMutexLocker lock(&workers_lock);
 
     for (auto& srv: jobs)
     {
@@ -299,6 +300,9 @@ unsigned int Server::njobs()
 unsigned int Server::nbUsers()
 {
     QSet<QString> names;
+
+    QMutexLocker lock(&workers_lock);
+
     for (auto& srv: jobs)
     {
         for (auto& q: srv)
@@ -315,6 +319,8 @@ unsigned int Server::nbUsers()
 
 QStringList Server::pendingTasks()
 {
+    QMutexLocker lock(&workers_lock);
+
     QMap<QString, int> names;
     for (auto& srv: jobs)
     {

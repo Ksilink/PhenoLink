@@ -29,7 +29,7 @@ public:
     virtual cv::Mat getImage(size_t i);
 
     virtual void  deallocate();
-
+    virtual size_t getChannelCount();
     // To be used by plugin that wish to return results as TimeImage
     // First set the number of expected outputs
     virtual void setCount(size_t s);
@@ -106,7 +106,7 @@ public:
 };
 
 // 2D + t + fields
-// 
+//
 class DllCoreExport TimeImageXP
 {
 public:

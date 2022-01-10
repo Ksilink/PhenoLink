@@ -381,9 +381,10 @@ void MainWindow::importOverlay()
         ui->tagSelector->addItems(tags.values());
     }
 
+}
 
-
-
+void MainWindow::exportOverlay()
+{
 }
 
 

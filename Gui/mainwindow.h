@@ -257,6 +257,7 @@ public slots:
     void renameWorkbench();
     void exportContent();
     void importOverlay();
+    void exportOverlay();
 
     void finishedEditMinValue();
     void finishedEditMaxValue();

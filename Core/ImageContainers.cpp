@@ -25,7 +25,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1)
     {
         for (size_t i = 0; i < (size_t)data.size(); ++i)
         {
-            if (im >= 0 && im != (int)i) continue;            
+            if (im >= 0 && im != (int)i) continue;
             cv::Mat m = cv::imread(data.at((int)i).toString().toStdString(), 2);
             if (m.type() != CV_16U)
             {
@@ -149,6 +149,11 @@ void ImageContainer::deallocate()
         images[i].release();
 }
 
+size_t ImageContainer::getChannelCount()
+{
+      return _data["Data"].toArray().size();
+}
+
 
 void TimeImage::loadFromJSON(QJsonObject data)
 {
@@ -211,7 +216,7 @@ cv::Mat StackedImage::getImage(size_t i, int chann)
             cv::Mat spl;
             cv::extractChannel(images[i], spl, chann);
             return spl;
-        }        
+        }
     }
 
 
@@ -334,7 +339,7 @@ cv::Mat ImageXP::getImage(int i, int c)
             cv::extractChannel((*this)[i], res, c);
             return res;
         }
-        else    
+        else
             return (*this)[i];
     }
 
