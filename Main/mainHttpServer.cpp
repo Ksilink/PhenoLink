@@ -685,8 +685,8 @@ void Control::timerEvent(QTimerEvent * event)
     }
     trayIcon->setToolTip(tooltip);
 
-    if (lastNpro != npro && npro == 0)
-        trayIcon->showMessage("Checkout Server", "Checkout server has finished all his process");
+//    if (lastNpro != npro && npro == 0)
+//        trayIcon->showMessage("Checkout Server", "Checkout server has finished all his process");
 
     lastNpro = npro;
 
