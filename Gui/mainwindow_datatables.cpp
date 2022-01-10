@@ -428,7 +428,7 @@ void MainWindow::finishedJob()
         uint64_t ms = QDateTime::currentMSecsSinceEpoch()-process_starttime.currentMSecsSinceEpoch();
 
 
-        QTime y(0,0); y = y.addMSecs(ms/_StatusProgress->value());
+        QTime y(0,0); y = y.addMSecs(ms/(double)_StatusProgress->value());
         QDateTime z = process_starttime; z = z.addMSecs(y.msec() * _StatusProgress->maximum());
 
         this->statusBar()->showMessage(QString("Starting Time %1 (Per sample run time: %2 - ETA %3)").arg(process_starttime.toString("yyyyMMdd hh:mm:ss.zz"),

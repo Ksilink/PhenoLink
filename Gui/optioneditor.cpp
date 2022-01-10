@@ -375,8 +375,8 @@ QWidget *GlobalOptions::features()
     minServerProcs = new QSpinBox();
     minServerProcs->setMinimum(0);
     minServerProcs->setMaximum(100000);
-    minServerProcs->setValue(set.value("MinProcs", 20).toInt());
-    minServerProcs->setToolTip("Default: 20");
+    minServerProcs->setValue(set.value("MinProcs", 2000).toInt());
+    minServerProcs->setToolTip("Default: 2000");
     connect(minServerProcs, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
 
     mainLayout->addRow("Minimum Process List Size ", minServerProcs);
