@@ -1,4 +1,4 @@
-#include "networkprocesshandler.h"
+﻿#include "networkprocesshandler.h"
 #include <QMessageBox>
 #include <QFuture>
 #include <QtConcurrent/QtConcurrent>
@@ -83,13 +83,42 @@ void CheckoutHttpClient::sendQueue()
     auto req = reqs.takeFirst();
     QUrl url = req.url;
     auto ob = req.data;
-    auto keepalive = req.keepalive;
+
+    // Collapse request url
+    QList<int> collapse;
+    for (int i = 0; i < reqs.size(); ++i)
+        if (reqs.at(i).url == url && url.path().startsWith("/addData/"))
+            collapse << i;
+
+    if (collapse.size() > 0)
+    {
+        QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
+
+        for (auto& i: collapse)
+        {
+            auto r = reqs.at(i);
+            QJsonArray a2 = QCborValue::fromCbor(r.data).toJsonValue().toArray();
+            for (int i = 0; i < a2.size(); ++i)
+            {
+                ar.append(a2.at(i));
+            }
+        }
+
+        for (QList<int>::reverse_iterator it = collapse.rbegin(), e = collapse.rend();
+                    it != e; ++it)
+            reqs.removeAt(*it);
+
+    }
+
+
+
+//    auto keepalive = req.keepalive;
 
     qDebug() << "Sending Queued" << url;
     iclient.request(
                 qhttp::EHTTP_POST,
                 req.url,
-                [ob, keepalive](QHttpRequest* req){
+                [ob](QHttpRequest* req){
         auto body = ob;
         if (req)
         {
@@ -435,7 +464,7 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
         }
 
     }
-    res << ob;
+   // res << ob;
     return res;
 }
 /* "Meta": [
