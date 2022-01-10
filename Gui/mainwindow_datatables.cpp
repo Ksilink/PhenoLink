@@ -456,9 +456,8 @@ void MainWindow::finishedJob()
     {
         _StatusProgress->setValue(_StatusProgress->value()+1);
 
-        uint64_t ms = QDateTime::currentMSecsSinceEpoch()-process_starttime.currentMSecsSinceEpoch();
+        uint64_t ms = process_starttime.msecsTo(QDateTime::currentDateTime());
 
-        qDebug()  << "Average run time" << ms/(double)_StatusProgress->value();
         QTime y(0,0); y = y.addMSecs(ms/(double)_StatusProgress->value());
         QDateTime z = process_starttime; z = z.addMSecs(y.msec() * _StatusProgress->maximum());
 

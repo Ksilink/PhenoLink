@@ -754,7 +754,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 QMutexLocker lock(&workers_lock);
                 // Clear up the jobs
                 QStringList job = proc.split("#");
-                QStringList name = job[0].split("@");
+                if (job.size() < 2)
+                    break;
+                QStringList name = job[0].split("@");                
                 QString jobname  = job[1];
                 QString workid = job.back();
 
