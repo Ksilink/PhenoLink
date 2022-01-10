@@ -34,6 +34,7 @@ class CheckoutCorePythonInterface;
 class QWinTaskbarProgress;
 class QCloseEvent;
 class QShortcut;
+class QPushButton;
 
 #include "experimentworkbenchcontrol.h"
 
@@ -288,6 +289,9 @@ protected slots:
 
 
     void plateMap();
+
+    void button_load_database();
+
 private:
 
     bool networking;
@@ -352,6 +356,8 @@ private:
 
 
     QDateTime process_starttime;
+
+    QPushButton* load_data;
 
 };
 

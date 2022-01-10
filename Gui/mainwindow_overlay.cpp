@@ -383,8 +383,17 @@ void MainWindow::importOverlay()
 
 }
 
-void MainWindow::exportOverlay()
+void MainWindow::exportOverlay() // to force save of overlay on modification
 {
+    SequenceInteractor* inter = _sinteractor.current();
+
+    QMap<QString, StructuredMetaData>& metas = inter->getSequenceFileModel()->getMetas(inter->getTimePoint(),
+                                                                                       inter->getField(),
+                                                                                       inter->getZ(),
+                                                                                       inter->getChannel());
+
+    for (auto items = metas.begin(), e = metas.end() ; items != e; ++items)
+       items.value().exportData();
 }
 
 

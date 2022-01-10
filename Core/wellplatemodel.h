@@ -404,10 +404,10 @@ public:
     bool hasMeasurements(QPoint pos);
     void setMeasurements(QPoint pos, bool active = true);
 
-    void reloadDatabaseData();
-    void reloadDatabaseData(QString file, QString t, bool aggregat);
-    void reloadDatabaseDataCSV(QString file, QString t, bool aggregat);
-    void reloadDatabaseDataFeather(QString file, QString t, bool aggregat);
+    void reloadDatabaseData(bool load=false);
+    void reloadDatabaseData(QString file, QString t, bool aggregat, bool load=false);
+    void reloadDatabaseDataCSV(QString file, QString t, bool aggregat, bool load=false);
+    void reloadDatabaseDataFeather(QString file, QString t, bool aggregat, bool load=false);
 
     QPair<QStringList, QStringList> databases();
 

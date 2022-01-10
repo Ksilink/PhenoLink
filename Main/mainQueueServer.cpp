@@ -249,7 +249,8 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
     //for (auto it = runni)
     for (auto it = workers_status.begin(), e = workers_status.end(); it != e; ++it)
     {
-        body += QString("Server %1 => %2 Cores<br>").arg(it.key()).arg(it.value());
+        auto t = it.key().split(":");
+        body += QString("Server %1 => %2 Cores &nbsp;<a href='/rm?host=%3&port=%4'>remove server</a><br>").arg(it.key()).arg(it.value()).arg(t.front(), t.back());
     }
 
     body += "<h3>Cores Availability</h3>";
@@ -638,7 +639,25 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         client = new CheckoutHttpClient(srv, port.toUInt());
         client->send("/Proxy", QString("port=%1").arg(dport), QJsonArray());
+    }
 
+    if (urlpath.startsWith("/rm"))
+    {
+        QStringList queries = query.split("&");
+        QString srv, port;
+
+        for (auto q : queries)
+        {
+            if (q.startsWith("port="))
+                port = q.replace("port=", "");
+            if (q.startsWith("host="))
+                srv = q.replace("host=", "");
+        }
+
+      QMutexLocker lock(&workers_lock);
+
+      workers.removeAll(qMakePair(srv, port.toInt()));
+      workers_status.remove(QString("%1:%2").arg(srv).arg(port));
     }
 
     if (urlpath.startsWith("/Status"))

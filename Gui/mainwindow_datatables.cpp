@@ -306,6 +306,14 @@ void MainWindow::on_wellPlateViewTab_tabBarClicked(int index)
             tmdl = mdl;
     if (!tmdl) return;
 
+    if (!load_data)
+    {
+        load_data = new QPushButton("Load data");
+        ui->databases->setCornerWidget(load_data);
+        connect(load_data, SIGNAL(clicked()), this, SLOT(button_load_database()));
+    }
+
+
 
     QList<QWidget*> l;
     for (int i = 0; i < ui->databases->count(); ++i)  l << ui->databases->widget(i);
@@ -330,6 +338,29 @@ void MainWindow::on_wellPlateViewTab_tabBarClicked(int index)
         tv->setModel(proxyModel);
     }
 
+}
+
+
+void MainWindow::button_load_database()
+{
+    Screens& data = ScreensHandler::getHandler().getScreens();
+    if (data.size() < 1) return;
+
+    ExperimentFileModel* tmdl = 0;
+    foreach (ExperimentFileModel* mdl, data)
+        if (ui->wellPlateViewTab->tabText(ui->wellPlateViewTab->currentIndex()) == mdl->name())
+            tmdl = mdl;
+
+    if (!tmdl) return;
+    tmdl->reloadDatabaseData(true);
+
+
+    QTableView* v = getDataTableView(tmdl);
+
+    QSortFilterProxyModel* proxyModel = new QSortFilterProxyModel();
+    proxyModel->setSourceModel(tmdl->computedDataModel());
+
+    v->setModel(proxyModel);
 }
 
 
