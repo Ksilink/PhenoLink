@@ -91,21 +91,23 @@ void CheckoutHttpClient::sendQueue()
                 req.url,
                 [ob, keepalive](QHttpRequest* req){
         auto body = ob;
-        req->addHeader("Content-Type", "application/cbor");
+        if (req)
+        {
+            req->addHeader("Content-Type", "application/cbor");
 
-        req->addHeaderValue("content-length", body.length());
-        req->end(body);
-        qDebug() << "Request" << req->connection()->tcpSocket()->peerAddress()
-                 << req->connection()->tcpSocket()->peerPort() << (keepalive ? "keep-alive" : "close");
-                    ;
-
+            req->addHeaderValue("content-length", body.length());
+            req->end(body);
+        }
     },
 
     [this](QHttpResponse* res) {
-        res->collectData();
-        res->onEnd([this, res](){
-            onIncomingData(res->collectedData());
-        });
+        if (res)
+        {
+            res->collectData();
+            res->onEnd([this, res]() {
+                onIncomingData(res->collectedData());
+                       });
+        }
     });
 
     if (iclient.tcpSocket()->error() >= 0)
