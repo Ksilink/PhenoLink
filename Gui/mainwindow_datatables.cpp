@@ -174,7 +174,7 @@ void MainWindow::exportData()
 {
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/export.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                           | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                      | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -456,16 +456,15 @@ void MainWindow::finishedJob()
     {
         _StatusProgress->setValue(_StatusProgress->value()+1);
 
-        uint64_t ms = QDateTime::currentMSecsSinceEpoch()-process_starttime.currentMSecsSinceEpoch();
+        uint64_t ms = process_starttime.msecsTo(QDateTime::currentDateTime());
 
-        qDebug()  << "Average run time" << ms/(double)_StatusProgress->value();
         QTime y(0,0); y = y.addMSecs(ms/(double)_StatusProgress->value());
         QDateTime z = process_starttime; z = z.addMSecs(y.msec() * _StatusProgress->maximum());
 
         this->statusBar()->showMessage(QString("Starting Time %1 (Per sample run time: %2 - ETA %3)").arg(process_starttime.toString("yyyyMMdd hh:mm:ss.zz"),
-                                                                                                 y.toString("mm:ss.zzz"),
-                                                                                                 z.toString("mm:ss.zzz")
-                                                                                                 ));
+                                                                                                          y.toString("mm:ss.zzz"),
+                                                                                                          z.toString(y.hour()  > 24 ? "yyyyMMdd hh:mm:ss.zz" : "hh:mm:ss.zzz")
+                                                                                                          ));
 
         if (_StatusProgress->value() == _StatusProgress->maximum())
         {
