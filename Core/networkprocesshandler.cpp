@@ -55,12 +55,13 @@ void CheckoutHttpClient::send(QString path, QString query)
 
 void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool keepalive)
 {
-     auto body = QCborValue::fromJsonValue(ob).toCbor();
+     //auto body = QCborValue::fromJsonValue(ob).toCbor();
+     auto body = QCborArray::fromJsonArray(ob).toCborValue().toCbor();
      QUrl url=iurl;
      url.setPath(path);
      url.setQuery(query);
 
-//     qDebug() << "Creating Query" << url.toString() << ob;
+     qDebug() << "Creating Query" << url.toString() << body.size(); // << ob;
      send(path, query, body, keepalive);
 }
 
@@ -82,7 +83,7 @@ void CheckoutHttpClient::sendQueue()
 
     auto req = reqs.takeFirst();
     QUrl url = req.url;
-    auto ob = req.data;
+    auto& ob = req.data;
 
     // Collapse request url
     QList<int> collapse;
@@ -116,7 +117,7 @@ void CheckoutHttpClient::sendQueue()
 
 //    auto keepalive = req.keepalive;
 
-    qDebug() << "Sending Queued" << url;
+    qDebug() << "Sending Queued" << url << ob.size();
     iclient.request(
                 qhttp::EHTTP_POST,
                 req.url,
@@ -129,6 +130,8 @@ void CheckoutHttpClient::sendQueue()
             req->addHeaderValue("content-length", body.length());
             req->end(body);
         }
+        else
+            qDebug() << "Queue Request Error...";
     },
 
     [this](QHttpResponse* res) {
@@ -466,7 +469,7 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
         }
 
     }
-   // res << ob;
+    res << ob;
     return res;
 }
 /* "Meta": [
