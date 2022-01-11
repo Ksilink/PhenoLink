@@ -55,17 +55,13 @@ void CheckoutHttpClient::send(QString path, QString query)
 
 void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool keepalive)
 {
-<<<<<<< HEAD
      //auto body = QCborValue::fromJsonValue(ob).toCbor();
-=======
-//     auto body = QCborValue::fromJsonValue(ob).toCbor();
->>>>>>> 3b4127a746ae3ace1c787c2e5a74f7697b3e90b7
      auto body = QCborArray::fromJsonArray(ob).toCborValue().toCbor();
      QUrl url=iurl;
      url.setPath(path);
      url.setQuery(query);
 
-     qDebug() << "Creating Query" << url.toString() << body.size(); // << ob;
+//     qDebug() << "Creating Query" << url.toString() << ob;
      send(path, query, body, keepalive);
 }
 
@@ -99,7 +95,6 @@ void CheckoutHttpClient::sendQueue()
     {
         qDebug() << "Collapsing responses " << collapse;
          QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
-         qDebug() << ar;
 
         for (auto& i: collapse)
         {
@@ -116,7 +111,6 @@ void CheckoutHttpClient::sendQueue()
             reqs.removeAt(*it);
 
         ob = QCborValue::fromJsonValue(ar).toCbor();
-        qDebug() << ar;
     }
 
 
@@ -124,7 +118,7 @@ void CheckoutHttpClient::sendQueue()
 
 //    auto keepalive = req.keepalive;
 
-    qDebug() << "Sending Queued" << url << ob.size();
+    qDebug() << "Sending Queued" << url;
     iclient.request(
                 qhttp::EHTTP_POST,
                 req.url,
