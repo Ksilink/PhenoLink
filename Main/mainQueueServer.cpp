@@ -9,7 +9,7 @@
 
 #include <fstream>
 #include <iostream>
-
+#include <limits>
 
 #include "Core/pluginmanager.h"
 
@@ -250,7 +250,12 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
     for (auto it = workers_status.begin(), e = workers_status.end(); it != e; ++it)
     {
         auto t = it.key().split(":");
-        body += QString("Server %1 => %2 Cores &nbsp;<a href='/rm?host=%3&port=%4'>remove server</a><br>").arg(it.key()).arg(it.value()).arg(t.front(), t.back());
+
+        QStringList  aff;
+        for (auto af = project_affinity.begin(), e = project_affinity.end(); af != e; ++af)
+            if (af.value() == it.key()) aff << af.key();
+
+        body += QString("Server %1 => %2 Cores %5&nbsp;<a href='/rm?host=%3&port=%4'>remove server</a><br>").arg(it.key()).arg(it.value()).arg(t.front(), t.back()).arg(QString("(%1)").arg(aff.join(",")));
     }
 
     body += "<h3>Cores Availability</h3>";
@@ -598,8 +603,32 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             qDebug() << "Finished " << workid;
             running.remove(workid);
         }
+    }
+
+    if (urlpath.startsWith("/Affinity"))
+    {
+        QStringList projects;
+        QString srv, port;
+        QStringList queries = query.split("&");
+
+        for (auto& q : queries)
+        {
+            if (q.startsWith("project="))
+                projects = q.replace("project=", "").split(",");
+
+            if (q.startsWith("port="))
+                port = q.replace("port=","");
+
+            if (q.startsWith("server="))
+                srv = q.replace("server=", "");
+        }
+
+
+        for (auto& project: projects)
+            project_affinity[project]=QString("%1:%2").arg(srv, port);
 
     }
+
 
     if (urlpath.startsWith("/setProcessList")) // Server is ready /Ready/{port}
     {
@@ -756,7 +785,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 QStringList job = proc.split("#");
                 if (job.size() < 2)
                     break;
-                QStringList name = job[0].split("@");                
+                QStringList name = job[0].split("@");
                 QString jobname  = job[1];
                 QString workid = job.back();
 
@@ -841,7 +870,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 obj["LocalRun"] = true;
             obj["ReplyTo"] = refIP; // Address to push results to !
             auto project = obj["Project"].toString();
-            int priority = obj.contains("Priority") ? obj["Priority"].toInt() : 1;
+            int priority = obj.contains("Priority") ? obj["Priority"].toInt() : 10000000 - ob.size();
 
             priority_lock.lock();
             if (project_affinity.contains(project))
@@ -864,8 +893,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         setHttpResponse(obj, res, !query.contains("json"));
         //        QtConcurrent::run(&procs, &CheckoutProcess::startProcessServer,
         //                          proc, ob);
-
-
 
     }
 
