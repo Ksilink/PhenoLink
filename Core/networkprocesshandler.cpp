@@ -55,7 +55,8 @@ void CheckoutHttpClient::send(QString path, QString query)
 
 void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool keepalive)
 {
-     auto body = QCborValue::fromJsonValue(ob).toCbor();
+//     auto body = QCborValue::fromJsonValue(ob).toCbor();
+     auto body = QCborArray::fromJsonArray(ob).toCborValue().toCbor();
      QUrl url=iurl;
      url.setPath(path);
      url.setQuery(query);
@@ -94,6 +95,7 @@ void CheckoutHttpClient::sendQueue()
     {
         qDebug() << "Collapsing responses " << collapse;
          QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
+         qDebug() << ar;
 
         for (auto& i: collapse)
         {
@@ -110,7 +112,9 @@ void CheckoutHttpClient::sendQueue()
             reqs.removeAt(*it);
 
         ob = QCborValue::fromJsonValue(ar).toCbor();
+        qDebug() << ar;
     }
+
 
 
 
@@ -466,7 +470,7 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
         }
 
     }
-   // res << ob;
+    res << ob;
     return res;
 }
 /* "Meta": [
