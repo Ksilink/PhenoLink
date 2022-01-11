@@ -439,7 +439,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
         QJsonArray Core,Run;
-
         for (int i = 0; i < ob.size(); ++i)
         {
             QJsonObject obj = ob.at(i).toObject();
@@ -478,7 +477,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             qDebug() << "Warn the Proxy about used CPU " << proxy << refIP;
             if (client)
                 client->send(QString("/UsedCPU/"),
-                             QString("port=%1").arg(dport), QJsonArray());
+                             QString("port=%1&cpus=%2").arg(dport).arg(ob.size()), QJsonArray());
 
         }
     }

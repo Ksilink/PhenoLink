@@ -88,7 +88,9 @@ void CheckoutHttpClient::sendQueue()
     // Collapse request url
     QList<int> collapse;
     for (int i = 0; i < reqs.size(); ++i)
-        if (reqs.at(i).url == url && url.path().startsWith("/addData/"))
+        if (reqs.at(i).url == url &&
+                (url.path().startsWith("/addData/") ||
+                 url.path().startsWith("/Start/")))
             collapse << i;
 
     if (collapse.size() > 0)

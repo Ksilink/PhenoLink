@@ -790,7 +790,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
         uint16_t port;
         QString serverIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
-
+        int cpus = 1;
 
         QStringList queries = query.split("&");
         for (auto q : queries)
@@ -799,14 +799,18 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             {
                 port = q.replace("port=","").toUInt();
             }
+            if (q.startsWith("cpus"))
+            {
+                    cpus = q.replace("cpus=","").toInt();
+                    if (cpus < 1) cpus = 1;
+            }
         }
 
         qDebug() << "Suspending" << serverIP << "CPU on port" << port;
         QMutexLocker lock(&workers_lock);
         //        workers.enqueue(qMakePair(serverIP, port));
-        workers.removeOne(qMakePair(serverIP, port));
-        workers_status[QString("%1:%2").arg(serverIP).arg(port)]--;
-
+        for (int i = 0; i < cpus; ++i) workers.removeOne(qMakePair(serverIP, port));
+        workers_status[QString("%1:%2").arg(serverIP).arg(port)] -= cpus;;
 
     }
 
