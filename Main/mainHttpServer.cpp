@@ -585,7 +585,7 @@ void Server::finished(QString hash, QJsonObject ob)
 {
     //    qDebug() << "Finishing on server side";
 
-    if (client)
+    if (client && ob.contains("TaskID") && !ob["TaskID"].isNull())
         client->send(QString("/Ready/0"),
                      QString("affinity=%1&port=%2&workid=%3&available=%4")
                         .arg(affinity_list.join(","))

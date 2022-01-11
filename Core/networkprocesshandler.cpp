@@ -55,7 +55,11 @@ void CheckoutHttpClient::send(QString path, QString query)
 
 void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool keepalive)
 {
+<<<<<<< HEAD
      //auto body = QCborValue::fromJsonValue(ob).toCbor();
+=======
+//     auto body = QCborValue::fromJsonValue(ob).toCbor();
+>>>>>>> 3b4127a746ae3ace1c787c2e5a74f7697b3e90b7
      auto body = QCborArray::fromJsonArray(ob).toCborValue().toCbor();
      QUrl url=iurl;
      url.setPath(path);
@@ -95,6 +99,7 @@ void CheckoutHttpClient::sendQueue()
     {
         qDebug() << "Collapsing responses " << collapse;
          QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
+         qDebug() << ar;
 
         for (auto& i: collapse)
         {
@@ -111,7 +116,9 @@ void CheckoutHttpClient::sendQueue()
             reqs.removeAt(*it);
 
         ob = QCborValue::fromJsonValue(ar).toCbor();
+        qDebug() << ar;
     }
+
 
 
 
