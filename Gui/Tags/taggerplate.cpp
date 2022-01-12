@@ -26,7 +26,6 @@ TaggerPlate::TaggerPlate(QString _plate,QWidget *parent) :
     //    tagger* ttags = qobject_cast< tagger* >(parent);
     //    qDebug() << (ttags != nullptr);
 
-
     QStringList header;
 
     for (int i = 0; i < 'Q'; ++i)
@@ -36,7 +35,6 @@ TaggerPlate::TaggerPlate(QString _plate,QWidget *parent) :
 
     ui->plateMaps->resizeColumnsToContents();
     ui->plateMaps->resizeRowsToContents();
-
 }
 
 TaggerPlate::~TaggerPlate()
@@ -48,51 +46,81 @@ QJsonDocument &TaggerPlate::getTags() { return tagger; }
 
 void TaggerPlate::on_setTags_clicked()
 {
-    auto model = ui->treeView->model();
-    auto idx = ui->treeView->selectionModel()->currentIndex();
-        if (idx.isValid())
+    QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    if (!ml) return;
+
+    QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
+    if (!model) return;
+
+    QStandardItem* root = model->invisibleRootItem();
+
+    auto idx = ml->mapToSource(ui->treeView->selectionModel()->currentIndex());
+    qDebug() << idx;// << idx.parent();
+    if (idx.isValid() && idx.parent().isValid())
+    {
+//        qDebug() << idx << idx.parent();
+//        qDebug() << root;
+        QStandardItem* item = root->child(idx.parent().row());
+//        qDebug() << item;
+        if (item)
         {
-           QString str = model->data(idx).toString();
-                   //                   .data().toString();
-            for (auto item: ui->plateMaps->selectedItems())
+            QString str = item->child(idx.row())->text();
+            qDebug() << item->text() << str << ui->plateMaps->selectedItems().size();
+
+            for (auto idx: ui->plateMaps->selectionModel()->selectedIndexes())
             {
-                QStringList tmp = item->text().split(";");
-                QSet<QString> tags(tmp.begin(), tmp.end());
-                tags.insert(str);
-                tmp = QStringList(tags.begin(), tags.end());  tmp.sort();
-                item->setText(tmp.join(";"));
+                QTableWidgetItem * item = ui->plateMaps->item(idx.row(), idx.column());
+                if (!item)
+                {
+                    item = new QTableWidgetItem(str);
+                    ui->plateMaps->setItem(idx.row(), idx.column(), item);
+
+                }
+                else
+                {
+                    QStringList tmp = item->text().split(";", Qt::SkipEmptyParts);
+                    QSet<QString> tags(tmp.begin(), tmp.end());
+                    tags.insert(str);
+                    tmp = QStringList(tags.begin(), tags.end());  tmp.sort(); tmp.removeAll("");
+                    item->setText(tmp.join(";"));
+                }
             }
-    //            currentItem();
+        }
+        //            currentItem();
     }
-
-
-
 }
 
 
 void TaggerPlate::on_unsetTags_clicked()
 {
+    QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    if (!ml) return;
 
-    auto model = ui->treeView->model();
-    auto idx = ui->treeView->selectionModel()->currentIndex();
-        if (idx.isValid())
+    QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
+    if (!model) return;
+
+    QStandardItem* root = model->invisibleRootItem();
+
+    auto idx = ml->mapToSource(ui->treeView->selectionModel()->currentIndex());
+    if (idx.isValid() && idx.parent().isValid())
+    {
+        QStandardItem* item = root->child(idx.parent().row());
+        QString str = item->child(idx.row())->text();
+
+        //                   .data().toString();
+        for (auto item: ui->plateMaps->selectedItems())
         {
-           QString str = model->data(idx).toString();
-                   //                   .data().toString();
-            for (auto item: ui->plateMaps->selectedItems())
-            {
-                QStringList tags = item->text().split(";");
-                tags.removeAll(str);
-                item->setText(tags.join(";"));
-            }
-    //            currentItem();
+            QStringList tags = item->text().split(";", Qt::SkipEmptyParts);
+            tags.removeAll(str);
+            item->setText(tags.join(";"));
+        }
+        //            currentItem();
     }
-
 }
 
 
 // Plate Layout changed (384 / 96 / 1536)
-void TaggerPlate::on_plates_design_currentIndexChanged(const QString &arg1)
+void TaggerPlate::on_plates_design_currentIndexChanged(const QString &)
 {
 }
 
@@ -106,14 +134,13 @@ void TaggerPlate::on_pushButton_clicked()
 // Export Template
 void TaggerPlate::on_pushButton_2_clicked()
 {
-
 }
 
 
 void TaggerPlate::on_treeView_customContextMenuRequested(const QPoint &pos)
 {
     // Tag context menu for addind new tags
-  //  qDebug() << "Tag edition";
+    //  qDebug() << "Tag edition";
     QMenu menu(this);
 
     auto *tag = menu.addAction("Add Tag");
@@ -122,9 +149,40 @@ void TaggerPlate::on_treeView_customContextMenuRequested(const QPoint &pos)
 
     auto res = menu.exec(ui->treeView->mapToGlobal(pos));
 
+    auto idx = ui->treeView->indexAt(pos);
+
+    QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    if (!ml) return;
+
+    QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
+    if (!model) return;
+
+
+    QStandardItem* root = model->invisibleRootItem();
+    //QStandardItem* root = ui->treeView->invisibleRootItem();
+    //ui->treeView->roo
+
     if (res == tag)
     {
 
+        bool ok;
+        QString text = QInputDialog::getText(this, tr("New Tag"),
+                                             tr("Tag name:"), QLineEdit::Normal,
+                                             "", &ok);
+        if (ok && !text.isEmpty())
+        {
+            QStandardItem* parent = nullptr;
+            QString name =  ui->treeView->model()->itemData(idx)[Qt::DisplayRole].toString();
+
+            for (int i = 0; i < root->rowCount(); ++i)
+            {
+                if (root->child(i)->text() == name)
+                    parent = root->child(i);
+            }
+
+            if (parent)
+                parent->appendRow(new QStandardItem(text));
+        }
     }
     if (res == cat)
     {
@@ -134,54 +192,62 @@ void TaggerPlate::on_treeView_customContextMenuRequested(const QPoint &pos)
                                              tr("Category name:"), QLineEdit::Normal,
                                              "", &ok);
         if (ok && !text.isEmpty())
-            ui->treeView->model();
-//            textLabel->setText(text);
+            root->appendRow(new QStandardItem(text));
 
 
     }
-
-
 }
 
-void TaggerPlate::setTags(QMap<QString, QSet<QString> > &data, QSet<QString> &othertags)
+void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
+                          QMap<QString, QSet<QString> >  &othertags,
+                          QString project)
 {
-    QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ui->treeView->model());
+    QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    QStandardItemModel* model = nullptr;
 
-    if (!model)
+    if (!ml)
     {
         model = new QStandardItemModel(0, 2);
         mdl = new QSortFilterProxyModel(this);
+
+        mdl->setRecursiveFilteringEnabled(true);
+        mdl->setFilterCaseSensitivity(Qt::CaseInsensitive);
+        //        mdl->setSortRole():
+
         mdl->setSourceModel(model);
         ui->treeView->setModel(mdl);
         model->setHorizontalHeaderLabels(QStringList() << "Label" << "Amount");
     }
+    else
+        model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
+
 
     QStandardItem* root = model->invisibleRootItem();
     root->removeRows(0, root->rowCount());
 
 
     QSet<QString> skip;
-
-    //    QList<QTreeWidgetItem *> items;
-    for (auto & key: data.keys())
-    {
-        QStandardItem * item = new QStandardItem(key);
-        root->appendRow(item);
-        for (auto& prod: data[key])
+    QStringList headers = QStringList() << "" << project;
+    for (auto& k : headers)
+        for (auto & key: data[k].keys())
         {
-            item->appendRow(new QStandardItem(prod));
-            for (const QString& ot: othertags)
+            QStandardItem * item = new QStandardItem(key);
+            root->appendRow(item);
+            for (auto& prod: data[k][key])
             {
-                if (ot.startsWith(prod))
-                    skip.insert(ot);
+                item->appendRow(new QStandardItem(prod));
+                for (const QString& ot: othertags[project])
+                {
+                    if (ot.startsWith(prod))
+                        skip.insert(ot);
+                }
             }
         }
-    }
 
     auto others = new QStandardItem("Others");
     root->appendRow(others);
 
-    for (const QString& ot: othertags)
+    for (const QString& ot: othertags[project])
         if (!skip.contains(ot))
         {
             others->appendRow(new QStandardItem(ot));
@@ -200,7 +266,14 @@ void TaggerPlate::setTag(int r, int c, QString tags)
         QStringList lst = ui->plateMaps->item(r,c)->text().split(';');
         for (auto &t: tags.split(';')) lst.append(t);
 
+        QSet<QString> st = QSet<QString>(lst.begin(), lst.end());
+
+        lst.clear();
+
+        for (auto& t: st) lst << t;
+
         lst.sort();
+
         ui->plateMaps->item(r,c)->setText(lst.join(";"));
     }
 
@@ -215,10 +288,6 @@ void TaggerPlate::setColor(int r, int c, QString color)
 
     ui->plateMaps->item(r,c)->setBackground(QColor(color));
 }
-
-
-
-
 
 void TaggerPlate::updatePlate()
 {
@@ -285,15 +354,24 @@ void TaggerPlate::updatePlate()
 
                         //qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
                         setColor(r,c, ctag);
-
-
-
                     }
                 }
             }
         }
 
     }
+
+}
+
+void TaggerPlate::refeshJson()
+{
+    // We shall update the tags with respect to the content of the GUI
+    //
+
+
+
+
+
 
 }
 
@@ -328,7 +406,7 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
 
 
 
-    auto res = menu.exec(ui->treeView->mapToGlobal(pos));
+    auto res = menu.exec(ui->plateMaps->mapToGlobal(pos));
 
     if (res == ico)
     {
@@ -347,7 +425,7 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
     {
         for (auto item: ui->plateMaps->selectedItems())
             if (item)
-                item->setBackground(QColor(QColor::Invalid));
+                item->setBackground(QColor(QColorConstants::White));
 
         return;
     }

@@ -54,11 +54,13 @@ tagger::tagger(QStringList datas, QWidget *parent) :
     dataset(datas), http(nullptr),
     ui(new Ui::tagger)
 {
+    setWindowTitle("Setting Plate Tags");
+    setModal(true);
     ui->setupUi(this);
 
 
     this->_tags_of_tags["DMSO"].insert("Drugs"); // Tags a compound corresponding tag as compound
-    this->_grouped_tags["Drugs"].insert("DMSO");
+    this->_grouped_tags[""]["Drugs"].insert("DMSO");
 
 
     http = getHttp();
@@ -90,7 +92,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                     {
                         this->_well_tags[pr].insert(obj["number"].toString());
                         this->_tags_of_tags[obj["number"].toString()].insert("CellLines"); // Tags the tag as a cell line
-                        this->_grouped_tags["CellLines"].insert(obj["number"].toString().simplified());
+                        this->_grouped_tags[pr]["CellLines"].insert(obj["number"].toString().simplified());
                     }
                 }
             }
@@ -112,8 +114,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
     mongocxx::client client(uri);
 
     try {
-        for (auto& dbn: client.list_database_names())
-            qDebug() << QString::fromStdString(dbn);
+        //        for (auto& dbn: client.list_database_names())
+        //            qDebug() << QString::fromStdString(dbn);
 
         auto db = client["tags"];
 
@@ -158,11 +160,11 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 for (auto & item: cursor)
                 {
 #if (BSONCXX_VERSION_MAJOR >= 3 && BSONCXX_VERSION_MINOR >= 7)
-            bsoncxx::stdx::string_view view = item["_id"].get_string().value;
+                    bsoncxx::stdx::string_view view = item["_id"].get_string().value;
 #else
-            bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
+                    bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
 #endif
-            _well_tags[prj].insert(QString::fromStdString(view.to_string()).simplified());
+                    _well_tags[prj].insert(QString::fromStdString(view.to_string()).simplified());
                 }
             }
         }
@@ -209,7 +211,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 if (map.contains(obj["cat_id"].toString().simplified()))
                 {
                     this->_tags_of_tags[obj["name"].toString().simplified()].insert(map[obj["cat_id"].toString().simplified()]); // Tags a compound corresponding tag as compound
-                    this->_grouped_tags[map[obj["cat_id"].toString().simplified()]].insert(obj["name"].toString().simplified());
+                    this->_grouped_tags[""][map[obj["cat_id"].toString().simplified()]].insert(obj["name"].toString().simplified());
                 }
             }
         });
@@ -230,9 +232,9 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             for (auto & item: cursor)
             {
 #if (BSONCXX_VERSION_MAJOR >= 3 && BSONCXX_VERSION_MINOR >= 7)
-            bsoncxx::stdx::string_view view = item["_id"].get_string().value;
+                bsoncxx::stdx::string_view view = item["_id"].get_string().value;
 #else
-            bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
+                bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
 #endif
                 data << QString::fromStdString(view.to_string()).simplified();
             }
@@ -243,28 +245,35 @@ tagger::tagger(QStringList datas, QWidget *parent) :
         {
             mongocxx::pipeline pipe{};
             pipe.unwind(make_document(kvp("path","$meta.cell_lines"), kvp("preserveNullAndEmptyArrays", false)));
-            pipe.group(make_document(kvp("_id", "$meta.cell_lines"), kvp("count", make_document(kvp("$sum", 1)))));
+            pipe.group(make_document(kvp("_id", make_document(kvp("cell_lines", "$meta.cell_lines"), kvp("project", "$meta.project"))),
+
+                                     kvp("count", make_document(kvp("$sum", 1)))));
 
             auto cursor = db["tags"].aggregate(pipe);
 
-            QSet<QString> data;
             for (auto & item: cursor)
             {
 #if (BSONCXX_VERSION_MAJOR >= 3 && BSONCXX_VERSION_MINOR >= 7)
-            bsoncxx::stdx::string_view view = item["_id"].get_string().value;
+                bsoncxx::stdx::string_view prview = item["_id"]["project"].get_string().value;
+                bsoncxx::stdx::string_view cellview = item["_id"]["cell_lines"].get_string().value;
 #else
-            bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
+                bsoncxx::stdx::string_view prview = item["_id"]["project"].get_utf8().value;
+                bsoncxx::stdx::string_view cellview = item["_id"]["cell_lines"].get_utf8().value;
 #endif
-                QString t = QString::fromStdString(view.to_string()).simplified();
-                if (!t.isEmpty())
-                    data.insert(t);
+                QString t = QString::fromStdString(cellview.to_string()).simplified();
+                QString prj = QString::fromStdString(prview.to_string()).simplified();
+
+                _grouped_tags[prj]["CellLines"].insert(t);
             }
-            _grouped_tags["CellLines"] |= data;
             //ui->cell_lines->addItems(data);
         }
     }
     catch(...) {}
 
+    auto button = new QPushButton("Map CSV");
+    ui->Plates->setCornerWidget(button);
+
+    connect(button, SIGNAL(clicked()), this, SLOT(on_mapcsv()));
 
     for (auto & d: datas)
     {
@@ -295,6 +304,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).toLatin1();
             tags=QJsonDocument::fromJson(arr);
             QJsonObject ob = tags.object();
+            qDebug() <<"Mongodb info" << ob["plateAcq"].toString() << ob["_id"].toObject()["$oid"].toString();
             if (ob.contains("meta") && ob["meta"].toObject().contains("project"))
             {
                 proj = ob["meta"].toObject()["project"].toString(); // mandatoringly :D
@@ -310,7 +320,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
         if (!proj.isEmpty())
             this->ui->project->setCurrentText(proj);
 
-        platet->setTags(_grouped_tags, _well_tags[proj]);
+        platet->setTags(_grouped_tags, _well_tags, proj);
 
     }
 
@@ -390,7 +400,7 @@ void tagger::on_project_currentIndexChanged(const QString &arg1)
         if (qobject_cast<TaggerPlate*>(w))
         {
             auto platet = qobject_cast<TaggerPlate*>(w);
-            platet->setTags(_grouped_tags, _well_tags[proj]);
+            platet->setTags(_grouped_tags, _well_tags, proj);
         }
     }
 }
@@ -405,6 +415,19 @@ void tagger::on_pushButton_2_clicked()
 // Ok button clicked save to Mongo !!!
 void tagger::on_pushButton_clicked()
 {
+    qDebug() << "Shall be Saving to mongodb";
+    // Tell each taggerplate to gather the associated infos in internal json representation
+    // Retrieve the jsons
+    // push to mongodb :p
 
+
+
+    this->close();
+}
+
+void tagger::on_mapcsv()
+{
+
+ qDebug() << "Query for CSV & Map CSV file to the plate names";
 }
 

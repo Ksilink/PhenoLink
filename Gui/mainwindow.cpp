@@ -103,7 +103,8 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     //    _progress(0),
     _StatusProgress(0),
     StartId(0),
-    _gui_server(this)
+    _gui_server(this),
+    load_data(0)
 {
     ui->setupUi(this);
 
@@ -824,10 +825,18 @@ void MainWindow::updateCurrentSelection()
         bvl->setContentsMargins(0, 0, 0, 0);
         bvl->addWidget(new QLabel("Overlay width", wwid), 0, 1);
         bvl->addWidget(setupOverlayWidth(new QDoubleSpinBox(wwid), "OverlayWidth", fo), 0, 2);
+
         auto imp = new QPushButton("Import", wwid);
         bvl->addWidget(imp, 0, 3);
         imp->setObjectName("overlay_import");
         connect(imp, SIGNAL(clicked()), this, SLOT(importOverlay()));
+
+        imp = new QPushButton("Export", wwid);
+        bvl->addWidget(imp, 0, 4);
+        imp->setObjectName("overlay_export");
+        connect(imp, SIGNAL(clicked()), this, SLOT(exportOverlay()));
+
+
 
 
         bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), "Tile", fo), 1, 0);
@@ -2875,6 +2884,12 @@ void MainWindow::ungraySelection()
 void MainWindow::on_actionDisplay_Remaining_Processes_triggered()
 {
 
+
+    auto & hdlr = CheckoutProcess::handler();
+    ui->textLog->insertPlainText(    hdlr.dumpProcesses()
+
+                        );
+
 //    for (Process)
 //    ui->textLog->insertPlainText();
 }
@@ -2889,7 +2904,7 @@ void MainWindow::plateMap()
     QStringList checked = mdl->getCheckedDirectories(false);
     if (checked.size())
     {
-        tagger t(checked);
+        tagger t(checked, this);
         t.exec();
     }
 }
