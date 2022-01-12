@@ -3691,7 +3691,8 @@ void ExperimentDataTableModel::clearAll()
 
     QModelIndex idx;
     beginRemoveColumns(idx, 5 + (_owner->hasTag() ? 1 : 0), this->columnCount());
-    beginRemoveRows(idx, 0, _dataset.size());
+    if (_dataset.size())
+        beginRemoveRows(idx, 0, _dataset.size());
 
     _datanames.clear();
     _dataset.clear();

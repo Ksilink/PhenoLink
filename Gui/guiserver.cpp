@@ -81,7 +81,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
             bool finished = (0 == NetworkProcessHandler::handler().remainingProcess().size());
             auto hash = oj["DataHash"].toString();
-            qDebug() << "Process finished" << oj;
+            //   qDebug() << "Process finished" << oj;
             auto mdl = ScreensHandler::getHandler().addDataToDb(hash, commit, oj, false);
 
             if (finished)
