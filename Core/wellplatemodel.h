@@ -404,7 +404,7 @@ public:
     bool hasMeasurements(QPoint pos);
     void setMeasurements(QPoint pos, bool active = true);
 
-    void reloadDatabaseData(bool load=false);
+    void reloadDatabaseData(bool load=false, QString db=QString());
     void reloadDatabaseData(QString file, QString t, bool aggregat, bool load=false);
     void reloadDatabaseDataCSV(QString file, QString t, bool aggregat, bool load=false);
     void reloadDatabaseDataFeather(QString file, QString t, bool aggregat, bool load=false);

@@ -885,6 +885,11 @@ void CheckoutProcess::getStatus(QJsonObject& ob)
     }
 }
 
+QString CheckoutProcess::dumpProcesses()
+{
+    return QString();
+}
+
 QString CheckoutProcess::dumpHtmlStatus()
 {
     QString body;

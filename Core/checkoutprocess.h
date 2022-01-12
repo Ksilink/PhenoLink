@@ -97,6 +97,8 @@ public:
 
   QString dumpHtmlStatus();
   void getStatus(QJsonObject &ob);
+  QString dumpProcesses();
+
 public slots:
 
   void updatePath();

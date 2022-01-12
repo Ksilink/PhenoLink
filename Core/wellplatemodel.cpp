@@ -584,7 +584,7 @@ void ExperimentFileModel::setOwner(ExperimentFileModel* own)
 
 
 
-void ExperimentFileModel::reloadDatabaseData(bool load)
+void ExperimentFileModel::reloadDatabaseData(bool load, QString db)
 {
 
     QPair<QStringList, QStringList> dbs = databases();
@@ -594,9 +594,8 @@ void ExperimentFileModel::reloadDatabaseData(bool load)
         QString t = file;
         QStringList spl = t.split("/");
         t = spl[spl.size() - 2];
-
-
-        reloadDatabaseData(file, t, false);
+        if (load && !db.isEmpty() && db == t)
+            reloadDatabaseData(file, t, false, load);
     }
     // No loading of the aggregated, they are useless for display purposes
     //    for (auto file: (dbs.second))
@@ -614,9 +613,9 @@ void ExperimentFileModel::reloadDatabaseData(bool load)
 void ExperimentFileModel::reloadDatabaseData(QString file, QString t, bool aggregat, bool load)
 {
     if (file.endsWith(".csv"))
-        reloadDatabaseDataCSV(file, t, aggregat);
+        reloadDatabaseDataCSV(file, t, aggregat, load);
     else
-        reloadDatabaseDataFeather(file, t, aggregat);
+        reloadDatabaseDataFeather(file, t, aggregat, load);
 
 }
 void ExperimentFileModel::reloadDatabaseDataCSV(QString file, QString t, bool aggregat, bool load)
@@ -2570,9 +2569,11 @@ void ScreensHandler::commitAll()
     }
 }
 
+QMutex workers_lock;
 
 ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, QJsonObject& data, bool finished)
 {
+    QMutexLocker lock(&workers_lock);
     if (!_mscreens.contains(hash))
     {
         qDebug() << "Cannot find original XP for hash" << hash;

@@ -308,9 +308,11 @@ void MainWindow::on_wellPlateViewTab_tabBarClicked(int index)
 
     if (!load_data)
     {
-        load_data = new QPushButton("Load data");
+        qDebug() << "Adding the load_data button !";
+        load_data = new QPushButton("Load data", ui->databases);
         ui->databases->setCornerWidget(load_data);
         connect(load_data, SIGNAL(clicked()), this, SLOT(button_load_database()));
+        load_data->show();
     }
 
 
@@ -352,7 +354,8 @@ void MainWindow::button_load_database()
             tmdl = mdl;
 
     if (!tmdl) return;
-    tmdl->reloadDatabaseData(true);
+
+    tmdl->reloadDatabaseData(true, ui->databases->tabText(ui->databases->currentIndex()));
 
 
     QTableView* v = getDataTableView(tmdl);
