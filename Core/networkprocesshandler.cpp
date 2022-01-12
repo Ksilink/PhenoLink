@@ -90,12 +90,13 @@ void CheckoutHttpClient::sendQueue()
     for (int i = 0; i < reqs.size(); ++i)
         if (reqs.at(i).url == url &&
                 (url.path().startsWith("/addData/") ||
-                 url.path().startsWith("/Start/")))
+                 url.path().startsWith("/Start/")  ||
+                 url.path().startsWith("/Ready")) )
             collapse << i;
 
     if (collapse.size() > 0)
     {
-        qDebug() << "Collapsing responses " << collapse;
+        qDebug() << "Collapsing responses (0 + " << collapse << ")";
          QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
 
         for (auto& i: collapse)

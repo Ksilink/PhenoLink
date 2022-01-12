@@ -603,6 +603,14 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             qDebug() << "Finished " << workid;
             running.remove(workid);
         }
+        auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
+        for (int i = 0; i < ob.size(); ++i)
+        {
+            auto obj = ob[i].toObject();
+            if (obj.contains("TaskID"))
+                 running.remove(obj["TaskID"].toString());
+        }
+
     }
 
     if (urlpath.startsWith("/Affinity"))

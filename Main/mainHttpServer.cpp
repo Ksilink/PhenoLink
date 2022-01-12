@@ -577,7 +577,8 @@ void Server::proxyAdvert(QString host, int port)
 
     int processor_count = QThreadPool::globalInstance()->maxThreadCount();
     client->send(QString("/Ready/%1").arg(processor_count),
-                 QString("affinity=%1&port=%2&cpu=%3&reset&available=1").arg(affinity_list.join(",")).arg(dport).arg(processor_count), QJsonArray());
+                 QString("affinity=%1&port=%2&cpu=%3&reset&available=1").arg(affinity_list.join(",")).arg(dport).arg(processor_count),
+                 QJsonArray());
 }
 
 void Server::finished(QString hash, QJsonObject ob)
@@ -585,13 +586,18 @@ void Server::finished(QString hash, QJsonObject ob)
     //    qDebug() << "Finishing on server side";
 
     if (client && ob.contains("TaskID") && !ob["TaskID"].isNull())
+    {
+        QJsonObject pr;
+        pr["TaskID"] = ob["TaskID"].toString();
+        QJsonArray ar; ar << pr;
+
         client->send(QString("/Ready/0"),
-                     QString("affinity=%1&port=%2&workid=%3&available=%4")
+                     QString("affinity=%1&port=%2&available=%3")
                         .arg(affinity_list.join(","))
                         .arg(dport)
-                        .arg(ob["TaskID"].toString())
                         .arg(QThreadPool::globalInstance()->activeThreadCount() <= QThreadPool::globalInstance()->maxThreadCount()),
-                     QJsonArray());
+                     ar);
+    }
 
     NetworkProcessHandler::handler().finishedProcess(hash, ob);
 
