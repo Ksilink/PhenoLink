@@ -47,6 +47,8 @@ public:
 
     QString getProject();
 
+
+
 private slots:
     void on_add_global_tags_clicked();
 
@@ -59,6 +61,8 @@ private slots:
 
     void on_pushButton_clicked();
 
+    void on_mapcsv();
+
 private:
     QStringList dataset;
 
@@ -70,7 +74,7 @@ private:
 
     QSet<QString> _projects;
     QMap<QString, QSet<QString> > _well_tags; // Per project tags
-    QMap<QString, QSet<QString> > _grouped_tags;
+    QMap<QString, QMap<QString, QSet<QString> > > _grouped_tags;
 
     QMap<QString, QSet<QString > > _tags_of_tags;
 

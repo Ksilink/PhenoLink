@@ -18,12 +18,16 @@ public:
     ~TaggerPlate();
     QJsonDocument& getTags();
 
-    void setTags(QMap<QString, QSet<QString> >& data, QSet<QString>& othertags);
+    void setTags(
+            QMap<QString, QMap<QString, QSet<QString > > > &data,
+            QMap<QString, QSet<QString> >  &othertags,
+            QString project);
 
     void setTag(int r, int c, QString tags);
     void setColor(int r, int c, QString color);
 
     void updatePlate();
+    void refeshJson();
 
 
 private slots:

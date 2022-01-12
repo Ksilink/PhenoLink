@@ -90,8 +90,11 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionPlate_Tag"/>
     <addaction name="actionOptions"/>
+    <addaction name="separator"/>
     <addaction name="actionRe_start_Server"/>
+    <addaction name="separator"/>
     <addaction name="action_Exit"/>
    </widget>
    <widget class="QMenu" name="menuProcess">
@@ -199,18 +202,8 @@
          <item>
           <widget class="QTabWidget" name="databases">
            <property name="currentIndex">
-            <number>0</number>
+            <number>-1</number>
            </property>
-           <widget class="QWidget" name="tab_3">
-            <attribute name="title">
-             <string>Tab 1</string>
-            </attribute>
-           </widget>
-           <widget class="QWidget" name="tab_4">
-            <attribute name="title">
-             <string>Tab 2</string>
-            </attribute>
-           </widget>
           </widget>
          </item>
         </layout>
@@ -1043,6 +1036,11 @@
   <action name="actionDisplay_Remaining_Processes">
    <property name="text">
     <string>Display Remaining Processes</string>
+   </property>
+  </action>
+  <action name="actionPlate_Tag">
+   <property name="text">
+    <string>Plate Tag</string>
    </property>
   </action>
  </widget>
