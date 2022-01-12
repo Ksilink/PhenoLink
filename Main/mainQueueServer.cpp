@@ -295,8 +295,12 @@ unsigned int Server::njobs()
 
     for (auto& srv: jobs)
     {
-        for (auto& q: srv)
+        for (auto& q : srv)
+        {
             count += q.size();
+        }
+
+
     }
 
     return count;
@@ -362,6 +366,13 @@ QQueue<QJsonObject>& Server::getHighestPriorityJob(QString server)
     if (jobs.contains(server)) // does this server have some affinity with the current process ?
     { // if yes we dequeue from this one
         int key = jobs[server].lastKey();
+
+        if (jobs[server].contains(key) && jobs[server][key].isEmpty())
+        {
+            jobs[server].remove(key);
+            return getHighestPriorityJob(server);
+        }
+
         return jobs[server][key];
     }
     // retreive first available object
@@ -378,6 +389,11 @@ QQueue<QJsonObject>& Server::getHighestPriorityJob(QString server)
         }
     }
 
+    if (jobs[maxserv].contains(maxpriority) && jobs[maxserv][maxpriority].isEmpty())
+    {
+        jobs[maxserv].remove(maxpriority);
+        return getHighestPriorityJob(server);
+    }
 
     return jobs[maxserv][maxpriority];
 }
@@ -443,18 +459,18 @@ void Server::WorkerMonitor()
                 workers_status[QString("%1:%2").arg(next_worker.first).arg(next_worker.second)]--;
 
                 running[taskid] = pr;
-                qApp->processEvents();
             }
+          
+
 
             workers_lock.unlock();
-
         }
         else
         {
             QThread::msleep(300); // Wait for 300ms at least
-            qApp->processEvents();
         }
-        //qDebug() << "Worker Monitor Loop";
+
+        qApp->processEvents();
     }
 }
 
