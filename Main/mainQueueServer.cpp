@@ -286,7 +286,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
     res->end(message.toUtf8());
 }
 
-QMutex priority_lock, workers_lock;
+QMutex workers_lock;
 
 unsigned int Server::njobs()
 {
@@ -361,7 +361,7 @@ QStringList Server::pendingTasks()
 
 QQueue<QJsonObject>& Server::getHighestPriorityJob(QString server)
 {
-    QMutexLocker locker(&priority_lock);
+   // QMutexLocker locker(&workers_lock);
 
     if (jobs.contains(server)) // does this server have some affinity with the current process ?
     { // if yes we dequeue from this one
@@ -596,8 +596,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             workers.removeAll(qMakePair(serverIP, port));
             workers_status[QString("%1:%2").arg(serverIP).arg(port)]=0;
         }
+        auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
 
-        if (avail)
+        if (avail && ob.size() == 0 )
         {
             if (workers_status[QString("%1:%2").arg(serverIP).arg(port)] >= 0)
             {
@@ -610,11 +611,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             }
         }
 
-        auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
-
+      
         if (!cpu.isEmpty())
             workers_status[QString("%1:%2").arg(serverIP).arg(port)]+=cpu.toInt();
-        else if (ob.size())
+        else if (ob.size() == 0)
             workers_status[QString("%1:%2").arg(serverIP).arg(port)]++;
 
         if (!workid.isEmpty())
@@ -759,7 +759,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 auto project = obj["Project"].toString();
                 int priority = obj.contains("Priority") ? obj["Priority"].toInt() : 1;
 
-                priority_lock.lock();
                 if (project_affinity.contains(project))
                 {
                     jobs[project_affinity[project]][priority].enqueue(obj);
@@ -767,7 +766,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 else
                     jobs[""][priority].enqueue(obj); // Unmapped project goes to "global" path
 
-                priority_lock.unlock();
             }
             running.clear();
             workers_lock.unlock();
@@ -783,7 +781,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             auto project = obj["Project"].toString();
             int priority = obj.contains("Priority") ? obj["Priority"].toInt() : 1;
 
-            priority_lock.lock();
             if (project_affinity.contains(project))
             {
                 jobs[project_affinity[project]][priority].enqueue(obj);
@@ -791,7 +788,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             else
                 jobs[""][priority].enqueue(obj); // Unmapped project goes to "global" path
 
-            priority_lock.unlock();
+          
         }
         running.clear();
         workers_lock.unlock();
@@ -902,7 +899,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             auto project = obj["Project"].toString();
             int priority = obj.contains("Priority") ? obj["Priority"].toInt() : 10000000 - ob.size();
 
-            priority_lock.lock();
+            workers_lock.lock();
             if (project_affinity.contains(project))
             {
                 jobs[project_affinity[project]][priority].enqueue(obj);
@@ -910,7 +907,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             else
                 jobs[""][priority].enqueue(obj); // Unmapped project goes to "global" path
 
-            priority_lock.unlock();
+            workers_lock.unlock();
 
 
             ob.replace(i, obj);

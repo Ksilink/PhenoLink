@@ -73,7 +73,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         QString commit=urlpath.mid((int)strlen("/addData/"));
 
 //        qDebug() << "Client Adding data" << ob.size();
-        for (auto item: (ob))
+        for (auto item : (ob))
         {
             auto oj = item.toObject();
 
@@ -81,11 +81,15 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
             bool finished = (0 == NetworkProcessHandler::handler().remainingProcess().size());
             auto hash = oj["DataHash"].toString();
+            qDebug() << "Process finished" << oj;
             auto mdl = ScreensHandler::getHandler().addDataToDb(hash, commit, oj, false);
-            //            qDebug() << "Process finished" << finished << commit << NetworkProcessHandler::handler().remainingProcess().size();
+
             if (finished)
+            {
+            
                 ScreensHandler::getHandler().commitAll();
-            win->updateTableView(mdl);
+                win->updateTableView(mdl);
+            }
             win->on_wellPlateViewTab_tabBarClicked(-1);
         }
     }
