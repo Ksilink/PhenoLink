@@ -3688,10 +3688,13 @@ QVariant ExperimentDataTableModel::headerData(int section, Qt::Orientation orien
 
 void ExperimentDataTableModel::clearAll()
 {
-
+    if (_dataset.size() == 0)
+        return;
+        
     QModelIndex idx;
+    
     beginRemoveColumns(idx, 5 + (_owner->hasTag() ? 1 : 0), this->columnCount());
-    if (_dataset.size())
+    
         beginRemoveRows(idx, 0, _dataset.size());
 
     _datanames.clear();
