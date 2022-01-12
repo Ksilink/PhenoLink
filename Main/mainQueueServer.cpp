@@ -609,9 +609,12 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                         workers.enqueue(qMakePair(serverIP, port));
             }
         }
+
+        auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
+
         if (!cpu.isEmpty())
             workers_status[QString("%1:%2").arg(serverIP).arg(port)]+=cpu.toInt();
-        else
+        else if (ob.size())
             workers_status[QString("%1:%2").arg(serverIP).arg(port)]++;
 
         if (!workid.isEmpty())
@@ -619,12 +622,15 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             qDebug() << "Finished " << workid;
             running.remove(workid);
         }
-        auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
         for (int i = 0; i < ob.size(); ++i)
         {
             auto obj = ob[i].toObject();
             if (obj.contains("TaskID"))
-                 running.remove(obj["TaskID"].toString());
+            {
+                running.remove(obj["TaskID"].toString());
+                workers.enqueue(qMakePair(serverIP, port));
+                workers_status[QString("%1:%2").arg(serverIP).arg(port)]++;
+            }
         }
 
     }
