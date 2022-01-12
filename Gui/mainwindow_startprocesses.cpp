@@ -591,6 +591,11 @@ void MainWindow::startProcessRun()
         QString projName;
         for(Screens::iterator it = s.begin(), e = s.end(); it != e; ++it)
         {
+
+
+            if ((*it)->computedDataModel()) (*it)->computedDataModel()->clearAll();
+
+
             if ((*it)->property("project").isEmpty())
             {
                 if (projName.isEmpty())
@@ -652,6 +657,8 @@ void MainWindow::startProcessRun()
         Screens s = ScreensHandler::getHandler().getScreens();
         for(Screens::iterator it = s.begin(), e = s.end(); it != e; ++it)
         {
+            if ((*it)->computedDataModel()) (*it)->computedDataModel()->clearAll();
+
             QList<SequenceFileModel*> seqs = (*it)->getSelection();
 
             for (QList<SequenceFileModel*> ::Iterator si = seqs.begin(), se = seqs.end(); si != se; ++si)
@@ -675,6 +682,9 @@ void MainWindow::startProcessRun()
         Screens& data = handler.getScreens();
         foreach (ExperimentFileModel* efm, data)
         {
+            if (efm->computedDataModel()) efm->computedDataModel()->clearAll();
+
+
             QList<SequenceFileModel*> t = efm->getAllSequenceFiles();
             foreach (SequenceFileModel* l, t)
                 lsfm.push_back(l);
