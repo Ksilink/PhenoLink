@@ -96,6 +96,7 @@ public:
     void finishedProcess(QString hash, QJsonObject res);
 
     void removeHash(QString hash);
+    void removeHash(QStringList hashes);
 
     void exitServer();
 
@@ -118,7 +119,7 @@ signals:
     void processStarted(QString, QString);
     void updateProcessStatusMessage(QJsonArray);
     void payloadAvailable(QString hash);
-    void finishedJob();
+    void finishedJob(int nb);
 
 protected:
     // Allows to link a process with a network connection

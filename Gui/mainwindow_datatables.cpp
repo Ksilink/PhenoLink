@@ -453,11 +453,11 @@ void MainWindow::retrievedPayload(QString hash)
 }
 
 
-void MainWindow::finishedJob()
+void MainWindow::finishedJob(int nb)
 {
     if (_StatusProgress)
     {
-        _StatusProgress->setValue(_StatusProgress->value()+1);
+        _StatusProgress->setValue(_StatusProgress->value()+nb);
 
         uint64_t ms = process_starttime.msecsTo(QDateTime::currentDateTime());
 

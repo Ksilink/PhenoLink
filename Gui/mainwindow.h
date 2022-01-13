@@ -252,7 +252,7 @@ public slots:
     void overlayChanged(QString id);
     void overlayChangedCmap(QString id);
 
-    void finishedJob();
+    void finishedJob(int nb);
 
     void setOverlayWidth(double w);
     void renameWorkbench();

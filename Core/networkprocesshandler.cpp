@@ -91,7 +91,8 @@ void CheckoutHttpClient::sendQueue()
         if (reqs.at(i).url == url &&
                 (url.path().startsWith("/addData/") ||
                  url.path().startsWith("/Start")  ||
-                 url.path().startsWith("/Ready")) )
+                 url.path().startsWith("/Ready") ||
+                 url.path().startsWith("/ServerDone") ) )
             collapse << i;
 
     if (collapse.size() > 0)
@@ -737,9 +738,15 @@ void NetworkProcessHandler::removeHash(QString hash)
     // Just finished a item
 //    qDebug() << "Finished Job" << hash;
     runningProcs.remove(hash);
-    emit finishedJob();
+    emit finishedJob(1);
 }
+void NetworkProcessHandler::removeHash(QStringList hashes)
+{
+    for (auto& hash: hashes)
+        runningProcs.remove(hash);
 
+    emit finishedJob(hashes.size());
+}
 
 
 void NetworkProcessHandler::exitServer()

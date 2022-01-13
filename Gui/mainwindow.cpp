@@ -216,8 +216,8 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     connect(&CheckoutProcess::handler(), SIGNAL(processFinished(QJsonArray)),
             this, SLOT(networkProcessFinished(QJsonArray)));
 
-    connect(&NetworkProcessHandler::handler(), SIGNAL(finishedJob()),
-            this, SLOT(finishedJob()));
+    connect(&NetworkProcessHandler::handler(), SIGNAL(finishedJob(int)),
+            this, SLOT(finishedJob(int)));
 
     connect(&CheckoutProcess::handler(), SIGNAL(emptyProcessList()),
             this, SLOT(processFinished()));

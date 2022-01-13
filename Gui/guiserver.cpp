@@ -72,12 +72,15 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
         QString commit=urlpath.mid((int)strlen("/addData/"));
 
+        QStringList hashes;
+        for (auto item : (ob))
+            hashes << item.toObject()["hash"].toString();
+        NetworkProcessHandler::handler().removeHash(hashes);
+
 //        qDebug() << "Client Adding data" << ob.size();
         for (auto item : (ob))
         {
             auto oj = item.toObject();
-
-            NetworkProcessHandler::handler().removeHash(oj["hash"].toString());
 
             bool finished = (0 == NetworkProcessHandler::handler().remainingProcess().size());
             auto hash = oj["DataHash"].toString();
@@ -86,7 +89,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
             if (finished)
             {
-            
+
                 ScreensHandler::getHandler().commitAll();
                 win->updateTableView(mdl);
             }
@@ -96,7 +99,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
 
     if (urlpath.startsWith("/addImage/"))
-    { // Now let's do the fun part :)   
+    { // Now let's do the fun part :)
         auto ob = QCborValue::fromCbor(data);
 
         QList<SequenceFileModel*> lsfm;
