@@ -594,7 +594,12 @@ void ExperimentFileModel::reloadDatabaseData(bool load, QString db)
         QString t = file;
         QStringList spl = t.split("/");
         t = spl[spl.size() - 2];
-        if (load && !db.isEmpty() && db == t)
+        if (load)
+        {
+            if (!db.isEmpty() && db == t)
+                reloadDatabaseData(file, t, false, load);
+        }
+        else
             reloadDatabaseData(file, t, false, load);
     }
     // No loading of the aggregated, they are useless for display purposes
@@ -3690,11 +3695,11 @@ void ExperimentDataTableModel::clearAll()
 {
     if (_dataset.size() == 0)
         return;
-        
+
     QModelIndex idx;
-    
+
     beginRemoveColumns(idx, 5 + (_owner->hasTag() ? 1 : 0), this->columnCount());
-    
+
         beginRemoveRows(idx, 0, _dataset.size());
 
     _datanames.clear();
@@ -3904,7 +3909,7 @@ StructuredMetaData::~StructuredMetaData()
 
 void StructuredMetaData::exportData()
 {
-    if (!hasProperty("Filename")) return;
+    if (!hasProperty("Filename") || property("Filename").isEmpty()) return;
 
     QStringList cols = property("ChannelNames").split(';');
     std::vector<std::shared_ptr<arrow::Field> > fields;

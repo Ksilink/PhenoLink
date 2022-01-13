@@ -337,6 +337,12 @@ void MainWindow::importOverlay()
         }
     }
 
+    if (coms.size() == 0)
+    {
+        QMessageBox::warning(this, "Import Overlays", "No commit found for this plate & well");
+        return;
+    }
+
    bool ok;
    QString scom = QInputDialog::getItem(this, "Select Commit Name data", "Commit Name:", coms.keys(), 0, false, &ok);
 
