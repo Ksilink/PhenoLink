@@ -447,13 +447,16 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
             QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
 
-            Core.append(obj["CoreProcess_hash"]);
-            QString sHash = hash.toHex();
-            Run.append(QString(sHash));
-            obj["Process_hash"] = sHash;
-            if (req->connection()->tcpSocket()->peerAddress() ==
-                    req->connection()->tcpSocket()->localAddress())
-                obj["LocalRun"] = true;
+            if (!obj.contains("Process_hash"))
+            {
+                Core.append(obj["CoreProcess_hash"]);
+                QString sHash = hash.toHex();
+                Run.append(QString(sHash));
+                obj["Process_hash"] = sHash;
+                if (req->connection()->tcpSocket()->peerAddress() ==
+                        req->connection()->tcpSocket()->localAddress())
+                    obj["LocalRun"] = true;
+            }
 
             if (!obj.contains("ReplyTo"))
                 obj["ReplyTo"] = refIP; // Address to push results to !

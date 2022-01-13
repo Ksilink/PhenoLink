@@ -737,13 +737,15 @@ void NetworkProcessHandler::removeHash(QString hash)
 {
     // Just finished a item
 //    qDebug() << "Finished Job" << hash;
-    runningProcs.remove(hash);
+    if (runningProcs.remove(hash) == 0)
+        qDebug() << "hash " << hash << "not found";
     emit finishedJob(1);
 }
 void NetworkProcessHandler::removeHash(QStringList hashes)
 {
     for (auto& hash: hashes)
-        runningProcs.remove(hash);
+        if (runningProcs.remove(hash) == 0)
+            qDebug() << "hash " << hash << "not found";
 
     emit finishedJob(hashes.size());
 }
