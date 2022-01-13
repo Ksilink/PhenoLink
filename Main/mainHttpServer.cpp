@@ -425,9 +425,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             client = nullptr;
         }
 
-
         proxyAdvert(host, port);
-
     }
 
     if (urlpath.startsWith("/Start/"))

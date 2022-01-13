@@ -50,10 +50,21 @@ GuiServer::GuiServer(MainWindow* par): win(par)
     //        qDebug() << "Gui Server Started";
 }
 
+inline QString stringIP(quint32 ip)
+{
+    return QString("%4.%3.%2.%1").arg(ip & 0xFF)
+        .arg((ip >> 8) & 0xFF)
+        .arg((ip >> 16) & 0xFF)
+        .arg((ip >> 24) & 0xFF);
+}
+
+
 void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res)
 {
     const QByteArray data = req->collectedData();
     QString urlpath = req->url().path(), query = req->url().query();
+
+  
 
     //    qDebug() << qhttp::Stringify::toString(req->method())
     //             << qPrintable(urlpath)
@@ -76,8 +87,10 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         for (auto item : (ob))
             hashes << item.toObject()["hash"].toString();
         NetworkProcessHandler::handler().removeHash(hashes);
+        QString refIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
 
-//        qDebug() << "Client Adding data" << ob.size();
+        qDebug() << "Client Adding data" << refIP << NetworkProcessHandler::handler().remainingProcess().size();
+
         for (auto item : (ob))
         {
             auto oj = item.toObject();
