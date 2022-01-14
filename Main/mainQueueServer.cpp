@@ -894,6 +894,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
             Core.append(obj["CoreProcess_hash"]);
             Run.append(obj["CoreProcess_hash"].toString());
+
             obj["Process_hash"] = obj["CoreProcess_hash"];
             if (req->connection()->tcpSocket()->peerAddress() ==
                     req->connection()->tcpSocket()->localAddress())

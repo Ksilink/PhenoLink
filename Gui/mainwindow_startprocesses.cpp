@@ -386,16 +386,16 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
         obj["Pos"] = sfm->Pos();
 
         //            qDebug() << "Image" << obj;
+        obj["CommitName"] = _commitName->text();
+        if (sfm->getOwner())
+            obj["XP"] = sfm->getOwner()->groupName() + "/" + sfm->getOwner()->name();
+        obj["WellTags"] = sfm->getTags().join(";");
 
         QByteArray arr;    arr += QCborValue::fromJsonValue(obj).toByteArray();//QJsonDocument(obj).toBinaryData();
         arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
         QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
 
         obj["CoreProcess_hash"] = QString(hash.toHex());
-        obj["CommitName"] = _commitName->text();
-        if (sfm->getOwner())
-            obj["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
-        obj["WellTags"] = sfm->getTags().join(";");
 
 
         procArray.append(obj);

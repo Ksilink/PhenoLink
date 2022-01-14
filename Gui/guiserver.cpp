@@ -94,7 +94,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         for (auto item : (ob))
         {
             auto oj = item.toObject();
-
+            qDebug() << oj;
             bool finished = (0 == NetworkProcessHandler::handler().remainingProcess().size());
             auto hash = oj["DataHash"].toString();
             //   qDebug() << "Process finished" << oj;
@@ -104,7 +104,8 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             {
 
                 ScreensHandler::getHandler().commitAll();
-                mdl->computedDataModel()->resyncmodel();
+                if (mdl->computedDataModel())
+                    mdl->computedDataModel()->resyncmodel();
                 win->updateTableView(mdl);
                 win->on_wellPlateViewTab_tabBarClicked(-1);
             }            

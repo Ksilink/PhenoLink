@@ -78,11 +78,10 @@ void CheckoutHttpClient::send(QString path, QString query, QByteArray ob, bool k
     QUrl url=iurl;
     url.setPath(path);
     url.setQuery(query);
-
+   
     reqs.append(Req(url, ob, keepalive));
-    if (reqs.isEmpty())
-        sendQueue();
 }
+
 void CheckoutHttpClient::sendQueue()
 {
     QMutexLocker lock(&mutex_send_lock);
@@ -726,8 +725,10 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
     QString address=res["ReplyTo"].toString();
     ///    qDebug() << hash << res << address;
     CheckoutHttpClient* client = NULL;
+    
     for (CheckoutHttpClient* cl : alive_replies)  if (address == cl->iurl.host())  client = cl;
     if (!client) { client = new CheckoutHttpClient(address, 8020); alive_replies << client; }
+
     // else { qDebug() << "Reusing Client"; }
     QString commitname = res["CommitName"].toString();
     if (commitname.isEmpty()) commitname = "Default";
@@ -755,11 +756,16 @@ void NetworkProcessHandler::removeHash(QString hash)
 
     emit finishedJob(1);
 }
+
 void NetworkProcessHandler::removeHash(QStringList hashes)
 {
-    for (auto& hash: hashes)
+    static QMap<QString, int > olds;
+    for (auto& hash : hashes)
+    {
+        olds[hash]++;
         if (runningProcs.remove(hash) == 0)
-            qDebug() << "hash " << hash << "not found";
+            qDebug() << "hash " << hash << "not found" << (olds.contains(hash) ? QString("but was already seen %1").arg(olds[hash]) : QString(""));
+    }
 
     emit finishedJob(hashes.size());
 }

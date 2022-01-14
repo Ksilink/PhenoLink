@@ -818,10 +818,11 @@ void CheckoutProcess::finishedProcess(QString hash, QJsonObject result)
 
     //    qDebug() << "Process finished " << hash << "emiting signal";
     emit finishedJob(hash, result);
-    qDebug() << "process finished, remaining" << _status.size();
-    //    qDebug() << "Removing" << hash;
     _status.remove(hash);
     _finished[hash] = result;
+
+    qDebug() << "process finished, remaining" << _status.size();
+    //    qDebug() << "Removing" << hash;
 }
 
 unsigned CheckoutProcess::numberOfRunningProcess()
