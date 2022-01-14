@@ -798,7 +798,7 @@ void NetworkProcessHandler::handleHashMapping(QJsonArray Core, QJsonArray Run)
         if (hash_logfile)
             (*hash_logfile) << coreHash << "->" << hash << Qt::endl;
 
-        qDebug() << coreHash << "->" << hash;
+        //qDebug() << coreHash << "->" << hash;
 
         emit processStarted(coreHash, hash);
     }
