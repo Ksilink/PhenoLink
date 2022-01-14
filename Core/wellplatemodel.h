@@ -310,6 +310,8 @@ public:
     void addData(QString XP, int field, int stackZ, int time, int chan, QPoint pos, QVector<double> data);
     void addData(QString XP, int field, int stackZ, int time, int chan, QString pos, QVector<double> data);
 
+    void resyncmodel();
+
 
     QVector<double> getData(QString XP, int field, int stackZ, int time, int chan, int x, int y);
     QVector<double> getData(QString XP, int field, int stackZ, int time, int chan, QPoint pos);

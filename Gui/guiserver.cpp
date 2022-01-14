@@ -104,9 +104,10 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             {
 
                 ScreensHandler::getHandler().commitAll();
+                mdl->computedDataModel()->resyncmodel();
                 win->updateTableView(mdl);
-            }
-            win->on_wellPlateViewTab_tabBarClicked(-1);
+                win->on_wellPlateViewTab_tabBarClicked(-1);
+            }            
         }
     }
 

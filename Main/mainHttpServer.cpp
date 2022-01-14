@@ -443,13 +443,13 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
             QByteArray arr = QCborValue::fromJsonValue(obj).toCbor();
             arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
-            QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
+            //QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
 
             if (!obj.contains("Process_hash"))
             {
-//                Core.append(obj["CoreProcess_hash"]);
 //                QString sHash = hash.toHex();
-//                Run.append(QString(sHash));
+                Core.append(obj["CoreProcess_hash"]);
+                Run.append(obj["CoreProcess_hash"].toString());
                 obj["Process_hash"] = obj["CoreProcess_hash"];
                 if (req->connection()->tcpSocket()->peerAddress() ==
                         req->connection()->tcpSocket()->localAddress())

@@ -2574,11 +2574,11 @@ void ScreensHandler::commitAll()
     }
 }
 
-QMutex workers_lock;
+//QMutex workers_lock;
 
 ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, QJsonObject& data, bool finished)
 {
-    QMutexLocker lock(&workers_lock);
+//    QMutexLocker lock(&workers_lock);
     if (!_mscreens.contains(hash))
     {
         qDebug() << "Cannot find original XP for hash" << hash;
@@ -3076,6 +3076,31 @@ void ExperimentDataTableModel::timerEvent(QTimerEvent* event)
     }
 }
 
+
+void ExperimentDataTableModel::resyncmodel()
+{
+    if (modified)
+    {
+        //if (!_datanames.contains(XP))
+        //{
+
+        //    columnCount();
+        //    QSet<QString>::const_iterator pos = _datanames.insert(XP);
+        //    int col = std::distance(_datanames.cbegin(), pos);
+        //    //beginInsertColumns(idx, 5 + (int)_owner->hasTag() + col, 5 + (int)_owner->hasTag() + col);
+
+        //    _datanames.insert(XP);
+        //    //this->headerDataChanged(Qt::Horizontal, col, col);
+        //    newCol = true;
+
+        //}
+
+
+
+    }
+}
+
+
 void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int time, int chan, int x, int y, QVector<double> data)
 {
     using namespace std::chrono;
@@ -3104,10 +3129,10 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
 
         QSet<QString>::const_iterator pos = _datanames.insert(XP);
         int col = std::distance(_datanames.cbegin(), pos);
-        beginInsertColumns(idx, 5 + (int)_owner->hasTag() + col, 5 + (int)_owner->hasTag() + col);
+        //beginInsertColumns(idx, 5 + (int)_owner->hasTag() + col, 5 + (int)_owner->hasTag() + col);
 
         _datanames.insert(XP);
-        this->headerDataChanged(Qt::Horizontal, col, col);
+        //this->headerDataChanged(Qt::Horizontal, col, col);
         newCol = true;
 
     }
@@ -3131,15 +3156,15 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
             QSet<QString>::iterator cpos = _datanames.insert(xp);
             int col = std::distance(_datanames.begin(), cpos);
 
-            if (newCol)      endInsertColumns();
+            //if (newCol)      endInsertColumns();
 
-            dataChanged(index(pos, 5 + _owner->hasTag() + col), index(pos, 5 + _owner->hasTag() + col));
+            //dataChanged(index(pos, 5 + _owner->hasTag() + col), index(pos, 5 + _owner->hasTag() + col));
 
             return;
         }
     }
 
-    beginInsertRows(idx, _dataset.size(), _dataset.size());
+    //beginInsertRows(idx, _dataset.size(), _dataset.size());
 
     h.data[XP] = data;
 
@@ -3162,8 +3187,8 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
 
     _dataset << h;
 
-    endInsertRows();
-    if (newCol)  endInsertColumns();
+    //endInsertRows();
+    //if (newCol)  endInsertColumns();
 
 
 }
