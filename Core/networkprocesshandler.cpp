@@ -746,8 +746,10 @@ void NetworkProcessHandler::removeHash(QString hash)
 {
     // Just finished a item
 //    qDebug() << "Finished Job" << hash;
+    
     if (runningProcs.remove(hash) == 0)
         qDebug() << "hash " << hash << "not found";
+
     emit finishedJob(1);
 }
 void NetworkProcessHandler::removeHash(QStringList hashes)
@@ -792,6 +794,8 @@ void NetworkProcessHandler::handleHashMapping(QJsonArray Core, QJsonArray Run)
 
         if (hash_logfile)
             (*hash_logfile) << coreHash << "->" << hash << Qt::endl;
+
+        qDebug() << coreHash << "->" << hash;
 
         emit processStarted(coreHash, hash);
     }
