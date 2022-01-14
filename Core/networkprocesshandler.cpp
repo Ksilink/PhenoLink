@@ -24,6 +24,10 @@ using namespace qhttp::client;
 #include <arrow/util/iterator.h>
 
 
+#include <QMutex>
+#include <QMutexLocker>
+
+
 namespace fs = arrow::fs;
 
 
@@ -65,8 +69,11 @@ void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool k
      send(path, query, body, keepalive);
 }
 
+QMutex mutex_send_lock;
+
 void CheckoutHttpClient::send(QString path, QString query, QByteArray ob, bool keepalive)
 {
+    QMutexLocker lock(&mutex_send_lock);
 
     QUrl url=iurl;
     url.setPath(path);
@@ -78,6 +85,8 @@ void CheckoutHttpClient::send(QString path, QString query, QByteArray ob, bool k
 }
 void CheckoutHttpClient::sendQueue()
 {
+    QMutexLocker lock(&mutex_send_lock);
+
     if (reqs.isEmpty())
         return;
 

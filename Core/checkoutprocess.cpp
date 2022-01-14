@@ -525,7 +525,7 @@ void CheckoutProcess::networkProcessStarted(QString core, QString hash)
     _hash_to_save[hash]=_counter;
     if (_counter)    (*_counter)++;
     hash_to_save_mtx.unlock();
-    emit processStarted(hash);
+//    emit processStarted(hash);
 
 }
 

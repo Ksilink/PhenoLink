@@ -99,7 +99,7 @@ public:
 #endif
 
 protected:
-   void HTMLstatus(qhttp::server::QHttpResponse *res);
+   void HTMLstatus(qhttp::server::QHttpResponse *res, QString mesg=QString());
    void WorkerMonitor();
 
 

@@ -449,10 +449,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
             if (!obj.contains("Process_hash"))
             {
-                Core.append(obj["CoreProcess_hash"]);
-                QString sHash = hash.toHex();
-                Run.append(QString(sHash));
-                obj["Process_hash"] = sHash;
+//                Core.append(obj["CoreProcess_hash"]);
+//                QString sHash = hash.toHex();
+//                Run.append(QString(sHash));
+                obj["Process_hash"] = obj["CoreProcess_hash"];
                 if (req->connection()->tcpSocket()->peerAddress() ==
                         req->connection()->tcpSocket()->localAddress())
                     obj["LocalRun"] = true;

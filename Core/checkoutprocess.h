@@ -113,7 +113,7 @@ signals:
 
   void newPaths();
   void parametersReady(QJsonObject obj);
-  void processStarted(QString hash);
+//  void processStarted(QString hash);
   void updateProcessStatus(QJsonArray);
   void updateDatabase();
   void processFinished(QJsonArray ob);

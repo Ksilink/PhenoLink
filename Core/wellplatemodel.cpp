@@ -3096,7 +3096,7 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
     static quint64 MaxY = 50, MaxChan = 30, MaxTime = 1000, MaxField = 100, MaxZ = 1000;
     DataHolder h;
     bool newCol = false;
-    QModelIndex idx;
+    QModelIndex idx = index(0,0);
 
     modified = true;
     if (!_datanames.contains(XP))
@@ -3696,7 +3696,8 @@ void ExperimentDataTableModel::clearAll()
     if (_dataset.size() == 0)
         return;
 
-    QModelIndex idx;
+    QModelIndex idx = index(0,0);
+
 
     beginRemoveColumns(idx, 5 + (_owner->hasTag() ? 1 : 0), this->columnCount());
 

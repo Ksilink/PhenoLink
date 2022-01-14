@@ -1892,6 +1892,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     else
         layo->addRow("Commit Name:", _commitName);
 
+    _commitName->setFocus();
+
     QPushButton* button = new QPushButton("Start");
     button->setObjectName("ProcessStartButton");
     connect(button, SIGNAL(pressed()), this, SLOT(startProcess()));

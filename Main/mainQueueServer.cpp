@@ -225,7 +225,7 @@ void Server::setHttpResponse(QJsonObject& ob,  qhttp::server::QHttpResponse* res
 }
 
 
-void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
+void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
 {
 
     QString message;
@@ -235,7 +235,8 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
     // jobs : priority to server  / Process name [call params]
 
     body += QString("<h2>Connected Users : %1 / Number of Pending Jobs %2</h2>").arg(nbUsers()).arg(njobs());
-
+    if (!mesg.isEmpty())
+        body += QString("<p style='color:red;'>Info: %1</p>").arg(mesg);
 
     QMap<QString, int > servers;
 
@@ -460,7 +461,7 @@ void Server::WorkerMonitor()
 
                 running[taskid] = pr;
             }
-          
+
 
 
             workers_lock.unlock();
@@ -611,7 +612,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             }
         }
 
-      
+
         if (!cpu.isEmpty())
             workers_status[QString("%1:%2").arg(serverIP).arg(port)]+=cpu.toInt();
         else if (ob.size() == 0)
@@ -717,6 +718,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
       workers.removeAll(qMakePair(srv, port.toInt()));
       workers_status.remove(QString("%1:%2").arg(srv).arg(port));
+
+      HTMLstatus(res, QString("Removed server %1:%2").arg(srv,port));
+      return;
     }
 
     if (urlpath.startsWith("/Status"))
@@ -788,7 +792,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             else
                 jobs[""][priority].enqueue(obj); // Unmapped project goes to "global" path
 
-          
+
         }
         running.clear();
         workers_lock.unlock();
@@ -800,12 +804,13 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
 
         QStringList queries = query.split("&");
-
+        int cancelProcs = 0;
+        QString proc;
         for (auto& q : queries)
         {
             if (q.startsWith("proc="))
             {
-                QString proc = q.replace("proc=","");
+                proc = q.replace("proc=","");
 
                 QMutexLocker lock(&workers_lock);
                 // Clear up the jobs
@@ -830,9 +835,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                                     item["WorkID"].toString() == workid)
                                 torm << item;
                         }
-
+                        cancelProcs = (int)torm.size();
                         for (auto& it : torm)
-                            q.removeOne(it);
+                            q.removeAll(it);
 
 
                     }
@@ -840,7 +845,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
             }
         }
-
+        HTMLstatus(res, QString("Canceled processes : %1 %2").arg(cancelProcs).arg(proc));
         return;
     }
 
@@ -888,10 +893,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
             QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
 
-            Core.append(obj["CoreProcess_hash"]);
-            QString sHash = hash.toHex();
-            Run.append(QString(sHash));
-            obj["Process_hash"] = sHash;
+//            Core.append(obj["CoreProcess_hash"]);
+//            QString sHash = hash.toHex();
+//            Run.append(QString(sHash));
+            obj["Process_hash"] = obj["CoreProcess_hash"];
             if (req->connection()->tcpSocket()->peerAddress() ==
                     req->connection()->tcpSocket()->localAddress())
                 obj["LocalRun"] = true;
