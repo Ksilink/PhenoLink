@@ -34,7 +34,7 @@ namespace fs = arrow::fs;
 
 CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(false), icpus(0)
 {
-//    iclient.setTimeOut(5000);
+    //    iclient.setTimeOut(5000);
     QObject::connect(&iclient, &QHttpClient::disconnected, [this]() {
         finalize();
     });
@@ -59,14 +59,14 @@ void CheckoutHttpClient::send(QString path, QString query)
 
 void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool keepalive)
 {
-     //auto body = QCborValue::fromJsonValue(ob).toCbor();
-     auto body = QCborArray::fromJsonArray(ob).toCborValue().toCbor();
-     QUrl url=iurl;
-     url.setPath(path);
-     url.setQuery(query);
+    //auto body = QCborValue::fromJsonValue(ob).toCbor();
+    auto body = QCborArray::fromJsonArray(ob).toCborValue().toCbor();
+    QUrl url=iurl;
+    url.setPath(path);
+    url.setQuery(query);
 
-//     qDebug() << "Creating Query" << url.toString() << ob;
-     send(path, query, body, keepalive);
+    //     qDebug() << "Creating Query" << url.toString() << ob;
+    send(path, query, body, keepalive);
 }
 
 QMutex mutex_send_lock;
@@ -81,7 +81,7 @@ void CheckoutHttpClient::send(QString path, QString query, QByteArray ob, bool k
 
     reqs.append(Req(url, ob, keepalive));
     if (reqs.isEmpty())
-       sendQueue();
+        sendQueue();
 }
 void CheckoutHttpClient::sendQueue()
 {
@@ -107,7 +107,7 @@ void CheckoutHttpClient::sendQueue()
     if (collapse.size() > 0)
     {
         qDebug() << "Collapsing responses (0 + " << collapse << ")";
-         QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
+        QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
 
         for (auto& i: collapse)
         {
@@ -120,7 +120,7 @@ void CheckoutHttpClient::sendQueue()
         }
 
         for (QList<int>::reverse_iterator it = collapse.rbegin(), e = collapse.rend();
-                    it != e; ++it)
+             it != e; ++it)
             reqs.removeAt(*it);
 
         ob = QCborValue::fromJsonValue(ar).toCbor();
@@ -129,7 +129,7 @@ void CheckoutHttpClient::sendQueue()
 
 
 
-//    auto keepalive = req.keepalive;
+    //    auto keepalive = req.keepalive;
 
     qDebug() << "Sending Queued" << url;
     iclient.request(
@@ -154,7 +154,7 @@ void CheckoutHttpClient::sendQueue()
             res->collectData();
             res->onEnd([this, res]() {
                 onIncomingData(res->collectedData());
-                       });
+            });
         }
     });
 
@@ -165,7 +165,7 @@ void CheckoutHttpClient::sendQueue()
 
 void CheckoutHttpClient::timerEvent(QTimerEvent * )
 {
-     sendQueue();
+    sendQueue();
 }
 
 void CheckoutHttpClient::onIncomingData(const QByteArray& data)
@@ -201,7 +201,7 @@ void CheckoutHttpClient::onIncomingData(const QByteArray& data)
 }
 
 void CheckoutHttpClient::finalize() {
-  //  qDebug() << "Disconnected";    //        qDebug("totally %d request/response pairs have been transmitted in %lld [mSec].\n",
+    //  qDebug() << "Disconnected";    //        qDebug("totally %d request/response pairs have been transmitted in %lld [mSec].\n",
     ////               istan, itick.tock()
     //               );
 }
@@ -302,7 +302,7 @@ void NetworkProcessHandler::establishNetworkAvailability()
 
 void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient* cl)
 {
-//    qDebug() << "Settings Processes";
+    //    qDebug() << "Settings Processes";
 
     for (int p = 0; p < ar.size(); ++p)
     {
@@ -310,7 +310,7 @@ void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient* cl)
         QList<CheckoutHttpClient*>& lp = procMapper[pr];
         if (!lp.contains(cl))
         {
-         //   qDebug() << pr;
+            //   qDebug() << pr;
             procMapper[pr] << cl;
         }
     }
@@ -324,7 +324,7 @@ QStringList NetworkProcessHandler::getProcesses()
     QStringList l;
 
     l =  procMapper.keys();
-   // qDebug() << "Network Handler list: " << l;
+    // qDebug() << "Network Handler list: " << l;
     return l;
 }
 
@@ -454,6 +454,7 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
     QJsonObject ob;
     ob["hash"] = hash;
 
+
     if (ds.contains("Data"))
     {
         auto arr = ds["Data"].toArray();
@@ -463,19 +464,21 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
             if (obj["Data"].toString() != "Image results" )
             {
 
-
                 ob[obj["Tag"].toString()] = obj["Data"];
                 ob[QString("%1_Agg").arg(obj["Tag"].toString())] = obj["Aggregation"];
 
                 if (obj.contains("Meta"))
                 {
-                    auto met = obj["Meta"].toArray()[0].toObject();
+                    QJsonObject met;
+                    if (obj["Meta"].isArray())
+                        met = obj["Meta"].toArray()[0].toObject();
+                    if (obj["Meta"].isObject())
+                        met = obj["Meta"].toObject();
 
                     auto txt = QStringList() << "FieldId" << "Pos" << "TimePos" << "channel" << "zPos" << "DataHash";
                     for (auto s: txt)
                         if (met.contains(s))
                         {
-
                             ob[s] = met[s];
                         }
                 }
@@ -518,10 +521,10 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
         QString pos = par["Meta"].toArray().first().toObject()["Pos"].toString();
 
         QString tofile = QString("%1/%2/%3_%5_%4.fth").arg(par.value("SavePath").toString(),
-                                                         commit, plate,
-                                                         par.value("Tag").toString(),
-                                                         pos);
-//        qDebug() << "Saving Generated Meta to" << tofile;
+                                                           commit, plate,
+                                                           par.value("Tag").toString(),
+                                                           pos);
+        //        qDebug() << "Saving Generated Meta to" << tofile;
         {
             auto datasizes = ob.value("DataSizes").toArray();
             size_t size = 0;
@@ -577,7 +580,7 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
             }
             ABORT_ON_FAILURE(bldr.Finish(&dat[feat.cols]));
             auto schema =
-                arrow::schema(fields);
+                    arrow::schema(fields);
             auto table = arrow::Table::Make(schema, dat);
             std::string uri = tofile.toStdString();
             std::string root_path;
@@ -612,7 +615,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
         for (auto itd : arr)
         {
             auto obj = itd.toObject();
-          //  qDebug() << "Filtering" << obj["Tag"] << obj;
+            //  qDebug() << "Filtering" << obj["Tag"] << obj;
             if (obj["Data"].toString() == "Image results" && obj.contains("Payload"))
             {
                 if (obj.contains("isOptional") && !obj["optionalState"].toBool())
@@ -646,7 +649,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                 {
                     auto met = obj["Meta"].toArray()[0].toObject();
                     auto txt = QStringList() << "FieldId" << "Pos" << "TimePos"
-                            << "channel" << "zPos" << "DataHash" ;
+                                             << "channel" << "zPos" << "DataHash" ;
                     for (auto s: txt)
                         if (met.contains(s))
                         {
@@ -661,7 +664,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                             << obj;
                     continue;
                 }
-//                qDebug() << "Ready data" << ob.toJsonObject();
+                //                qDebug() << "Ready data" << ob.toJsonObject();
                 // Now add Image info:
                 auto ps = obj["Payload"].toArray();
                 QCborArray cbar;
@@ -721,11 +724,11 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
 void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
 {
     QString address=res["ReplyTo"].toString();
-///    qDebug() << hash << res << address;
+    ///    qDebug() << hash << res << address;
     CheckoutHttpClient* client = NULL;
     for (CheckoutHttpClient* cl : alive_replies)  if (address == cl->iurl.host())  client = cl;
     if (!client) { client = new CheckoutHttpClient(address, 8020); alive_replies << client; }
-   // else { qDebug() << "Reusing Client"; }
+    // else { qDebug() << "Reusing Client"; }
     QString commitname = res["CommitName"].toString();
     if (commitname.isEmpty()) commitname = "Default";
     // now we can setup the reply !
@@ -745,8 +748,8 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
 void NetworkProcessHandler::removeHash(QString hash)
 {
     // Just finished a item
-//    qDebug() << "Finished Job" << hash;
-    
+    //    qDebug() << "Finished Job" << hash;
+
     if (runningProcs.remove(hash) == 0)
         qDebug() << "hash " << hash << "not found";
 
