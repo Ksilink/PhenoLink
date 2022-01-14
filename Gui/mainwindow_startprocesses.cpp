@@ -188,6 +188,9 @@ bool sortWidgets(QWidget* a, QWidget* b)
 QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                                     QList<bool> selectedChanns )
 {
+
+    static size_t crypto_offset = 0;
+
     if (!ui || !ui->processingArea)
     {
         //        QMessageBox::warning(this, tr("Starting Process"),
@@ -386,17 +389,22 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
         obj["Pos"] = sfm->Pos();
 
         //            qDebug() << "Image" << obj;
-
-        QByteArray arr;    arr += QCborValue::fromJsonValue(obj).toByteArray();//QJsonDocument(obj).toBinaryData();
-        arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
-        QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
-
-        obj["CoreProcess_hash"] = QString(hash.toHex());
         obj["CommitName"] = _commitName->text();
         if (sfm->getOwner())
             obj["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
         obj["WellTags"] = sfm->getTags().join(";");
 
+        QByteArray arr;
+        arr += (QString("%1").arg(crypto_offset)).toLatin1();
+        arr += QCborValue::fromJsonValue(obj).toByteArray();//QJsonDocument(obj).toBinaryData();
+        arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
+        arr += (QString("%1").arg(crypto_offset)).toLatin1();
+
+        QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
+
+        obj["CoreProcess_hash"] = QString(hash.toHex());
+
+        crypto_offset ++;
 
         procArray.append(obj);
     }
