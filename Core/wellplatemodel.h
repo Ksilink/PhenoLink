@@ -353,6 +353,7 @@ protected:
     bool modified;
 
     int saveTimer;
+    int ncols, nrows;
 
 public:
 
@@ -372,6 +373,8 @@ public:
     MatrixDataModel* exposeDatabaseData(QStringList xps,  MatrixDataModel* datamodel);
     MatrixDataModel* exposeMemoryData(QStringList xps, MatrixDataModel* datamodel, QVector<QList<int> > &subdata );
     MatrixDataModel* exposeDatabaseData(QStringList xps,  MatrixDataModel* datamodel, QVector<QList<int> >& subdata );
+
+
 
 };
 

@@ -2721,6 +2721,9 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
         mm->addAction("3 wells", this, SLOT(loadPlateDisplay3()));
         mm->addAction("sample from tags", this, SLOT(loadPlateDisplaySample()));
 
+        // auto lp = menu.addMenu("Load && Prep. Process");
+        // populate with the processing list
+
         menu.addSeparator();
         menu.addAction("Plate Map / Tags", this, SLOT(plateMap()));
         menu.addSeparator();

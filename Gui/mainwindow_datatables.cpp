@@ -355,10 +355,17 @@ void MainWindow::button_load_database()
 
     if (!tmdl) return;
 
-    tmdl->reloadDatabaseData(true, ui->databases->tabText(ui->databases->currentIndex()));
 
+    QString db = ui->databases->tabText(ui->databases->currentIndex());
+    tmdl->reloadDatabaseData(true, db);
+
+    if (!tmdl->databaseDataModel(db))
+        return;
+
+    tmdl->databaseDataModel(db)->resyncmodel();
 
     QTableView* v = getDataTableView(tmdl);
+
 
     QSortFilterProxyModel* proxyModel = new QSortFilterProxyModel();
     proxyModel->setSourceModel(tmdl->computedDataModel());

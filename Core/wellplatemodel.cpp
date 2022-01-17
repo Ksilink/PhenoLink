@@ -159,12 +159,12 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
         y.insert(v);
 
     }
-//    qDebug() << "Get Well Pos: Unpack well pos sorted" << x << y;
+    //    qDebug() << "Get Well Pos: Unpack well pos sorted" << x << y;
 
     QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
     std::sort(xl.begin(), xl.end());
     std::sort(yl.begin(), yl.end());
-//    qDebug() << "Get Well Pos: Unpack well pos sorted" << xl << yl;
+    //    qDebug() << "Get Well Pos: Unpack well pos sorted" << xl << yl;
     //    xl.indexOf(), yl.indexOf()
     return qMakePair(xl, yl);
 }
@@ -221,7 +221,7 @@ void ExperimentFileModel::setFieldPosition()
     QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
     std::sort(xl.begin(), xl.end());// , std::greater<double>());
     std::sort(yl.begin(), yl.end(), std::greater<double>());
-//    qDebug() << "Unpack well pos sorted" << xl << yl;
+    //    qDebug() << "Unpack well pos sorted" << xl << yl;
 
 
     fields_pos = qMakePair(xl, yl);
@@ -2221,7 +2221,7 @@ QString ScreensHandler::findPlate(QString plate, QStringList projects, QString d
         for (auto& file : searchpaths)
             for (auto &project: projects)
                 if (dir.exists(file) && dir.exists(file + project))
-                        searchPaths.push_front(file + project);
+                    searchPaths.push_front(file + project);
     }
     else
     {
@@ -2578,7 +2578,7 @@ void ScreensHandler::commitAll()
 
 ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, QJsonObject& data, bool finished)
 {
-//    QMutexLocker lock(&workers_lock);
+    //    QMutexLocker lock(&workers_lock);
     if (!_mscreens.contains(hash))
     {
         qDebug() << "Cannot find original XP for hash" << hash;
@@ -2769,7 +2769,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
                 seq.addFile(t, f, z, cc, fname);
 
                 rmdl = &seq;
-//                seq.setAsShowed(false); // Force to not shown
+                //                seq.setAsShowed(false); // Force to not shown
                 seq.setDisplayStatus(true);
                 _result_images << fname;
 
@@ -2981,7 +2981,7 @@ QMutex ExperimentDataModel::_lock(QMutex::NonRecursive);
 
 ExperimentDataTableModel::ExperimentDataTableModel(ExperimentFileModel* parent, int nX, int nY) :
     _owner(parent), nbX(nX), nbY(nY),
-    modified(false), saveTimer(-1)
+    modified(false), saveTimer(-1), ncols(0), nrows(0)
 {
 }
 
@@ -3079,25 +3079,10 @@ void ExperimentDataTableModel::timerEvent(QTimerEvent* event)
 
 void ExperimentDataTableModel::resyncmodel()
 {
-    if (modified)
-    {
-        //if (!_datanames.contains(XP))
-        //{
-
-        //    columnCount();
-        //    QSet<QString>::const_iterator pos = _datanames.insert(XP);
-        //    int col = std::distance(_datanames.cbegin(), pos);
-        //    //beginInsertColumns(idx, 5 + (int)_owner->hasTag() + col, 5 + (int)_owner->hasTag() + col);
-
-        //    _datanames.insert(XP);
-        //    //this->headerDataChanged(Qt::Horizontal, col, col);
-        //    newCol = true;
-
-        //}
-
-
-
-    }
+    beginResetModel();
+    ncols = 5 + _datanames.size() + (int)_owner->hasTag() ;
+    nrows = _dataset.size();
+    endResetModel();
 }
 
 
@@ -3115,20 +3100,21 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
         saveTimer = startTimer(seconds(30));
     }
 
-//    if (x <= 0 || y <= 0)
-//        qDebug() << "add Data" << XP << field << stackZ << time << chan << x << y;
+    //    if (x <= 0 || y <= 0)
+    //        qDebug() << "add Data" << XP << field << stackZ << time << chan << x << y;
 
     static quint64 MaxY = 50, MaxChan = 30, MaxTime = 1000, MaxField = 100, MaxZ = 1000;
     DataHolder h;
     bool newCol = false;
-    QModelIndex idx = index(0,0);
+    //   QModelIndex idx = index(0,0);
 
     modified = true;
     if (!_datanames.contains(XP))
     {
 
-        QSet<QString>::const_iterator pos = _datanames.insert(XP);
-        int col = std::distance(_datanames.cbegin(), pos);
+        //        QSet<QString>::const_iterator pos =
+        _datanames.insert(XP);
+        //        int col = std::distance(_datanames.cbegin(), pos);
         //beginInsertColumns(idx, 5 + (int)_owner->hasTag() + col, 5 + (int)_owner->hasTag() + col);
 
         _datanames.insert(XP);
@@ -3153,13 +3139,7 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
         {
             l.data[XP] = data;
             QString xp = XP;
-            QSet<QString>::iterator cpos = _datanames.insert(xp);
-            int col = std::distance(_datanames.begin(), cpos);
-
-            //if (newCol)      endInsertColumns();
-
-            //dataChanged(index(pos, 5 + _owner->hasTag() + col), index(pos, 5 + _owner->hasTag() + col));
-
+            _datanames.insert(xp);
             return;
         }
     }
@@ -3664,9 +3644,9 @@ int ExperimentDataTableModel::rowCount(const QModelIndex& parent) const
     Q_UNUSED(parent);
 
     // Let's count this...
-    int res = this->getDataSize();
+    //    int res = this->getDataSize();
 
-    return res;
+    return nrows;
 }
 
 int ExperimentDataTableModel::columnCount(const QModelIndex&/* parent*/) const
@@ -3674,7 +3654,7 @@ int ExperimentDataTableModel::columnCount(const QModelIndex&/* parent*/) const
     int res = 5 + _owner->hasTag();
     res += this->getExperimentCount();
 
-    return res;
+    return ncols;
 }
 
 
@@ -3718,20 +3698,18 @@ QVariant ExperimentDataTableModel::headerData(int section, Qt::Orientation orien
 
 void ExperimentDataTableModel::clearAll()
 {
-//    if (_dataset.size() == 0)
-//        return;
 
-//    QModelIndex idx = index(0,0);
+    beginResetModel();
 
-
-//    beginRemoveColumns(idx, 5 + (_owner->hasTag() ? 1 : 0), columnCount());
-//    beginRemoveRows(idx, 0, (QAbstractTableModel::rowCount()));
+    nrows = 0;
+    ncols = 0;
 
     _datanames.clear();
     _dataset.clear();
 
-//    endRemoveRows();
-//    endRemoveColumns();
+
+    endResetModel();
+
 }
 
 int ExperimentDataTableModel::exposeDataColumnCount(QStringList memlist, QStringList dblist)
@@ -3975,7 +3953,7 @@ void StructuredMetaData::exportData()
     ABORT_ON_FAILURE(bldr.Finish(&dat[_content.cols]));
 
     auto schema =
-        arrow::schema(fields);
+            arrow::schema(fields);
     auto table = arrow::Table::Make(schema, dat);
     std::string uri = property("Filename").toStdString();
     std::string root_path;
