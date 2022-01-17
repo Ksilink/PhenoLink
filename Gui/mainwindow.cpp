@@ -4,8 +4,6 @@
 #include "screensmodel.h"
 
 #include <map>
-#include <algorithm>
-
 #include <QFileSystemModel>
 #include <QDebug>
 
@@ -1537,8 +1535,6 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
             QFormLayout* l = new QFormLayout(wid);
             l->setLabelAlignment(Qt::AlignVCenter | Qt::AlignRight);
 
-            //            for (unsigned i = 0; i < _numberOfChannels; ++i)
-            int p = 1;
             QList<int> list = _channelsIds.values();
             std::sort(list.begin(), list.end());
             QJsonArray ar,ar2;
@@ -1548,15 +1544,16 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                 if (par.contains("Value2"))
                     ar2 = par["Value2"].toArray();
             }
+            int pos = 0;
             foreach(int channels, list)
             {
 
-                par["guiChan"] = channels-1;
+                par["guiChan"] = channels;
 
                 if (ar.size())
                 {
-                    par["Value"]=ar[channels-1];
-                    par["Value2"]=ar2[channels-1];
+                    par["Value"]=ar[pos];
+                    par["Value2"]=ar2[pos];
                 }
 
 
@@ -1566,18 +1563,19 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                     QString nm;
 
                     if (_channelsNames.size() == _channelsIds.size())
-                        nm = QString(_channelsNames[list.at(channels-1)]);
+                        nm = QString(_channelsNames[pos]);
                     else
-                        nm = QString("Channel %1").arg(p++);
+                        nm = QString("Channel %1").arg(channels);
 
                     l->addRow(nm, w);
 
-                    w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(channels));
+                    w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(pos));
                     //                    qDebug() << "Created Widget:" << w << w->objectName();
 
                 }
-
+                pos++;
             }
+
         }
         else  if (par.contains("Type") && par["Type"].toString() == "Container")
         {
@@ -1587,8 +1585,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                 QList<int> list = _channelsIds.values();
                 std::sort(list.begin(), list.end());
 
-                int c = 1;
-                int start = par["startChannel"].toInt() + 1;
+                int c = 0;
+                int start = par["startChannel"].toInt();
                 int end = par["endChannel"].toInt();
                 end = end < 0 ? list.size() : end;
                 int c_def = par.contains("Default") ? par["Default"].toInt() : start;
@@ -1602,7 +1600,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                     QString nm;
 
                     if (_channelsNames.size() == _channelsIds.size())
-                        nm = QString(_channelsNames[list.at(i - 1)]);
+                        nm = QString(_channelsNames[i]);
                     else
                         nm = QString("Channel %1").arg(i);
 
