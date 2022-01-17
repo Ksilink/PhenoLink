@@ -89,12 +89,12 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         NetworkProcessHandler::handler().removeHash(hashes);
         QString refIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
 
-        qDebug() << "Client Adding data" << refIP << NetworkProcessHandler::handler().remainingProcess().size();
+        //qDebug() << "Client Adding data" << refIP << NetworkProcessHandler::handler().remainingProcess().size();
 
         for (auto item : (ob))
         {
             auto oj = item.toObject();
-            qDebug() << oj;
+            //qDebug() << oj;
             bool finished = (0 == NetworkProcessHandler::handler().remainingProcess().size());
             auto hash = oj["DataHash"].toString();
             //   qDebug() << "Process finished" << oj;
