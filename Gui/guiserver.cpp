@@ -64,7 +64,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
     const QByteArray data = req->collectedData();
     QString urlpath = req->url().path(), query = req->url().query();
 
-  
+
 
     //    qDebug() << qhttp::Stringify::toString(req->method())
     //             << qPrintable(urlpath)
@@ -100,7 +100,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             //   qDebug() << "Process finished" << oj;
             auto mdl = ScreensHandler::getHandler().addDataToDb(hash, commit, oj, false);
 
-            if (finished)
+            if (mdl && finished)
             {
 
                 ScreensHandler::getHandler().commitAll();
@@ -108,7 +108,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                     mdl->computedDataModel()->resyncmodel();
                 win->updateTableView(mdl);
                 win->on_wellPlateViewTab_tabBarClicked(-1);
-            }            
+            }
         }
     }
 

@@ -1693,8 +1693,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
         if (wid)
         {
-            if (!wid->objectName().isEmpty())
-                qDebug() << "Created Widget:" << wid << wid->objectName();
+//            if (!wid->objectName().isEmpty())
+//                qDebug() << "Created Widget:" << wid << wid->objectName();
 
             bool show = true;
 

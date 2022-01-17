@@ -3718,21 +3718,20 @@ QVariant ExperimentDataTableModel::headerData(int section, Qt::Orientation orien
 
 void ExperimentDataTableModel::clearAll()
 {
-    if (_dataset.size() == 0)
-        return;
+//    if (_dataset.size() == 0)
+//        return;
 
-    QModelIndex idx = index(0,0);
+//    QModelIndex idx = index(0,0);
 
 
-    beginRemoveColumns(idx, 5 + (_owner->hasTag() ? 1 : 0), this->columnCount());
-
-    beginRemoveRows(idx, 0, _dataset.size());
+//    beginRemoveColumns(idx, 5 + (_owner->hasTag() ? 1 : 0), columnCount());
+//    beginRemoveRows(idx, 0, (QAbstractTableModel::rowCount()));
 
     _datanames.clear();
     _dataset.clear();
 
-    endRemoveRows();
-    endRemoveColumns();
+//    endRemoveRows();
+//    endRemoveColumns();
 }
 
 int ExperimentDataTableModel::exposeDataColumnCount(QStringList memlist, QStringList dblist)

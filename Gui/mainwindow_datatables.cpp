@@ -308,7 +308,7 @@ void MainWindow::on_wellPlateViewTab_tabBarClicked(int index)
 
     if (!load_data)
     {
-        qDebug() << "Adding the load_data button !";
+//        qDebug() << "Adding the load_data button !";
         load_data = new QPushButton("Load data", ui->databases);
         ui->databases->setCornerWidget(load_data);
         connect(load_data, SIGNAL(clicked()), this, SLOT(button_load_database()));
