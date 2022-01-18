@@ -23,8 +23,8 @@ find_package(Arrow REQUIRED)
 
 if(WIN32)
 else()
-set(CMAKE_CXX_FLAGS "-Wno-deprecated")
-set(CMAKE_C_FLAGS "-Wno-deprecated")
+    set(CMAKE_CXX_FLAGS "-Wno-deprecated")
+    set(CMAKE_C_FLAGS "-Wno-deprecated")
 endif(WIN32)
 
 set(Checkout_VERSION_MAJOR 2)
@@ -93,7 +93,7 @@ if (WIN32)
 ELSE()
     find_package(Qt5 5.15 COMPONENTS
         Widgets Xml XmlPatterns
-        OpenGL Concurrent Sql WebView
+        OpenGL Concurrent Sql WebView WebEngineWidgets
         REQUIRED)
 ENDIF(WIN32)
 

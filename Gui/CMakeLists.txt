@@ -95,7 +95,7 @@ endif()
 IF(WIN32)
     target_link_libraries(CheckoutGui ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt::Sql  Qt::WinExtras Qt::Charts Qt::WebEngineWidgets  ${OpenCV_LIBS}  mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost )
 ELSE()
-target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt::Sql ${OpenCV_LIBS}  mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost)
+    target_link_libraries(CheckoutGui  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt::Sql  Qt::WebEngineWidgets ${OpenCV_LIBS}  mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost)
 ENDIF(WIN32)
 
 

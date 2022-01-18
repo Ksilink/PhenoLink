@@ -19,8 +19,11 @@
 
 #include <QLoggingCategory>
 
-#include <windows.h>
-#include <wincon.h>
+#if WIN32
+
+    #include <windows.h>
+    #include <wincon.h>
+#endif
 
 #include <QtWebView/QtWebView>
 #include <QStyleFactory>
@@ -61,6 +64,8 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 }
 
 void show_console() {
+#if WIN32
+
     AllocConsole();
 
     FILE *newstdin = nullptr;
@@ -70,6 +75,7 @@ void show_console() {
     freopen_s(&newstdin, "conin$", "r", stdin);
     freopen_s(&newstdout, "conout$", "w", stdout);
     freopen_s(&newstderr, "conout$", "w", stderr);
+#endif
 }
 
 int main(int argc, char *argv[])

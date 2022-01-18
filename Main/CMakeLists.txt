@@ -16,8 +16,22 @@ target_include_directories(Checkout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(Checkout CheckoutGui  ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network Qt::Sql Qt::Concurrent Qt::WinExtras Qt::WebView ${OpenCV_LIBS} )
 #install_qt5_executable(Checkout)
 install(TARGETS Checkout COMPONENT applications DESTINATION bin)
+ELSE()
+
+    add_executable(Checkout ${GUI_TYPE} main.cpp )
+
+    target_include_directories(Checkout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+    target_link_libraries(Checkout CheckoutGui  ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network Qt::Sql Qt::Concurrent Qt::WebView  Qt::WebEngineWidgets ${OpenCV_LIBS} )
+
+    install(TARGETS Checkout COMPONENT applications DESTINATION bin)
+
 
 ENDIF(WIN32)
+
+
+
+
 
 
 add_executable(ckcli  mainCli.cpp mainCli.h ${AppRCFILE} )
