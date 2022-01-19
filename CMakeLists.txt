@@ -10,7 +10,7 @@
 
 
 cmake_minimum_required(VERSION 3.12.0 FATAL_ERROR)
-
+set(VCPKG_FEATURE_FLAGS versions)
 project(Checkout)
 
 set(CMAKE_CXX_STANDARD 17)

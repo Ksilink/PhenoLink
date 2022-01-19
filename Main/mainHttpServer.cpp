@@ -20,8 +20,8 @@
 #include "Core/config.h"
 
 #ifdef WIN32
-#include <windows.h>
-#include <wincon.h>
+    #include <windows.h>
+    #include <wincon.h>
 #endif
 
 #include <QtConcurrent>

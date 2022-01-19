@@ -193,6 +193,8 @@ public:
 
     size_t countY();
 
+    bool exists(unsigned i, unsigned j);
+
     TimeStackedImageXP& operator()(unsigned i, unsigned j);
 
     virtual void loadFromJSON(QJsonObject data);

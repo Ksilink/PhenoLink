@@ -83,6 +83,7 @@ public:
     CheckoutProcessPluginInterface();
 
     virtual QString plugin_version() const { return "" ; }
+    virtual QString buildTime() const { return QString(); };
 
     // This function is to be called in plugins constructors to declare to the handler what data is required as input
     // value is the plugin registered parameter

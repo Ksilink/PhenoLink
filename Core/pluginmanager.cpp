@@ -46,7 +46,7 @@ void loadPlugins(bool isServer)
         pluginsDir.cdUp();
         pluginsDir.cdUp();
     }
-#endif    
+#endif
 
     pluginsDir.cd("plugins");
 
@@ -102,7 +102,7 @@ void loadPlugins(bool isServer)
                     if (pr->plugin_version().isEmpty())
                     {
                         qDebug() << "WARNING empty versionned plugin are not loaded anymore !!";
-                        qDebug() << "Fix:"<< pr->getPath();
+                        qDebug() << "        Fix:"<< pr->getPath();
                     }
                     else
                     {

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "name": "checkout",
+  "version": "2.0",
+   "builtin-baseline": "0fd31b9dbb96e1ab86e0c9ee930790990a974bd3",
+  "dependencies": [
+  {
+      "name": "opencv",
+       "default-features": true,
+      "features": ["contrib"]
+      },
+      {
+
+      "name":"arrow",
+       "default-features": true,
+      "features": ["filesystem","dataset"]
+      },
+      {
+      "name":    "mongo-cxx-driver",
+      "version>=": "3.6.5#2"
+      }
+  ]
+}

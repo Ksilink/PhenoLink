@@ -563,6 +563,11 @@ size_t WellPlate::countY()
     return r;
 }
 
+bool WellPlate::exists(unsigned i, unsigned j)
+{
+    return (_plate.count(i) > 0) && (_plate[i].count(j) > 0);
+}
+
 TimeStackedImageXP &WellPlate::operator()(unsigned i, unsigned j)
 {
     return _plate[i][j];
