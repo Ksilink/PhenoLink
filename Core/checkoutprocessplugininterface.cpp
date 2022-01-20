@@ -210,14 +210,17 @@ void CheckoutProcessPluginInterface::finished()
     QMutexLocker locker(&mutex);
 
     _state = Finished;
-    QString hash = _meta.front().hash;
-    _hashtoBiasCount[hash]--;
-    if (_hashtoBiasCount[hash] == 0)
+    if (_meta.size())
     {
-        for (int i = 0; i < _hashtoBias[hash].size(); ++i)
-            delete _hashtoBias[hash].at(i);
-        _hashtoBias.remove(hash);
-        _hashtoBiasCount.remove(hash);
+        QString hash = _meta.front().hash;
+        _hashtoBiasCount[hash]--;
+        if (_hashtoBiasCount[hash] == 0)
+        {
+            for (int i = 0; i < _hashtoBias[hash].size(); ++i)
+                delete _hashtoBias[hash].at(i);
+            _hashtoBias.remove(hash);
+            _hashtoBiasCount.remove(hash);
+        }
     }
 
 }
@@ -347,7 +350,7 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     ob["Pos"] = getPosition();
     ob["shallDisplay"] = _shallDisplay;
     ob["ProcessStartId"] = processStartId;
-    auto d = QStringList() << "XP" << "CommitName" << "ReplyTo" << "Parameters" << "StartTime" << "TaskID" << "WorkID" ;
+    auto d = QStringList() << "XP" << "DataHash" << "CommitName" << "ReplyTo" << "Parameters" << "StartTime" << "TaskID" << "WorkID" ;
     for (auto s: d)
         ob[s] = _callParams[s];
 

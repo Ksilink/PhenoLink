@@ -318,11 +318,11 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                     for (auto item: l)
                         wids.append(item);
                 }
-//                qDebug() << wids;
+                //                qDebug() << wids;
             }
 
             if (wids.empty()) {
-//                qDebug() << "Searching " << tag << "Params not found";
+                //                qDebug() << "Searching " << tag << "Params not found";
                 continue;
             }
 
@@ -409,8 +409,8 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
         procArray.append(obj);
     }
     // Display first image set
-//    if (procArray.size() > 0)
-//        qDebug() << procArray[0];
+    //    if (procArray.size() > 0)
+    //        qDebug() << procArray[0];
 
     //    handler.startProcess(_preparedProcess, procArray);
     if (procArray.size()) started = true;
@@ -452,46 +452,142 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     int count = 0;
     QMap<QString, int > adapt;
     bool deb = set.value("UserMode/Debug", false).toBool();
+
     if (deb)
         qDebug() << "Process to prepare: " << objR;
 
     QSet<QString> xps;
 
-    foreach (SequenceFileModel* sfm, lsfm)
-    {
-        if (!sfm) continue;
-        if (sfm->getOwner())
+
+    // Need to check if the Image Type is a "WellPlate" type then this won't work :'(
+    QString imgType;
+    QStringList metaData;
+
+    bool asVectorImage = isVectorImageAndImageType(objR, imgType, metaData);
+
+    if (imgType == "WellPlate")
+    { // adjust the procArray !
+
+        // Group again the data from the plate
+        QMap<QString, QList<SequenceFileModel*> > plates;
+        foreach (SequenceFileModel* sfm, lsfm)
         {
-            QString s = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
-            xps.insert(s);
+            if (sfm->getOwner())
+            {
+                QString s = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
+                xps.insert(s);
+            }
+            plates[sfm->getOwner()->name()] << sfm;
         }
 
-        // startProcess is more a prepare process list function now
-        QJsonArray tmp  = startProcess(sfm, objR, selectedChanns);
-        if (count == 0  && tmp.size())
-        {
-            QJsonDocument d(tmp[0].toObject());
-            if (deb)
-                qDebug() << d;
-            stored=tmp[0].toObject();
 
-            deb = false;
-        }
-        if (sfm && sfm->getOwner())
-            adapt[sfm->getOwner()->name()] += tmp.size();
-        count += tmp.size();
-        _StatusProgress->setMinimum(0);
-        _StatusProgress->setMaximum(count);
-        _StatusProgress->setValue(0);
+       for (auto & kv: plates)
+       {
+           QJsonArray ar;
+           for (auto& sfm: kv)
+           {
+               // Convert to json...
+               QList<QJsonObject>  images = sfm->toJSON("TimeStackedImageXP", asVectorImage, selectedChanns, metaData);
 
-        for (int i = 0; i < tmp.size(); ++i)
-            procArray.append(tmp[i]);
-        if (this->networking && procArray.size() > minProcs)
-        {
-            handler.startProcess(_preparedProcess, procArray);
-            procArray = QJsonArray();
-        }
+               // if asVectorImage is true we just have one data in images.size()
+
+               if (ar.isEmpty())
+                   for (auto & a: images)
+                       ar.append(QJsonObject());
+
+               for (int i = 0; i < images.size(); ++i)
+               {
+                   QJsonObject par_obj = ar[i].toObject();
+                   if (!par_obj.contains("Plate")) par_obj["Plate"] = QJsonObject();
+
+                   if (!par_obj.contains("DataHash"))
+                       par_obj["DataHash"] = sfm->getOwner()->hash();
+                   QJsonObject obj = par_obj["Plate"].toObject();
+
+                   auto p = sfm->pos();
+                   QString x = QString("%1").arg(p.x()),
+                           y = QString("%1").arg(p.y());
+                   if (obj.contains(x))
+                   {
+                       QJsonObject t = obj[x].toObject();
+                       t[y] = images[i];
+                       obj[x] = t;
+                   }
+                   else
+                   {
+                       QJsonObject t; t[y] = images[i];
+                       obj[x] = t;
+                   }
+
+                   par_obj["Plate"]=obj;
+
+                   ar.replace(i, par_obj);
+               }
+           }
+           static int crypto_offset = 0;
+           for (int i = 0; i < ar.size(); ++i)
+           {
+               auto obj = ar.at(i).toObject();
+               QByteArray arr;
+               arr += (QString("%1").arg(crypto_offset)).toLatin1();
+               arr += QCborValue::fromJsonValue(obj).toByteArray();//QJsonDocument(obj).toBinaryData();
+               arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
+               arr += (QString("%1").arg(crypto_offset)).toLatin1();
+
+               QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
+
+               obj["CoreProcess_hash"] = QString(hash.toHex());
+
+               crypto_offset ++;
+
+               procArray << obj;
+           }
+
+       }
+
+       QJsonDocument d(procArray.first().toObject());
+
+       qDebug() << d;
+
+       stored=procArray.first().toObject();
+
     }
+    else
+        foreach (SequenceFileModel* sfm, lsfm)
+        {
+            if (!sfm) continue;
+            if (sfm->getOwner())
+            {
+                QString s = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
+                xps.insert(s);
+            }
+
+            // startProcess is more a prepare process list function now
+            QJsonArray tmp  = startProcess(sfm, objR, selectedChanns);
+            if (count == 0  && tmp.size())
+            {
+                QJsonDocument d(tmp[0].toObject());
+                if (deb)
+                    qDebug() << d;
+                stored=tmp[0].toObject();
+
+                deb = false;
+            }
+            if (sfm && sfm->getOwner())
+                adapt[sfm->getOwner()->name()] += tmp.size();
+            count += tmp.size();
+            _StatusProgress->setMinimum(0);
+            _StatusProgress->setMaximum(count);
+            _StatusProgress->setValue(0);
+
+            for (int i = 0; i < tmp.size(); ++i)
+                procArray.append(tmp[i]);
+            if (this->networking && procArray.size() > minProcs)
+            {
+                handler.startProcess(_preparedProcess, procArray);
+                procArray = QJsonArray();
+            }
+        }
 
     if (this->networking &&  procArray.size())
         handler.startProcess(_preparedProcess, procArray);
@@ -536,6 +632,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     }
     else
         saveFile.write(doc.toJson());
+    saveFile.close();
 
 
     for (auto kv = adapt.begin(), ke = adapt.end(); kv != ke; ++kv) {
@@ -568,7 +665,8 @@ void MainWindow::startProcessRun()
 {
     StartId++;
 
-
+    if (!_typeOfprocessing)
+        return;
     SequenceViewContainer& hdl = SequenceViewContainer::getHandler();
 
 
@@ -699,7 +797,7 @@ void MainWindow::startProcessRun()
         }
 
     }
-    //}
+
 
     if ( _typeOfprocessing->currentText() == "Selected Screens and Filter")
     {

@@ -1744,6 +1744,11 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
 
     if (asVectorImage)
     {
+        if (imageType == "WellPlate")
+        {
+            qDebug() << "Should Prepare the data for WellPlate & Vector Image";
+            return res;
+        }
         if (imageType.contains("XP"))
         {
             QJsonArray data;
@@ -1799,6 +1804,14 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
     }
     else
     {
+
+        if (imageType == "WellPlate")
+        {
+            qDebug() << "Should Prepare the data for WellPlate & Single Channel";
+            return res;
+        }
+
+
         if (imageType.contains("XP"))
         {
             QMap<int, QJsonArray> data;
@@ -2581,9 +2594,15 @@ ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, Q
     //    QMutexLocker lock(&workers_lock);
     if (!_mscreens.contains(hash))
     {
-        qDebug() << "Cannot find original XP for hash" << hash;
-        qDebug() << "#### NOT ADDING Data ##########";
-        qDebug() << data;
+        if (data.size() > 2)
+        {
+            qDebug() << "Cannot find original XP for hash" << hash;
+            qDebug() << "#### NOT ADDING Data ##########";
+            qDebug() << data;
+        }
+        else
+            qDebug() << "Empty Return data from" << data;
+
         return 0;
     }
 

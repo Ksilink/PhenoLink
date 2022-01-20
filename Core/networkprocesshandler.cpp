@@ -78,7 +78,7 @@ void CheckoutHttpClient::send(QString path, QString query, QByteArray ob, bool k
     QUrl url=iurl;
     url.setPath(path);
     url.setQuery(query);
-   
+
     reqs.append(Req(url, ob, keepalive));
 }
 
@@ -453,6 +453,9 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
     QJsonObject ob;
     ob["hash"] = hash;
 
+    if (ds.contains("DataHash"))
+        ob["DataHash"] = ds["DataHash"];
+
 
     if (ds.contains("Data"))
     {
@@ -725,7 +728,7 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
     QString address=res["ReplyTo"].toString();
     ///    qDebug() << hash << res << address;
     CheckoutHttpClient* client = NULL;
-    
+
     for (CheckoutHttpClient* cl : alive_replies)  if (address == cl->iurl.host())  client = cl;
     if (!client) { client = new CheckoutHttpClient(address, 8020); alive_replies << client; }
 
@@ -733,6 +736,8 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
     QString commitname = res["CommitName"].toString();
     if (commitname.isEmpty()) commitname = "Default";
     // now we can setup the reply !
+
+    qDebug() << "Server side Process Finished" << hash;
 
     QJsonArray data = FilterObject(hash, res);
 

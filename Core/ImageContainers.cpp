@@ -576,11 +576,32 @@ TimeStackedImageXP &WellPlate::operator()(unsigned i, unsigned j)
 void WellPlate::loadFromJSON(QJsonObject data)
 {
     Q_UNUSED(data);
+
+    auto pl = data["Plate"].toObject();
+    for (auto kv = pl.begin(), e = pl.end(); kv != e; ++kv)
+    {
+        int x = kv.key().toInt();
+        auto yy = kv.value().toObject();
+        for (auto kkv = yy.begin(), ke = yy.end(); kkv != ke; ++kkv)
+        {
+            int y = kkv.key().toInt();
+            auto oo = kkv.value().toObject();
+            TimeStackedImageXP xp;
+            xp.loadFromJSON(oo);
+           _plate[x][y] = xp;
+        }
+
+    }
+
 }
 
 QString WellPlate::basePath(QJsonObject json)
 {
     Q_UNUSED(json);
+//    QDir dir(data.first().toString());
+//    return dir.dirName();
+
+
     return QString();
 }
 

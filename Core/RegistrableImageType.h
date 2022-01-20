@@ -1584,7 +1584,11 @@ public:
     virtual void write(QJsonObject& json) const
     {
         RegistrableImageParent::write(json);
+        json["DataHash"]=this->_hash;
         json["ImageType"] = QString("WellPlate");
+
+
+
     }
 
     virtual void loadImage(QJsonObject json)

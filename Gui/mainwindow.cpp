@@ -1116,9 +1116,6 @@ void MainWindow::prepareProcessCall()
         process = s->data().toString();
     }
 
-    //  _typeOfprocessing->hide();
-    //  _typeOfprocessing->setParent(this);
-
     if (process.isEmpty()) process = _preparedProcess;
     _preparedProcess = process;
 
@@ -1496,6 +1493,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     // FIXME: Properly handle other data types
 
     bool simpleImage = false;
+    bool wellplate = false;
 
     QMap<QString, QFormLayout*> mapper;
 
@@ -1686,6 +1684,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
             if (par["ImageType"].toString() == "ImageContainer")
                 simpleImage = true;
+            if (par["ImageType"].toString() == "WellPlate")
+                wellplate = true;
 
         }
 
@@ -1866,10 +1866,9 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
     QStringList names;
     if (simpleImage) names << "Current Image";
-    names << "Current Well" << "All loaded Sequences"
-          << "Selected Wells"
+    if (!wellplate)  names << "Current Well" << "All loaded Sequences"  << "Selected Wells";
              /* <<  "Images in View" << "Current Screen" */
-          << "Selected Screens" << "Selected Screens and Filter" << "All Loaded Screens";
+    names << "Selected Screens" << "Selected Screens and Filter" << "All Loaded Screens";
 
     _typeOfprocessing->addItems(names);
     if (_scrollArea->items() == 0)
