@@ -305,9 +305,8 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     foreach (InputImageMetaData meta, _meta)
         metaArr.append(meta.toJSON());
 
-//    qDebug() <<"Writing" << _results.size();
-
-    bool mem = _callParams["LocalRun"].toBool();
+    // qDebug() <<"Writing" << _results.size();
+    // bool mem = _callParams["LocalRun"].toBool();
 
      QString hash = _callParams["Process_hash"].toString();
      bool isBatch = false;
@@ -380,6 +379,7 @@ void CheckoutProcessPluginInterface::read(const QJsonObject &json)
     for (int i = 0; i < params.size(); ++i)
     {
         RegistrableParent* regs = _parameters[params[i].toObject()["Tag"].toString()];
+        //qDebug() << params[i].toObject();
         if (!regs) qDebug() << "Error getting algorithm parameters" << params[i].toObject()["Tag"];
         else regs->read(params[i].toObject());
     }

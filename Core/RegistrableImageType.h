@@ -827,6 +827,8 @@ public:
         RegistrableImageParent::read(json);
         setProperties(json);
 
+        _value->storeJson(json);
+
         if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
         {
             QJsonArray t = json["ChannelNames"].toArray();
@@ -936,6 +938,18 @@ public:
         RegistrableImageParent::read(json);
         setProperties(json);
 
+        _value->storeJson(json);
+
+        auto d = json["Data"].toArray();
+
+        for (int i = 0; i < d.size(); ++i)
+        {
+            QJsonObject oo = d.at(i).toObject();
+            StackedImage& xp = _value->addOne();
+            Registrable<StackedImage> reg;
+            reg.setValuePointer(&xp);
+            reg.read(oo);
+        }
         if (_vectorNames.size() == 0 && json.contains("ChannelNames"))
         {
             QJsonArray t = json["ChannelNames"].toArray();
@@ -1444,6 +1458,12 @@ public:
             auto d = data.at(i).toObject();
             setProperties(d, QString("f%1").arg(i));
 
+             TimeStackedImage& tsi = _value->addOne();
+             Registrable<TimeStackedImage> reg;
+             reg.setValuePointer(&tsi);
+             reg.read(d);
+
+
             if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
             {
                 QJsonArray t = d["ChannelNames"].toArray();
@@ -1564,18 +1584,23 @@ public:
     {
         RegistrableImageParent::read(json);
         setProperties(json);
-
-        auto data = json["Data"].toArray();
-        for (int i = 0; i < data.size(); i++)
+//        qDebug() << "DDD" << json;
+        auto pl = json["Data"].toObject();
+  //      qDebug() << pl ;
+        for (auto kv = pl.begin(), e = pl.end(); kv != e; ++kv)
         {
-            auto d = data.at(i).toObject();
-            setProperties(d, QString("f%1").arg(i));
-
-            if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
+            int x = kv.key().toUInt();
+            auto yy = kv.value().toObject();
+            for (auto kkv = yy.begin(), ke = yy.end(); kkv != ke; ++kkv)
             {
-                QJsonArray t = d["ChannelNames"].toArray();
-                for (int i = 0; i < t.size(); ++i)
-                    _vectorNames << t[i].toString();
+                int y = kkv.key().toUInt();
+                auto oo = kkv.value().toObject();
+                TimeStackedImageXP& xp = _value->addOne(x,y);
+                Registrable<TimeStackedImageXP> reg;
+                reg.setValuePointer(&xp);
+//                 qDebug() << x << y << oo["Data"];
+                reg.read(oo);
+//               _plate[x][y] = xp;
             }
 
         }
@@ -1622,7 +1647,7 @@ public:
     virtual void storeJson(QJsonObject json)
     {
 
-
+        return _value->storeJson(json);
     }
 
 

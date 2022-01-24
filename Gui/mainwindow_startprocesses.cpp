@@ -470,11 +470,14 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
         // Group again the data from the plate
         QMap<QString, QList<SequenceFileModel*> > plates;
+        QString project;
         foreach (SequenceFileModel* sfm, lsfm)
         {
             if (sfm->getOwner())
             {
                 QString s = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
+                if (project.isEmpty())
+                    project = sfm->getOwner()->property("project");
                 xps.insert(s);
             }
             plates[sfm->getOwner()->name()] << sfm;
@@ -483,7 +486,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
        for (auto & kv: plates)
        {
-           QJsonArray ar;
+           QJsonArray ar, tp;
            for (auto& sfm: kv)
            {
                // Convert to json...
@@ -493,16 +496,22 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
                if (ar.isEmpty())
                    for (auto & a: images)
-                       ar.append(QJsonObject());
+                   {
+                       ar.append(objR); // copy the reference object
+                       tp.append(QJsonObject());
+                   }
 
                for (int i = 0; i < images.size(); ++i)
                {
-                   QJsonObject par_obj = ar[i].toObject();
-                   if (!par_obj.contains("Plate")) par_obj["Plate"] = QJsonObject();
+                   QJsonObject obj = tp[i].toObject();
+                   QJsonObject oo = ar[i].toObject();
 
-                   if (!par_obj.contains("DataHash"))
-                       par_obj["DataHash"] = sfm->getOwner()->hash();
-                   QJsonObject obj = par_obj["Plate"].toObject();
+//                   if (!par_obj.contains("Plate")) par_obj["Plate"] = QJsonObject();
+
+                   if (!oo.contains("DataHash"))
+                       oo["DataHash"] = sfm->getOwner()->hash();
+
+//                   QJsonObject obj = par_obj["Plate"].toObject();
 
                    auto p = sfm->pos();
                    QString x = QString("%1").arg(p.x()),
@@ -519,15 +528,29 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                        obj[x] = t;
                    }
 
-                   par_obj["Plate"]=obj;
+                   QJsonArray params = objR["Parameters"].toArray();
+                   for (int i = 0; i < params.size(); ++i)
+                   {
+                       auto oo = params[i].toObject();
+                       if (oo.contains("ContentType") && oo["ContentType"].toString()=="Image")
+                       {
+                           oo["Data"]=obj;
+                           params.replace(i, oo);
+                       }
+                   }
 
-                   ar.replace(i, par_obj);
+                   oo["Parameters"]=params;
+
+                   ar.replace(i, oo);
+                   tp.replace(i, obj);
                }
            }
+
            static int crypto_offset = 0;
            for (int i = 0; i < ar.size(); ++i)
            {
                auto obj = ar.at(i).toObject();
+
                QByteArray arr;
                arr += (QString("%1").arg(crypto_offset)).toLatin1();
                arr += QCborValue::fromJsonValue(obj).toByteArray();//QJsonDocument(obj).toBinaryData();
@@ -537,6 +560,13 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
 
                obj["CoreProcess_hash"] = QString(hash.toHex());
+
+               obj["ProcessStartId"] = StartId;
+               obj["Project"] = project;
+
+               obj["Pos"]="A01"; // Force return pos to be A01
+               obj["CommitName"] = _commitName->text();
+
 
                crypto_offset ++;
 

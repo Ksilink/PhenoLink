@@ -926,8 +926,9 @@ QStringList CheckoutProcess::users()
 {
     QStringList users, del;
     status_protect.lock();
+
     for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
-        if (it.value().size())
+        if (it.value().size() > 0)
             users << it.key();
         else
             del << it.key();
@@ -941,7 +942,7 @@ QStringList CheckoutProcess::users()
 void CheckoutProcess::removeRunner(QString user, void *run) {
     status_protect.lock();
     _peruser_runners[user].removeOne(run);
-    if (_peruser_runners.empty())
+    if (_peruser_runners[user].isEmpty())
         _peruser_runners.remove(user);
     status_protect.unlock();
 }

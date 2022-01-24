@@ -203,7 +203,7 @@ void StackedImage::loadFromJSON(QJsonObject data)
     //        qDebug() << "LoadFromJSON not implemented for StackedImage";
 }
 
-cv::Mat StackedImage::getImage(size_t i, int chann)
+cv::Mat StackedImage::getImage(size_t i, size_t chann)
 {
     if (_loaded) return (*this)[i];
 
@@ -214,7 +214,7 @@ cv::Mat StackedImage::getImage(size_t i, int chann)
         else
         {
             cv::Mat spl;
-            cv::extractChannel(images[i], spl, chann);
+            cv::extractChannel(images[i], spl, (int)chann);
             return spl;
         }
     }
@@ -224,7 +224,7 @@ cv::Mat StackedImage::getImage(size_t i, int chann)
     QJsonObject ob = times.at((int)i).toObject();
     QJsonArray chans = ob["Data"].toArray();
 
-    return loadImage(chans, chann);
+    return loadImage(chans, (int)chann);
 }
 
 size_t StackedImage::getChannelCount()
@@ -244,7 +244,7 @@ TimeStackedImage::TimeStackedImage(): _loaded(true) {}
 
 size_t TimeStackedImage::count()
 {
-    return _count;
+    return _times.size();
 }
 
 StackedImage &TimeStackedImage::operator[](size_t i)
@@ -296,6 +296,8 @@ void TimeStackedImage::deallocate()
         //foreach(StackedImage& mat, _times)
         _times[i].deallocate();
 }
+
+
 
 
 void ImageXP::loadFromJSON(QJsonObject data)
@@ -383,8 +385,6 @@ void TimeImageXP::loadFromJSON(QJsonObject data)
 
 QString TimeImageXP::basePath(QJsonObject json)
 {
-    Q_UNUSED(json);
-
     QJsonArray stack =    _data["Data"].toArray();
     QJsonObject ob = stack.first().toObject();
     TimeImage im;
@@ -493,7 +493,7 @@ TimeStackedImageXP::TimeStackedImageXP() : _loaded(false) {}
 
 size_t TimeStackedImageXP::count()
 {
-    return _count;
+    return _xp.size();
 }
 
 TimeStackedImage &TimeStackedImageXP::operator[](size_t i)
@@ -548,51 +548,55 @@ void TimeStackedImageXP::deallocate()
 }
 
 
+
 size_t WellPlate::countX()
 {
-    return _plate.size();
+    return _plate.lastKey();
 }
 
 size_t WellPlate::countY()
 {
     size_t r = 0;
-    for (std::map<unsigned, std::map<unsigned, TimeStackedImageXP> >::iterator it = _plate.begin(), e  = _plate.end(); it != e; ++it)
-    {
-        r = std::max(it->second.size(), r);
+    for (QMap<size_t, QMap<size_t, TimeStackedImageXP> >::iterator it = _plate.begin(), e  = _plate.end(); it != e; ++it)
+     {
+        r = std::max((size_t)(it.value().lastKey()), r);
     }
     return r;
 }
 
-bool WellPlate::exists(unsigned i, unsigned j)
+bool WellPlate::exists(size_t i, size_t j)
 {
     return (_plate.count(i) > 0) && (_plate[i].count(j) > 0);
 }
 
-TimeStackedImageXP &WellPlate::operator()(unsigned i, unsigned j)
+TimeStackedImageXP &WellPlate::operator()(size_t i, size_t j)
 {
     return _plate[i][j];
+}
+
+void WellPlate::storeJson(QJsonObject json)
+{
+    this->_data = json;
 }
 
 void WellPlate::loadFromJSON(QJsonObject data)
 {
     Q_UNUSED(data);
 
-    auto pl = data["Plate"].toObject();
+    auto pl = data["Data"].toObject();
     for (auto kv = pl.begin(), e = pl.end(); kv != e; ++kv)
     {
-        int x = kv.key().toInt();
+        int x = kv.key().toUInt();
         auto yy = kv.value().toObject();
         for (auto kkv = yy.begin(), ke = yy.end(); kkv != ke; ++kkv)
         {
-            int y = kkv.key().toInt();
+            int y = kkv.key().toUInt();
             auto oo = kkv.value().toObject();
             TimeStackedImageXP xp;
             xp.loadFromJSON(oo);
            _plate[x][y] = xp;
         }
-
     }
-
 }
 
 QString WellPlate::basePath(QJsonObject json)
@@ -607,9 +611,9 @@ QString WellPlate::basePath(QJsonObject json)
 
 void WellPlate::deallocate()
 {
-    for (std::map<unsigned, std::map<unsigned, TimeStackedImageXP> >::iterator it = _plate.begin(), e  = _plate.end(); it != e; ++it)
+    for (QMap<size_t, QMap<size_t, TimeStackedImageXP> >::iterator it = _plate.begin(), e  = _plate.end(); it != e; ++it)
     {
-        for (std::map<unsigned, TimeStackedImageXP>::iterator sit = it->second.begin(), se  = it->second.end(); sit != se; ++sit)
-            sit->second.deallocate();
+        for (QMap<size_t, TimeStackedImageXP>::iterator sit = it.value().begin(), se  = it.value().end(); sit != se; ++sit)
+            sit.value().deallocate();
     }
 }

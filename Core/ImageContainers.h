@@ -62,9 +62,10 @@ class DllCoreExport StackedImage: public ImageContainer
 {
 public:
     virtual void loadFromJSON(QJsonObject data);
-    virtual cv::Mat getImage(size_t i, int chann);
+    virtual cv::Mat getImage(size_t i, size_t chann);
     virtual QString basePath(QJsonObject json);
     virtual size_t getChannelCount();
+
 
 };
 
@@ -86,6 +87,12 @@ public:
     StackedImage getImage(size_t i);
 
     virtual void  deallocate();
+    inline StackedImage& addOne() {
+        int l = (int)_times.size();
+        _times.resize(l+1);
+        return _times[l];
+    }
+
 
 protected:
     std::vector<StackedImage> _times;
@@ -151,6 +158,7 @@ public:
     virtual size_t getChannelCount();
     virtual void  deallocate();
 
+
 protected:
     std::vector<StackedImage> _xp;
 
@@ -176,6 +184,13 @@ public:
     TimeStackedImage getImage(size_t i );
 
     virtual void  deallocate();
+    inline TimeStackedImage& addOne(){
+        int l = (int)_xp.size() ;
+        _xp.resize(l + 1);
+        return _xp[l];
+    }
+
+
 protected:
     std::vector<TimeStackedImage> _xp;
 
@@ -193,16 +208,22 @@ public:
 
     size_t countY();
 
-    bool exists(unsigned i, unsigned j);
+    bool exists(size_t i, size_t j);
 
-    TimeStackedImageXP& operator()(unsigned i, unsigned j);
+    TimeStackedImageXP& operator()(size_t i, size_t j);
 
+    inline TimeStackedImageXP& addOne(size_t i, size_t j)
+    { return _plate[i][j]; }
+
+
+
+    virtual void storeJson(QJsonObject json);
     virtual void loadFromJSON(QJsonObject data);
     virtual QString basePath(QJsonObject json);
     virtual void  deallocate();
 protected:
     QJsonObject _data; // This is of no real use for the plugins but necessary for the handler (may it should be put as an opaque object)
-    std::map<unsigned, std::map<unsigned, TimeStackedImageXP> > _plate;
+    QMap<size_t, QMap<size_t, TimeStackedImageXP> > _plate;
 
 };
 
