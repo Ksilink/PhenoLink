@@ -73,7 +73,7 @@ QStringList CheckoutProcess::pluginPaths(bool withVersion)
         if (plugin)
         {
             l << (withVersion ?
-                     QString("%1 - %2 (%3)").arg(plugin->getPath(), plugin->plugin_version(), plugin->buildTime())
+                     QString("%1 - %2 (%3 - last git %4)").arg(plugin->getPath(), plugin->plugin_version(), plugin->buildTime(), plugin->gitTime())
                      :
                      plugin->getPath() );
         }
