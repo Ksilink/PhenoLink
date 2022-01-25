@@ -394,6 +394,7 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
     qDebug() << "Remaining unstarted processes" << _process_to_start.size()
              << QThreadPool::globalInstance()->activeThreadCount()
              << QThreadPool::globalInstance()->maxThreadCount();
+
     CheckoutProcessPluginInterface* plugin = _plugins[process];
     if (plugin)
     {
@@ -407,14 +408,15 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
 
 
             //  qDebug() << "Starting process" << process << params;
-
             // - 1) clone the plugin: call the clone() function
+
             plugin = plugin->clone();
             if (!plugin)
             {
                 qDebug() << "Plugin cannot be cloned";
                 break;
             }
+
             //params["StartTime"] = QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz");
 
             QString hash = params["Process_hash"].toString();

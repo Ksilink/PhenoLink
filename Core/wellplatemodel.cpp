@@ -1733,7 +1733,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
     MetaDataHandler handler;
     QStringList fieldLevelMeta = QStringList() << "HorizontalPixelDimension" << "VerticalPixelDimension" << "X" << "Y";
     QStringList searchingMeta;
-    for (auto x : metaData)
+    for (auto& x : metaData)
         if (!fieldLevelMeta.contains(x))
             handler.metaData << x;
         else
@@ -1744,11 +1744,6 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
 
     if (asVectorImage)
     {
-        if (imageType == "WellPlate")
-        {
-            qDebug() << "Should Prepare the data for WellPlate & Vector Image";
-            return res;
-        }
         if (imageType.contains("XP"))
         {
             QJsonArray data;
@@ -1804,13 +1799,6 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
     }
     else
     {
-
-        if (imageType == "WellPlate")
-        {
-            qDebug() << "Should Prepare the data for WellPlate & Single Channel";
-            return res;
-        }
-
 
         if (imageType.contains("XP"))
         {

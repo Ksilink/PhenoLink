@@ -28,7 +28,9 @@ struct InputImageMetaData
     {
         QJsonObject o;
 
+        if (!hash.isEmpty())
         o["DataHash"]=hash;
+        if (!pos.isEmpty())
         o["Pos"]=pos;
         o["zPos"]=zPos;
         o["FieldId"] = fieldId;
@@ -84,6 +86,7 @@ public:
 
     virtual QString plugin_version() const { return "" ; }
     virtual QString buildTime() const { return QString(); };
+    virtual QString gitTime() const { return GitPluginDate; };
 
     // This function is to be called in plugins constructors to declare to the handler what data is required as input
     // value is the plugin registered parameter

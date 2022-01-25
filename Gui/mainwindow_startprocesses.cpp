@@ -465,7 +465,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
     bool asVectorImage = isVectorImageAndImageType(objR, imgType, metaData);
 
-    if (imgType == "WellPlate")
+    if (imgType.startsWith("WellPlate") )
     { // adjust the procArray !
 
         // Group again the data from the plate
@@ -490,13 +490,14 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
            for (auto& sfm: kv)
            {
                // Convert to json...
-               QList<QJsonObject>  images = sfm->toJSON("TimeStackedImageXP", asVectorImage, selectedChanns, metaData);
+               QList<QJsonObject>  images = sfm->toJSON(QString("TimeStackedImage%1").arg(imgType.endsWith("XP") ? "XP" : ""), asVectorImage, selectedChanns, metaData);
 
                // if asVectorImage is true we just have one data in images.size()
 
                if (ar.isEmpty())
                    for (auto & a: images)
                    {
+                       Q_UNUSED(a);
                        ar.append(objR); // copy the reference object
                        tp.append(QJsonObject());
                    }
@@ -506,12 +507,8 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                    QJsonObject obj = tp[i].toObject();
                    QJsonObject oo = ar[i].toObject();
 
-//                   if (!par_obj.contains("Plate")) par_obj["Plate"] = QJsonObject();
 
-                   if (!oo.contains("DataHash"))
-                       oo["DataHash"] = sfm->getOwner()->hash();
 
-//                   QJsonObject obj = par_obj["Plate"].toObject();
 
                    auto p = sfm->pos();
                    QString x = QString("%1").arg(p.x()),
@@ -532,6 +529,14 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                    for (int i = 0; i < params.size(); ++i)
                    {
                        auto oo = params[i].toObject();
+                       oo["DataHash"] =  sfm->getOwner()->hash();
+                       oo["Pos"]="A01";
+                       oo["FieldId"]= imgType.contains("XP") ? 0 : int(i % sfm->getFieldCount());
+                       oo["TimePos"]=0;
+                       oo["zPos"]=0;
+                       if (!asVectorImage)
+                           oo["Channels"]=i;
+
                        if (oo.contains("ContentType") && oo["ContentType"].toString()=="Image")
                        {
                            oo["Data"]=obj;
@@ -540,6 +545,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                    }
 
                    oo["Parameters"]=params;
+                   oo["DataHash"] = sfm->getOwner()->hash();
 
                    ar.replace(i, oo);
                    tp.replace(i, obj);
@@ -567,7 +573,6 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                obj["Pos"]="A01"; // Force return pos to be A01
                obj["CommitName"] = _commitName->text();
 
-
                crypto_offset ++;
 
                procArray << obj;
@@ -575,9 +580,12 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
        }
 
+       _StatusProgress->setMinimum(0);
+       _StatusProgress->setMaximum(procArray.size());
+       _StatusProgress->setValue(0);
+
        QJsonDocument d(procArray.first().toObject());
 
-       qDebug() << d;
 
        stored=procArray.first().toObject();
 
@@ -597,11 +605,8 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
             if (count == 0  && tmp.size())
             {
                 QJsonDocument d(tmp[0].toObject());
-                if (deb)
-                    qDebug() << d;
                 stored=tmp[0].toObject();
 
-                deb = false;
             }
             if (sfm && sfm->getOwner())
                 adapt[sfm->getOwner()->name()] += tmp.size();
@@ -637,14 +642,8 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
 
     QDir dir(set.value("databaseDir").toString());
-    //  dir.mkpath(set.value("databaseDir").toString() +st);
 
-    // 20201210: Large behaviour change
-    // Now: Assuming the following reordering:
-    // dir + {tag.project} + Checkout_Results/ + prefix + / PlateName + .csv
-    // If file exists move previous file with a post_fix info
-    QString writePath = QString("%1/%2/Checkout_Results/").arg(dir.absolutePath())
-            .arg(lsfm[0]->getOwner()->property("project"))
+    QString writePath = QString("%1/%2/Checkout_Results/").arg(dir.absolutePath(), lsfm[0]->getOwner()->property("project"))
             ;
 
     dir.mkpath(writePath + st);
@@ -918,9 +917,9 @@ void MainWindow::startProcessRun()
 
     process_starttime = QDateTime::currentDateTime();
 
-    qDebug() << "Starting" << lsfm.size() << "# of processes" << process_starttime.toString("yyyyMMdd hh:mm:ss.z");
+    qDebug() << "Wells to process" << lsfm.size() << " - "<< process_starttime.toString("yyyyMMdd hh:mm:ss.zzz");
 
-    this->statusBar()->showMessage(QString("Starting %1 processes %2").arg(lsfm.size()).arg(process_starttime.toString("yyyyMMdd hh:mm:ss.z")));
+    this->statusBar()->showMessage(QString("Wells to process %1 - %2").arg(lsfm.size()).arg(process_starttime.toString("yyyyMMdd hh:mm:ss.z")));
 
     // Start the computation.
     if (!_StatusProgress)

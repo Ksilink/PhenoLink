@@ -611,11 +611,15 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
 
     QString commitName = ds["CommitName"].toString();
 
+
+
     if (ds.contains("Data"))
     {
         auto arr = ds["Data"].toArray();
         for (auto itd : arr)
         {
+
+
             auto obj = itd.toObject();
             //  qDebug() << "Filtering" << obj["Tag"] << obj;
             if (obj["Data"].toString() == "Image results" && obj.contains("Payload"))
@@ -647,6 +651,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                     }
                 QString dhash;
 
+                if (ds.contains("DataHash"))  dhash = ds["DataHash"].toString();
                 if (obj.contains("Meta"))
                 {
                     auto met = obj["Meta"].toArray()[0].toObject();
@@ -655,9 +660,12 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                     for (auto s: txt)
                         if (met.contains(s))
                         {
+                            qDebug() << "Meta" << s << met[s];
                             ob.insert(QCborValue(s), QCborValue::fromJsonValue(met[s]));
                         }
-                    dhash = met["DataHash"].toString();
+                    if (met.contains("DataHash"))
+                        dhash = met["DataHash"].toString();
+
                 }
                 else
                 {

@@ -549,6 +549,101 @@ void TimeStackedImageXP::deallocate()
 
 
 
+size_t WellPlateXP::countX()
+{
+    return _plate.lastKey();
+}
+
+size_t WellPlateXP::countY()
+{
+    size_t r = 0;
+    for (QMap<size_t, QMap<size_t, TimeStackedImageXP> >::iterator it = _plate.begin(), e  = _plate.end(); it != e; ++it)
+     {
+        r = std::max((size_t)(it.value().lastKey()), r);
+    }
+    return r;
+}
+
+bool WellPlateXP::exists(size_t i, size_t j)
+{
+    return (_plate.count(i) > 0) && (_plate[i].count(j) > 0);
+}
+
+TimeStackedImageXP &WellPlateXP::operator()(size_t i, size_t j)
+{
+    return _plate[i][j];
+}
+
+size_t WellPlateXP::getChannelCount()
+{
+    for (size_t x = 0; x < countX(); ++x)
+        for (size_t y = 0; y < countY(); ++y)
+            if (exists(x,y))
+            {
+                TimeStackedImageXP& well = _plate[x][y];
+                for (size_t field = 0; field < well.count(); ++field)
+                {
+                    TimeStackedImage& timestack = well[field];
+                    for (size_t time = 0; time < timestack.count(); ++time)
+                    {
+                        StackedImage& stack = timestack[time];
+                        for (size_t z = 0; z < stack.count(); ++z)
+                            return stack.getChannelCount();
+                    }
+                }
+            }
+    return 0;
+}
+
+void WellPlateXP::storeJson(QJsonObject json)
+{
+    this->_data = json;
+}
+
+void WellPlateXP::loadFromJSON(QJsonObject data)
+{
+    Q_UNUSED(data);
+
+    auto pl = data["Data"].toObject();
+    for (auto kv = pl.begin(), e = pl.end(); kv != e; ++kv)
+    {
+        int x = kv.key().toUInt();
+        auto yy = kv.value().toObject();
+        for (auto kkv = yy.begin(), ke = yy.end(); kkv != ke; ++kkv)
+        {
+            int y = kkv.key().toUInt();
+            auto oo = kkv.value().toObject();
+            TimeStackedImageXP xp;
+            xp.loadFromJSON(oo);
+            _plate[x][y] = xp;
+        }
+    }
+}
+
+QString WellPlateXP::basePath(QJsonObject json)
+{
+    Q_UNUSED(json);
+    //    QDir dir(data.first().toString());
+    //    return dir.dirName();
+
+
+    return QString();
+}
+
+void WellPlateXP::deallocate()
+{
+    for (QMap<size_t, QMap<size_t, TimeStackedImageXP> >::iterator it = _plate.begin(), e  = _plate.end(); it != e; ++it)
+    {
+        for (QMap<size_t, TimeStackedImageXP>::iterator sit = it.value().begin(), se  = it.value().end(); sit != se; ++sit)
+            sit.value().deallocate();
+    }
+}
+
+
+
+
+
+
 size_t WellPlate::countX()
 {
     return _plate.lastKey();
@@ -557,7 +652,7 @@ size_t WellPlate::countX()
 size_t WellPlate::countY()
 {
     size_t r = 0;
-    for (QMap<size_t, QMap<size_t, TimeStackedImageXP> >::iterator it = _plate.begin(), e  = _plate.end(); it != e; ++it)
+    for (auto it = _plate.begin(), e  = _plate.end(); it != e; ++it)
      {
         r = std::max((size_t)(it.value().lastKey()), r);
     }
@@ -569,9 +664,26 @@ bool WellPlate::exists(size_t i, size_t j)
     return (_plate.count(i) > 0) && (_plate[i].count(j) > 0);
 }
 
-TimeStackedImageXP &WellPlate::operator()(size_t i, size_t j)
+TimeStackedImage &WellPlate::operator ()(size_t i, size_t j)
 {
     return _plate[i][j];
+}
+
+size_t WellPlate::getChannelCount()
+{
+    for (size_t x = 0; x < countX(); ++x)
+        for (size_t y = 0; y < countY(); ++y)
+            if (exists(x,y))
+            {
+                TimeStackedImage& timestack = _plate[x][y];
+                for (size_t time = 0; time < timestack.count(); ++time)
+                {
+                    StackedImage& stack = timestack[time];
+                    for (size_t z = 0; z < stack.count(); ++z)
+                        return stack.getChannelCount();
+                }
+            }
+    return 0;
 }
 
 void WellPlate::storeJson(QJsonObject json)
@@ -592,9 +704,9 @@ void WellPlate::loadFromJSON(QJsonObject data)
         {
             int y = kkv.key().toUInt();
             auto oo = kkv.value().toObject();
-            TimeStackedImageXP xp;
+            TimeStackedImage xp;
             xp.loadFromJSON(oo);
-           _plate[x][y] = xp;
+            _plate[x][y] = xp;
         }
     }
 }
@@ -602,8 +714,8 @@ void WellPlate::loadFromJSON(QJsonObject data)
 QString WellPlate::basePath(QJsonObject json)
 {
     Q_UNUSED(json);
-//    QDir dir(data.first().toString());
-//    return dir.dirName();
+    //    QDir dir(data.first().toString());
+    //    return dir.dirName();
 
 
     return QString();
@@ -611,9 +723,10 @@ QString WellPlate::basePath(QJsonObject json)
 
 void WellPlate::deallocate()
 {
-    for (QMap<size_t, QMap<size_t, TimeStackedImageXP> >::iterator it = _plate.begin(), e  = _plate.end(); it != e; ++it)
+    for (QMap<size_t, QMap<size_t, TimeStackedImage> >::iterator it = _plate.begin(), e  = _plate.end(); it != e; ++it)
     {
-        for (QMap<size_t, TimeStackedImageXP>::iterator sit = it.value().begin(), se  = it.value().end(); sit != se; ++sit)
+        for (QMap<size_t, TimeStackedImage>::iterator sit = it.value().begin(), se  = it.value().end(); sit != se; ++sit)
             sit.value().deallocate();
     }
 }
+

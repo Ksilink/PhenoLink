@@ -200,7 +200,40 @@ protected:
 };
 
 
+
 class DllCoreExport WellPlate
+{
+public:
+
+    size_t countX();
+
+    size_t countY();
+
+    bool exists(size_t i, size_t j);
+
+    TimeStackedImage& operator()(size_t i, size_t j);
+
+    inline TimeStackedImage& addOne(size_t i, size_t j)
+    { return _plate[i][j]; }
+
+
+
+    size_t getChannelCount();
+
+    virtual void storeJson(QJsonObject json);
+    virtual void loadFromJSON(QJsonObject data);
+    virtual QString basePath(QJsonObject json);
+    virtual void  deallocate();
+protected:
+    QJsonObject _data; // This is of no real use for the plugins but necessary for the handler (may it should be put as an opaque object)
+    QMap<size_t, QMap<size_t, TimeStackedImage> > _plate;
+
+};
+
+
+
+
+class DllCoreExport WellPlateXP
 {
 public:
 
@@ -216,6 +249,8 @@ public:
     { return _plate[i][j]; }
 
 
+
+    size_t getChannelCount();
 
     virtual void storeJson(QJsonObject json);
     virtual void loadFromJSON(QJsonObject data);

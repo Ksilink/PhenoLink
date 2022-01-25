@@ -20,7 +20,8 @@ public:
     enum ContentType { Image, Roi_cv_stats, Roi_rect, Histogram };
 
 
-    RegistrableImageParent() : _vectorImage(false), _splitted(false), _withMeta(false), _autoload(true), _unbias(0), _tiles(0), _content_type(Image)
+    RegistrableImageParent() : _vectorImage(false), _splitted(false), _singleField(false),
+        _withMeta(false), _autoload(true), _unbias(0), _tiles(0), _content_type(Image)
     {
     }
 
@@ -29,6 +30,12 @@ public:
     {
         _vectorImage = true;
         _splitted = splitted;
+        return *this;
+    }
+
+    Self& singleField()
+    {
+        _singleField = true;
         return *this;
     }
 
@@ -41,7 +48,7 @@ public:
             {
                 if (!ob[ks].toString().isEmpty())
                 {
-//                    qDebug() << "Property" << prefix << ks << ob[ks].toString();
+                    //                    qDebug() << "Property" << prefix << ks << ob[ks].toString();
                     _metaData[prefix + ks] = ob[ks].toString();
                 }
             }
@@ -57,6 +64,9 @@ public:
 
         if (json.contains("splitted"))
             _splitted = json["splitted"].toBool();
+
+        if (json.contains("singleField"))
+            _singleField = json["singleField"].toBool();
 
         if (json.contains("unbias"))
             _unbias = json["unbias"].toBool();
@@ -87,6 +97,9 @@ public:
         json["isImage"] = true;
         json["asVectorImage"] = _vectorImage;
         if (_splitted) json["splitted"] = true;
+        if (_singleField)
+            json["singleField"] = true;
+
         json["unbias"] = _unbias; // Tells the client to send the bias field data
         json["tiled"] = (int)_tiles; // Tells the client to send the 8 sided images to be loaded as tiled data !
 
@@ -211,7 +224,7 @@ public:
 protected:
     Colormap _colormap;
 
-    bool        _vectorImage, _splitted;
+    bool        _vectorImage, _splitted, _singleField;
     bool        _withMeta;
     bool        _autoload;
     bool        _unbias;
@@ -282,8 +295,8 @@ public:
         { //qDebug() << "Empty image !!!!";
             return;
         }
-//      qDebug() << "Finishing Registered images" << _value->rows << _value->cols  << _value->channels();
-//        _value.
+        //      qDebug() << "Finishing Registered images" << _value->rows << _value->cols  << _value->channels();
+        //        _value.
         if (this->_isProduct && this->_isFinished)
         {
             if (this->_isOptional && this->_optionalDefault != true)
@@ -453,8 +466,8 @@ public:
         { //qDebug() << "Empty image !!!!";
             return;
         }
-//      qDebug() << "Finishing Registered images" << _value->rows << _value->cols  << _value->channels();
-//        _value.
+        //      qDebug() << "Finishing Registered images" << _value->rows << _value->cols  << _value->channels();
+        //        _value.
         if (this->_isProduct && this->_isFinished)
         {
             if (this->_isOptional && this->_optionalDefault != true)
@@ -1458,10 +1471,10 @@ public:
             auto d = data.at(i).toObject();
             setProperties(d, QString("f%1").arg(i));
 
-             TimeStackedImage& tsi = _value->addOne();
-             Registrable<TimeStackedImage> reg;
-             reg.setValuePointer(&tsi);
-             reg.read(d);
+            TimeStackedImage& tsi = _value->addOne();
+            Registrable<TimeStackedImage> reg;
+            reg.setValuePointer(&tsi);
+            reg.read(d);
 
 
             if (_vectorNames.size() == 0 && d.contains("ChannelNames"))
@@ -1547,7 +1560,6 @@ protected:
     DataType* _value;
 };
 
-
 template <>
 class Registrable<WellPlate> : public RegistrableImageParent
 {
@@ -1584,23 +1596,28 @@ public:
     {
         RegistrableImageParent::read(json);
         setProperties(json);
-//        qDebug() << "DDD" << json;
+        //        qDebug() << "DDD" << json;
         auto pl = json["Data"].toObject();
-  //      qDebug() << pl ;
+
+        this->_hash=json["DataHash"].toString();;
+        bool ok;
+        //      qDebug() << pl ;
         for (auto kv = pl.begin(), e = pl.end(); kv != e; ++kv)
         {
-            int x = kv.key().toUInt();
+            int x = kv.key().toUInt(&ok); if (!ok) continue;
+
             auto yy = kv.value().toObject();
             for (auto kkv = yy.begin(), ke = yy.end(); kkv != ke; ++kkv)
             {
-                int y = kkv.key().toUInt();
+                int y = kkv.key().toUInt(&ok); if (!ok) continue;
+
                 auto oo = kkv.value().toObject();
-                TimeStackedImageXP& xp = _value->addOne(x,y);
-                Registrable<TimeStackedImageXP> reg;
+                TimeStackedImage& xp = _value->addOne(x,y);
+                Registrable<TimeStackedImage> reg;
                 reg.setValuePointer(&xp);
-//                 qDebug() << x << y << oo["Data"];
+                //                 qDebug() << x << y << oo["Data"];
                 reg.read(oo);
-//               _plate[x][y] = xp;
+                //               _plate[x][y] = xp;
             }
 
         }
@@ -1611,6 +1628,145 @@ public:
         RegistrableImageParent::write(json);
         json["DataHash"]=this->_hash;
         json["ImageType"] = QString("WellPlate");
+
+
+
+    }
+
+    virtual void loadImage(QJsonObject json)
+    {
+        _value->loadFromJSON(json);
+    }
+    virtual void applyBiasField(cv::Mat bias)
+    {
+        //        DataType& time = *_value;
+
+        //        for (size_t t = 0; t < im.count(); ++t)
+        //        {
+        //            StackedImage& im = time[t];
+        //            for (size_t i = 0; i < im.count(); ++i)
+        //            {
+        //                cv::Mat tmp;
+        //                cv::divide(im[i], bias, tmp);
+        //                cv::swap(tmp, *_value);
+        //            }
+        //        }
+
+        qDebug() << "Not implemented yet !!!";
+
+    }
+
+    virtual QString basePath(QJsonObject json)
+    {
+        return _value->basePath(json);
+    }
+
+    virtual void storeJson(QJsonObject json)
+    {
+
+        return _value->storeJson(json);
+    }
+
+
+    virtual void freeImage()
+    {
+        _value->deallocate();
+    }
+
+    virtual RegistrableParent* dup()
+    {
+        DataType* data = new DataType();
+        *data = *_value;
+
+        Self* s = new Self();
+        s->setValuePointer(data);
+
+        s->setTag(this->_tag);
+        s->setComment(this->_comment);
+        s->setHash(this->_hash);
+
+        return s;
+    }
+
+    virtual bool hasData(void* data) override
+    {
+        return _value == data;
+    }
+
+protected:
+
+    DataType* _value;
+};
+
+
+template <>
+class Registrable<WellPlateXP> : public RegistrableImageParent
+{
+public:
+    typedef Registrable<WellPlateXP> Self;
+    typedef WellPlateXP DataType;
+
+
+    Registrable() : RegistrableImageParent(), _value(nullptr)
+    {
+
+    }
+
+
+    DataType& value()
+    {
+        return *_value;
+    }
+
+    void setValue(DataType t)
+    {
+        _wasSet = true;
+        *_value = t;
+    }
+
+    Self& setValuePointer(DataType* v)
+    {
+        _value = v;
+        return *this;
+
+    }
+
+    virtual void read(const QJsonObject& json)
+    {
+        RegistrableImageParent::read(json);
+        setProperties(json);
+        //        qDebug() << "DDD" << json;
+        auto pl = json["Data"].toObject();
+
+        this->_hash=json["DataHash"].toString();;
+        bool ok;
+        //      qDebug() << pl ;
+        for (auto kv = pl.begin(), e = pl.end(); kv != e; ++kv)
+        {
+            int x = kv.key().toUInt(&ok); if (!ok) continue;
+
+            auto yy = kv.value().toObject();
+            for (auto kkv = yy.begin(), ke = yy.end(); kkv != ke; ++kkv)
+            {
+                int y = kkv.key().toUInt(&ok); if (!ok) continue;
+
+                auto oo = kkv.value().toObject();
+                TimeStackedImageXP& xp = _value->addOne(x,y);
+                Registrable<TimeStackedImageXP> reg;
+                reg.setValuePointer(&xp);
+                //                 qDebug() << x << y << oo["Data"];
+                reg.read(oo);
+                //               _plate[x][y] = xp;
+            }
+
+        }
+    }
+
+    virtual void write(QJsonObject& json) const
+    {
+        RegistrableImageParent::write(json);
+        json["DataHash"]=this->_hash;
+        json["ImageType"] = QString("WellPlateXP");
 
 
 
