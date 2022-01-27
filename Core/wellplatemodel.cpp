@@ -1406,7 +1406,10 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
     parent["Data"] = data;
     parent["Channels"] = chans;
     parent["ChannelNames"] = QJsonArray::fromStringList(this->getChannelNames());
-    parent["Channel"] = -1;
+    if (chans.size() == 1)
+        parent["Channel"] = chans.first();
+    else
+        parent["Channel"] = -1;
 
     QJsonObject props = getMeta(h);
     if (!props.isEmpty())
@@ -1606,6 +1609,7 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(Channel channe
             QJsonArray da; da.append(it.value());
             h.channel = it.key();
             parent["Channels"] = ch;
+            parent["Channel"] = it.key();
             parent["ChannelNames"] = QJsonArray::fromStringList(this->getChannelNames());
             parent["Data"] = da;
 
@@ -2394,7 +2398,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject& ob)
                         int t = payload.contains("Time") ? payload["Time"].toInt() : meta["TimePos"].toInt(),
                                 f = meta["FieldId"].toInt(),
                                 z = meta["zPos"].toInt(),
-                                ch = meta["channel"].toInt();
+                                ch = meta["Channel"].toInt();
 
                         int cc = datasizes.size() > 1 ? i + 1 : ch;
 
@@ -2489,7 +2493,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject& ob)
                         int t = payload.contains("Time") ? payload["Time"].toInt() : meta["TimePos"].toInt(),
                                 f = meta["FieldId"].toInt(),
                                 z = meta["zPos"].toInt(),
-                                ch = meta["channel"].toInt();
+                                ch = meta["Channel"].toInt();
 
                         int cc = datasizes.size() > 1 ? i + 1 : ch;
 
@@ -2610,7 +2614,7 @@ ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, Q
     int fieldId = data.take("FieldId").toInt(),
             timepoint = data.take("TimePos").toInt(),
             sliceId = data.take("zPos").toInt(),
-            channel = data.take("channel").toInt();
+            channel = data.take("Channel").toInt();
 
     data.take("hash");
     data.take("DataHash");
@@ -2757,8 +2761,9 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
                 int t = ob.value(QCborValue("TimePos")).toInteger(),
                         f = ob.value(QCborValue("FieldId")).toInteger(),
                         z = ob.value(QCborValue("zPos")).toInteger(),
-                        ch = ob.value(QCborValue("channel")).toInteger();
+                        ch = ob.value(QCborValue("Channel")).toInteger();
 
+                ch = ch <= 0 ? 1: ch;
                 int cc = datasizes.size() > 1 ? i + 1 : ch;
 
                 QString fname = QString(":/mem/%1_%2_%3_%4_T%5F%6Z%7C%8.png")
@@ -2856,7 +2861,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
                 int t = ob.value(QCborValue("TimePos")).toInteger(),
                         f = ob.value(QCborValue("FieldId")).toInteger(),
                         z = ob.value(QCborValue("zPos")).toInteger(),
-                        ch = ob.value(QCborValue("channel")).toInteger();
+                        ch = ob.value(QCborValue("Channel")).toInteger();
 
                 int cc = datasizes.size() > 1 ? i + 1 : ch;
 

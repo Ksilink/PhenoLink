@@ -134,6 +134,7 @@ protected:
 
     void overlayClearTags();
 
+    QJsonArray& adjustParameterFromWidget(SequenceFileModel *sfm, QJsonObject& im, QJsonArray& params, QJsonArray& bias);
 private slots:
     void deleteDirectoryPath();
     void on_loadSelection_clicked();

@@ -21,7 +21,7 @@ public:
 
 
     RegistrableImageParent() : _vectorImage(false), _splitted(false), _singleField(false),
-        _withMeta(false), _autoload(true), _unbias(0), _tiles(0), _content_type(Image), _channel(-1)
+        _withMeta(false), _autoload(true), _unbias(0), _tiles(0), _content_type(Image), _channel(1)
     {
     }
 
@@ -98,9 +98,7 @@ public:
         RegistrableParent::write(json);
         json["isImage"] = true;
         json["asVectorImage"] = _vectorImage;
-        if (_channel > 0)
-            json["Channel"] = _channel;
-
+        json["Channel"] = _channel;
         if (_splitted) json["splitted"] = true;
         if (_singleField)
             json["singleField"] = true;
@@ -131,11 +129,7 @@ public:
 
     }
 
-    Self& setChannel(int channel)
-    {
-        _channel = channel;
-        return *this;
-    }
+    void
 
     void setBiasFiles(QStringList bias)
     {

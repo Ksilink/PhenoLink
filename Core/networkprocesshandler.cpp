@@ -477,7 +477,7 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
                     if (obj["Meta"].isObject())
                         met = obj["Meta"].toObject();
 
-                    auto txt = QStringList() << "FieldId" << "Pos" << "TimePos" << "channel" << "zPos" << "DataHash";
+                    auto txt = QStringList() << "FieldId" << "Pos" << "TimePos" << "Channel" << "zPos" << "DataHash";
                     for (auto s: txt)
                         if (met.contains(s))
                         {
@@ -498,7 +498,7 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
         "FieldId" : -1,
         "Pos" : "C03",
         "TimePos" : 1,
-        "channel" : -1,
+        "Channel" : -1,
         "zPos" : 1
 }
     ],
@@ -605,7 +605,7 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
 QCborArray filterBinary(QString hash, QJsonObject ds)
 {
 
-    QString tmp = QJsonDocument(ds).toJson();
+//    QString tmp = QJsonDocument(ds).toJson();
 
     QCborArray res;
 
@@ -642,13 +642,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                 }
 
                 QCborMap ob;
-                auto txt = QStringList() << "ContentType" << "ImageType" << "ChannelNames"
-                                         << "Tag" ;
-                for (auto s: txt)
-                    if (obj.contains(s))
-                    {
-                        ob.insert(QCborValue(s), QCborValue::fromJsonValue(obj[s]));
-                    }
+
                 QString dhash;
 
                 if (ds.contains("DataHash"))  dhash = ds["DataHash"].toString();
@@ -656,11 +650,12 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                 {
                     auto met = obj["Meta"].toArray()[0].toObject();
                     auto txt = QStringList() << "FieldId" << "Pos" << "TimePos"
-                                             << "channel" << "zPos" << "DataHash" ;
+                                             << "Channel" << "zPos" ;
                     for (auto s: txt)
                         if (met.contains(s))
                         {
-                            qDebug() << "Meta" << s << met[s];
+                            if (met[s].isDouble() && met[s].toInt() < 0 )    continue;
+
                             ob.insert(QCborValue(s), QCborValue::fromJsonValue(met[s]));
                         }
                     if (met.contains("DataHash"))
@@ -674,6 +669,15 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                             << obj;
                     continue;
                 }
+
+                auto txt = QStringList() << "ContentType" << "ImageType" << "ChannelNames" << "Channel"
+                                         << "Tag" << "Pos";
+                for (auto& s: txt)
+                    if (obj.contains(s))
+                    {
+                        ob.insert(QCborValue(s), QCborValue::fromJsonValue(obj[s]));
+                    }
+
                 //                qDebug() << "Ready data" << ob.toJsonObject();
                 // Now add Image info:
                 auto ps = obj["Payload"].toArray();

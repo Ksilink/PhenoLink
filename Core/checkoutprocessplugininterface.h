@@ -29,13 +29,18 @@ struct InputImageMetaData
         QJsonObject o;
 
         if (!hash.isEmpty())
-        o["DataHash"]=hash;
+            o["DataHash"]=hash;
         if (!pos.isEmpty())
-        o["Pos"]=pos;
-        o["zPos"]=zPos;
-        o["FieldId"] = fieldId;
-        o["TimePos"] = TimePos;
-        o["channel"] = channel;
+            o["Pos"]=pos;
+        if (zPos >= 0)
+            o["zPos"]=zPos;
+        if (fieldId >= 0)
+            o["FieldId"] = fieldId;
+        if (TimePos >= 0)
+            o["TimePos"] = TimePos;
+        if (channel >= 0)
+            o["Channel"] = channel;
+
         o["CommitName"] = commitName;
 
 
@@ -218,6 +223,51 @@ public:
         return _callParams["CommitName"].toString();
     }
 
+protected:
+    QString recurseSearch(QJsonObject ob, QString key)
+    {
+        if (ob.contains(key) && ob[key].toInt() != -1)
+            return QString("%1").arg(ob[key].toInt());
+
+        for (auto i = ob.begin(), e = ob.end(); i != e; ++i)
+        {
+            if (i->isObject())
+            {
+                QString t = recurseSearch(i->toObject(), key);
+                if (!t.isEmpty())
+                    return t;
+            }
+            if (i->isArray())
+            {
+                auto a = i->toArray();
+                for (int i = 0; i < a.size(); ++i)
+                {
+                    QString t = recurseSearch(a.at(i).toObject(), key);
+                    if (!t.isEmpty())
+                        return t;
+                }
+            }
+        }
+        return QString();
+    }
+public:
+
+    QString getParams(QString p)
+    {
+        if (_callParams.contains(p))
+        {
+            if (_callParams[p].isDouble())
+                return QString("%1").arg(_callParams[p].toInt());
+
+            return _callParams[p].toString();
+        }
+
+        QString t = recurseSearch(_callParams, p);
+
+        if (t.isEmpty())
+            qDebug() << "Parameter" << p << "Not found";
+        return t;
+    }
 
     cv::Mat& getBiasField(int i)
     { // "datahash"

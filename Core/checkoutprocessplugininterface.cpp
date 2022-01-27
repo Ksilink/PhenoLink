@@ -76,12 +76,24 @@ int getKeyFromJSON(QString key, QJsonObject ob)
     int min = std::numeric_limits<int>::max();
     if (ob.contains("Data"))
     {
-        QJsonArray arr = ob["Data"].toArray();
-        min = getKeyFromJSON(key, arr.at(0).toObject());
-        for (int i = 1; i < arr.size(); ++i)
+        if (ob["Data"].isArray())
         {
-            int v = getKeyFromJSON(key, arr.at(i).toObject());
-            if  (v != min) v = -1;
+            QJsonArray arr = ob["Data"].toArray();
+            min = getKeyFromJSON(key, arr.at(0).toObject());
+            for (int i = 1; i < arr.size(); ++i)
+            {
+                int v = getKeyFromJSON(key, arr.at(i).toObject());
+                if  (v != min) min = -1;
+            }
+        }
+        else if (ob["Data"].isObject())
+        {
+            QJsonObject obj = ob["Data"].toObject();
+            for (auto i = obj.begin(), e = obj.end(); i != e; ++i)
+            {
+                int v = getKeyFromJSON(key, i.value().toObject());
+                if (v != min) min = -1;
+            }
         }
     }
     if (ob.contains(key))
@@ -159,7 +171,7 @@ void CheckoutProcessPluginInterface::prepareData()
         QMutexLocker locker(&mutex);
         if (_meta.size())
         {
-//            qDebug() << "Expected to find data as input Please debug" << getPath();
+            //            qDebug() << "Expected to find data as input Please debug" << getPath();
             _hashtoBiasCount[_meta.first().hash]++;
         }
         else
@@ -308,10 +320,10 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     // qDebug() <<"Writing" << _results.size();
     // bool mem = _callParams["LocalRun"].toBool();
 
-     QString hash = _callParams["Process_hash"].toString();
-     bool isBatch = false;
-     if (_callParams.contains("BatchRun"))
-         isBatch = true;
+    QString hash = _callParams["Process_hash"].toString();
+    bool isBatch = false;
+    if (_callParams.contains("BatchRun"))
+        isBatch = true;
 
     int c=0;
     foreach (RegistrableParent* p, _results)
@@ -319,7 +331,7 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
         QJsonObject cobj;
 
         p->setFinished();
-//        p->keepInMem(mem);
+        //        p->keepInMem(mem);
         p->setHash(QString("%1%2").arg(hash).arg(c++));  // Set hash for results when live set result maps
 
 

@@ -255,107 +255,8 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
         // Need to fill the parameters with appropriate values
         QJsonArray params = obj["Parameters"].toArray(), bias;
 
-        for (int i = 0; i < params.size(); ++i )
-        { // First set the images up, so that it will match the input data
-            QJsonObject par = params[i].toObject();
 
-            if (par.contains("ImageType"))
-            {
-                foreach (QString j, im.keys())
-                    par.insert(j, im[j]);
-
-                if (par["Channels"].isArray() && bias.isEmpty())
-                {
-                    QJsonArray chs = par["Channels"].toArray();
-                    for (int j = 0; j < chs.size(); ++j)
-                    {
-                        int channel = chs[j].toInt();
-                        QString bias_file = sfm->property(QString("ShadingCorrectionSource_ch%1").arg(channel));
-                        bias.append(bias_file);
-                    }
-                }
-
-
-                par["bias"] = bias;
-                params.replace(i, par);
-            }
-
-        }
-
-        QJsonArray cchans;
-        for (int i = 0; i < params.size(); ++i )
-        {
-            QJsonObject par = params[i].toObject();
-            if (par["Channels"].isArray() && cchans.isEmpty())
-            {
-                cchans = par["Channels"].toArray();
-            }
-        }
-        //         qDebug() << "Found channels:" << cchans;
-        for (int i = 0; i < params.size(); ++i )
-        {
-            QJsonObject par = params[i].toObject();
-
-            QString tag = par["Tag"].toString();
-            //            qDebug() << par["Channels"].toArray().size() << par["PerChannelParameter"].toBool();
-            QList<QWidget*> wids = ui->processingArea->findChildren<QWidget*>(tag);
-
-            if (cchans.size() &&  par["PerChannelParameter"].toBool())
-            {
-                tag = QString("%1_%2").arg(par["Tag"].toString()).arg(cchans.first().toInt());
-                //                qDebug() << "Searching Tag" << tag << cchans.size() << cchans;
-                wids = ui->processingArea->findChildren<QWidget*>(tag);
-            }
-            if (wids.isEmpty() && par["PerChannelParameter"].toBool())
-            {
-                // qDebug() << cchans.size() << _channelsIds.values();
-                for (int i = 0; i < _channelsIds.size(); ++i)
-                {
-                    tag = QString("%1_%2").arg(par["Tag"].toString()).arg(i+1);
-                    auto l = ui->processingArea->findChildren<QWidget*>(tag);
-                    //                    qDebug() << "Searching Tag:" << tag << l.size();
-
-                    for (auto item: l)
-                        wids.append(item);
-                }
-                //                qDebug() << wids;
-            }
-
-            if (wids.empty()) {
-                //                qDebug() << "Searching " << tag << "Params not found";
-                continue;
-            }
-
-            std::sort(wids.begin(), wids.end(), sortWidgets);
-
-
-            foreach (QWidget* wid, wids)
-            {
-                //                qDebug() << par << wids;
-                getValue(wid, par, "Value", wids.size() > 1);
-            }
-            params.replace(i, par);
-
-            if (par.contains("Comment2"))
-            {
-                QList<QWidget*> wids = ui->processingArea->findChildren<QWidget*>(tag+"2");
-
-                if (wids.empty()) {
-                    continue;
-                }
-
-                std::sort(wids.begin(), wids.end(), sortWidgets);
-
-
-                foreach (QWidget* wid, wids)
-                    getValue(wid, par, "Value2", wids.size() > 1);
-                params.replace(i, par);
-            }
-
-        }
-
-
-        obj["Parameters"] = params;
+        obj["Parameters"] = adjustParameterFromWidget(sfm, im, params, bias);
 
         params = obj["ReturnData"].toArray();
         for (int i = 0; i < params.size(); ++i )
@@ -425,6 +326,150 @@ void MainWindow::startProcess()
     startProcessRun();
 }
 
+
+int recurseField(QJsonObject ob, QString key)
+{
+    int val = -1;
+    if (ob.contains(key))
+    {
+        if (ob[key].isArray())
+        {
+            if (ob[key].toArray().size() != 1)
+                val = -1;
+            val = ob[key].toArray().first().toInt();
+        }
+        val = ob[key].toInt();
+    }
+
+    for (auto it = ob.begin(), e = ob.end(); it != e; ++it)
+    {
+        int tmp = -1;
+        if (it.value().isObject())
+        {
+            tmp = recurseField(it.value().toObject(), key);
+            if (tmp != -1 && val == -1) val = tmp;
+            else
+                if (tmp != -1 && val != tmp) return -1;
+
+        }
+        if (it.value().isArray())
+            for (auto item : it.value().toArray())
+            {
+                tmp = recurseField(item.toObject(), key);
+                if (tmp != -1 && val == -1) val = tmp;
+                else
+                    if (tmp != -1 && val != tmp) return -1;
+            }
+    }
+    return val;
+}
+
+
+QJsonArray& MainWindow::adjustParameterFromWidget(SequenceFileModel* sfm, QJsonObject& im, QJsonArray& params, QJsonArray& bias)
+{
+    for (int i = 0; i < params.size(); ++i )
+    { // First set the images up, so that it will match the input data
+        QJsonObject par = params[i].toObject();
+
+        if (par.contains("ImageType"))
+        {
+            foreach (QString j, im.keys())
+                par.insert(j, im[j]);
+
+            if (par["Channels"].isArray() && bias.isEmpty())
+            {
+                QJsonArray chs = par["Channels"].toArray();
+                for (int j = 0; j < chs.size(); ++j)
+                {
+                    int channel = chs[j].toInt();
+                    QString bias_file = sfm->property(QString("ShadingCorrectionSource_ch%1").arg(channel));
+                    bias.append(bias_file);
+                }
+            }
+
+
+            par["bias"] = bias;
+            params.replace(i, par);
+        }
+
+    }
+    QJsonArray cchans;
+    for (int i = 0; i < params.size(); ++i )
+    {
+        QJsonObject par = params[i].toObject();
+        if (par["Channels"].isArray() && cchans.isEmpty())
+        {
+            cchans = par["Channels"].toArray();
+        }
+    }
+    //         qDebug() << "Found channels:" << cchans;
+    for (int i = 0; i < params.size(); ++i )
+    {
+        QJsonObject par = params[i].toObject();
+
+        QString tag = par["Tag"].toString();
+        //            qDebug() << par["Channels"].toArray().size() << par["PerChannelParameter"].toBool();
+        QList<QWidget*> wids = ui->processingArea->findChildren<QWidget*>(tag);
+
+        if (cchans.size() &&  par["PerChannelParameter"].toBool())
+        {
+            tag = QString("%1_%2").arg(par["Tag"].toString()).arg(cchans.first().toInt());
+            //                qDebug() << "Searching Tag" << tag << cchans.size() << cchans;
+            wids = ui->processingArea->findChildren<QWidget*>(tag);
+        }
+        if (wids.isEmpty() && par["PerChannelParameter"].toBool())
+        {
+            // qDebug() << cchans.size() << _channelsIds.values();
+            for (int i = 0; i < _channelsIds.size(); ++i)
+            {
+                tag = QString("%1_%2").arg(par["Tag"].toString()).arg(i+1);
+                auto l = ui->processingArea->findChildren<QWidget*>(tag);
+                //                    qDebug() << "Searching Tag:" << tag << l.size();
+
+                for (auto item: l)
+                    wids.append(item);
+            }
+            //                qDebug() << wids;
+        }
+
+        if (wids.empty()) {
+            //                qDebug() << "Searching " << tag << "Params not found";
+            continue;
+        }
+
+        std::sort(wids.begin(), wids.end(), sortWidgets);
+
+
+        foreach (QWidget* wid, wids)
+        {
+            //                qDebug() << par << wids;
+            getValue(wid, par, "Value", wids.size() > 1);
+        }
+        params.replace(i, par);
+
+        if (par.contains("Comment2"))
+        {
+            QList<QWidget*> wids = ui->processingArea->findChildren<QWidget*>(tag+"2");
+
+            if (wids.empty()) {
+                continue;
+            }
+
+            std::sort(wids.begin(), wids.end(), sortWidgets);
+
+
+            foreach (QWidget* wid, wids)
+                getValue(wid, par, "Value2", wids.size() > 1);
+            params.replace(i, par);
+        }
+
+    }
+
+
+    return params;
+}
+
+
 void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
                                          bool started)//, QMap<QString, QSet<QString> > tags_map)
 {
@@ -453,8 +498,6 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     QMap<QString, int > adapt;
     bool deb = set.value("UserMode/Debug", false).toBool();
 
-    if (deb)
-        qDebug() << "Process to prepare: " << objR;
 
     QSet<QString> xps;
 
@@ -484,110 +527,136 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         }
 
 
-       for (auto & kv: plates)
-       {
-           QJsonArray ar, tp;
-           for (auto& sfm: kv)
-           {
-               // Convert to json...
-               QList<QJsonObject>  images = sfm->toJSON(QString("TimeStackedImage%1").arg(imgType.endsWith("XP") ? "XP" : ""), asVectorImage, selectedChanns, metaData);
+        for (auto & kv: plates)
+        {
+            int fieldId = -1;
+            QJsonArray ar, tp;
+            for (auto& sfm: kv)
+            {
+                // Convert to json...
+                QList<QJsonObject>  images = sfm->toJSON(QString("TimeStackedImage%1").arg(imgType.endsWith("XP") ? "XP" : ""), asVectorImage, selectedChanns, metaData);
 
-               // if asVectorImage is true we just have one data in images.size()
+                // if asVectorImage is true we just have one data in images.size()
 
-               if (ar.isEmpty())
-                   for (auto & a: images)
-                   {
-                       Q_UNUSED(a);
-                       ar.append(objR); // copy the reference object
-                       tp.append(QJsonObject());
-                   }
+                if (ar.isEmpty())
+                    for (auto & a: images)
+                    {
+                        Q_UNUSED(a);
+                        ar.append(objR); // copy the reference object
+                        tp.append(QJsonObject());
+                    }
 
-               for (int i = 0; i < images.size(); ++i)
-               {
-                   QJsonObject obj = tp[i].toObject();
-                   QJsonObject oo = ar[i].toObject();
-
-
-
-
-                   auto p = sfm->pos();
-                   QString x = QString("%1").arg(p.x()),
-                           y = QString("%1").arg(p.y());
-                   if (obj.contains(x))
-                   {
-                       QJsonObject t = obj[x].toObject();
-                       t[y] = images[i];
-                       obj[x] = t;
-                   }
-                   else
-                   {
-                       QJsonObject t; t[y] = images[i];
-                       obj[x] = t;
-                   }
-
-                   QJsonArray params = objR["Parameters"].toArray();
-                   for (int i = 0; i < params.size(); ++i)
-                   {
-                       auto oo = params[i].toObject();
-                       oo["DataHash"] =  sfm->getOwner()->hash();
-                       oo["Pos"]="A01";
-                       oo["FieldId"]= imgType.contains("XP") ? 0 : int(i % sfm->getFieldCount());
-                       oo["TimePos"]=0;
-                       oo["zPos"]=0;
-                       if (!asVectorImage)
-                           oo["Channels"]=i;
-
-                       if (oo.contains("ContentType") && oo["ContentType"].toString()=="Image")
-                       {
-                           oo["Data"]=obj;
-                           params.replace(i, oo);
-                       }
-                   }
-
-                   oo["Parameters"]=params;
-                   oo["DataHash"] = sfm->getOwner()->hash();
-
-                   ar.replace(i, oo);
-                   tp.replace(i, obj);
-               }
-           }
-
-           static int crypto_offset = 0;
-           for (int i = 0; i < ar.size(); ++i)
-           {
-               auto obj = ar.at(i).toObject();
-
-               QByteArray arr;
-               arr += (QString("%1").arg(crypto_offset)).toLatin1();
-               arr += QCborValue::fromJsonValue(obj).toByteArray();//QJsonDocument(obj).toBinaryData();
-               arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
-               arr += (QString("%1").arg(crypto_offset)).toLatin1();
-
-               QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
-
-               obj["CoreProcess_hash"] = QString(hash.toHex());
-
-               obj["ProcessStartId"] = StartId;
-               obj["Project"] = project;
-
-               obj["Pos"]="A01"; // Force return pos to be A01
-               obj["CommitName"] = _commitName->text();
-
-               crypto_offset ++;
-
-               procArray << obj;
-           }
-
-       }
-
-       _StatusProgress->setMinimum(0);
-       _StatusProgress->setMaximum(procArray.size());
-       _StatusProgress->setValue(0);
-
-       QJsonDocument d(procArray.first().toObject());
+                for (int i = 0; i < images.size(); ++i)
+                {
+                    QJsonObject obj = tp[i].toObject();
+                    QJsonObject oo = ar[i].toObject();
 
 
-       stored=procArray.first().toObject();
+
+                    auto p = sfm->pos();
+                    QString x = QString("%1").arg(p.x()),
+                            y = QString("%1").arg(p.y());
+                    if (obj.contains(x))
+                    {
+                        QJsonObject t = obj[x].toObject();
+                        t[y] = images[i];
+                        obj[x] = t;
+                    }
+                    else
+                    {
+                        QJsonObject t; t[y] = images[i];
+                        obj[x] = t;
+                    }
+
+
+
+
+                    QJsonArray params = objR["Parameters"].toArray(),  bias;
+
+                    adjustParameterFromWidget(sfm, oo, params, bias);
+
+                    int channel = -1;
+                    if (fieldId == -1)
+                        fieldId = recurseField(obj, "FieldId");
+                    if (channel == -1 && !asVectorImage)
+                        channel = recurseField(obj, "Channel");
+
+                    oo["DataHash"] =  sfm->getOwner()->hash();
+                    oo["Pos"]="A01";
+                    oo["FieldId"]= imgType.contains("XP") ? 0 : fieldId;
+                    oo["TimePos"]=0;
+                    oo["zPos"]=0;
+                    oo["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
+                    if (!asVectorImage)
+                        oo["Channel"]=channel;
+
+                    for (int i = 0; i < params.size(); ++i)
+                    {
+                        auto oo = params[i].toObject();
+                        oo["DataHash"] =  sfm->getOwner()->hash();
+                        oo["Pos"]="A01";
+                        oo["FieldId"]= imgType.contains("XP") ? 0 : fieldId;
+                        oo["TimePos"]=0;
+                        oo["zPos"]=0;
+                        oo["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
+                        if (!asVectorImage)
+                            oo["Channel"]=channel;
+
+                        if (oo.contains("ContentType") && oo["ContentType"].toString()=="Image")
+                        {
+                            oo["Data"]=obj;
+                            params.replace(i, oo);
+                        }
+                    }
+
+
+                    oo["Parameters"]=params;
+                    oo["DataHash"] = sfm->getOwner()->hash();
+
+                    ar.replace(i, oo);
+                    tp.replace(i, obj);
+                }
+            }
+
+            static int crypto_offset = 0;
+            for (int i = 0; i < ar.size(); ++i)
+            {
+                auto obj = ar.at(i).toObject();
+
+                QByteArray arr;
+                arr += (QString("%1").arg(crypto_offset)).toLatin1();
+                arr += QCborValue::fromJsonValue(obj).toByteArray();//QJsonDocument(obj).toBinaryData();
+                arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
+                arr += (QString("%1").arg(crypto_offset)).toLatin1();
+
+                QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
+
+                obj["CoreProcess_hash"] = QString(hash.toHex());
+
+                obj["ProcessStartId"] = StartId;
+                obj["Project"] = project;
+
+                obj["Pos"]="A01"; // Force return pos to be A01
+
+
+
+                obj["CommitName"] = _commitName->text();
+
+                crypto_offset ++;
+
+                procArray << obj;
+            }
+
+        }
+
+        _StatusProgress->setMinimum(0);
+        _StatusProgress->setMaximum(procArray.size());
+        _StatusProgress->setValue(0);
+
+        QJsonDocument d(procArray.first().toObject());
+
+
+        stored=procArray.first().toObject();
 
     }
     else
@@ -976,7 +1045,7 @@ void MainWindow::on_pluginhistory(QString )
         if (!reloaded.contains(QString(str)))
             return;
     //if (reloaded.contains())
-    qDebug() << reloaded;
+//    qDebug() << reloaded;
 
     setupProcessCall(reloaded, cb->currentIndex());
 }
