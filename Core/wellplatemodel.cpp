@@ -2780,6 +2780,10 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
             if (sr->hasProperty(prop)) mdl->setProperties(prop, sr->property(prop));
         }
 
+        auto ss = (*_mscreens[hash])(row, col);
+        for (auto & p: ss.properties())
+            seq.setProperties(p, ss.property(p));
+
 
 
         QCborArray ar = ob.take(QCborValue("Payload")).toArray();
