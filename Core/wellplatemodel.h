@@ -155,7 +155,7 @@ public:
 
     ExperimentFileModel* getOwner() const;
 
-    QList<QJsonObject> toJSON(QString imageType, bool asVectorImage, QList<bool> selectedChanns, QStringList &metaData);
+    QList<QJsonObject> toJSON(QString imageType, bool asVectorImage, QList<bool> selectedChanns, QStringList &metaData, QRegExp siteMatcher);
 
     void displayData();
 
@@ -198,8 +198,9 @@ public:
     void setColor(QString col);
     QString getColor();
 
-protected:
+    QString getBasePath();
 
+protected:
 
 
     bool _isValid;
@@ -216,6 +217,7 @@ protected:
     QStringList _tags;
     QString _color;
 
+
 private:
 
     struct MetaDataHandler
@@ -226,15 +228,15 @@ private:
     };
 
 
-    QMap<int, QList<QJsonObject> > toJSONnonVector(ImageStack stack, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h);
-    QMap<int, QList<QJsonObject> > toJSONnonVector(TimeLapse times, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h);
-    QMap<int, QList<QJsonObject> > toJSONnonVector(Channel channels, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h);
+    QMap<int, QList<QJsonObject> > toJSONnonVector(ImageStack stack, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
+    QMap<int, QList<QJsonObject> > toJSONnonVector(TimeLapse times, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
+    QMap<int, QList<QJsonObject> > toJSONnonVector(Channel channels, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
 
 
 
-    QList<QJsonObject> toJSONvector(ImageStack stack, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h);
-    QList<QJsonObject> toJSONvector(TimeLapse times, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h);
-    QList<QJsonObject> toJSONvector(Channel channels, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h);
+    QList<QJsonObject> toJSONvector(ImageStack stack, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
+    QList<QJsonObject> toJSONvector(TimeLapse times, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
+    QList<QJsonObject> toJSONvector(Channel channels, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
 
 
     QJsonObject getMeta(MetaDataHandler& h);
@@ -489,6 +491,8 @@ public:
     void setMetadataPath(QString m);
     QString getMetadataPath();
 
+    QString getBasePath();
+    void adjustBasePath(QString path);
 
 protected:
 
@@ -506,6 +510,8 @@ protected:
 
     QString metadataPath;
 
+
+    QString base_path;
 
     QMap<QString, ExperimentFileModel *> _siblings;
     ExperimentFileModel* _owner;

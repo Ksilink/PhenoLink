@@ -16,7 +16,7 @@ QString getbasePath(QJsonArray data)
     return dir.dirName();
 }
 
-cv::Mat loadImage(QJsonArray data, int im = -1)
+cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
 {
     std::vector<cv::Mat> vec;
     cv::Mat mat;
@@ -26,7 +26,10 @@ cv::Mat loadImage(QJsonArray data, int im = -1)
         for (size_t i = 0; i < (size_t)data.size(); ++i)
         {
             if (im >= 0 && im != (int)i) continue;
-            cv::Mat m = cv::imread(data.at((int)i).toString().toStdString(), 2);
+
+            qDebug() << "bp:" << base_path << "file: "<<  data.at((int)i).toString();
+
+            cv::Mat m = cv::imread((base_path + data.at((int)i).toString()).toStdString(), 2);
             if (m.type() != CV_16U)
             {
                 cv::Mat t;
@@ -44,7 +47,9 @@ cv::Mat loadImage(QJsonArray data, int im = -1)
     }
     else
     {
-        mat = cv::imread(data.first().toString().toStdString(), 2);
+        qDebug() << "bp:" << base_path << "file: "<<  data.first().toString();
+
+        mat = cv::imread((base_path + data.first().toString()).toStdString(), 2);
         if (mat.type() != CV_16U)
         {
             cv::Mat t;
@@ -58,12 +63,14 @@ cv::Mat loadImage(QJsonArray data, int im = -1)
 
 namespace cocvMat
 {
-    void loadFromJSON(QJsonObject data, cv::Mat& mat, int im)
-    {
-        QJsonArray times =    data["Data"].toArray();
+void loadFromJSON(QJsonObject data, cv::Mat& mat, int im, QString base_path)
+{
+    QJsonArray times =    data["Data"].toArray();
 
-        mat = loadImage(times, im);
-    }
+    QString bp = base_path.isEmpty() ? data["BasePath"].toString() : base_path;
+
+    mat = loadImage(times, im, bp);
+}
 
 }
 
@@ -95,12 +102,12 @@ cv::Mat &ImageContainer::operator()(size_t i)
     return images[i];
 }
 
-void ImageContainer::loadFromJSON(QJsonObject data)
+void ImageContainer::loadFromJSON(QJsonObject data, QString base_path)
 {
     _loaded = true;
 
     cv::Mat mat;
-    cocvMat::loadFromJSON(data, mat, -1);
+    cocvMat::loadFromJSON(data, mat, -1, base_path);
 
     if (!mat.empty()) images.push_back(mat);
 }
@@ -117,13 +124,13 @@ QString ImageContainer::basePath(QJsonObject data)
     return getbasePath(times);
 }
 
-cv::Mat ImageContainer::getImage(size_t i)
+cv::Mat ImageContainer::getImage(size_t i, QString base_path)
 {
     if (_loaded) return (*this)[i];
 
 
     cv::Mat mat;
-    cocvMat::loadFromJSON(_data, mat, (int)i);
+    cocvMat::loadFromJSON(_data, mat, (int)i, base_path);
     return mat;
 }
 
@@ -151,18 +158,23 @@ void ImageContainer::deallocate()
 
 size_t ImageContainer::getChannelCount()
 {
-      return _data["Data"].toArray().size();
+    return _data["Data"].toArray().size();
 }
 
 
-void TimeImage::loadFromJSON(QJsonObject data)
+void TimeImage::loadFromJSON(QJsonObject data, QString base_path)
 {
     _loaded = true;
 
+    QString bp = data.contains("BasePath") ? data["BasePath"].toString() : base_path;
     QJsonArray times =    data["Data"].toArray();
     for (int i = 0; i < times.size(); ++i)
     {
         QJsonObject ob = times.at(i).toObject();
+
+        if (bp.isEmpty())
+            bp = ob["BasePath"].toString();
+
         QJsonArray chans = ob["Data"].toArray();
 
         images.push_back(loadImage(chans));
@@ -175,35 +187,42 @@ QString TimeImage::basePath(QJsonObject data)
     return getbasePath(times);
 }
 
-cv::Mat TimeImage::getImage(size_t i)
+cv::Mat TimeImage::getImage(size_t i, QString base_path)
 {
     if (_loaded) return (*this)[i];
+
+    QString bp = _data.contains("BasePath") ? _data["BasePath"].toString() : base_path;
 
     QJsonArray times =    _data["Data"].toArray();
     {
         QJsonObject ob = times.at((int)i).toObject();
+        if (bp.isEmpty() && ob.contains("BasePath"))
+            bp = ob["BasePath"].toString();
         QJsonArray chans = ob["Data"].toArray();
 
-        return loadImage(chans);
+        return loadImage(chans, -1, bp);
     }
 }
 
 
-void StackedImage::loadFromJSON(QJsonObject data)
+void StackedImage::loadFromJSON(QJsonObject data, QString base_path)
 {
 
+    QString bp = data.contains("BasePath") ? data["BasePath"].toString() : base_path;
     QJsonArray times =    data["Data"].toArray();
     for (int i = 0; i < times.size(); ++i)
     {
         QJsonObject ob = times.at(i).toObject();
+        if (bp.isEmpty())
+            bp = ob["BasePath"].toString();
         QJsonArray chans = ob["Data"].toArray();
 
-        this->images.push_back(loadImage(chans));
+        this->images.push_back(loadImage(chans, -1, bp));
     }
     //        qDebug() << "LoadFromJSON not implemented for StackedImage";
 }
 
-cv::Mat StackedImage::getImage(size_t i, size_t chann)
+cv::Mat StackedImage::getImage(size_t i, size_t chann, QString base_path)
 {
     if (_loaded) return (*this)[i];
 
@@ -220,11 +239,15 @@ cv::Mat StackedImage::getImage(size_t i, size_t chann)
     }
 
 
+    QString bp = _data.contains("BasePath")  ? _data["BasePath"].toString() : base_path;
+
     QJsonArray times =    _data["Data"].toArray();
     QJsonObject ob = times.at((int)i).toObject();
+    if (bp.isEmpty() && ob.contains("BasePath"))
+        bp = ob["BasePath"].toString();
     QJsonArray chans = ob["Data"].toArray();
 
-    return loadImage(chans, (int)chann);
+    return loadImage(chans, (int)chann, bp);
 }
 
 size_t StackedImage::getChannelCount()
@@ -252,16 +275,20 @@ StackedImage &TimeStackedImage::operator[](size_t i)
     return _times[i];
 }
 
-void TimeStackedImage::loadFromJSON(QJsonObject data)
+void TimeStackedImage::loadFromJSON(QJsonObject data, QString base_path )
 {
     _loaded = true;
 
+    if (data.isEmpty()) data = _data;
+
     QJsonArray stack =    data["Data"].toArray();
+    QString bp = data.contains("BasePath") ? data["BasePath"].toString() : base_path;
+
     for (int i = 0; i < stack.size(); ++i)
     {
         QJsonObject ob = stack.at(i).toObject();
         StackedImage im;
-        im.loadFromJSON(ob);
+        im.loadFromJSON(ob, bp);
         _times.push_back(im);
     }
 }
@@ -278,15 +305,29 @@ QString TimeStackedImage::basePath(QJsonObject data)
 void TimeStackedImage::storeJson(QJsonObject json)
 {
     _data = json;
-    _count = json["Data"].toArray().size();
+//    _count = json["Data"].toArray().size();
+    QJsonArray stack =    json["Data"].toArray();
+    QString bp = json["BasePath"].toString();
+
+    _times.resize(stack.size());
+
+    for (int i = 0; i < stack.size(); ++i)
+    {
+        QJsonObject ob = stack.at(i).toObject();
+        ob["BasePath"] = bp;
+        _times[i].storeJson(ob);
+    }
+
+
 }
 
-StackedImage TimeStackedImage::getImage(size_t i)
+StackedImage TimeStackedImage::getImage(size_t i, QString bp)
 {
     if (_loaded) return (*this)[i];
 
     StackedImage im;
-    im.loadFromJSON(_data["Data"].toArray().at((int)i).toObject());
+    bp = _data.contains("BasePath") ?  _data["BasePath"].toString() : bp;
+    im.loadFromJSON(_data["Data"].toArray().at((int)i).toObject(), bp);
     return im;
 }
 
@@ -300,18 +341,25 @@ void TimeStackedImage::deallocate()
 
 
 
-void ImageXP::loadFromJSON(QJsonObject data)
+void ImageXP::loadFromJSON(QJsonObject data, QString base_path )
 {
     Q_UNUSED(data);
     _loaded = true;
 
     QJsonArray field =    _data["Data"].toArray();
+
+    QString bp = _data.contains("BasePath") ? _data["BasePath"].toString() : base_path;
+
+
     for (int i = 0; i < field.size(); ++i)
     {
         QJsonObject ob = field.at(i).toObject();
+        if (bp.contains("BasePath"))
+            bp = ob["BasePath"].toString();
+
         QJsonArray chans = ob["Data"].toArray();
 
-        images.push_back(loadImage(chans));
+        images.push_back(loadImage(chans, -1, bp));
     }
 }
 
@@ -328,11 +376,11 @@ size_t ImageXP::getChannelCount()
     QJsonArray field =    _data["Data"].toArray();
 
     QJsonObject ob = field.at(0).toObject();
-     QJsonArray chans = ob["Data"].toArray();
-     return chans.size();
+    QJsonArray chans = ob["Data"].toArray();
+    return chans.size();
 }
 
-cv::Mat ImageXP::getImage(int i, int c)
+cv::Mat ImageXP::getImage(int i, int c, QString bp)
 {
     if (_loaded) {
         if (c >= 0)
@@ -346,11 +394,14 @@ cv::Mat ImageXP::getImage(int i, int c)
     }
 
     QJsonArray field =    _data["Data"].toArray();
+    bp = _data.contains("BasePath") ? _data["BasePath"].toString() : bp;
 
     QJsonObject ob = field.at(i).toObject();
+    if (bp.isEmpty() && ob.contains("BasePath"))
+        bp = ob["BasePath"].toString();
     QJsonArray chans = ob["Data"].toArray();
 
-    return loadImage(chans,c);
+    return loadImage(chans,c, bp);
 
 }
 
@@ -367,18 +418,24 @@ TimeImage &TimeImageXP::operator[](size_t i)
     return _xp[i];
 }
 
-void TimeImageXP::loadFromJSON(QJsonObject data)
+void TimeImageXP::loadFromJSON(QJsonObject data, QString base_path )
 {
     Q_UNUSED(data);
     //  qDebug() << "LoadFromJSON not implemented for TimeImageXP";
     _loaded = true;
 
+
+    QString bp = _data.contains("BasePath") ? _data["BasePath"].toString() : base_path;
+
     QJsonArray stack =    _data["Data"].toArray();
     for (int i = 0; i < stack.size(); ++i)
     {
         QJsonObject ob = stack.at(i).toObject();
+        if (bp.isEmpty() && ob.contains("BasePath"))
+            bp = ob["BasePath"].toString();
+        ob["BasePath"] = bp;
         TimeImage im;
-        im.loadFromJSON(ob);
+        im.loadFromJSON(ob, base_path);
         _xp.push_back(im);
     }
 }
@@ -397,14 +454,19 @@ void TimeImageXP::storeJson(QJsonObject json)
     _count = _data["Data"].toArray().size();
 }
 
-TimeImage TimeImageXP::getImage(size_t i)
+TimeImage TimeImageXP::getImage(size_t i, QString bp)
 {
     if (_loaded) return (*this)[i];
 
     QJsonArray stack =    _data["Data"].toArray();
+    bp = _data.contains("BasePath") ? _data["BasePath"].toString() : bp;
     QJsonObject ob = stack.at((int)i).toObject();
+    if (bp.isEmpty() && ob.contains("BasePath"))
+        bp = ob["BasePath"].toString();
+
+    ob["BasePath"] = bp;
     TimeImage im;
-    im.loadFromJSON(ob);
+    im.loadFromJSON(ob, bp);
 
     return im;
 
@@ -431,16 +493,23 @@ StackedImage &StackedImageXP::operator[](size_t i)
     return _xp[i];
 }
 
-void StackedImageXP::loadFromJSON(QJsonObject data)
+void StackedImageXP::loadFromJSON(QJsonObject data, QString base_path)
 {
     _loaded = true;
+
+
+    QString bp = data.contains("BasePath") ? data["BasePath"].toString() : base_path;
 
     QJsonArray stack =    data["Data"].toArray();
     for (int i = 0; i < stack.size(); ++i)
     {
         QJsonObject ob = stack.at(i).toObject();
+
+        if (bp.isEmpty() && ob.contains("BasePath"))
+            bp = ob["BasePath"].toString();
+
         StackedImage im;
-        im.loadFromJSON(ob);
+        im.loadFromJSON(ob, base_path);
         _xp.push_back(im);
     }
 }
@@ -455,13 +524,13 @@ QString StackedImageXP::basePath(QJsonObject data)
 }
 
 
- size_t StackedImageXP::getChannelCount()
+size_t StackedImageXP::getChannelCount()
 {
-     QJsonArray stack = _data["Data"].toArray();
-     QJsonObject ob = stack.at((int)0).toObject();
-     StackedImage im;
-     im.storeJson(ob);
-     return im.getChannelCount();
+    QJsonArray stack = _data["Data"].toArray();
+    QJsonObject ob = stack.at((int)0).toObject();
+    StackedImage im;
+    im.storeJson(ob);
+    return im.getChannelCount();
 }
 
 
@@ -471,11 +540,16 @@ void StackedImageXP::storeJson(QJsonObject json)
     _count = _data["Data"].toArray().size();
 }
 
-StackedImage StackedImageXP::getImage(size_t i)
+StackedImage StackedImageXP::getImage(size_t i, QString bp)
 {
     if (_loaded) return (*this)  [i];
     QJsonArray stack =    _data["Data"].toArray();
+    bp = _data.contains("BasePath") ? _data["BasePath"].toString() : bp;
     QJsonObject ob = stack.at((int)i).toObject();
+    if (bp.isEmpty() && ob.contains("BasePath"))
+        bp = ob["BasePath"].toString();
+    ob["BasePath"] = bp;
+
     StackedImage im;
     im.storeJson(ob);
     return im;
@@ -501,16 +575,22 @@ TimeStackedImage &TimeStackedImageXP::operator[](size_t i)
     return _xp[i];
 }
 
-void TimeStackedImageXP::loadFromJSON(QJsonObject data)
+void TimeStackedImageXP::loadFromJSON(QJsonObject data, QString base_path)
 {
     _loaded = true;
 
     QJsonArray stack =    data["Data"].toArray();
+
+    QString bp = _data.contains("BasePath") ? _data["BasePath"].toString() : base_path;
+
     for (int i = 0; i < stack.size(); ++i)
     {
         QJsonObject ob = stack.at(i).toObject();
+        if (bp.isEmpty() && ob.contains("BasePath"))
+            bp = ob["BasePath"].toString();
+
         TimeStackedImage im;
-        im.loadFromJSON(ob);
+        im.loadFromJSON(ob, bp);
         _xp.push_back(im);
     }
 }
@@ -529,14 +609,20 @@ void TimeStackedImageXP::storeJson(QJsonObject json)
     _count = _data["Data"].toArray().size();
 }
 
-TimeStackedImage TimeStackedImageXP::getImage(size_t i)
+TimeStackedImage TimeStackedImageXP::getImage(size_t i, QString bp)
 {
     if (_loaded) return (*this)[i];
 
     QJsonArray stack =    _data["Data"].toArray();
+    if (_data.contains("BasePath"))
+        bp = _data["BasePath"].toString();
     QJsonObject ob = stack.at((int)i).toObject();
+
+    if (ob.contains("BasePath") && bp.isEmpty())
+        bp = ob["BasePath"].toString();
+
     TimeStackedImage im;
-    im.loadFromJSON(ob);
+    im.loadFromJSON(ob, bp);
     return im;
 
 }
@@ -558,7 +644,7 @@ size_t WellPlateXP::countY()
 {
     size_t r = 0;
     for (QMap<size_t, QMap<size_t, TimeStackedImageXP> >::iterator it = _plate.begin(), e  = _plate.end(); it != e; ++it)
-     {
+    {
         r = std::max((size_t)(it.value().lastKey()), r);
     }
     return r;
@@ -598,13 +684,7 @@ size_t WellPlateXP::getChannelCount()
 void WellPlateXP::storeJson(QJsonObject json)
 {
     this->_data = json;
-}
-
-void WellPlateXP::loadFromJSON(QJsonObject data)
-{
-    Q_UNUSED(data);
-
-    auto pl = data["Data"].toObject();
+    auto pl = json["Data"].toObject();
     for (auto kv = pl.begin(), e = pl.end(); kv != e; ++kv)
     {
         int x = kv.key().toUInt();
@@ -613,8 +693,40 @@ void WellPlateXP::loadFromJSON(QJsonObject data)
         {
             int y = kkv.key().toUInt();
             auto oo = kkv.value().toObject();
+            oo["BasePath"] = json["BasePath"];
+            _plate[x][y].storeJson(oo);
+        }
+    }
+}
+
+
+
+
+void WellPlateXP::loadFromJSON(QJsonObject data, QString base_path)
+{
+    Q_UNUSED(data);
+
+    auto pl = data["Data"].toObject();
+
+    QString bp = data.contains("BasePath") ? data["BasePath"].toString() : base_path;
+    if (bp.isEmpty() && data.contains("BasePath"))
+        bp = data["BasePath"].toString();
+
+
+
+    for (auto kv = pl.begin(), e = pl.end(); kv != e; ++kv)
+    {
+        int x = kv.key().toUInt();
+        auto yy = kv.value().toObject();
+        for (auto kkv = yy.begin(), ke = yy.end(); kkv != ke; ++kkv)
+        {
+            int y = kkv.key().toUInt();
+            auto oo = kkv.value().toObject();
+            if (bp.isEmpty() && oo.contains("BasePath"))
+                bp = oo["BasePath"].toString();
+            oo["BasePath"] = bp;
             TimeStackedImageXP xp;
-            xp.loadFromJSON(oo);
+            xp.loadFromJSON(oo, bp);
             _plate[x][y] = xp;
         }
     }
@@ -653,7 +765,7 @@ size_t WellPlate::countY()
 {
     size_t r = 0;
     for (auto it = _plate.begin(), e  = _plate.end(); it != e; ++it)
-     {
+    {
         r = std::max((size_t)(it.value().lastKey()), r);
     }
     return r;
@@ -666,6 +778,7 @@ bool WellPlate::exists(size_t i, size_t j)
 
 TimeStackedImage &WellPlate::operator ()(size_t i, size_t j)
 {
+
     return _plate[i][j];
 }
 
@@ -689,13 +802,9 @@ size_t WellPlate::getChannelCount()
 void WellPlate::storeJson(QJsonObject json)
 {
     this->_data = json;
-}
 
-void WellPlate::loadFromJSON(QJsonObject data)
-{
-    Q_UNUSED(data);
+    auto pl = json["Data"].toObject();
 
-    auto pl = data["Data"].toObject();
     for (auto kv = pl.begin(), e = pl.end(); kv != e; ++kv)
     {
         int x = kv.key().toUInt();
@@ -704,8 +813,39 @@ void WellPlate::loadFromJSON(QJsonObject data)
         {
             int y = kkv.key().toUInt();
             auto oo = kkv.value().toObject();
+
+            oo["BasePath"] = json["BasePath"];
+            _plate[x][y].storeJson(oo);
+        }
+    }
+}
+
+void WellPlate::loadFromJSON(QJsonObject data,QString base_path)
+{
+    Q_UNUSED(data);
+
+    auto pl = data["Data"].toObject();
+
+    QString bp = _data.contains("BasePath") ? _data["BasePath"].toString() : base_path;
+    if (bp.isEmpty() && data.contains("BasePath"))
+        bp = data["BasePath"].toString();
+
+
+    for (auto kv = pl.begin(), e = pl.end(); kv != e; ++kv)
+    {
+        int x = kv.key().toUInt();
+        auto yy = kv.value().toObject();
+        for (auto kkv = yy.begin(), ke = yy.end(); kkv != ke; ++kkv)
+        {
+            int y = kkv.key().toUInt();
+            auto oo = kkv.value().toObject();
+
+            if (bp.isEmpty() && oo.contains("BasePath"))
+                bp = oo["BasePath"].toString();
+            oo["BasePath"] = bp;
+
             TimeStackedImage xp;
-            xp.loadFromJSON(oo);
+            xp.loadFromJSON(oo, bp);
             _plate[x][y] = xp;
         }
     }

@@ -52,7 +52,7 @@ public:
     void adaptSelection(QTableView* tw, QItemSelectionModel* sm, QSet<QString> &rs);
 
     void startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                 bool started);
+                                 bool started, QRegExp siteMatcher);
 
     void on_actionRe_load_servers_triggered();
 
@@ -107,7 +107,7 @@ protected:
     QTableView* getDataTableView(QString hash);
     QString getDataHash(QJsonObject data);
 
-    QJsonArray startProcess(SequenceFileModel *sfm, QJsonObject obj, QList<bool> selectedChanns);
+    QJsonArray startProcess(SequenceFileModel *sfm, QJsonObject obj, QList<bool> selectedChanns, QRegExp siteMatcher);
     void refreshExperimentControl(QTreeWidget *l, ExperimentFileModel *mdl);
     QDoubleSpinBox* constructDoubleSpinbox(QHBoxLayout* popupLayout, QWidget *popup, ImageInfos* fo, QString objName, QString text);
 

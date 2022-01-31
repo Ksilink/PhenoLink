@@ -247,6 +247,7 @@ protected:
     QStringList _vectorNames;
     QMap<QString, QString> _metaData;
     QStringList _bias_files;
+    QString base_path;
 };
 
 #include <QThread>
@@ -1338,6 +1339,7 @@ public:
     {
         RegistrableImageParent::read(json);
         setProperties(json);
+        _value->storeJson(json);
 
         auto data = json["Data"].toArray();
         for (int f = 0; f < data.size(); f++)
@@ -1624,6 +1626,8 @@ public:
                 int y = kkv.key().toUInt(&ok); if (!ok) continue;
 
                 auto oo = kkv.value().toObject();
+                oo["BasePath"] = json["BasePath"].toString();
+                qDebug() << oo;
                 TimeStackedImage& xp = _value->addOne(x,y);
                 Registrable<TimeStackedImage> reg;
                 reg.setValuePointer(&xp);
@@ -1763,6 +1767,8 @@ public:
                 int y = kkv.key().toUInt(&ok); if (!ok) continue;
 
                 auto oo = kkv.value().toObject();
+                oo["BasePath"] = json["BasePath"];
+
                 TimeStackedImageXP& xp = _value->addOne(x,y);
                 Registrable<TimeStackedImageXP> reg;
                 reg.setValuePointer(&xp);

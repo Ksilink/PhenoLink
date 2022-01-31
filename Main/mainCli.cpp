@@ -74,7 +74,7 @@ void helper::listParams(QJsonObject ob)
         qApp->exit();
 }
 
-void helper::startProcess(QJsonObject ob)
+void helper::startProcess(QJsonObject ob, QRegExp siteMatcher)
 {
 
     QJsonArray startParams;
@@ -137,7 +137,7 @@ void helper::startProcess(QJsonObject ob)
         bool asVectorImage = isVectorImageAndImageType(ob, imgType, metaData);
 
 
-        QList<QJsonObject>  images =  sfm->toJSON(imgType, asVectorImage, selectedChanns, metaData);
+        QList<QJsonObject>  images =  sfm->toJSON(imgType, asVectorImage, selectedChanns, metaData, siteMatcher);
         foreach (QJsonObject im, images)
         {
             ob["shallDisplay"] = false;

@@ -21,12 +21,12 @@ public:
 
     cv::Mat& operator()(size_t i);
 
-    virtual void loadFromJSON(QJsonObject data);
+    virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
     virtual void storeJson(QJsonObject json);
 
     virtual QString basePath(QJsonObject data);
 
-    virtual cv::Mat getImage(size_t i);
+    virtual cv::Mat getImage(size_t i, QString base_path = QString());
 
     virtual void  deallocate();
     virtual size_t getChannelCount();
@@ -50,10 +50,10 @@ protected:
 class DllCoreExport TimeImage: public ImageContainer
 {
 public:
-    virtual void loadFromJSON(QJsonObject data);
+    virtual void loadFromJSON(QJsonObject data, QString bp = QString());
     virtual QString basePath(QJsonObject json);
 
-    virtual cv::Mat getImage(size_t i);
+    virtual cv::Mat getImage(size_t i, QString base_path = QString());
 
 };
 
@@ -61,8 +61,8 @@ public:
 class DllCoreExport StackedImage: public ImageContainer
 {
 public:
-    virtual void loadFromJSON(QJsonObject data);
-    virtual cv::Mat getImage(size_t i, size_t chann);
+    virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
+    virtual cv::Mat getImage(size_t i, size_t chann, QString base_path = QString());
     virtual QString basePath(QJsonObject json);
     virtual size_t getChannelCount();
 
@@ -80,11 +80,11 @@ public:
 
 
     StackedImage& operator[](size_t i);
-    virtual void loadFromJSON(QJsonObject data);
+    virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
     virtual QString basePath(QJsonObject json);
     virtual void storeJson(QJsonObject json);
 
-    StackedImage getImage(size_t i);
+    StackedImage getImage(size_t i, QString base_path = QString());
 
     virtual void  deallocate();
     inline StackedImage& addOne() {
@@ -105,10 +105,10 @@ protected:
 class DllCoreExport ImageXP: public ImageContainer
 {
 public:
-    virtual void loadFromJSON(QJsonObject data);
+    virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
     virtual QString basePath(QJsonObject json);
     virtual size_t getChannelCount();
-    virtual cv::Mat getImage(int i, int c=-1);
+    virtual cv::Mat getImage(int i, int c=-1, QString base_path = QString());
 
 };
 
@@ -124,10 +124,10 @@ public:
 
     TimeImage& operator[](size_t i);
 
-    virtual void loadFromJSON(QJsonObject data);
+    virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
     virtual QString basePath(QJsonObject json);
     virtual void storeJson(QJsonObject json);
-    TimeImage getImage(size_t i);
+    TimeImage getImage(size_t i, QString base_path = QString());
 
 
     virtual void  deallocate();
@@ -151,10 +151,10 @@ public:
 
     StackedImage& operator[](size_t i);
 
-    virtual void loadFromJSON(QJsonObject data);
+    virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
     virtual QString basePath(QJsonObject json);
     virtual void storeJson(QJsonObject json);
-    StackedImage getImage(size_t i);
+    StackedImage getImage(size_t i, QString base_path = QString());
     virtual size_t getChannelCount();
     virtual void  deallocate();
 
@@ -177,11 +177,11 @@ public:
 
     TimeStackedImage& operator[](size_t i);
 
-    virtual void loadFromJSON(QJsonObject data);
+    virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
     virtual QString basePath(QJsonObject json);
     virtual void storeJson(QJsonObject json);
 
-    TimeStackedImage getImage(size_t i );
+    TimeStackedImage getImage(size_t i, QString base_path = QString() );
 
     virtual void  deallocate();
     inline TimeStackedImage& addOne(){
@@ -204,7 +204,8 @@ protected:
 class DllCoreExport WellPlate
 {
 public:
-
+    WellPlate():     _propagated(false)
+        {}
     size_t countX();
 
     size_t countY();
@@ -221,12 +222,14 @@ public:
     size_t getChannelCount();
 
     virtual void storeJson(QJsonObject json);
-    virtual void loadFromJSON(QJsonObject data);
+    virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
     virtual QString basePath(QJsonObject json);
     virtual void  deallocate();
 protected:
     QJsonObject _data; // This is of no real use for the plugins but necessary for the handler (may it should be put as an opaque object)
     QMap<size_t, QMap<size_t, TimeStackedImage> > _plate;
+
+    bool _propagated;
 
 };
 
@@ -236,6 +239,9 @@ protected:
 class DllCoreExport WellPlateXP
 {
 public:
+
+    WellPlateXP():     _propagated(false)
+    {}
 
     size_t countX();
 
@@ -253,19 +259,20 @@ public:
     size_t getChannelCount();
 
     virtual void storeJson(QJsonObject json);
-    virtual void loadFromJSON(QJsonObject data);
+    virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
     virtual QString basePath(QJsonObject json);
     virtual void  deallocate();
 protected:
     QJsonObject _data; // This is of no real use for the plugins but necessary for the handler (may it should be put as an opaque object)
     QMap<size_t, QMap<size_t, TimeStackedImageXP> > _plate;
+    bool _propagated;
 
 };
 
 
 namespace cocvMat {
 
-void DllCoreExport loadFromJSON(QJsonObject data, cv::Mat& mat, int image = -1);
+void DllCoreExport loadFromJSON(QJsonObject data, cv::Mat& mat, int image = -1, QString base_path=QString());
 
 }
 

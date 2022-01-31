@@ -1880,7 +1880,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
     layo->addRow(_typeOfprocessing);
 
-    if (_preparedProcess.endsWith("Generate BirdView"))
+    if (_preparedProcess.endsWith("BirdView"))
     {
         _commitName->setText("BirdView");
         layo->addRow(_commitName);

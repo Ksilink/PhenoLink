@@ -186,7 +186,7 @@ bool sortWidgets(QWidget* a, QWidget* b)
 
 
 QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
-                                    QList<bool> selectedChanns )
+                                    QList<bool> selectedChanns, QRegExp siteMatcher )
 {
 
     static size_t crypto_offset = 0;
@@ -215,7 +215,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
 
     bool asVectorImage = isVectorImageAndImageType(obj, imgType, metaData);
 
-    QList<QJsonObject>  images =  sfm->toJSON(imgType, asVectorImage, selectedChanns, metaData);
+    QList<QJsonObject>  images =  sfm->toJSON(imgType, asVectorImage, selectedChanns, metaData, siteMatcher);
     SequenceInteractor* inter = _sinteractor.current();
 
     if (!images.size())
@@ -241,9 +241,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
 
         if (_typeOfprocessing->currentText() == "All Loaded Screens"
                 ||
-                _typeOfprocessing->currentText() == "Selected Screens"
-                ||
-                _typeOfprocessing->currentText() == "Selected Screens and Filter"
+                _typeOfprocessing->currentText().startsWith("Selected Screens")
                 )
             obj["shallDisplay"] = false;
         else
@@ -471,7 +469,7 @@ QJsonArray& MainWindow::adjustParameterFromWidget(SequenceFileModel* sfm, QJsonO
 
 
 void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                         bool started)//, QMap<QString, QSet<QString> > tags_map)
+                                         bool started, QRegExp siteMatcher)//, QMap<QString, QSet<QString> > tags_map)
 {
     static int WorkID = 1;
 
@@ -496,7 +494,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     QJsonArray procArray;
     int count = 0;
     QMap<QString, int > adapt;
-    bool deb = set.value("UserMode/Debug", false).toBool();
+//    bool deb = set.value("UserMode/Debug", false).toBool();
 
 
     QSet<QString> xps;
@@ -534,7 +532,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
             for (auto& sfm: kv)
             {
                 // Convert to json...
-                QList<QJsonObject>  images = sfm->toJSON(QString("TimeStackedImage%1").arg(imgType.endsWith("XP") ? "XP" : ""), asVectorImage, selectedChanns, metaData);
+                QList<QJsonObject>  images = sfm->toJSON(QString("TimeStackedImage%1").arg(imgType.endsWith("XP") ? "XP" : ""), asVectorImage, selectedChanns, metaData, siteMatcher);
 
                 // if asVectorImage is true we just have one data in images.size()
 
@@ -542,30 +540,32 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                     for (auto & a: images)
                     {
                         Q_UNUSED(a);
-                        ar.append(objR); // copy the reference object
+                        auto ob = objR;
+                        ar.append(ob); // copy the reference object
                         tp.append(QJsonObject());
                     }
 
                 for (int i = 0; i < images.size(); ++i)
                 {
-                    QJsonObject obj = tp[i].toObject();
+                    QJsonObject data = tp[i].toObject();
                     QJsonObject oo = ar[i].toObject();
 
-
+                    QStringList drop = QStringList() << "BasePath" << "DataHash" << "PlateName";
+                    for (auto &d : drop) { data[d] = images[i][d]; images[i].remove(d); }
 
                     auto p = sfm->pos();
                     QString x = QString("%1").arg(p.x()),
                             y = QString("%1").arg(p.y());
-                    if (obj.contains(x))
+                    if (data.contains(x))
                     {
-                        QJsonObject t = obj[x].toObject();
+                        QJsonObject t = data[x].toObject();
                         t[y] = images[i];
-                        obj[x] = t;
+                        data[x] = t;
                     }
                     else
                     {
                         QJsonObject t; t[y] = images[i];
-                        obj[x] = t;
+                        data[x] = t;
                     }
 
 
@@ -577,35 +577,39 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
                     int channel = -1;
                     if (fieldId == -1)
-                        fieldId = recurseField(obj, "FieldId");
+                        fieldId = recurseField(data, "FieldId");
                     if (channel == -1 && !asVectorImage)
-                        channel = recurseField(obj, "Channel");
+                        channel = recurseField(data, "Channel");
 
+
+                    oo["PlateName"] = sfm->getOwner()->name();
                     oo["DataHash"] =  sfm->getOwner()->hash();
                     oo["Pos"]="A01";
                     oo["FieldId"]= imgType.contains("XP") ? 0 : fieldId;
                     oo["TimePos"]=0;
                     oo["zPos"]=0;
                     oo["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
+
                     if (!asVectorImage)
                         oo["Channel"]=channel;
 
                     for (int i = 0; i < params.size(); ++i)
                     {
-                        auto oo = params[i].toObject();
-                        oo["DataHash"] =  sfm->getOwner()->hash();
-                        oo["Pos"]="A01";
-                        oo["FieldId"]= imgType.contains("XP") ? 0 : fieldId;
-                        oo["TimePos"]=0;
-                        oo["zPos"]=0;
-                        oo["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
+                        auto oob = params[i].toObject();
+                        oob["DataHash"] =  sfm->getOwner()->hash();
+                        oob["Pos"]="A01";
+                        oob["FieldId"]= imgType.contains("XP") ? 0 : fieldId;
+                        oob["TimePos"]=0;
+                        oob["zPos"]=0;
+                        oob["BasePath"] = sfm->getBasePath();
+                        oob["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
                         if (!asVectorImage)
-                            oo["Channel"]=channel;
+                            oob["Channel"]=channel;
 
-                        if (oo.contains("ContentType") && oo["ContentType"].toString()=="Image")
+                        if (oob.contains("ContentType") && oob["ContentType"].toString()=="Image")
                         {
-                            oo["Data"]=obj;
-                            params.replace(i, oo);
+                            oob["Data"]=data;
+                            params.replace(i, oob);
                         }
                     }
 
@@ -614,7 +618,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                     oo["DataHash"] = sfm->getOwner()->hash();
 
                     ar.replace(i, oo);
-                    tp.replace(i, obj);
+                    tp.replace(i, data);
                 }
             }
 
@@ -638,9 +642,18 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
                 obj["Pos"]="A01"; // Force return pos to be A01
 
-
-
                 obj["CommitName"] = _commitName->text();
+
+                auto params = obj["Parameters"].toArray();
+                for (int i = 0; i < params.size(); ++i)
+                    if (params[i].toObject().contains("Parameters"))
+                    {
+                        auto oo = params[i].toObject();
+                        oo.remove("Parameters");
+                        params.replace(i, oo);
+                    }
+                obj["Parameters"] = params;
+
 
                 crypto_offset ++;
 
@@ -652,9 +665,6 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         _StatusProgress->setMinimum(0);
         _StatusProgress->setMaximum(procArray.size());
         _StatusProgress->setValue(0);
-
-        QJsonDocument d(procArray.first().toObject());
-
 
         stored=procArray.first().toObject();
 
@@ -670,15 +680,15 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
             }
 
             // startProcess is more a prepare process list function now
-            QJsonArray tmp  = startProcess(sfm, objR, selectedChanns);
+            QJsonArray tmp  = startProcess(sfm, objR, selectedChanns, siteMatcher);
             if (count == 0  && tmp.size())
             {
-                QJsonDocument d(tmp[0].toObject());
                 stored=tmp[0].toObject();
-
             }
+
             if (sfm && sfm->getOwner())
                 adapt[sfm->getOwner()->name()] += tmp.size();
+
             count += tmp.size();
             _StatusProgress->setMinimum(0);
             _StatusProgress->setMaximum(count);
@@ -896,7 +906,7 @@ void MainWindow::startProcessRun()
 
     }
 
-
+    QRegExp siteMatcher;
     if ( _typeOfprocessing->currentText() == "Selected Screens and Filter")
     {
         // Add the filtering part !!!
@@ -911,7 +921,7 @@ void MainWindow::startProcessRun()
         QStringList tag_filter = filtertags.isEmpty() ? QStringList() :
                                                         filtertags.split(';');
         QStringList remTags;
-        QRegExp wellMatcher, siteMatcher;
+        QRegExp wellMatcher;
         QList<QRegExp> tagRegexps;
 
         for (auto f : tag_filter)
@@ -921,7 +931,7 @@ void MainWindow::startProcessRun()
                 remTags <<  f;
                 wellMatcher.setPattern(f.replace("W:", ""));
             }
-            if (f.startsWith("S:"))
+            if (f.startsWith("S:")) // Fix the site filter by passing to the startProcessOtherStates function
             {
                 remTags << f;
                 siteMatcher.setPattern(f.replace("S:", ""));
@@ -948,12 +958,14 @@ void MainWindow::startProcessRun()
                 matches += tgs.contains(t);
 
             auto wPos = sfm->Pos();
-            if (!wellMatcher.isEmpty() && !wellMatcher.exactMatch(wPos))
+            if (!wellMatcher.isEmpty() && wellMatcher.exactMatch(wPos))
                 matches ++;
 
             for (auto r: tagRegexps) for (auto t: tgs) if (r.exactMatch(t))  matches++;
 
             if (matches > 0)
+                lsfm2 << sfm;
+            if (tagRegexps.isEmpty() && wellMatcher.isEmpty())
                 lsfm2 << sfm;
         }
 
@@ -1002,7 +1014,7 @@ void MainWindow::startProcessRun()
     _StatusProgress->setRange(0,0);
 
     run_time.start();
-    startProcessOtherStates(selectedChanns, lsfm, started);
+    startProcessOtherStates(selectedChanns, lsfm, started, siteMatcher);
 
 
     QPushButton* s = ui->processingArea->findChild<QPushButton*>("ProcessStartButton");

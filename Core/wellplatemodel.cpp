@@ -143,6 +143,29 @@ QSize ExperimentFileModel::getSize()
     return QSize(_rows, _cols);
 }
 
+QString ExperimentFileModel::getBasePath()
+{return base_path;}
+
+
+
+void ExperimentFileModel::adjustBasePath(QString path)
+{
+    if (base_path.isEmpty())
+        base_path = path;
+    else
+    {
+        int i = 0;
+        while (i < std::min(path.size(), base_path.size()) && path[i] == base_path[i])
+            ++i;
+
+//        qDebug() << "Adjusting base path:" << base_path ;
+//        qDebug() << path;
+        base_path.truncate(i);
+//        qDebug() << base_path;
+
+    }
+}
+
 QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned fieldc, int /*z*/, int /*t*/, int /*c*/)
 {
     Q_UNUSED(fieldc);
@@ -986,6 +1009,8 @@ unsigned SequenceFileModel::getChannels() const
 
 void SequenceFileModel::addFile(int timePoint, int fieldIdx, int Zindex, int channel, QString file)
 {
+    _owner->adjustBasePath(file);
+
     if (!file.isEmpty())
         _channelsIds.insert(channel);
     //  qDebug() << "Adding: "<< timePoint << fieldIdx << Zindex << channel;
@@ -1055,6 +1080,12 @@ int SequenceFileModel::getMetaChannels(int timePoint, int fieldIdx, int Zindex)
 
     return s;
 }
+
+QString SequenceFileModel::getBasePath()
+{
+    return _owner->getBasePath();
+}
+
 
 QMap<QString, StructuredMetaData>& SequenceFileModel::getMetas(int timePoint, int fieldIdx, int Zindex, int channel)
 {
@@ -1370,9 +1401,10 @@ ExperimentFileModel* SequenceFileModel::getOwner() const
 
 
 QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
-                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h)
+                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher)
 {
     Q_UNUSED(imageType);
+    Q_UNUSED(siteMatcher);
 
     QList<QJsonObject> res;
 
@@ -1380,6 +1412,9 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
     QJsonArray chans;
     QJsonObject parent;
     int chann = 0;
+    int r = _owner->getBasePath().size();
+
+    QStringList names, st = this->getChannelNames();
 
     if (selectedChanns.count() != 0)
     {
@@ -1387,7 +1422,8 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
             if (!it.value().startsWith(":/mem/") && chann < selectedChanns.size() && selectedChanns.at(chann))
             {
                 h.channel = it.key();
-                data.append(it.value());
+                names << st[it.key()-1];
+                data.append(it.value().mid(r));
                 chans.append(it.key());
             }
     }
@@ -1397,7 +1433,10 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
             if (!it.value().startsWith(":/mem/"))
             {
                 h.channel = it.key();
-                data.append(it.value());
+                names << st[it.key()-1];
+                QString t;
+                QString();
+                data.append(it.value().mid(r));
                 chans.append(it.key());
             }
     }
@@ -1405,7 +1444,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
 
     parent["Data"] = data;
     parent["Channels"] = chans;
-    parent["ChannelNames"] = QJsonArray::fromStringList(this->getChannelNames());
+    parent["ChannelNames"] = QJsonArray::fromStringList(names);
     if (chans.size() == 1)
         parent["Channel"] = chans.first();
     else
@@ -1503,7 +1542,7 @@ QJsonObject SequenceFileModel::getMeta(SequenceFileModel::MetaDataHandler& h)
 }
 
 QList<QJsonObject> SequenceFileModel::toJSONvector(TimeLapse times,
-                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h)
+                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher)
 {
     QList<QJsonObject> res;
 
@@ -1513,7 +1552,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(TimeLapse times,
         for (TimeLapse::iterator it = times.begin(), e = times.end(); it != e; ++it)
         {
             h.timepoint = it.key();
-            QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, h);
+            QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, h, siteMatcher);
             foreach(QJsonObject o, s)
             {
                 o["TimePos"] = it.key();
@@ -1532,7 +1571,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(TimeLapse times,
         for (TimeLapse::iterator it = times.begin(), e = times.end(); it != e; ++it)
         {
             h.timepoint = it.key();
-            QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, h);
+            QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, h, siteMatcher);
             foreach(QJsonObject o, s)
             {
                 o["TimePos"] = it.key();
@@ -1546,7 +1585,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(TimeLapse times,
 
 
 QList<QJsonObject> SequenceFileModel::toJSONvector(ImageStack stack,
-                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h)
+                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher)
 {
     QList<QJsonObject> res;
 
@@ -1556,7 +1595,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(ImageStack stack,
         for (ImageStack::iterator it = stack.begin(), e = stack.end(); it != e; ++it)
         {
             h.zindex = it.key();
-            QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, h);
+            QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, h, siteMatcher);
             foreach(QJsonObject o, s)
             {
                 o["zPos"] = it.key();
@@ -1576,7 +1615,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(ImageStack stack,
         for (ImageStack::iterator it = stack.begin(), e = stack.end(); it != e; ++it)
         {
             h.zindex = it.key();
-            QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, h);
+            QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, h, siteMatcher);
             foreach(QJsonObject o, s)
             {
                 o["zPos"] = it.key();
@@ -1593,11 +1632,19 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(ImageStack stack,
 QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(Channel channels,
                                                                   QString imageType,
                                                                   QList<bool> selectedChanns
-                                                                  , MetaDataHandler& h)
+                                                                  , MetaDataHandler& h, QRegExp siteMatcher)
 {
     QMap<int, QList<QJsonObject> > res;
 
+    Q_UNUSED(siteMatcher);
+
+    int r = _owner->getBasePath().size();
+
     Q_UNUSED(imageType);
+
+    QStringList names, st = this->getChannelNames();
+
+
 
     int channs = 0;
     for (Channel::iterator it = channels.begin(), e = channels.end(); it != e; ++it, ++channs)
@@ -1606,11 +1653,13 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(Channel channe
             QJsonObject parent;
 
             QJsonArray ch; ch.append(it.key());
-            QJsonArray da; da.append(it.value());
+            QJsonArray da; da.append(it.value().mid(r));
+
+            names << st[it.key()-1];
             h.channel = it.key();
             parent["Channels"] = ch;
             parent["Channel"] = it.key();
-            parent["ChannelNames"] = QJsonArray::fromStringList(this->getChannelNames());
+            parent["ChannelNames"] = QJsonArray::fromStringList(names);
             parent["Data"] = da;
 
             QJsonObject props = getMeta(h);
@@ -1625,7 +1674,7 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(Channel channe
 
 
 QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(TimeLapse times,
-                                                                  QString imageType, QList<bool> selectedChanns, MetaDataHandler& h)
+                                                                  QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher)
 {
     QMap<int, QList<QJsonObject> > res;
 
@@ -1635,7 +1684,7 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(TimeLapse time
         for (TimeLapse::iterator it = times.begin(), e = times.end(); it != e; ++it)
         {
             h.timepoint = it.key();
-            QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, h);
+            QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, h, siteMatcher);
             for (QMap<int, QList<QJsonObject> >::iterator cit = v.begin(), e = v.end(); cit != e; ++cit)
                 foreach(QJsonObject o, cit.value())
                 {
@@ -1658,7 +1707,7 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(TimeLapse time
         for (TimeLapse::iterator it = times.begin(), e = times.end(); it != e; ++it)
         {
             h.timepoint = it.key();
-            QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, h);
+            QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, h,siteMatcher);
             for (QMap<int, QList<QJsonObject> >::iterator cit = v.begin(), e = v.end(); cit != e; ++cit)
             {
                 foreach(QJsonObject o, cit.value())
@@ -1674,7 +1723,7 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(TimeLapse time
 
 
 QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(ImageStack stack,
-                                                                  QString imageType, QList<bool> selectedChanns, MetaDataHandler& h)
+                                                                  QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher)
 {
     QMap<int, QList<QJsonObject> > res;
 
@@ -1684,7 +1733,7 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(ImageStack sta
         for (ImageStack::iterator it = stack.begin(), e = stack.end(); it != e; ++it)
         {
             h.zindex = it.key();
-            QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, h);
+            QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, h, siteMatcher);
             for (QMap<int, QList<QJsonObject> >::iterator cit = v.begin(), e = v.end(); cit != e; ++cit)
                 foreach(QJsonObject o, cit.value())
                 {
@@ -1708,7 +1757,7 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(ImageStack sta
         for (ImageStack::iterator it = stack.begin(), e = stack.end(); it != e; ++it)
         {
             h.zindex = it.key();
-            QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, h);
+            QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, h,siteMatcher);
             for (QMap<int, QList<QJsonObject> >::iterator cit = v.begin(), e = v.end(); cit != e; ++cit)
             {
                 foreach(QJsonObject o, cit.value())
@@ -1731,7 +1780,8 @@ typedef QMap<int, ImageStack> FieldImaging;
 
 
 QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorImage,
-                                             QList<bool> selectedChanns, QStringList& metaData)
+                                             QList<bool> selectedChanns, QStringList& metaData,
+                                             QRegExp siteMatcher)
 {
     QList<QJsonObject> res;
     MetaDataHandler handler;
@@ -1754,8 +1804,12 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
             int f = 0;
             for (FieldImaging::iterator it = _data.begin(), e = _data.end(); it != e; ++it)
             {
+                QString fi = QString("%1").arg((int)it.key(), 2, 10, QChar('0'));
+                if (!siteMatcher.isEmpty() && !siteMatcher.exactMatch(fi))
+                    continue;
+
                 handler.fieldIdx = it.key();
-                QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, handler);
+                QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, handler,siteMatcher);
                 foreach(QJsonObject o, s)
                 {
                     o["FieldId"] = it.key();
@@ -1774,6 +1828,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
             obj["Pos"] = Pos();
             obj["asVectorImage"] = true;
             obj["PlateName"] = getOwner()->name();
+            obj["BasePath"] = getBasePath();
 
             if (!data.empty())
                 res << obj;
@@ -1784,7 +1839,11 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
         for (FieldImaging::iterator it = _data.begin(), e = _data.end(); it != e; ++it)
         {
             handler.fieldIdx = it.key();
-            QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, handler);
+            QString fi=QString("%1").arg(it.key(), 2, 10, QChar('0'));
+            if (!siteMatcher.isEmpty() && !siteMatcher.exactMatch(fi))
+                continue;
+
+            QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, handler,siteMatcher);
             foreach(QJsonObject o, s)
             {
                 o["FieldId"] = it.key();
@@ -1795,6 +1854,8 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
                 o["asVectorImage"] = true;
                 o["PlateName"] = getOwner()->name();
                 o["Properties"] = getMeta(searchingMeta, QString("f%1").arg(f + 1));
+                o["BasePath"] = getBasePath();
+
                 f++;
                 res << o;
             }
@@ -1810,8 +1871,12 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
             int f = 0;
             for (FieldImaging::iterator it = _data.begin(), e = _data.end(); it != e; ++it)
             {
+                QString fi=QString("%1").arg((int)it.key(), 2, 10, QChar('0'));
+                if (!siteMatcher.isEmpty() && !siteMatcher.exactMatch(fi))
+                    continue;
+
                 handler.fieldIdx = it.key();
-                QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, handler);
+                QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, handler,siteMatcher);
                 for (QMap<int, QList<QJsonObject> >::iterator cit = v.begin(), e = v.end(); cit != e; ++cit)
                     foreach(QJsonObject o, cit.value())
                     {
@@ -1833,6 +1898,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
                 obj["Pos"] = Pos();
                 obj["asVectorImage"] = true;
                 obj["PlateName"] = getOwner()->name();
+                obj["BasePath"] = getBasePath();
 
 
                 res << obj;
@@ -1844,7 +1910,11 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
         for (FieldImaging::iterator it = _data.begin(), e = _data.end(); it != e; ++it)
         {
             handler.fieldIdx = it.key();
-            QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, handler);
+            QString fi=QString("%1").arg((int)it.key(), 2, 10, QChar('0'));
+            if (!siteMatcher.isEmpty() && !siteMatcher.exactMatch(fi))
+                continue;
+
+            QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, handler, siteMatcher);
             for (QMap<int, QList<QJsonObject> >::iterator cit = v.begin(), e = v.end(); cit != e; ++cit)
             {
                 foreach(QJsonObject o, cit.value())
@@ -1856,6 +1926,9 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
                     o["asVectorImage"] = true;
                     o["PlateName"] = getOwner()->name();
                     o["Properties"] = getMeta(searchingMeta, QString("f%1").arg(f + 1));
+
+                    o["BasePath"] = getBasePath();
+
                     f++;
 
                     res << o;

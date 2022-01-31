@@ -261,10 +261,13 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
             if (ob.contains("Value") || ob.contains("Data"))
             {
                 QJsonObject r;
-                auto l = QStringList() << "Tag" << "Value" << "Value2" << "Channels" << "Channel" << "ChannelNames" << "Data" << "isOptional" << "optionalState"
-                                           << "ContentType" << "ImageType" << "PlateName" << "Enum" << "DataHash" << "Properties" << "PlateName"
-                                            << "Pos" << "Channel" << "asVectorImage" << "tiled" << "unbias"
-                                            << "isImage" << "FieldId" << "TimePos" << "zPos";
+                auto l = QStringList() << "Tag" << "Value" << "Value2" << "Channels"
+                                       << "Channel" << "ChannelNames" << "Data"
+                                       << "isOptional" << "optionalState"
+                                       << "BasePath" << "ContentType" << "ImageType"
+                                       << "PlateName" << "Enum" << "DataHash" << "Properties" << "PlateName"
+                                       << "Pos" << "Channel" << "asVectorImage" << "tiled" << "unbias"
+                                       << "isImage" << "FieldId" << "TimePos" << "zPos";
                 for (auto key : l)
                     if (ob.contains(key))
                         r[key] = ob[key];
