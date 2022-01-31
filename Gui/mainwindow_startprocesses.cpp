@@ -527,7 +527,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
         for (auto & kv: plates)
         {
-            int fieldId = -1;
+
             QJsonArray ar, tp;
             for (auto& sfm: kv)
             {
@@ -575,9 +575,9 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
                     adjustParameterFromWidget(sfm, oo, params, bias);
 
-                    int channel = -1;
-                    if (fieldId == -1)
+                    int channel = -1,
                         fieldId = recurseField(data, "FieldId");
+
                     if (channel == -1 && !asVectorImage)
                         channel = recurseField(data, "Channel");
 

@@ -27,7 +27,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
         {
             if (im >= 0 && im != (int)i) continue;
 
-            qDebug() << "bp:" << base_path << "file: "<<  data.at((int)i).toString();
+//            qDebug() << "bp:" << base_path << "file: "<<  data.at((int)i).toString();
 
             cv::Mat m = cv::imread((base_path + data.at((int)i).toString()).toStdString(), 2);
             if (m.type() != CV_16U)
@@ -47,7 +47,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
     }
     else
     {
-        qDebug() << "bp:" << base_path << "file: "<<  data.first().toString();
+//        qDebug() << "bp:" << base_path << "file: "<<  data.first().toString();
 
         mat = cv::imread((base_path + data.first().toString()).toStdString(), 2);
         if (mat.type() != CV_16U)
