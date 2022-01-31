@@ -254,6 +254,8 @@ public:
 
     QString getParams(QString p)
     {
+        QString fsd = QJsonDocument(_callParams).toJson();
+
         if (_callParams.contains(p))
         {
             if (_callParams[p].isDouble())

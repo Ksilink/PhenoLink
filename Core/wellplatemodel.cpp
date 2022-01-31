@@ -264,7 +264,8 @@ void ExperimentFileModel::setFieldPosition()
 
 QMap<int, QMap<int, int> > ExperimentFileModel::getFieldPosition()
 {
-    // setFieldPosition();
+    if (toField.isEmpty())
+         setFieldPosition();
     return toField;
 }
 
