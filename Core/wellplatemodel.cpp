@@ -966,6 +966,19 @@ bool DataProperty::hasProperty(QString tag) const
 }
 
 
+DataProperty& DataProperty::merge(DataProperty& other)
+{
+
+    for (auto it = other._properties.begin(), e = other._properties.end(); it != e; ++it)
+    {
+        _properties[it.key()] = it.value();
+    }
+
+    return *this;
+}
+
+
+
 SequenceFileModel::SequenceFileModel(Dictionnary dict) :
     DataProperty(dict), _isValid(true), _isShowed(false), _toDisplay(true), _owner(0)
 {
@@ -2752,7 +2765,9 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
     ExperimentFileModel* mdl = _mscreens[hash]->getSibling(tag + hash);
     mdl->setOwner(_mscreens[hash]);
     mdl->setProperties("hash", hash);
+    mdl->merge(*_mscreens[hash]);
     mdl->setName(_mscreens[hash]->name());
+    mdl->setFieldPosition();
 
     if (mdl->fileName().isEmpty())
     {
@@ -2781,11 +2796,8 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
             if (sr->hasProperty(prop)) mdl->setProperties(prop, sr->property(prop));
         }
 
-        auto ss = (*_mscreens[hash])(row, col);
-        for (auto & p: ss.properties())
-            seq.setProperties(p, ss.property(p));
-
-
+        seq.merge((*_mscreens[hash])(row, col));
+//        seq.fiel
 
         QCborArray ar = ob.take(QCborValue("Payload")).toArray();
         for (int item = 0; item < ar.size(); ++item)

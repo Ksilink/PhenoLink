@@ -69,6 +69,7 @@ public:
     virtual QString property(QRegExp& re) const;
     virtual QString properties();
     virtual bool hasProperty(QString tag) const;
+    DataProperty& merge(DataProperty& other);
 
 protected:
     Dictionnary             _dict;
