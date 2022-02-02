@@ -529,6 +529,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         {
 
             QJsonArray ar, tp;
+            QString pos("A01");
             for (auto& sfm: kv)
             {
                 // Convert to json...
@@ -552,6 +553,8 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
                     QStringList drop = QStringList() << "BasePath" << "DataHash" << "PlateName";
                     for (auto &d : drop) { data[d] = images[i][d]; images[i].remove(d); }
+
+                    if (pos.isEmpty())     pos = images[i]["Pos"].toString();
 
                     auto p = sfm->pos();
                     QString x = QString("%1").arg(p.x()),
@@ -584,7 +587,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
                     oo["PlateName"] = sfm->getOwner()->name();
                     oo["DataHash"] =  sfm->getOwner()->hash();
-                    oo["Pos"]="A01";
+                    oo["Pos"]=pos;
                     oo["FieldId"]= imgType.contains("XP") ? 0 : fieldId;
                     oo["TimePos"]=0;
                     oo["zPos"]=0;

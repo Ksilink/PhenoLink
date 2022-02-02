@@ -70,6 +70,8 @@ public:
     virtual QString properties();
     virtual bool hasProperty(QString tag) const;
 
+
+
 protected:
     Dictionnary             _dict;
     QMap<QString, QVariant> _properties;

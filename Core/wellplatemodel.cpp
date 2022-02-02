@@ -150,6 +150,16 @@ QString ExperimentFileModel::getBasePath()
 
 void ExperimentFileModel::adjustBasePath(QString path)
 {
+
+#ifndef WIN32
+        if (path[1]!=":")
+        {
+            // /mnt/shares/U
+            path = path.replace("/mnt/shares/", "");
+            path = QString("%1:%2").arg(path[0], path.mid(1));
+        }
+#endif
+
     if (base_path.isEmpty())
         base_path = path;
     else
