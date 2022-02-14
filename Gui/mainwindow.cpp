@@ -2569,7 +2569,7 @@ void MainWindow::exportToCellProfiler()
         {
             QStringList t = seq->getTags();
 
-            values["Metadata_Tags"]= t.join(";").replace("%","");
+            values["Metadata_Tags"]= t.join(";").replace("%","").replace("'","").replace("\"","").replace(" ","");
 
             for (auto a: cname)  values[QString("Image_PathName_%1").arg(a.trimmed().replace(" ", "_"))]=path;
             for (auto c : meta) values[QString("Metadata_%1").arg(c.trimmed().replace(" ", "_"))] = QString("0");
