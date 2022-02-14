@@ -204,6 +204,8 @@ private slots:
     void on_delTag_clicked();
     void on_actionDisplay_Remaining_Processes_triggered();
 
+    void on_actionDisplay_Channel_Names_triggered();
+
 public slots:
 
     void updateCurrentSelection();

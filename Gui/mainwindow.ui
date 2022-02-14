@@ -140,11 +140,13 @@
      </property>
      <addaction name="actionDisplay_Remaining_Processes"/>
     </widget>
+    <addaction name="actionDisplay_Channel_Names"/>
     <addaction name="sync_fields"/>
     <addaction name="sync_zstack"/>
     <addaction name="separator"/>
     <addaction name="separator"/>
     <addaction name="menuInfos"/>
+    <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -1041,6 +1043,14 @@
   <action name="actionPlate_Tag">
    <property name="text">
     <string>Plate Tag</string>
+   </property>
+  </action>
+  <action name="actionDisplay_Channel_Names">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Display Channel Names</string>
    </property>
   </action>
  </widget>

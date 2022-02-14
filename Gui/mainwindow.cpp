@@ -2910,3 +2910,9 @@ void MainWindow::plateMap()
         t.exec();
     }
 }
+
+void MainWindow::on_actionDisplay_Channel_Names_triggered()
+{
+
+}
+

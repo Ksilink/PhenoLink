@@ -706,20 +706,21 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QStringList queries = query.split("&");
         QString srv, port;
 
-        for (auto q : queries)
+        for (auto& q : queries)
         {
             if (q.startsWith("port="))
                 port = q.replace("port=", "");
             if (q.startsWith("host="))
                 srv = q.replace("host=", "");
         }
+        {
+            QMutexLocker lock(&workers_lock);
 
-      QMutexLocker lock(&workers_lock);
+            workers.removeAll(qMakePair(srv, port.toInt()));
+            workers_status.remove(QString("%1:%2").arg(srv,port));
+        }
 
-      workers.removeAll(qMakePair(srv, port.toInt()));
-      workers_status.remove(QString("%1:%2").arg(srv).arg(port));
-
-      HTMLstatus(res, QString("Removed server %1:%2").arg(srv,port));
+        HTMLstatus(res, QString("Removed server %1:%2").arg(srv,port));
       return;
     }
 
