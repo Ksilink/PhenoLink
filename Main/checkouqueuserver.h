@@ -116,6 +116,8 @@ protected:
 
     // We need to maintain a worker list
     QQueue<QPair<QString, int> > workers;
+    QSet<QPair<QString, int> > rmWorkers;
+
 
     // Who's connected
     QMap<QString, int> workers_status;

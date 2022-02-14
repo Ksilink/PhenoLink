@@ -2479,9 +2479,6 @@ void MainWindow::exportToCellProfiler()
                                                );
     if (dir.isEmpty()) return;
 
-
-
-
     // Now we have all :) Lets set a CSV file with all the metadata for CellProfiler
 
     // Set up the headers
@@ -2510,14 +2507,15 @@ void MainWindow::exportToCellProfiler()
         {
             QStringList t = seq->getTags();
             for (auto a: t)
-                tags.insert(a);
+                tags.insert(a.replace("%", "").replace("'", "").replace("\"", "").replace(" ", ""));
         }
     }
     // "DCM-Tum-lines-seeded-for-6k-D9-4X"
     // "C:/Data/DCM/DCM-Tum-lines-seeded-for-6k-D9-4X_20200702_110209/DCM-Tum-lines-seeded-for-6k-D9-4X/MeasurementDetail.mrf"
     //("Hoechst 33342", "2", "3")
     // QSet("D-001-Cb-08", "D-001-Cc-01", "W-004-017", "D-001-035 (3232)", "D-001-Ca-12")
-    qDebug() << basePath << chans << tags;
+    //qDebug() << basePath << chans << tags;
+
     for (auto c : chans)
     {
         values[QString("Image_FileName_%1").arg(c)]=QString();
@@ -2579,7 +2577,7 @@ void MainWindow::exportToCellProfiler()
 
             for (auto c : t)
             {
-
+                c = c.replace("%", "").replace("'", "").replace("\"", "").replace(" ", "");
 
                 for (auto mt : tag_filter)
                     validated_tags += c.contains(mt);

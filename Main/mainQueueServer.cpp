@@ -241,7 +241,9 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
     QMap<QString, int > servers;
 
     for (auto& srv: workers)
+        if (!rmWorkers.contains(qMakePair(srv.first, srv.second)))
     {
+
         auto id = QString("%1:%2").arg(srv.first).arg(srv.second);
         servers[id] ++;
     }
@@ -251,7 +253,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
     for (auto it = workers_status.begin(), e = workers_status.end(); it != e; ++it)
     {
         auto t = it.key().split(":");
-
+        if (rmWorkers.contains(qMakePair(t.front(), t.back().toInt()))) continue;
         QStringList  aff;
         for (auto af = project_affinity.begin(), e = project_affinity.end(); af != e; ++af)
             if (af.value() == it.key()) aff << af.key();
@@ -426,43 +428,45 @@ void Server::WorkerMonitor()
         {
             workers_lock.lock();
             auto next_worker = pickWorker();
-            QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker.first);
-
-            // Hey hey look what we have here: the job to be run by next_worker let's call the start func then :
-            // start it :)
-            if (queue.size())
+            if (!next_worker.first.isEmpty())
             {
+                QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker.first);
 
-                QJsonObject pr = queue.dequeue();
-                QString srv = QString("%1:%2").arg(next_worker.first).arg(next_worker.second); // Set proxy name
-                CheckoutHttpClient* sr = nullptr;
-                if (clients[srv])
-                    sr = clients[srv];
-                else
+                // Hey hey look what we have here: the job to be run by next_worker let's call the start func then :
+                // start it :)
+                if (queue.size())
                 {
-                    clients[srv] = new CheckoutHttpClient(next_worker.first, next_worker.second);
-                    sr = clients[srv] ;
+
+                    QJsonObject pr = queue.dequeue();
+                    QString srv = QString("%1:%2").arg(next_worker.first).arg(next_worker.second); // Set proxy name
+                    CheckoutHttpClient* sr = nullptr;
+                    if (clients[srv])
+                        sr = clients[srv];
+                    else
+                    {
+                        clients[srv] = new CheckoutHttpClient(next_worker.first, next_worker.second);
+                        sr = clients[srv];
+                    }
+
+                    QString taskid = QString("%1@%2#%3#%4!%5#%6:%7")
+                        .arg(pr["Username"].toString(), pr["Computer"].toString(),
+                             pr["Path"].toString(), pr["WorkID"].toString(),
+                             pr["XP"].toString(), pr["Pos"].toString(), pr["Process_hash"].toString());
+
+                    pr["TaskID"] = taskid;
+
+                    //  qDebug()  << "Taskid" << taskid << pr;
+                    QJsonArray ar; ar.append(pr);
+
+                    sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
+
+                    workers.removeOne(next_worker);
+                    workers_status[QString("%1:%2").arg(next_worker.first).arg(next_worker.second)]--;
+
+                    running[taskid] = pr;
                 }
 
-                QString taskid =  QString("%1@%2#%3#%4!%5#%6:%7")
-                        .arg(pr["Username"].toString(), pr["Computer"].toString(),
-                        pr["Path"].toString(),  pr["WorkID"].toString(),
-                        pr["XP"].toString(), pr["Pos"].toString(), pr["Process_hash"].toString());
-
-                pr["TaskID"]= taskid;
-
-                //  qDebug()  << "Taskid" << taskid << pr;
-                QJsonArray ar; ar.append(pr);
-
-                sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
-
-                workers.removeOne(next_worker);
-                workers_status[QString("%1:%2").arg(next_worker.first).arg(next_worker.second)]--;
-
-                running[taskid] = pr;
             }
-
-
 
             workers_lock.unlock();
         }
@@ -481,13 +485,18 @@ QPair<QString, int> Server::pickWorker()
 
     //    QMutexLocker locker(&workers_lock);
     if (lastsrv.isEmpty())
+
     {
+        
         auto next_worker = workers.back();
+        int p = 1;
+        while (rmWorkers.contains(next_worker) && p < workers.size())  next_worker = workers.at(p++);
+
         lastsrv=next_worker.first;
         return next_worker;
     }
     for(auto& nxt: workers)
-        if (lastsrv != nxt.first)
+        if (lastsrv != nxt.first && !rmWorkers.contains(nxt) )
         {
             lastsrv = nxt.first;
             return nxt;
@@ -714,10 +723,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 srv = q.replace("host=", "");
         }
         {
-            QMutexLocker lock(&workers_lock);
+//            QMutexLocker lock(&workers_lock);
 
-            workers.removeAll(qMakePair(srv, port.toInt()));
-            workers_status.remove(QString("%1:%2").arg(srv,port));
+            rmWorkers.insert(qMakePair(srv, port.toInt()));
+            //workers_status.remove(QString("%1:%2").arg(srv,port));
         }
 
         HTMLstatus(res, QString("Removed server %1:%2").arg(srv,port));
