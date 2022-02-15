@@ -156,7 +156,7 @@ void ExperimentFileModel::adjustBasePath(QString path)
         {
             // /mnt/shares/U
             path = path.replace("/mnt/shares/", "");
-            path = QString("%1:%2").arg(path[0], path.mid(1));
+            path = QString("%1:%2").arg(QString(path[0]), path.mid(1));
         }
 #endif
 
