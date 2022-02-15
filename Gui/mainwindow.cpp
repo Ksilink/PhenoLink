@@ -118,6 +118,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     ui->dockImageControl->hide();
     ui->dockExperimentControl->hide();
 
+
     tabifyDockWidget(ui->dockWidget, ui->dockWidget_3);
 
 
@@ -149,6 +150,9 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     ui->thumbnail->horizontalScrollBar()->setEnabled(false);
 
     tabifyDockWidget(ui->logWindow, ui->computed_features);
+
+    ui->actionDisplay_Channel_Names->setChecked(q.value("DisplayChannelNames", false).toBool());
+
 
     mdl = new ScreensModel();
 
@@ -738,6 +742,12 @@ void MainWindow::updateCurrentSelection()
     for (auto trueChan : chList)
     {
         ImageInfos* fo = inter->getChannelImageInfos(trueChan);
+        if (ui->actionDisplay_Channel_Names->isChecked())
+        {
+            QString name = fo->getChannelName().isEmpty() ? QString("%1").arg(trueChan) : fo->getChannelName() ;
+            bvl->addWidget(new QLabel(name), i, 0);
+            i++;
+        }
 
         //          qDebug() << "Adding " << i << QString("Channel%1").arg(i);
         pix = fo->imSize();
@@ -2911,8 +2921,11 @@ void MainWindow::plateMap()
     }
 }
 
-void MainWindow::on_actionDisplay_Channel_Names_triggered()
-{
 
+
+void MainWindow::on_actionDisplay_Channel_Names_toggled(bool arg1)
+{
+    QSettings set;
+    set.setValue("DisplayChannelNames", arg1);
 }
 

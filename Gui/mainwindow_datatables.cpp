@@ -92,6 +92,8 @@ void MainWindow::on_computeFeatures_currentChanged(int index)
 void MainWindow::copyDataToClipBoard()
 {
     QMap<int, unsigned> cols, rows;
+    QString pl = ui->computeFeatures->tabText(ui->computeFeatures->currentIndex());
+
 
     QTableView* tv = qobject_cast<QTableView*>(ui->computeFeatures->currentWidget());
 
@@ -124,7 +126,8 @@ void MainWindow::copyDataToClipBoard()
     QList<int> row = rows.keys();  std::sort(row.begin(), row.end());
 
     QString raw;
-    QString str = "<!--StartFragment-->\n<table>\n<tr>\n";
+    QString str = "<!--StartFragment-->\n<table>\n<tr>\n<td>Plate</td>";
+
 
     foreach (int c, col)
     {
@@ -138,7 +141,7 @@ void MainWindow::copyDataToClipBoard()
 
     foreach (int r, row)
     {
-        str += "<tr>\n";
+        str += "<tr>\n<td>"+pl+"</td>";
         foreach (int c, col)
         {
             QModelIndex idx = mdl->index(r,c);
@@ -172,7 +175,12 @@ void MainWindow::copyDataToClipBoard()
 
 void MainWindow::exportData()
 {
-    QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/export.csv", tr("CSV file (excel compatible) (*.csv)"),
+    QString pl = ui->computeFeatures->tabText(ui->computeFeatures->currentIndex());
+
+    QString dir = QFileDialog::getSaveFileName(this, tr("Save File"),
+                                               QString("%1/%2.csv").
+                                               arg(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), pl),
+                                               tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
                                                                                                                                                                                                                                                                       | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
@@ -191,6 +199,7 @@ void MainWindow::exportData()
         }
 
         QAbstractItemModel* mdl = tv->model();
+        out << "Plate,";
 
         for (int c = 0; c < mdl->columnCount(); ++c)
         {
@@ -199,6 +208,7 @@ void MainWindow::exportData()
         out << Qt::endl;
         for (int r = 0; r < mdl->rowCount(); ++r)
         {
+            out << pl << ",";
             for (int c = 0; c < mdl->columnCount(); ++c)
             {
                 QModelIndex idx = mdl->index(r,c);
