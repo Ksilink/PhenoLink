@@ -92,7 +92,7 @@ void MainWindow::on_computeFeatures_currentChanged(int index)
 void MainWindow::copyDataToClipBoard()
 {
     QMap<int, unsigned> cols, rows;
-    QString pl = ui->computeFeatures->tabText(ui->computeFeatures->currentIndex());
+    QString pl = _sinteractor.current()->getExperimentName();
 
 
     QTableView* tv = qobject_cast<QTableView*>(ui->computeFeatures->currentWidget());
@@ -176,6 +176,12 @@ void MainWindow::copyDataToClipBoard()
 void MainWindow::exportData()
 {
     QString pl = ui->computeFeatures->tabText(ui->computeFeatures->currentIndex());
+    if (qobject_cast<QTabWidget*>(ui->computeFeatures->currentWidget()))
+    {
+        auto t = qobject_cast<QTabWidget*>(ui->computeFeatures->currentWidget());
+        pl = t->tabText(t->currentIndex());
+    }
+
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"),
                                                QString("%1/%2.csv").
@@ -200,6 +206,8 @@ void MainWindow::exportData()
 
         QAbstractItemModel* mdl = tv->model();
         out << "Plate,";
+
+        pl = _sinteractor.current()->getExperimentName();
 
         for (int c = 0; c < mdl->columnCount(); ++c)
         {
