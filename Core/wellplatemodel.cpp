@@ -144,7 +144,9 @@ QSize ExperimentFileModel::getSize()
 }
 
 QString ExperimentFileModel::getBasePath()
-{return base_path;}
+{
+    return base_path;
+}
 
 
 
@@ -152,7 +154,7 @@ void ExperimentFileModel::adjustBasePath(QString path)
 {
 
 #ifndef WIN32
-        if (path[1]!=":")
+        if (path[1]!=':')
         {
             // /mnt/shares/U
             path = path.replace("/mnt/shares/", "");

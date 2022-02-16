@@ -755,10 +755,31 @@ void MainWindow::refreshExperimentControl(QTreeWidget* l,ExperimentFileModel* md
 QString generatePlate(QFile& file, ExperimentFileModel* mdl)
 {
 
+
     QString res;
 
     QSettings set;
     QString dbP=set.value("databaseDir").toString();
+
+    bool hasBirdview2 = false;
+    for (unsigned r = 0; r < mdl->getRowCount() && !hasBirdview2; ++r)
+    {
+        for (unsigned c = 0; c < mdl->getColCount() && !hasBirdview2; ++c)
+        {
+            auto colname =  (QString("%1").arg(((int)c+1), 2, 10,QChar('0')));
+            if (mdl->hasMeasurements(QPoint(r, c)))
+            {
+
+                QString img2Path = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/bv2" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
+                                      + colname + ".jpg";
+                if (QFile::exists(img2Path))
+                    hasBirdview2 = true;
+                break;
+            }
+        }
+    }
+
+
 
     // Let's create the HTML file !
     if (file.open(QFile::WriteOnly))
@@ -767,7 +788,16 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
 
         QTextStream out(&file);
 
-        QString chanChange("<select name='channel' onchange='chanChange(this.value);'><option value='composite' >Composite</option>");
+        QString chanChange("<select name='channel' onchange='chanChange(this.value);'>");
+
+        if (hasBirdview2)
+        {
+            chanChange+="<option value='bv2composite' >Composite</option>";
+            for (auto chan : mdl->getChannelNames())
+                chanChange += QString("<option value='bv2%1'>%1</option>").arg(chan.replace(" ", "_"));
+
+        }
+        chanChange+="<option value='composite' >Composite</option>";
         for (auto chan : mdl->getChannelNames())
             chanChange += QString("<option value='%1'>%1</option>").arg(chan.replace(" ", "_"));
         chanChange += "</select>";
@@ -798,12 +828,15 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
                 auto colname =  (QString("%1").arg(((int)c+1), 2, 10,QChar('0')));
                 if (mdl->hasMeasurements(QPoint(r, c)))
                 {
+
                     QString imgPath = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
                                           + colname + ".jpg";
-                    // http://localhost:8020/Load?project=MFM&plate=VB9%20MFM%20WT1%20D004%20hiPS-CM%20J9%20Rap%20Met%20treatment%2040X&wells=C12,C14&unpack&json
-                    // http://localhost:8020/Load?project=DCM&plate=DCM-Tum-lines-seeded-for-6k-D9-4X&wells=C09&json
+                    QString img2Path = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/bv2" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
+                                          + colname + ".jpg";
+
+
                     out <<    "<td><img width='100%' src='file://"
-                    << imgPath << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+r) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'" <<"/></td>";
+                    <<  (QFile::exists(img2Path) ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+r) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'" <<"/></td>";
                     if (res.isEmpty())
                         res = imgPath;
                 }
