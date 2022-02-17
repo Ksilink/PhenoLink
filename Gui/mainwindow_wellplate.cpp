@@ -764,13 +764,13 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
     bool hasBirdview2 = false;
     for (unsigned r = 0; r < mdl->getRowCount() && !hasBirdview2; ++r)
     {
-        for (unsigned c = 0; c < mdl->getColCount() && !hasBirdview2; ++c)
+        for (unsigned c = 0; c < mdl->getColCount(); ++c)
         {
             auto colname =  (QString("%1").arg(((int)c+1), 2, 10,QChar('0')));
             if (mdl->hasMeasurements(QPoint(r, c)))
             {
 
-                QString img2Path = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/bv2" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
+                QString img2Path = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+r)
                                       + colname + ".jpg";
                 if (QFile::exists(img2Path))
                     hasBirdview2 = true;
@@ -792,9 +792,9 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
 
         if (hasBirdview2)
         {
-            chanChange+="<option value='bv2composite' >Composite</option>";
+            chanChange+="<option value='bv2composite' >Adjusted Composite</option>";
             for (auto chan : mdl->getChannelNames())
-                chanChange += QString("<option value='bv2%1'>%1</option>").arg(chan.replace(" ", "_"));
+                chanChange += QString("<option value='bv2%1'>Adjusted %1</option>").arg(chan.replace(" ", "_"));
 
         }
         chanChange+="<option value='composite' >Composite</option>";
@@ -831,12 +831,12 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
 
                     QString imgPath = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
                                           + colname + ".jpg";
-                    QString img2Path = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/bv2" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
+                    QString img2Path = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+r)
                                           + colname + ".jpg";
 
 
                     out <<    "<td><img width='100%' src='file://"
-                    <<  (QFile::exists(img2Path) ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+r) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'" <<"/></td>";
+                    <<  (hasBirdview2 ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+r) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'" <<"/></td>";
                     if (res.isEmpty())
                         res = imgPath;
                 }

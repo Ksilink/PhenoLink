@@ -694,17 +694,23 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QStringList queries = query.split("&");
         QString srv, port;
         srv = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
+        bool self = true;
 
         for (auto q : queries)
         {
             if (q.startsWith("port="))
                 port = q.replace("port=", "");
             if (q.startsWith("host="))
+            {
                 srv = q.replace("host=", "");
+                self = false;
+            }
         }
 
         if (client)
             delete client;
+
+        rmWorkers.remove(qMakePair(srv, port.toInt()));
 
         client = new CheckoutHttpClient(srv, port.toUInt());
         client->send("/Proxy", QString("port=%1").arg(dport), QJsonArray());
