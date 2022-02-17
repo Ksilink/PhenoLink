@@ -172,7 +172,12 @@ public:
     // This name also has a purpose of presenting the processing in a tree like approach (called path, i.e.: a tree like representation separated by '/')
     // The authors allows the user to list the authors of the algorithm
     // Comments is a comment presenting the behaviour of the algorithm
-    void description(QString path, QStringList authors,  QString comment );
+    CheckoutProcessPluginInterface& description(QString path, QStringList authors,  QString comment );
+
+    CheckoutProcessPluginInterface& addDependency(QString dep);
+    CheckoutProcessPluginInterface& addDependencies(QStringList dep);
+
+
 
     template <class Type>
     Registrable<Type>& getMetaInformation(Type* value)
@@ -391,6 +396,7 @@ protected:
     QString path;
     QStringList authors;
     QString comments;
+    QStringList _dependencies;
     QJsonObject _callParams;
 
     QString position;

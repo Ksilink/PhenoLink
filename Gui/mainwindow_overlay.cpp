@@ -186,6 +186,14 @@ void MainWindow::on_nextOverlay_clicked()
 
 }
 
+void MainWindow::on_clearTags_clicked()
+{
+    ui->tagList->clear();
+
+    SequenceInteractor* inter = _sinteractor.current();
+    inter->setTag(ui->pickOverlay->currentText(), ui->overlayId->text().toInt(), QStringList());
+}
+
 
 
 void MainWindow::on_addTag_clicked()
@@ -208,7 +216,8 @@ void MainWindow::on_addTag_clicked()
 
 void MainWindow::on_delTag_clicked()
 {
-    auto tg =ui->tagSelector->currentText();
+    auto tg = ui->tagList->currentItem()->text();
+//    auto tg =ui->tagSelector->currentText();
     QStringList names;
 
     for (int i =0; i <   ui->tagList->count();++i)

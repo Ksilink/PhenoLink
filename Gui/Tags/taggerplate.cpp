@@ -15,6 +15,7 @@
 #include <QMenu>
 #include <QColorDialog>
 #include <QInputDialog>
+#include <QPainter>
 
 TaggerPlate::TaggerPlate(QString _plate,QWidget *parent) :
     QWidget(parent),
@@ -58,10 +59,10 @@ void TaggerPlate::on_setTags_clicked()
     qDebug() << idx;// << idx.parent();
     if (idx.isValid() && idx.parent().isValid())
     {
-//        qDebug() << idx << idx.parent();
-//        qDebug() << root;
+        //        qDebug() << idx << idx.parent();
+        //        qDebug() << root;
         QStandardItem* item = root->child(idx.parent().row());
-//        qDebug() << item;
+        //        qDebug() << item;
         if (item)
         {
             QString str = item->child(idx.row())->text();
@@ -402,6 +403,49 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
     auto *ico = menu.addAction("Set Color");
     auto *cc = menu.addAction("Clear Color");
     menu.addSeparator();
+    auto *pco = menu.addMenu("Set Pattern");
+    QStringList opts = QStringList() << "SolidPattern" <<
+                                        "Dense1Pattern" <<
+                                        "Dense2Pattern" <<
+                                        "Dense3Pattern" <<
+                                        "Dense4Pattern" <<
+                                        "Dense5Pattern" <<
+                                        "Dense6Pattern" <<
+                                        "Dense7Pattern" <<
+                                        "HorPattern" <<
+                                        "VerPattern" <<
+                                        "CrossPattern" <<
+                                        "BDiagPattern" <<
+                                        "FDiagPattern" <<
+                                        "DiagCrossPattern" <<
+                                        "LinearGradientPattern"
+                                     << "RadialGradientPattern"
+                                     << "ConicalGradientPattern";
+
+
+    QList<QAction*> br;
+    for (int i = Qt::SolidPattern; i < Qt::LinearGradientPattern; ++i)
+    {
+        QPixmap px(16,16);
+        QPainter p(&px);
+        QBrush b;
+        b.setColor(Qt::black);
+        p.setBackground(Qt::white);
+        b.setStyle((Qt::BrushStyle)i);
+        p.setBrush(b);
+        p.drawRect(0,0,16,16);
+        p.end();
+        QIcon ico(px);
+//        ico.actualSize(QSize(16,16));
+  //      ico.paint(&p, 0,0,16,16);
+
+        br << pco->addAction(ico,opts[i-Qt::SolidPattern]);
+    }
+    auto *pcc = menu.addAction("Clear Pattern");
+    menu.addSeparator();
+    auto *fco = menu.addAction("Set Foreground Color");
+    auto *fcc = menu.addAction("Clear Foreground Color");
+    menu.addSeparator();
     auto *ct = menu.addAction("Clear Tags");
 
 
@@ -414,25 +458,76 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
         QColor col = QColorDialog::getColor(Qt::white, this);
         if (col.isValid())
         {
-            for (auto item: ui->plateMaps->selectedItems())
+            for (auto& item: ui->plateMaps->selectedItems())
                 if (item)
-                    item->setBackground(col);
+                {
+                    auto c = item->background();
+                    c.setColor(col);
+                    item->setBackground(c);
+                }
+        }
+        return;
+    }
+    if (res == fco)
+    {
+        QColor col = QColorDialog::getColor(Qt::white, this);
+        if (col.isValid())
+        {
+            for (auto& item: ui->plateMaps->selectedItems())
+                if (item)
+                    item->setForeground(col);
         }
         return;
     }
 
     if (res == cc)
     {
-        for (auto item: ui->plateMaps->selectedItems())
+        for (auto& item: ui->plateMaps->selectedItems())
             if (item)
                 item->setBackground(QColor(QColorConstants::White));
 
         return;
     }
+    if (res == fcc)
+    {
+        for (auto & item: ui->plateMaps->selectedItems())
+            if (item)
+            {
+                item->setForeground(QColor(QColorConstants::White));
+            }
+        return;
+    }
+    //    if (res == pco)
+    if (br.contains(res))
+    {
+        // Pick pattern
 
+        for (auto& item: ui->plateMaps->selectedItems())
+            if (item)
+            {
+                auto b = item->background();
+                b.setStyle((Qt::BrushStyle)(Qt::SolidPattern+br.indexOf(res)));
+                item->setBackground(b);
+            }
+
+        return;
+    }
+
+    if (res == pcc)
+    {
+        for (auto& item: ui->plateMaps->selectedItems())
+            if (item)
+            {
+                auto b = item->background();
+                b.setStyle(Qt::SolidPattern);
+                item->setBackground(b);
+            }
+
+        return;
+    }
     if (res == ct)
     {
-        for (auto item: ui->plateMaps->selectedItems())
+        for (auto& item: ui->plateMaps->selectedItems())
             if (item)
                 item->setText(QString());
         return;

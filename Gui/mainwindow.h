@@ -271,6 +271,7 @@ public slots:
 
     void change_overlay_details(QString, QString, int);
 
+    void on_clearTags_clicked();
 protected slots:
     void updateProcessStatusMessage(QJsonArray ob);
 

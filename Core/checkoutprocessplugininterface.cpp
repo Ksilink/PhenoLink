@@ -19,11 +19,25 @@ CheckoutProcessPluginInterface::CheckoutProcessPluginInterface(): _state(NotStar
 
 
 
-void CheckoutProcessPluginInterface::description(QString path, QStringList authors, QString comment)
+CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::description(QString path, QStringList authors, QString comment)
 {
     this->path = path;
     this->authors = authors;
     this->comments = comment;
+
+    return *this;
+}
+
+CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addDependency(QString dep)
+{
+ _dependencies << dep;
+ return *this;
+}
+
+CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addDependencies(QStringList dep)
+{
+    _dependencies.append(dep);
+    return *this;
 }
 
 
@@ -47,7 +61,11 @@ void CheckoutProcessPluginInterface::write(QJsonObject &json) const
     json["Path"] = path;
     json["PluginVersion"] = plugin_version();
     json["authors"] = QJsonArray::fromStringList(authors);
+
     json["Comment"] = comments;
+    auto deps = QSet<QString>(_dependencies.begin(), _dependencies.end());
+    json["Dependencies"] =  QJsonArray::fromStringList(QStringList(deps.begin(), deps.end()));
+
     json["Parameters"] = params;
     json["ReturnData"] = ret;
     json["State"] = QString(_state == Running ? "Running" : (_state == Finished ? "Running" : "NotStarted")); // Not allowed to change state here

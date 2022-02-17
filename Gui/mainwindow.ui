@@ -351,8 +351,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>371</width>
-          <height>214</height>
+          <width>385</width>
+          <height>233</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -501,7 +501,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>365</width>
+                 <width>379</width>
                  <height>68</height>
                 </rect>
                </property>
@@ -813,12 +813,39 @@
             <property name="spacing">
              <number>1</number>
             </property>
-            <item row="6" column="0">
-             <widget class="QToolButton" name="delTag">
+            <item row="1" column="2">
+             <widget class="QToolButton" name="nextOverlay">
               <property name="text">
-               <string>-</string>
+               <string>&gt;</string>
               </property>
              </widget>
+            </item>
+            <item row="5" column="1" rowspan="5" colspan="2">
+             <widget class="QListWidget" name="tagList"/>
+            </item>
+            <item row="1" column="4" rowspan="11" colspan="6">
+             <widget class="QLabel" name="showOverlay">
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QToolButton" name="prevOverlay">
+              <property name="text">
+               <string>&lt;</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0" colspan="5">
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>Pick Overlay</string>
+              </property>
+             </widget>
+            </item>
+            <item row="11" column="0" colspan="4">
+             <widget class="QListWidget" name="valuesOverlay"/>
             </item>
             <item row="1" column="1">
              <widget class="QLabel" name="overlayId">
@@ -830,30 +857,6 @@
               </property>
               <property name="text">
                <string/>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="1" rowspan="2" colspan="2">
-             <widget class="QListWidget" name="tagList"/>
-            </item>
-            <item row="1" column="0">
-             <widget class="QToolButton" name="prevOverlay">
-              <property name="text">
-               <string>&lt;</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="8" colspan="2">
-             <widget class="QComboBox" name="pickOverlay">
-              <property name="editable">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="0" colspan="5">
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>Pick Overlay</string>
               </property>
              </widget>
             </item>
@@ -870,29 +873,39 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="2">
-             <widget class="QToolButton" name="nextOverlay">
-              <property name="text">
-               <string>&gt;</string>
+            <item row="0" column="8" colspan="2">
+             <widget class="QComboBox" name="pickOverlay">
+              <property name="editable">
+               <bool>false</bool>
               </property>
              </widget>
             </item>
-            <item row="5" column="0">
+            <item row="9" column="0">
+             <widget class="QToolButton" name="delTag">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>22</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>-</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="0">
+             <widget class="QToolButton" name="clearTags">
+              <property name="text">
+               <string>c</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="0">
              <widget class="QToolButton" name="addTag">
               <property name="text">
                <string>+</string>
               </property>
              </widget>
-            </item>
-            <item row="1" column="4" rowspan="8" colspan="6">
-             <widget class="QLabel" name="showOverlay">
-              <property name="text">
-               <string>TextLabel</string>
-              </property>
-             </widget>
-            </item>
-            <item row="8" column="0" colspan="4">
-             <widget class="QListWidget" name="valuesOverlay"/>
             </item>
            </layout>
           </widget>
