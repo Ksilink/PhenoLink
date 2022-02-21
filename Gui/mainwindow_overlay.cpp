@@ -425,3 +425,23 @@ void MainWindow::exportContent()
         }
     }
 }
+
+
+void MainWindow::on_filterOverlay_clicked()
+{
+    auto inter =    _sinteractor.current();
+
+    //inter->getTag()
+    if (!overlay_filter)
+    {
+        overlay_filter = new QDockWidget(this);
+
+        addDockWidget(Qt::TopDockWidgetArea, overlay_filter);
+        overlay_filter->setFloating(true);
+    }
+
+    //    QStringList tags = inter->getTag(ui->pickOverlay->currentText(), val);
+
+
+
+}

@@ -102,7 +102,8 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     _StatusProgress(0),
     StartId(0),
     _gui_server(this),
-    load_data(0)
+    load_data(0),
+    overlay_filter(0)
 {
     ui->setupUi(this);
 
@@ -2926,4 +2927,6 @@ void MainWindow::on_actionDisplay_Channel_Names_toggled(bool arg1)
     QSettings set;
     set.setValue("DisplayChannelNames", arg1);
 }
+
+
 

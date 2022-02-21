@@ -207,6 +207,8 @@ private slots:
 
     void on_actionDisplay_Channel_Names_toggled(bool arg1);
 
+    void on_filterOverlay_clicked();
+
 public slots:
 
     void updateCurrentSelection();
@@ -363,6 +365,10 @@ private:
     QDateTime process_starttime;
 
     QPushButton* load_data;
+
+
+    QDockWidget* overlay_filter;
+    QStringList overlay_filter_or, overlay_filter_and, overlay_filter_not;
 
 };
 

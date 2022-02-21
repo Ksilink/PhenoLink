@@ -408,6 +408,7 @@ void tagger::on_project_currentIndexChanged(const QString &arg1)
 
 void tagger::on_pushButton_2_clicked()
 {
+
     this->close();
 }
 
@@ -419,6 +420,32 @@ void tagger::on_pushButton_clicked()
     // Tell each taggerplate to gather the associated infos in internal json representation
     // Retrieve the jsons
     // push to mongodb :p
+
+    mongocxx::uri uri("mongodb://192.168.2.127:27017");
+    mongocxx::client client(uri);
+
+    auto db = client["tags"];
+    auto coll = db["tags"];
+
+    for (auto w: this->findChildren<TaggerPlate*>())
+    {
+        //        qDebug() << w->objectName();
+
+        if (qobject_cast<TaggerPlate*>(w))
+        {
+            auto platet = qobject_cast<TaggerPlate*>(w);
+            auto json = platet->refreshJson();
+            qDebug() << json;
+            auto doc = bsoncxx::from_json(json.toJson().toStdString());
+
+            //bsoncxx::oid()
+            if (json.object().contains("_id"))
+                coll.update_one(make_document(kvp("plateAcq", json.object()["plateAcq"].toString().toStdString())),  doc.view());
+            else
+                coll.insert_one(doc.view());
+
+        }
+    }
 
 
 

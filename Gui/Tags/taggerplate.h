@@ -25,9 +25,10 @@ public:
 
     void setTag(int r, int c, QString tags);
     void setColor(int r, int c, QString color);
-
+    void setPattern(int r, int c, int patt);
+    void setColorFG(int r, int c, QString color);
     void updatePlate();
-    void refeshJson();
+    QJsonDocument refreshJson();
 
 
 private slots:

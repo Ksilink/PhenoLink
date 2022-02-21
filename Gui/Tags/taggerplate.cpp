@@ -290,6 +290,26 @@ void TaggerPlate::setColor(int r, int c, QString color)
     ui->plateMaps->item(r,c)->setBackground(QColor(color));
 }
 
+void TaggerPlate::setPattern(int r, int c, int patt)
+{
+    if (!ui->plateMaps->item(r,c))
+        ui->plateMaps->setItem(r,c, new QTableWidgetItem());
+
+
+    auto b = ui->plateMaps->item(r,c)->background();
+    b.setStyle((Qt::BrushStyle)patt);
+    ui->plateMaps->item(r,c)->setBackground(b);
+}
+
+void TaggerPlate::setColorFG(int r, int c, QString color)
+{
+    if (!ui->plateMaps->item(r,c))
+        ui->plateMaps->setItem(r,c, new QTableWidgetItem());
+
+    ui->plateMaps->item(r,c)->setForeground(QColor(color));
+
+}
+
 void TaggerPlate::updatePlate()
 {
     QStringList tags, gtags;
@@ -359,12 +379,54 @@ void TaggerPlate::updatePlate()
                 }
             }
         }
+        if (ob.contains("fgcolor_map"))
+        { // Unroll the colors
+            auto map = ob["fgcolor_map"].toObject();
+            for (auto it = map.begin(), e = map.end(); it != e; ++it)
+            {
+                QString ctag = it.key();
+                auto wells = it.value().toObject();
+                for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+                {
+                    auto arr = k.value().toArray();
+                    int r = k.key().toUtf8().at(0) - 'A';
+                    for (int i = 0; i < arr.size(); ++i)
+                    {
+                        int c = arr[i].toInt();
+
+                        //qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
+                        setColorFG(r,c, ctag);
+                    }
+                }
+            }
+        }
+        if (ob.contains("pattern_map"))
+        { // Unroll the patterns
+            auto map = ob["pattern_map"].toObject();
+            for (auto it = map.begin(), e = map.end(); it != e; ++it)
+            {
+                QString ctag = it.key();
+                auto wells = it.value().toObject();
+                for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+                {
+                    auto arr = k.value().toArray();
+                    int r = k.key().toUtf8().at(0) - 'A';
+                    for (int i = 0; i < arr.size(); ++i)
+                    {
+                        int c = arr[i].toInt();
+
+                        //qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
+                        setPattern(r,c, ctag.toInt());
+                    }
+                }
+            }
+        }
 
     }
 
 }
 
-void TaggerPlate::refeshJson()
+QJsonDocument TaggerPlate::refreshJson()
 {
     // We shall update the tags with respect to the content of the GUI
     //
@@ -372,8 +434,7 @@ void TaggerPlate::refeshJson()
 
 
 
-
-
+    return tagger;
 }
 
 
