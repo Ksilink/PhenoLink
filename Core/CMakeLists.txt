@@ -40,6 +40,9 @@ add_library(CheckoutCore SHARED
             ImageContainers.cpp ImageContainers.h
             matrixdatamodel.cpp matrixdatamodel.h
             checkouterrorhandler.cpp checkouterrorhandler.h
+
+            ck_mongo.h ck_mongo.cpp
+
             )
 
 include_directories(${ARROW_INCLUDE_DIR})
