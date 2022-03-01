@@ -360,6 +360,10 @@ void MainWindow::importOverlay()
         // Let's reload the datas !!!!
         //  void addMeta(int timePoint, int fieldIdx, int Zindex, int Channel, QString name, StructuredMetaData meta);
 
+        overlay_t = inter->getTimePoint();
+        overlay_f = inter->getField();
+        overlay_z = inter->getZ();
+        overlay_c = inter->getChannel();
         for (auto& file: coms[scom])
         {
             QStringList name = file.split("_");
@@ -384,10 +388,10 @@ void MainWindow::importOverlay()
 
             QString meta_name = key.join("_");
             inter->getSequenceFileModel()->addMeta(
-                    inter->getTimePoint(),
-                    inter->getField(),
-                    inter->getZ(),
-                        inter->getChannel(),
+                    overlay_t,
+                    overlay_f,
+                    overlay_z,
+                        overlay_c,
                         meta_name,
                         meta);
         }
@@ -402,13 +406,16 @@ void MainWindow::exportOverlay() // to force save of overlay on modification
 {
     SequenceInteractor* inter = _sinteractor.current();
 
-    QMap<QString, StructuredMetaData>& metas = inter->getSequenceFileModel()->getMetas(inter->getTimePoint(),
-                                                                                       inter->getField(),
-                                                                                       inter->getZ(),
-                                                                                       inter->getChannel());
+    QMap<QString, StructuredMetaData>& metas = inter->getSequenceFileModel()->getMetas(overlay_t,
+                                                                                       overlay_f,
+                                                                                       overlay_z,
+                                                                                       overlay_c);
 
     for (auto items = metas.begin(), e = metas.end() ; items != e; ++items)
-       items.value().exportData();
+    {
+        qDebug() <<  "Saving name" << items.key();
+        items.value().exportData();
+    }
 }
 
 

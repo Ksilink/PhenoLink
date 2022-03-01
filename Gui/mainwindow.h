@@ -369,6 +369,7 @@ private:
 
     QDockWidget* overlay_filter;
     QStringList overlay_filter_or, overlay_filter_and, overlay_filter_not;
+    int overlay_t, overlay_f, overlay_z, overlay_c;
 
 };
 

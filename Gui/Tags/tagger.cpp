@@ -8,18 +8,6 @@
 #include <iostream>
 #include <vector>
 
-#include <bsoncxx/config/version.hpp>
-#include <bsoncxx/json.hpp>
-#include <bsoncxx/types.hpp>
-#include <bsoncxx/stdx/string_view.hpp>
-#include <mongocxx/client.hpp>
-#include <mongocxx/stdx.hpp>
-#include <mongocxx/uri.hpp>
-#include <mongocxx/instance.hpp>
-#include <bsoncxx/builder/stream/helpers.hpp>
-#include <bsoncxx/builder/stream/document.hpp>
-#include <bsoncxx/builder/stream/array.hpp>
-
 
 #include <qhttp/qhttpclient.hpp>
 #include "qhttp/qhttpclientrequest.hpp"
@@ -35,9 +23,7 @@
 
 #include <QSettings>
 
-
-
-mongocxx::instance mongo_instance {}; // This should be done only once.
+#include <Core/ck_mongo.h>
 
 using namespace qhttp::client;
 
@@ -313,7 +299,32 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 
             platet->updatePlate();
         }
-        else qDebug() << "Plate Acq not found" << plateDate << "/" << plate;
+        else
+        {
+            qDebug() << "Plate Acq not found" << plateDate << "/" << plate;
+            QJsonObject t;
+            t["plateAcq"]   = QString("%1/%2").arg(plateDate,plate);
+            t["serverPath"] = d;
+            t["plate"]      = plate;
+
+            QStringList ops = QStringList() << "map" << "color_map" << "fgcolor_map" << "pattern_map";
+            for (auto& p : ops) t[p] = QJsonObject();
+
+            QJsonObject meta;
+
+            meta["project"]     = proj;
+            meta["global_tags"] = QJsonArray();
+            meta["operators"]   = QJsonObject();
+            meta["XP"]          = plate;
+            meta["cell_lines"]  = QJsonArray();
+
+
+
+            t["meta"]=meta;
+            tags = QJsonDocument(t);
+
+            platet->updatePlate();
+        }
 
         ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(1)));
 
@@ -434,20 +445,35 @@ void tagger::on_pushButton_clicked()
         if (qobject_cast<TaggerPlate*>(w))
         {
             auto platet = qobject_cast<TaggerPlate*>(w);
-            auto json = platet->refreshJson();
-            qDebug() << json;
-            auto doc = bsoncxx::from_json(json.toJson().toStdString());
+            auto json = platet->refreshJson().object();
 
-            //bsoncxx::oid()
-            if (json.object().contains("_id"))
-                coll.update_one(make_document(kvp("plateAcq", json.object()["plateAcq"].toString().toStdString())),  doc.view());
+            QJsonObject meta = json["meta"].toObject();
+
+            meta["project"] = ui->project->currentText();
+
+            auto ops = meta["operators"].toObject();
+            ops["XP"] = ui->xp_operator->currentText();
+            meta["operators"] = ops;
+
+            meta["measurement"] = ui->experiment->text();
+            auto arr = meta["global_tags"].toArray();
+
+            for (int i = 0; i < ui->global_tags_list->count(); ++i)
+                arr.append(ui->global_tags_list->item(i)->text());
+
+            meta["global_tags"] = arr;
+
+            json["meta"] = meta;
+
+            auto doc = bsoncxx::from_json(QJsonDocument(json).toJson().toStdString());
+
+            if (json.contains("_id"))
+                coll.replace_one(make_document(kvp("plateAcq", json["plateAcq"].toString().toStdString())),  doc.view());
             else
                 coll.insert_one(doc.view());
 
         }
     }
-
-
 
     this->close();
 }

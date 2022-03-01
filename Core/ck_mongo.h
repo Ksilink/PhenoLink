@@ -17,7 +17,7 @@
 
 
 
-static mongocxx::instance mongo_instance; // This should be done only once.
+extern mongocxx::instance mongo_instance; // This should be done only once.
 
 
 

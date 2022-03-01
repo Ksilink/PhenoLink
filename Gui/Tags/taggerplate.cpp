@@ -17,6 +17,11 @@
 #include <QInputDialog>
 #include <QPainter>
 
+
+#include <QFileDialog>
+#include <QFile>
+
+
 TaggerPlate::TaggerPlate(QString _plate,QWidget *parent) :
     QWidget(parent),
     ui(new Ui::TaggerPlate),
@@ -43,7 +48,10 @@ TaggerPlate::~TaggerPlate()
     delete ui;
 }
 
-QJsonDocument &TaggerPlate::getTags() { return tagger; }
+QJsonDocument &TaggerPlate::getTags() {
+
+    return tagger;
+}
 
 void TaggerPlate::on_setTags_clicked()
 {
@@ -130,11 +138,42 @@ void TaggerPlate::on_plates_design_currentIndexChanged(const QString &)
 void TaggerPlate::on_pushButton_clicked()
 {
 
+    QString script = QFileDialog::getOpenFileName(this, "Choose Template storage path",
+                                                  QDir::home().path(), "Tags json file (*.json)",
+                                                  0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
+                                                  );
+
+    if (!script.isEmpty())
+    {
+        QFile of(script);
+        if (of.open(QIODevice::ReadOnly))
+        {
+            QByteArray ar = of.readAll();
+            tagger = QJsonDocument::fromJson(ar);
+            updatePlate();
+        }
+    }
+
 }
 
 // Export Template
 void TaggerPlate::on_pushButton_2_clicked()
 {
+    QString script =
+            QFileDialog::getSaveFileName(this, "Choose Template storage path",
+                                         QDir::home().path(), "Tags json file (*.json)",
+                                         0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
+                                         );
+
+    if (!script.isEmpty())
+    {
+        refreshJson();
+        QFile of(script);
+        if (of.open(QIODevice::WriteOnly))
+        {
+            of.write(tagger.toJson());
+        }
+    }
 }
 
 
@@ -426,13 +465,84 @@ void TaggerPlate::updatePlate()
 
 }
 
+
+
+
+QJsonObject aC(QJsonObject& ob, QString p, int v)
+{
+    if (ob.contains(p))
+    {
+        auto ar = ob[p].toArray();
+        ar.append(v);
+        ob[p] = ar;
+        return ob;
+    }
+    else
+    {
+
+        QJsonArray ar;
+        ar.append(v);
+        ob[p] = ar;
+        return ob;
+    }
+}
+
+
+void addInfo(QJsonObject& ob, QString map, QString gl, QString row, int col)
+{
+    QJsonObject obj, token;
+
+
+    obj = ob[map].toObject();
+    token = obj[gl].toObject();
+
+    aC(token, row, col);
+
+    obj[gl] = token;
+    ob[map] = obj;
+
+}
+
+
 QJsonDocument TaggerPlate::refreshJson()
 {
     // We shall update the tags with respect to the content of the GUI
-    //
+
+    QMap<QString, QMap<QString, QList<int> > > tags, color, fgcolor, pattern;
+
+    auto ob = tagger.object();
+
+    QStringList ops = QStringList() << "map" << "color_map" << "fgcolor_map" << "pattern_map";
+    for (auto& p : ops)if (!ob.contains(p)) ob[p] = QJsonObject();
 
 
 
+    for (int c = 0; c < ui->plateMaps->columnCount(); ++c)
+        for (unsigned char r = 0; r < (unsigned char)std::min(255, ui->plateMaps->rowCount()); ++r)
+            if (ui->plateMaps->item(r,c))
+            {
+
+                auto item = ui->plateMaps->item(r,c);
+
+                QStringList stags = item->text().split(";");
+
+                for (QString& t: stags)
+                    addInfo(ob, "map", t, QString("%1").arg(QLatin1Char('A'+r)), c);
+
+                if (item->foreground().color().isValid() && item->foreground().color().name() != "#000000")
+                    addInfo(ob, "fgcolor_map", item->foreground().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
+
+                if (item->background().color().isValid())
+                    addInfo(ob, "color_map", item->background().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
+
+                if (item->background().style() != Qt::SolidPattern)
+                    addInfo(ob, "pattern_map", QString("%1").arg((int)item->background().style()),QString("%1").arg(QLatin1Char('A'+r)), c);
+            }
+
+
+
+
+    tagger = QJsonDocument(ob);
 
     return tagger;
 }
@@ -497,8 +607,8 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
         p.drawRect(0,0,16,16);
         p.end();
         QIcon ico(px);
-//        ico.actualSize(QSize(16,16));
-  //      ico.paint(&p, 0,0,16,16);
+        //        ico.actualSize(QSize(16,16));
+        //      ico.paint(&p, 0,0,16,16);
 
         br << pco->addAction(ico,opts[i-Qt::SolidPattern]);
     }

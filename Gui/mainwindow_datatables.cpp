@@ -92,16 +92,17 @@ void MainWindow::on_computeFeatures_currentChanged(int index)
 void MainWindow::copyDataToClipBoard()
 {
     QMap<int, unsigned> cols, rows;
-    QString pl = _sinteractor.current()->getExperimentName();
 
 
     QTableView* tv = qobject_cast<QTableView*>(ui->computeFeatures->currentWidget());
-
     if (!tv)
     {
         tv = qobject_cast<QTableView*>(ui->databases->currentWidget());
         if (!tv) return;
     }
+    QString pl = tv->property("PlateName").toString();//_sinteractor.current()->getExperimentName();
+
+
 
     QItemSelectionModel* selections = tv->selectionModel();
 
@@ -175,17 +176,21 @@ void MainWindow::copyDataToClipBoard()
 
 void MainWindow::exportData()
 {
-    QString pl = ui->computeFeatures->tabText(ui->computeFeatures->currentIndex());
-    if (qobject_cast<QTabWidget*>(ui->computeFeatures->currentWidget()))
+    QTableView* tv = qobject_cast<QTableView*>(ui->computeFeatures->currentWidget());
+    if (!tv)
     {
-        auto t = qobject_cast<QTabWidget*>(ui->computeFeatures->currentWidget());
-        pl = t->tabText(t->currentIndex());
+        tv = qobject_cast<QTableView*>(ui->databases->currentWidget());
+        if (!tv) return;
     }
+
+    QString pl = tv->property("PlateName").toString(),
+            cn = tv->property("CommitName").toString();
+
 
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"),
                                                QString("%1/%2.csv").
-                                               arg(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), pl),
+                                               arg(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), cn),
                                                tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
                                                                                                                                                                                                                                                                       | */QFileDialog::DontUseCustomDirectoryIcons
@@ -196,13 +201,6 @@ void MainWindow::exportData()
     if (data.open(QFile::WriteOnly | QFile::Truncate)) {
         QTextStream out(&data);
 
-
-        QTableView* tv = qobject_cast<QTableView*>(ui->computeFeatures->currentWidget());
-        if (!tv)
-        {
-            tv = qobject_cast<QTableView*>(ui->databases->currentWidget());
-            if (!tv) return;
-        }
 
         QAbstractItemModel* mdl = tv->model();
         out << "Plate,";
@@ -366,15 +364,18 @@ void MainWindow::button_load_database()
     Screens& data = ScreensHandler::getHandler().getScreens();
     if (data.size() < 1) return;
 
+    QString db = ui->databases->tabText(ui->databases->currentIndex()),
+            pl = ui->wellPlateViewTab->tabText(ui->wellPlateViewTab->currentIndex()) ;
+
     ExperimentFileModel* tmdl = 0;
     foreach (ExperimentFileModel* mdl, data)
-        if (ui->wellPlateViewTab->tabText(ui->wellPlateViewTab->currentIndex()) == mdl->name())
+        if (pl  == mdl->name())
             tmdl = mdl;
 
     if (!tmdl) return;
 
 
-    QString db = ui->databases->tabText(ui->databases->currentIndex());
+
     tmdl->reloadDatabaseData(true, db);
 
     if (!tmdl->databaseDataModel(db))
@@ -383,6 +384,19 @@ void MainWindow::button_load_database()
     tmdl->databaseDataModel(db)->resyncmodel();
 
     QTableView* v = getDataTableView(tmdl);
+
+
+    QTableView* tv = qobject_cast<QTableView*>(ui->computeFeatures->currentWidget());
+    if (!tv)
+    {
+        tv = qobject_cast<QTableView*>(ui->databases->currentWidget());
+
+    }
+    if (tv)
+    {
+        tv->setProperty("PlateName", pl );
+        tv->setProperty("CommitName", db );
+    }
 
 
     QSortFilterProxyModel* proxyModel = new QSortFilterProxyModel();

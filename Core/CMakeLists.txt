@@ -50,12 +50,17 @@ if (MSVC)
     target_compile_options(CheckoutCore PRIVATE /WX)
 endif()
 
+find_package(bsoncxx   REQUIRED)
+find_package(mongocxx   REQUIRED)
+find_package(Boost 1.56.0 REQUIRED)
+
+
 target_compile_definitions(CheckoutCore PUBLIC  -DGitPluginDate=${plugin_date})
 
 
 target_include_directories(CheckoutCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(CheckoutCore  QHttp Qt::Widgets Qt::Core Qt::Network Qt::Sql Qt::Xml Qt::XmlPatterns  Qt::Concurrent ${OpenCV_LIBS} arrow_shared )
+target_link_libraries(CheckoutCore  QHttp Qt::Widgets Qt::Core Qt::Network Qt::Sql Qt::Xml Qt::XmlPatterns  Qt::Concurrent ${OpenCV_LIBS} arrow_shared mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost)
 
 #add_custom_command(TARGET CheckoutCore   PRE_BUILD
 #    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"

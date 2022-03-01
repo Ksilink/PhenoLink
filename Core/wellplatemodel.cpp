@@ -23,6 +23,9 @@
 #include <arrow/ipc/api.h>
 
 
+#include "ck_mongo.h"
+
+
 namespace fs = arrow::fs;
 
 
@@ -154,12 +157,12 @@ void ExperimentFileModel::adjustBasePath(QString path)
 {
 
 #ifndef WIN32
-        if (path[1]!=':')
-        {
-            // /mnt/shares/U
-            path = path.replace("/mnt/shares/", "");
-            path = QString("%1:%2").arg(QString(path[0]), path.mid(1));
-        }
+    if (path[1]!=':')
+    {
+        // /mnt/shares/U
+        path = path.replace("/mnt/shares/", "");
+        path = QString("%1:%2").arg(QString(path[0]), path.mid(1));
+    }
 #endif
 
     if (base_path.isEmpty())
@@ -170,10 +173,10 @@ void ExperimentFileModel::adjustBasePath(QString path)
         while (i < std::min(path.size(), base_path.size()) && path[i] == base_path[i])
             ++i;
 
-//        qDebug() << "Adjusting base path:" << base_path ;
-//        qDebug() << path;
+        //        qDebug() << "Adjusting base path:" << base_path ;
+        //        qDebug() << path;
         base_path.truncate(i);
-//        qDebug() << base_path;
+        //        qDebug() << base_path;
 
     }
 }
@@ -277,7 +280,7 @@ void ExperimentFileModel::setFieldPosition()
 QMap<int, QMap<int, int> > ExperimentFileModel::getFieldPosition()
 {
     if (toField.isEmpty())
-         setFieldPosition();
+        setFieldPosition();
     return toField;
 }
 
@@ -2040,99 +2043,134 @@ ExperimentFileModel* loadScreenFunct(QString it)
     return nullptr;
 }
 
+
+using bsoncxx::builder::stream::close_array;
+using bsoncxx::builder::stream::close_document;
+using bsoncxx::builder::stream::document;
+using bsoncxx::builder::stream::finalize;
+using bsoncxx::builder::stream::open_array;
+using bsoncxx::builder::stream::open_document;
+using namespace bsoncxx::builder::basic;
+
+
 ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
 {
     if (!mdl)
         return mdl;
     QDir dir(fileName); dir.cdUp();
-    QString tfile = dir.absolutePath() + "/tags.json";
-    QStringList tags;
 
-    QFile file;
-    file.setFileName(tfile);
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+    QStringList pth = dir.absolutePath().split("/");
+    QString xp = pth.back(); pth.pop_back();
+    QString xpd = pth.back(); pth.clear();
+
+    QJsonDocument d;
+
+    mongocxx::uri uri("mongodb://192.168.2.127:27017");
+    mongocxx::client client(uri);
+
+    auto db = client["tags"];
+    auto fold = db["tags"].find_one(make_document(kvp("plateAcq",QString("%1/%2").arg(xpd,xp).toStdString())));
+
+    QStringList tags, gtags;
+
+    if (fold)
     {
-        mdl->setMetadataPath(tfile);
-        QString val = file.readAll();
-        file.close();
-        QStringList gtags;
-        QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
-        if (d.isObject())
+        QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).toLatin1();
+        d=QJsonDocument::fromJson(arr);
+    }
+
+
+
+    if (false)
+    {
+        QString tfile = dir.absolutePath() + "/tags.json";
+        QFile file;
+        file.setFileName(tfile);
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
-
-            QSettings set;
-            tags = set.value("Tags", QStringList()).toStringList();
-            auto json = d.object();
-            if (json.contains("meta"))
-            {
-                auto meta = json["meta"].toObject();
-
-                if (meta.contains("project"))
-                {
-                    mdl->setProperties("project", meta["project"].toString());
-                }
-                if (meta.contains("global_tags"))
-                {
-                    auto ar = meta["global_tags"].toArray();
-
-                    for (auto i : (ar)) gtags << i.toString();
-
-                    mdl->setProperties("global_tags", gtags.join(";"));
-                }
-                if (meta.contains("cell_lines"))
-                {
-                    auto ar = meta["cell_lines"].toArray();
-                    QStringList ll;
-                    for (auto i : (ar)) ll << i.toString();
-                    mdl->setProperties("cell_lines", ll.join(";"));
-                }
-            }
-            if (json.contains("map"))
-            {
-                auto map = json["map"].toObject();
-                for (auto it = map.begin(), e = map.end(); it != e; ++it)
-                {
-                    QString ctag = it.key();
-                    ctag = ctag.replace(';', ' ');
-                    tags << ctag.simplified();
-                    auto wells = it.value().toObject();
-                    for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
-                    {
-                        auto arr = k.value().toArray();
-                        int r = k.key().toUtf8().at(0) - 'A';
-                        for (int i = 0; i < arr.size(); ++i)
-                        {
-                            int c = arr[i].toInt();
-                            QPoint p(r, c);
-
-                            mdl->setTag(p, ctag);
-
-                        }
-                    }
-                }
-            }
-            if (json.contains("color_map"))
-            {
-                auto map = json["color_map"].toObject();
-                for (auto it = map.begin(), e = map.end(); it != e; ++it)
-                {
-                    // tags << it.key();
-                    auto wells = it.value().toObject();
-                    for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
-                    {
-                        auto arr = k.value().toArray();
-                        int r = k.key().toUtf8().at(0) - 'A';
-                        for (int i = 0; i < arr.size(); ++i)
-                        {
-                            int c = arr[i].toInt();
-                            QPoint p(r, c);
-                            mdl->setColor(p, it.key());
-                        }
-                    }
-                }
-            }
-            set.setValue("Tags", tags);
+            mdl->setMetadataPath(tfile);
+            QString val = file.readAll();
+            file.close();
+            d = QJsonDocument::fromJson(val.toUtf8());
         }
+
+    }
+
+    if (d.isObject())
+    {
+
+        QSettings set;
+        tags = set.value("Tags", QStringList()).toStringList();
+        auto json = d.object();
+        if (json.contains("meta"))
+        {
+            auto meta = json["meta"].toObject();
+
+            if (meta.contains("project"))
+            {
+                mdl->setProperties("project", meta["project"].toString());
+            }
+            if (meta.contains("global_tags"))
+            {
+                auto ar = meta["global_tags"].toArray();
+
+                for (auto i : (ar)) gtags << i.toString();
+
+                mdl->setProperties("global_tags", gtags.join(";"));
+            }
+            if (meta.contains("cell_lines"))
+            {
+                auto ar = meta["cell_lines"].toArray();
+                QStringList ll;
+                for (auto i : (ar)) ll << i.toString();
+                mdl->setProperties("cell_lines", ll.join(";"));
+            }
+        }
+        if (json.contains("map"))
+        {
+            auto map = json["map"].toObject();
+            for (auto it = map.begin(), e = map.end(); it != e; ++it)
+            {
+                QString ctag = it.key();
+                ctag = ctag.replace(';', ' ');
+                tags << ctag.simplified();
+                auto wells = it.value().toObject();
+                for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+                {
+                    auto arr = k.value().toArray();
+                    int r = k.key().toUtf8().at(0) - 'A';
+                    for (int i = 0; i < arr.size(); ++i)
+                    {
+                        int c = arr[i].toInt();
+                        QPoint p(r, c);
+
+                        mdl->setTag(p, ctag);
+
+                    }
+                }
+            }
+        }
+        if (json.contains("color_map"))
+        {
+            auto map = json["color_map"].toObject();
+            for (auto it = map.begin(), e = map.end(); it != e; ++it)
+            {
+                // tags << it.key();
+                auto wells = it.value().toObject();
+                for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+                {
+                    auto arr = k.value().toArray();
+                    int r = k.key().toUtf8().at(0) - 'A';
+                    for (int i = 0; i < arr.size(); ++i)
+                    {
+                        int c = arr[i].toInt();
+                        QPoint p(r, c);
+                        mdl->setColor(p, it.key());
+                    }
+                }
+            }
+        }
+        set.setValue("Tags", tags);
     }
 
     return mdl;
@@ -2809,7 +2847,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
         }
 
         seq.merge((*_mscreens[hash])(row, col));
-//        seq.fiel
+        //        seq.fiel
 
         QCborArray ar = ob.take(QCborValue("Payload")).toArray();
         for (int item = 0; item < ar.size(); ++item)
