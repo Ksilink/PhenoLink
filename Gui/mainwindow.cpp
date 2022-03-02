@@ -705,14 +705,17 @@ void MainWindow::updateCurrentSelection()
     foreach(QList<QWidget*> widl, _imageControls.values())
         foreach(QWidget* wid, widl)
         {
-            if (wid) wid->hide(); // hide everything
-            toDel << wid;
+            if (wid) {
+                wid->hide(); // hide everything
+                wid->setDisabled(true);
+                toDel << wid;
+            }
         }
 
 
 
 
-    unsigned channels = inter->getChannels();
+//    unsigned channels = inter->getChannels();
     // qDebug() << "#of Channels" << channels;
 
     QWidget* wwid = 0;
@@ -818,7 +821,7 @@ void MainWindow::updateCurrentSelection()
 
     // Add FrameRate control if it makes sense
     if (inter->getTimePointCount() > 1) {
-        bvl->addWidget(setupVideoFrameRate(new QDoubleSpinBox(wwid), QString("Video Frame Rate")), channels, 0, 1, -1);
+        bvl->addWidget(setupVideoFrameRate(new QDoubleSpinBox(wwid), QString("Video Frame Rate")), (int)chList.size(), 0, 1, -1);
     }
 
     ui->imageControl->layout()->addWidget(wwid);
@@ -906,7 +909,7 @@ void MainWindow::updateCurrentSelection()
     items.append(new QTreeWidgetItem(QStringList() << "Z" << QString("%2/%1").arg(inter->getZCount()).arg(inter->getZ())));
     items.append(new QTreeWidgetItem(QStringList() << "timePoints" << QString("%2/%1").arg(inter->getTimePointCount()).arg(inter->getTimePoint())));
     items.append(new QTreeWidgetItem(QStringList() << "Fields" << QString("%2/%1").arg(inter->getFieldCount()).arg(inter->getField())));
-    items.append(new QTreeWidgetItem(QStringList() << "Channels" << QString("%1").arg(channels)));
+    items.append(new QTreeWidgetItem(QStringList() << "Channels" << QString("%1").arg(chList.size())));
 
     items.append(new QTreeWidgetItem(QStringList() << "Size" << QString("%1x%2").arg(pix.width()).arg(pix.height())));
 
@@ -932,6 +935,7 @@ void MainWindow::updateCurrentSelection()
 
     foreach(QWidget* w, toDel)
     {
+        w->setDisabled(true);
         w->close();
     }
 
