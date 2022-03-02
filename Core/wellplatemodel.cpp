@@ -2076,8 +2076,13 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
 
     if (fold)
     {
-        QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).toLatin1();
-        d=QJsonDocument::fromJson(arr);
+        QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).replace("µ","u").toUtf8();
+        //qDebug() << arr;
+        QJsonParseError err;
+        auto doc = QJsonDocument::fromJson(arr, &err);
+        if (err.error != QJsonParseError::NoError)
+            qDebug() << err.errorString();
+        d = doc;
     }
 
 
