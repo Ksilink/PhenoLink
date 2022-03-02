@@ -2069,7 +2069,8 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
     mongocxx::client client(uri);
 
     auto db = client["tags"];
-    auto fold = db["tags"].find_one(make_document(kvp("plateAcq",QString("%1/%2").arg(xpd,xp).toStdString())));
+    std::string plate = QString("%1/%2").arg(xpd,xp).toStdString();
+    auto fold = db["tags"].find_one(make_document(kvp("plateAcq", plate)));
 
     QStringList tags, gtags;
 
