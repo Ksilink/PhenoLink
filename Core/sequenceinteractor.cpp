@@ -435,7 +435,7 @@ ImageInfos* SequenceInteractor::getChannelImageInfos(unsigned channel)
     QString nm = _mdl->getFile(_timepoint, _field, _zpos, channel);
 
     ImageInfos* res = imageInfos(nm, channel, loadkey);
-
+    //qDebug() << "Channel Infos for" << _mdl->getOwner()->name() << nm << channel << res;
     return res;
 }
 

@@ -1366,20 +1366,23 @@ QString SequenceFileModel::getFile(int timePoint, int fieldIdx, int Zindex, int 
     if (fi->size() < Zindex - 1) return QString();
     ImageStack::iterator si = fi->begin(); std::advance(si, Zindex - 1);
     if (si->size() < timePoint - 1) return QString();
-    TimeLapse::iterator ti = si->begin(); std::advance(ti, timePoint-1);
+    TimeLapse::iterator ti = si->begin(); std::advance(ti, timePoint - 1);
     if (ti->size() < channel - 1) return QString();
     Channel::iterator ci = ti->begin();
-    if (ci==ti->end())
+    if (ci == ti->end())
     {
         return QString();
     }
 
+// if (ti->value().contains(channel))
+        return ti->value(channel);
+        /*
     std::advance(ci, channel-1);
     if (ci==ti->end())
     {
         return QString();
     }
-    return ci.value();
+    return ci.value();*/
 }
 
 
