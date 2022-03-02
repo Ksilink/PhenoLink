@@ -131,7 +131,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         QStringList queries = query.split("&"), wells, plates;
         //        qDebug() << "Load" << queries;
         bool unpacked=false;
-        QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile" << "project";
+        QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile" << "project" << "drive";
         QString tile;
         std::map<QString, QString> params;
 

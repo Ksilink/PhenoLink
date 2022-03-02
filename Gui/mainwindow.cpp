@@ -742,7 +742,6 @@ void MainWindow::updateCurrentSelection()
     for (auto s: shrt_binarize) delete s;
     shrt_binarize.clear();
     int lastPal = 0;
-
     for (auto trueChan : chList)
     {
         ImageInfos* fo = inter->getChannelImageInfos(trueChan);
