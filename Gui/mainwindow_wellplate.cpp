@@ -337,6 +337,8 @@ void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
 
 Screens MainWindow::loadSelection(QStringList checked, bool reload)
 {
+    QSettings set;
+
     // We have the screens list
     // Need to properly load the files now
     ScreensHandler& handler = ScreensHandler::getHandler();
@@ -474,9 +476,16 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
     ScreensGraphicsView* view = (ScreensGraphicsView*)ui->wellPlateViewTab->currentWidget();
     view->update();
 
-    if (multifield)
-        multifield = (QMessageBox::question(this, "Multi Field Detected", "Do you want to automatically unpack wells on display ?") == QMessageBox::Yes);
-
+    if (!set.value("AlwaysUnpack", false).toBool() || !set.value("AlwaysUnpack", false).toBool())
+        if (multifield)
+            multifield = (QMessageBox::question(this, "Multi Field Detected", "Do you want to automatically unpack wells on display ?") == QMessageBox::Yes);
+    else
+        {
+            if (set.value("AlwaysUnpack", false).toBool())
+                multifield = true;
+            if (set.value("NeverUnpack", false).toBool())
+                multifield = false;
+        }
 
 
     foreach (ExperimentFileModel* mdl, data)

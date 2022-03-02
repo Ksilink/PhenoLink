@@ -209,6 +209,10 @@ private slots:
 
     void on_filterOverlay_clicked();
 
+    void on_actionAlways_triggered(bool checked);
+
+    void on_actionNever_triggered(bool checked);
+
 public slots:
 
     void updateCurrentSelection();

@@ -90,7 +90,6 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionPlate_Tag"/>
     <addaction name="actionOptions"/>
     <addaction name="separator"/>
     <addaction name="actionRe_start_Server"/>
@@ -140,6 +139,13 @@
      </property>
      <addaction name="actionDisplay_Remaining_Processes"/>
     </widget>
+    <widget class="QMenu" name="menuUnpack">
+     <property name="title">
+      <string>Unpack</string>
+     </property>
+     <addaction name="actionAlways"/>
+     <addaction name="actionNever"/>
+    </widget>
     <addaction name="actionDisplay_Channel_Names"/>
     <addaction name="sync_fields"/>
     <addaction name="sync_zstack"/>
@@ -147,6 +153,7 @@
     <addaction name="separator"/>
     <addaction name="menuInfos"/>
     <addaction name="separator"/>
+    <addaction name="menuUnpack"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -351,7 +358,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>400</width>
+          <width>412</width>
           <height>214</height>
          </rect>
         </property>
@@ -501,7 +508,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>394</width>
+                 <width>406</width>
                  <height>68</height>
                 </rect>
                </property>
@@ -763,7 +770,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>400</width>
+          <width>412</width>
           <height>288</height>
          </rect>
         </property>
@@ -1071,6 +1078,28 @@
    </property>
    <property name="text">
     <string>Display Channel Names</string>
+   </property>
+  </action>
+  <action name="actionAlways">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Always</string>
+   </property>
+   <property name="toolTip">
+    <string>Always Unpack</string>
+   </property>
+  </action>
+  <action name="actionNever">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Never</string>
+   </property>
+   <property name="toolTip">
+    <string>Never Unpack</string>
    </property>
   </action>
  </widget>

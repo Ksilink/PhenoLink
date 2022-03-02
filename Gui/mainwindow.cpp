@@ -266,8 +266,8 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     shrt_startEnt->setKey(Qt::CTRL + Qt::Key_Enter);
     connect(shrt_startEnt, SIGNAL(activated()), this, SLOT(startProcess()));
 
-
-
+    ui->actionNever->setChecked(set.value("AlwaysUnpack", false).toBool());
+    ui->actionAlways->setChecked(set.value("NeverUnpack", false).toBool());
 }
 
 
@@ -2929,4 +2929,20 @@ void MainWindow::on_actionDisplay_Channel_Names_toggled(bool arg1)
 }
 
 
+
+
+void MainWindow::on_actionAlways_triggered(bool checked)
+{
+    QSettings set;
+    set.setValue("AlwaysUnpack", checked);
+    ui->actionNever->setChecked(!checked);
+}
+
+
+void MainWindow::on_actionNever_triggered(bool checked)
+{
+    QSettings set;
+    set.setValue("NeverUnpack", checked);
+     ui->actionAlways->setChecked(!checked);
+}
 
