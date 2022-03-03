@@ -41,6 +41,15 @@ TaggerPlate::TaggerPlate(QString _plate,QWidget *parent) :
 
     ui->plateMaps->resizeColumnsToContents();
     ui->plateMaps->resizeRowsToContents();
+
+    for (int r = 0; r < 'Q'; ++r)
+        for (int c = 0; c < 24; ++c)
+            if (!ui->plateMaps->item(r, c))
+                ui->plateMaps->setItem(r, c, new QTableWidgetItem(QString()));
+
+    
+
+
 }
 
 TaggerPlate::~TaggerPlate()
@@ -326,7 +335,12 @@ void TaggerPlate::setColor(int r, int c, QString color)
     if (!ui->plateMaps->item(r,c))
         ui->plateMaps->setItem(r,c, new QTableWidgetItem());
 
-    ui->plateMaps->item(r,c)->setBackground(QColor(color));
+    auto item = ui->plateMaps->item(r, c);
+    auto b = item->background();
+    b.setStyle(Qt::SolidPattern);
+    b.setColor(QColor(color));
+//    qDebug() << r << c << color;
+
 }
 
 void TaggerPlate::setPattern(int r, int c, int patt)
@@ -492,6 +506,9 @@ void addInfo(QJsonObject& ob, QString map, QString gl, QString row, int col)
 {
     QJsonObject obj, token;
 
+    gl = gl.simplified();
+    if (gl.isEmpty())
+        return;
 
     obj = ob[map].toObject();
     token = obj[gl].toObject();
@@ -532,10 +549,10 @@ QJsonDocument TaggerPlate::refreshJson()
                 if (item->foreground().color().isValid() && item->foreground().color().name() != "#000000")
                     addInfo(ob, "fgcolor_map", item->foreground().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
 
-                if (item->background().color().isValid())
+                if (item->background().color().isValid() && item->background().color().name() != "#000000")
                     addInfo(ob, "color_map", item->background().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
 
-                if (item->background().style() != Qt::SolidPattern)
+                if (item->background().style() != Qt::SolidPattern && item->background().style() != Qt::NoBrush)
                     addInfo(ob, "pattern_map", QString("%1").arg((int)item->background().style()),QString("%1").arg(QLatin1Char('A'+r)), c);
             }
 
@@ -634,6 +651,8 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
                 {
                     auto c = item->background();
                     c.setColor(col);
+                    c.setStyle(Qt::SolidPattern);
+
                     item->setBackground(c);
                 }
         }

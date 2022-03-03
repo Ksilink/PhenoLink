@@ -465,10 +465,12 @@ void tagger::on_pushButton_clicked()
 
             json["meta"] = meta;
 
-            auto doc = bsoncxx::from_json(QJsonDocument(json).toJson().toStdString());
+            std::string qdoc = QJsonDocument(json).toJson().toStdString(),
+                plt = json["plateAcq"].toString().toStdString();
+            auto doc = bsoncxx::from_json(qdoc);
 
             if (json.contains("_id"))
-                coll.replace_one(make_document(kvp("plateAcq", json["plateAcq"].toString().toStdString())),  doc.view());
+                coll.replace_one(make_document(kvp("plateAcq", plt)),  doc.view());
             else
                 coll.insert_one(doc.view());
 
