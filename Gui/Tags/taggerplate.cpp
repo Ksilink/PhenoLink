@@ -45,8 +45,15 @@ TaggerPlate::TaggerPlate(QString _plate,QWidget *parent) :
     for (int r = 0; r < 'Q'; ++r)
         for (int c = 0; c < 24; ++c)
             if (!ui->plateMaps->item(r, c))
-                ui->plateMaps->setItem(r, c, new QTableWidgetItem(QString()));
+            {
+                auto item = new QTableWidgetItem(QString());
+                ui->plateMaps->setItem(r, c, item);
+                auto b = item->background();
+                b.setStyle(Qt::SolidPattern);
+                b.setColor(Qt::white);
+                item->setBackground(b);
 
+            }
     
 
 
@@ -158,7 +165,27 @@ void TaggerPlate::on_pushButton_clicked()
         if (of.open(QIODevice::ReadOnly))
         {
             QByteArray ar = of.readAll();
-            tagger = QJsonDocument::fromJson(ar);
+            auto tags = QJsonDocument::fromJson(ar);
+            auto tg = tags.object();
+            auto ftag = tagger.object();
+            for (auto k : tags.object().keys())
+                if (k != "map")
+                {
+                    ftag[k] = tg[k];
+                }
+                else
+                {
+                    QJsonObject maps = tg[k].toObject(), res;
+                    for (auto& v : maps.keys())
+                    {
+//                        qDebug() << v;
+                        auto k = v;
+                        res[v.replace(".", "::")] = maps[k];
+                    }
+                    ftag[k] = res;
+                }
+            tagger = QJsonDocument(ftag);
+            QByteArray bar = tagger.toJson();
             updatePlate();
         }
     }
@@ -199,6 +226,7 @@ void TaggerPlate::on_treeView_customContextMenuRequested(const QPoint &pos)
     auto res = menu.exec(ui->treeView->mapToGlobal(pos));
 
     auto idx = ui->treeView->indexAt(pos);
+    
 
     QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
     if (!ml) return;
@@ -208,6 +236,7 @@ void TaggerPlate::on_treeView_customContextMenuRequested(const QPoint &pos)
 
 
     QStandardItem* root = model->invisibleRootItem();
+
     //QStandardItem* root = ui->treeView->invisibleRootItem();
     //ui->treeView->roo
 
@@ -222,11 +251,16 @@ void TaggerPlate::on_treeView_customContextMenuRequested(const QPoint &pos)
         {
             QStandardItem* parent = nullptr;
             QString name =  ui->treeView->model()->itemData(idx)[Qt::DisplayRole].toString();
-
-            for (int i = 0; i < root->rowCount(); ++i)
+            
+            for (int i = 0; i < root->rowCount() && parent == nullptr; ++i)
             {
                 if (root->child(i)->text() == name)
                     parent = root->child(i);
+
+                if (!parent)
+                    for (int j = 0; j < root->child(i)->rowCount() && parent == nullptr; ++j)
+                        if (root->child(i)->child(j)->text() == name)
+                            parent = root->child(i);
             }
 
             if (parent)
@@ -308,6 +342,7 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
 void TaggerPlate::setTag(int r, int c, QString tags)
 {
 
+    tags = tags.replace("::", ".");
     if (!ui->plateMaps->item(r,c))
         ui->plateMaps->setItem(r,c, new QTableWidgetItem(tags));
     else
@@ -319,7 +354,7 @@ void TaggerPlate::setTag(int r, int c, QString tags)
 
         lst.clear();
 
-        for (auto& t: st) lst << t;
+        for (auto& t: st) if (!t.simplified().isEmpty()) lst << t.simplified();
 
         lst.sort();
 
@@ -506,7 +541,7 @@ void addInfo(QJsonObject& ob, QString map, QString gl, QString row, int col)
 {
     QJsonObject obj, token;
 
-    gl = gl.simplified();
+    gl = gl.simplified().replace(".","::");
     if (gl.isEmpty())
         return;
 
@@ -529,9 +564,16 @@ QJsonDocument TaggerPlate::refreshJson()
 
     auto ob = tagger.object();
 
-    QStringList ops = QStringList() << "map" << "color_map" << "fgcolor_map" << "pattern_map";
+    QStringList ops =  QStringList() << "map" << "color_map" << "fgcolor_map" << "pattern_map";
     for (auto& p : ops)if (!ob.contains(p)) ob[p] = QJsonObject();
-
+    ops = QStringList() << "color_map" << "fgcolor_map";
+    for (auto m: ops)
+        if (ob[m].toObject().contains("#ffffff"))
+        {
+            auto f = ob[m].toObject();
+            f.remove("#ffffff");
+            ob[m] = f;
+        }
 
 
     for (int c = 0; c < ui->plateMaps->columnCount(); ++c)
@@ -544,12 +586,12 @@ QJsonDocument TaggerPlate::refreshJson()
                 QStringList stags = item->text().split(";");
 
                 for (QString& t: stags)
-                    addInfo(ob, "map", t, QString("%1").arg(QLatin1Char('A'+r)), c);
+                    addInfo(ob, "map", t, QString("%1").arg(QLatin1Char('A' + r)), c);
 
-                if (item->foreground().color().isValid() && item->foreground().color().name() != "#000000")
+                if (item->foreground().color().isValid() && item->foreground().color().name() != "#000000" && item->foreground().color().name() != "#ffffff")
                     addInfo(ob, "fgcolor_map", item->foreground().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
 
-                if (item->background().color().isValid() && item->background().color().name() != "#000000")
+                if (item->background().color().isValid() && item->background().color().name() != "#000000" && item->foreground().color().name() != "#ffffff")
                     addInfo(ob, "color_map", item->background().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
 
                 if (item->background().style() != Qt::SolidPattern && item->background().style() != Qt::NoBrush)

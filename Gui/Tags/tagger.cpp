@@ -284,19 +284,30 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 
         // Try to find in the mongo the corresponding plate ?
         auto db = client["tags"];
-        auto fold = db["tags"].find_one(make_document(kvp("plateAcq",QString("%1/%2").arg(plateDate,plate).toStdString())));
+
+        std::string plt = QString("%1/%2").arg(plateDate, plate).toStdString();
+
+        auto fold = db["tags"].find_one(make_document(kvp("plateAcq",plt)));
+
         if (fold)
         {
-            QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).toLatin1();
-            tags=QJsonDocument::fromJson(arr);
+            QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).toUtf8();
+            //qDebug() << arr;
+            QJsonParseError err;
+            tags=QJsonDocument::fromJson(arr, &err);
+            if (err.error != QJsonParseError::NoError)
+                qDebug() << err.errorString();
             QJsonObject ob = tags.object();
-            qDebug() <<"Mongodb info" << ob["plateAcq"].toString() << ob["_id"].toObject()["$oid"].toString();
+            //arr = tags.toJson();
+            qDebug() <<"Mongodb info" << QString("%1/%2").arg(plateDate, plate) << ob["plateAcq"].toString() << ob["_id"].toObject()["$oid"].toString();
+            //qDebug() << arr;
             if (ob.contains("meta") && ob["meta"].toObject().contains("project"))
             {
                 proj = ob["meta"].toObject()["project"].toString(); // mandatoringly :D
                 //   qDebug() << proj;
             }
 
+           
             platet->updatePlate();
         }
         else
@@ -467,6 +478,7 @@ void tagger::on_pushButton_clicked()
 
             std::string qdoc = QJsonDocument(json).toJson().toStdString(),
                 plt = json["plateAcq"].toString().toStdString();
+
             auto doc = bsoncxx::from_json(qdoc);
 
             if (json.contains("_id"))

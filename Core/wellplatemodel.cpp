@@ -2140,7 +2140,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
             auto map = json["map"].toObject();
             for (auto it = map.begin(), e = map.end(); it != e; ++it)
             {
-                QString ctag = it.key();
+                QString ctag = it.key().replace("::", ".");;
                 ctag = ctag.replace(';', ' ');
                 tags << ctag.simplified();
                 auto wells = it.value().toObject();
