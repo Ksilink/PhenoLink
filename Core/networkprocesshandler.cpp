@@ -703,20 +703,28 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
 
                         QCborArray ar;
                         size_t pos = 0;
-
-                        while (pos < buf.size())
-                        {
-                            static const size_t mlen = 1073741824; // chunk size
-                            size_t end = std::min(mlen, buf.size() - pos);
-                            ar.append(QByteArray(reinterpret_cast<const char*>(&buf.data()[pos]), (int)end));
-                            pos += end;
+                        try {
+                            while (pos < buf.size())
+                            {
+                                static const size_t mlen = 1073741824; // chunk size
+                                size_t end = std::min(mlen, buf.size() - pos);
+                                ar.append(QByteArray(reinterpret_cast<const char*>(&buf[pos]), (int)end));
+                                pos += end;
+                            }
                         }
+                        catch (...)
+                        {
+                            QString msg("Server Out of Memory - Data cannot be transfered");
+                            qDebug() << msg;
+                            ob["Message"] = msg;
+                        }
+
 
 
                         qDebug() << "Got binary data: " << dhash << buf.size() << ar.size() << pos;
                         mm.insert(QCborValue("BinaryData"), ar);//QCborValue(data));
 
-                        exportBinary(ds, obj, mm);
+                        exportBinary(ds,obj, mm);
 
                     }
                     else
