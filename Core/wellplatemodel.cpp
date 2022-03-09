@@ -716,11 +716,11 @@ void ExperimentFileModel::reloadDatabaseDataCSV(QString file, QString t, bool ag
 
 #define ABORT_ON_FAILURE(expr)                     \
     do {                                             \
-    arrow::Status status_ = (expr);                \
-    if (!status_.ok()) {                           \
-    std::cerr << status_.message() << std::endl; \
-    abort();                                     \
-    }                                              \
+        arrow::Status status_ = (expr);                \
+        if (!status_.ok()) {                           \
+            qDebug() << QString::fromStdString(status_.message()) ; \
+            return ;                                     \
+        }                                              \
     } while (0);
 
 
@@ -3475,14 +3475,14 @@ double Aggregate(QList<double>& f, QString& ag)
     return -1.;
 }
 
-
+#undef ABORT_ON_FAILURE
 #define ABORT_ON_FAILURE(expr)                     \
     do {                                             \
-    arrow::Status status_ = (expr);                \
-    if (!status_.ok()) {                           \
-    std::cerr << status_.message() << std::endl; \
-    abort();                                     \
-    }                                              \
+        arrow::Status status_ = (expr);                \
+        if (!status_.ok()) {                           \
+            qDebug() << QString::fromStdString(status_.message()); \
+            return 0;                                     \
+        }                                              \
     } while (0);
 
 
@@ -3576,20 +3576,38 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
                 arrow::schema(fields, meta);
         auto table = arrow::Table::Make(schema, data);
         QDir dir(set.value("databaseDir").toString());
-        QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
+        QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath(), _owner->property("project"), prefix)
                 ;
         QString fname = writePath + _owner->name() + ".fth";
 
         std::string uri = fname.toStdString();
         std::string root_path;
 
-        auto fs = fs::FileSystemFromUriOrPath(uri, &root_path).ValueOrDie();
+        auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
+        if (!r0.ok())
+        {
+            qDebug() << "Arrow Error Not able to load" << fname;
+            return 0;
+        }
+        auto fs = r0.ValueOrDie();
 
-        auto output = fs->OpenOutputStream(uri).ValueOrDie();
+        auto r1 = fs->OpenOutputStream(uri);
+        if (!r1.ok())
+        {
+            qDebug() << "Arrow Error not able to open stream" << QString::fromStdString(uri);
+            return 0;
+        }
+        auto output = r1.ValueOrDie();
         arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
         //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
-        auto writer = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options).ValueOrDie();
+        auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
+        if (!r2.ok())
+        {
+            qDebug() << "Arrow Error not able to write table";
+            return 0;
+        }
+        auto writer = r2.ValueOrDie();
 
         writer->WriteTable(*table.get());
         writer->Close();
@@ -3656,13 +3674,33 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
         std::string uri = fname.toStdString();
         std::string root_path;
 
-        auto fs = fs::FileSystemFromUriOrPath(uri, &root_path).ValueOrDie();
+        auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
+        if (!r0.ok())
+        {
+            qDebug() << "Arrow Error " << QString::fromStdString(r0.status().ToString());
+            return 0;
+        }
+        auto fs = r0.ValueOrDie();
 
-        auto output = fs->OpenOutputStream(uri).ValueOrDie();
+        auto r1 = fs->OpenOutputStream(uri);
+        if (!r1.ok())
+        {
+            qDebug() << "Arrow Error " << QString::fromStdString(r1.status().ToString());
+            return 0;
+        }
+        auto output = r1.ValueOrDie();
         arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
         //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie();
 
-        auto writer = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options).ValueOrDie();
+        auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
+        if (!r2.ok())
+        {
+                qDebug() << "Arrow Error Not write" << QString::fromStdString(r2.status().ToString());
+                return 0;
+        }
+
+
+        auto writer = r2.ValueOrDie();
 
         writer->WriteTable(*table.get());
         writer->Close();
@@ -4058,13 +4096,14 @@ StructuredMetaData::StructuredMetaData(Dictionnary dict) : DataProperty(dict)
 
 
 #include <iostream>
-#define ABORT_ON_FAILURE(expr)                     \
-    do {                                             \
-    arrow::Status status_ = (expr);                \
-    if (!status_.ok()) {                           \
-    std::cerr << status_.message() << std::endl; \
-    abort();                                     \
-    }                                              \
+#undef ABORT_ON_FAILURE
+#define ABORT_ON_FAILURE(expr)                          \
+    do {                                                \
+        arrow::Status status_ = (expr);                 \
+        if (!status_.ok()) {                            \
+            qDebug() << QString::fromStdString(status_.message()); \
+            return;                                     \
+        }                                               \
     } while (0);
 
 StructuredMetaData::~StructuredMetaData()
