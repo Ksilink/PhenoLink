@@ -274,10 +274,13 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             _projects.insert(proj);
 
         TaggerPlate* platet = new TaggerPlate(d, this);
+        platet->setPlateAcq(plateDate, plate);
+        platet->setPath(d);
         QJsonDocument& tags = platet->getTags();
 
         this->ui->project->clear();
         this->ui->experiment->setText(plate);
+
         QStringList lst(_projects.begin(), _projects.end()); lst.sort();
         this->ui->project->addItems(lst);
 
@@ -307,7 +310,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 //   qDebug() << proj;
             }
 
-           
+
             platet->updatePlate();
         }
         else

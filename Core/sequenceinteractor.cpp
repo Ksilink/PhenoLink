@@ -900,7 +900,7 @@ void paletizeImage(ImageInfos* imifo, cv::Mat& image, QImage& toPix, int rows, i
         for (int j = 0; j < cols; ++j, ++p)
         {
             const unsigned short v = *p;
-            if (v != 0 && state[v]) // FIXME Need to fuse the image data and not clear it....
+            if (v != 0 && v < 16 && state[v]) // FIXME Need to fuse the image data and not clear it....
                 pix[j] = qRgb(std::min(255, qRed(pix[j]) + pa[(v + lastPal) % 16].red()),
                         std::min(255, qGreen(pix[j]) + pa[(v + lastPal) % 16].green()),
                         std::min(255, qBlue(pix[j]) + pa[(v + lastPal) % 16].blue()));

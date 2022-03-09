@@ -18,10 +18,23 @@ public:
     ~TaggerPlate();
     QJsonDocument& getTags();
 
+    void setPlateAcq(QString pla, QString pl)
+    {
+        plate = pl;
+        plateDate = pla;
+    }
+
+    void setPath(QString p)
+    {
+        path = p;
+    }
+
     void setTags(
             QMap<QString, QMap<QString, QSet<QString > > > &data,
             QMap<QString, QSet<QString> >  &othertags,
             QString project);
+
+
 
     void setTag(int r, int c, QString tags);
     void setColor(int r, int c, QString color);
@@ -51,7 +64,8 @@ private slots:
 private:
     Ui::TaggerPlate *ui;
 
-    QString plate;
+
+    QString plateDate, plate, path;
     QSortFilterProxyModel* mdl;
 
     QJsonDocument tagger;

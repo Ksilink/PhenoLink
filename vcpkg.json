@@ -11,12 +11,14 @@
       {
           "name":               "opencv",
           "default-features":   true,
-          "features":           ["contrib"]
+          "features":           [ "contrib" ]
       },
       {
           "name":               "arrow",
+
           "default-features":   true,
-          "features":           ["filesystem","dataset"]
+
+          "features":           [ "filesystem", "dataset" ]
       },
       {
           "name":               "dlib"

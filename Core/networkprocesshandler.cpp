@@ -698,8 +698,12 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                     if (pay.contains("DataHash"))
                     {
                         QString dhash = pay["DataHash"].toString();
+
                         auto buf = CheckoutProcess::handler().detachPayload(dhash);
-                        QCborArray ar;                        size_t pos = 0;
+
+                        QCborArray ar;
+                        size_t pos = 0;
+
                         while (pos < buf.size())
                         {
                             static const size_t mlen = 1073741824; // chunk size

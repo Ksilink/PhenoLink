@@ -54,7 +54,7 @@ TaggerPlate::TaggerPlate(QString _plate,QWidget *parent) :
                 item->setBackground(b);
 
             }
-    
+
 
 
 }
@@ -226,7 +226,7 @@ void TaggerPlate::on_treeView_customContextMenuRequested(const QPoint &pos)
     auto res = menu.exec(ui->treeView->mapToGlobal(pos));
 
     auto idx = ui->treeView->indexAt(pos);
-    
+
 
     QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
     if (!ml) return;
@@ -251,7 +251,7 @@ void TaggerPlate::on_treeView_customContextMenuRequested(const QPoint &pos)
         {
             QStandardItem* parent = nullptr;
             QString name =  ui->treeView->model()->itemData(idx)[Qt::DisplayRole].toString();
-            
+
             for (int i = 0; i < root->rowCount() && parent == nullptr; ++i)
             {
                 if (root->child(i)->text() == name)
@@ -510,6 +510,9 @@ void TaggerPlate::updatePlate()
             }
         }
 
+        ob["serverPath"] = path;
+        ob["plate"] = plate;
+        ob["plateAcq"] = QString("%1/%2").arg(plateDate, plate);
     }
 
 }
