@@ -143,6 +143,7 @@ int main(int ac, char** av)
     app.setOrganizationName("WD");
 
 
+//    qDebug() << "Runtime PATH" << QString("%1").arg(getenv("PATH"));
 
     QSettings sets;
     uint port = sets.value("ServerPort", 13378).toUInt();
