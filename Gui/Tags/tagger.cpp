@@ -340,7 +340,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             platet->updatePlate();
         }
 
-        ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(1)));
+        int p = std::min(1, date.size()-1);
+        ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(p)));
 
         if (!proj.isEmpty())
             this->ui->project->setCurrentText(proj);
