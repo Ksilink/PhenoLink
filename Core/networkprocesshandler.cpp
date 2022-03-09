@@ -716,7 +716,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                         {
                             QString msg("Server Out of Memory - Data cannot be transfered");
                             qDebug() << msg;
-                            ob["Message"] = msg;
+                            ob.insert(QCborValue("Message"), QCborValue(msg));
                         }
 
 
