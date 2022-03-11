@@ -163,44 +163,50 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 
     http->request(qhttp::EHTTP_GET, url,
                   [key, url]( qhttp::client::QHttpRequest* req){
-        req->addHeader("X-LC-APP-Auth", key.toLatin1());
-        req->addHeader("Accept", "application/json");
-        QByteArray body;
-        req->addHeaderValue("content-length", body.length());
-        req->end(body);
+        if (req)
+        {
+            req->addHeader("X-LC-APP-Auth", key.toLatin1());
+            req->addHeader("Accept", "application/json");
+            QByteArray body;
+            req->addHeaderValue("content-length", body.length());
+            req->end(body);
+        }
     },
 
     [this]( qhttp::client::QHttpResponse* res) {
-        res->collectData();
-        res->onEnd([this, res](){
-            auto data = res->collectedData();
-            QMap<QString, QString> map={ // No API way found as of yet to get this info...
-                                         //                                         {"1","Reagents"},
-                                         {"3","Drugs"},
-                                         //                                         {"4","Cell Culture Room"},// degage
-                                         //                                         {"5","Pipettes"},// degage
-                                         //                                         {"6","Filtration"},// degage
-                                         //                                         {"7","Reservoirs"},// degage
-                                         //                                         {"8","Gloves"},// degage
-                                         {"9","Antibodies"},
-                                         //                                         {"10","Plates"},// degage
-                                         //                                         {"11","Sanitisers"},// degage
-                                         //                                         {"12","Screening"}, // degage
-                                         //                                         {"13","Tips"},// degage
-                                         //                                         {"14","Tubes"},// degage
-                                         //                                         {"15","Western Blot"}// degage
-                                       };
-            this->labcollector_chemicals = QJsonDocument::fromJson(data);
-            for (auto items: this->labcollector_chemicals.array())
-            {
-                auto obj = items.toObject();
-                if (map.contains(obj["cat_id"].toString().simplified()))
+        if (res)
+        {
+            res->collectData();
+            res->onEnd([this, res](){
+                auto data = res->collectedData();
+                QMap<QString, QString> map={ // No API way found as of yet to get this info...
+                                             //                                         {"1","Reagents"},
+                                             {"3","Drugs"},
+                                             //                                         {"4","Cell Culture Room"},// degage
+                                             //                                         {"5","Pipettes"},// degage
+                                             //                                         {"6","Filtration"},// degage
+                                             //                                         {"7","Reservoirs"},// degage
+                                             //                                         {"8","Gloves"},// degage
+                                             {"9","Antibodies"},
+                                             //                                         {"10","Plates"},// degage
+                                             //                                         {"11","Sanitisers"},// degage
+                                             //                                         {"12","Screening"}, // degage
+                                             //                                         {"13","Tips"},// degage
+                                             //                                         {"14","Tubes"},// degage
+                                             //                                         {"15","Western Blot"}// degage
+                                           };
+                this->labcollector_chemicals = QJsonDocument::fromJson(data);
+                for (auto items: this->labcollector_chemicals.array())
                 {
-                    this->_tags_of_tags[obj["name"].toString().simplified()].insert(map[obj["cat_id"].toString().simplified()]); // Tags a compound corresponding tag as compound
-                    this->_grouped_tags[""][map[obj["cat_id"].toString().simplified()]].insert(obj["name"].toString().simplified());
+                    auto obj = items.toObject();
+                    if (map.contains(obj["cat_id"].toString().simplified()))
+                    {
+                        this->_tags_of_tags[obj["name"].toString().simplified()].insert(map[obj["cat_id"].toString().simplified()]); // Tags a compound corresponding tag as compound
+                        this->_grouped_tags[""][map[obj["cat_id"].toString().simplified()]].insert(obj["name"].toString().simplified());
+                    }
                 }
-            }
-        });
+            });
+        }
     });
 
     try
@@ -481,7 +487,7 @@ void tagger::on_pushButton_clicked()
             json["meta"] = meta;
 
             std::string qdoc = QJsonDocument(json).toJson().toStdString(),
-                plt = json["plateAcq"].toString().toStdString();
+                    plt = json["plateAcq"].toString().toStdString();
 
             auto doc = bsoncxx::from_json(qdoc);
 
@@ -499,6 +505,6 @@ void tagger::on_pushButton_clicked()
 void tagger::on_mapcsv()
 {
 
- qDebug() << "Query for CSV & Map CSV file to the plate names";
+    qDebug() << "Query for CSV & Map CSV file to the plate names";
 }
 

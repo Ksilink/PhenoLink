@@ -23,7 +23,7 @@
 #include <QLabel>
 
 #include <QtConcurrent/QtConcurrent>
-
+#include <QBuffer>
 
 #include "ImageDisplay/scrollzone.h"
 
@@ -1096,6 +1096,9 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
     QAction *capture = menu.addAction("Capture Image to clipboard", this, SLOT(captureToClipboard()));
     capture->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
 
+//    menu.addAction("Share on Teams", this, SLOT(sharePicture()));
+
+
     //    copy->setDisabled(true);
     if (this->_interactor->getTimePointCount() > 1)
     {
@@ -1145,6 +1148,9 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
 
     menu.exec(mapToGlobal(pos));
 }
+
+
+
 
 void ImageForm::copyToClipboard()
 {
@@ -1349,3 +1355,87 @@ void ImageForm::removeFromView()
 
 
 }
+
+
+#include "qhttp/qhttpclient.hpp"
+#include "qhttp/qhttpclientrequest.hpp"
+#include "qhttp/qhttpclientresponse.hpp"
+
+
+using namespace qhttp::client;
+
+
+// Checkout Image Webhook
+// https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8
+
+void ImageForm::sharePicture()
+{
+
+     static qhttp::client::QHttpClient*  iclient = 0;
+     if (!iclient)
+         iclient = new qhttp::client::QHttpClient(this);
+
+    QPixmap pixmap(this->size());
+    this->render(&pixmap);
+
+    QBuffer buf;
+    buf.open(QIODevice::WriteOnly);
+    pixmap.save(&buf, "PNG");
+    auto const encoded = buf.data().toBase64();
+
+    // Pixmap to base64 png
+    // Create json
+    QString json = QString("{ \"type\":\"message\", \"attachments\":[\
+          {\
+             \"contentType\":\"application/vnd.microsoft.card.adaptive\",\
+             \"content\":{\
+                \"$schema\":\"http://adaptivecards.io/schemas/adaptive-card.json\",\
+                \"type\":\"AdaptiveCard\",\
+                \"version\":\"1.2\",\
+                \"body\":[\
+                    {\
+                    \"type\": \"TextBlock\",\
+                    \"text\": \"Project %1 plate %2\"\
+                    }\
+                ]\
+             }\
+          }\
+       ]\
+    }\
+    ").arg(_interactor->getProjectName(),
+        _interactor->getExperimentName(),
+        QString(encoded));
+        /*,\
+                            {\
+                            \"type\": \"Image\",\
+                            \"url\": \"data:image/png;base64,%3\" \
+                            }\ */
+
+    // send through http webhook
+    QString webhook("https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8");
+
+    iclient->request(qhttp::EHTTP_POST,
+                     webhook,
+                     [json](qhttp::client::QHttpRequest* req)
+                     {
+                        req->addHeader("Content-Type", "application/json");
+                        req->addHeaderValue("content-length", json.size());
+                        req->end(json.toLatin1());
+                        qDebug() << "Sending message" << json;
+    },
+                    [](qhttp::client::QHttpResponse* res ){
+        if (res)
+        {
+            res->collectData();
+            res->onEnd([res]() {
+                qDebug() << res->statusString();
+                qDebug() << "Result info" << res->collectedData();
+            });
+        }
+    }
+                     );
+
+
+}
+
+

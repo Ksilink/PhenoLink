@@ -108,6 +108,7 @@ private slots:
     void on_ImageForm_customContextMenuRequested(const QPoint &pos);
     void copyToClipboard();
     void captureToClipboard();
+    void sharePicture();
     void copyCurrentImagePath();
     void copyCurrentSequencePath();
     void overlayHistogram();

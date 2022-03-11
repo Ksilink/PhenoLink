@@ -72,15 +72,15 @@ void loadPlugins(bool isServer)
 
         void operator()(QString fileName)
         {
+            qDebug() << "Checking file" << fileName << pluginsDir.absoluteFilePath(fileName);
             QPluginLoader pluginLoader(pluginsDir.absoluteFilePath(fileName));
 
 
             QObject *plugin = pluginLoader.instance();
 
-            //if (pluginLoader.isLoaded())
-            //	qDebug() << "Plugin" << fileName << "loaded";
-            //else
-            //	qDebug() << pluginLoader.errorString();
+            if (!pluginLoader.isLoaded())
+                qDebug() << pluginLoader.errorString();
+
 
             if (plugin)
             {
@@ -123,7 +123,7 @@ void loadPlugins(bool isServer)
         }
     };
 
-    QStringList entries = pluginsDir.entryList(QDir::Files);
+    QStringList entries = pluginsDir.entryList(QStringList() << "*.dll" << "*.so" << "*.dylib", QDir::Files);
     QtConcurrent::blockingMap(entries, paraLoader(loader, process, pluginsDir, isServer, mutex));
 
 }
