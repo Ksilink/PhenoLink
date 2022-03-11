@@ -32,7 +32,7 @@ namespace fs = arrow::fs;
 
 
 
-CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(false), icpus(0)
+CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(false), icpus(0), collapse(true)
 {
     //    iclient.setTimeOut(5000);
     QObject::connect(&iclient, &QHttpClient::disconnected, [this]() {
@@ -94,21 +94,22 @@ void CheckoutHttpClient::sendQueue()
     auto& ob = req.data;
 
     // Collapse request url
-    QList<int> collapse;
-    for (int i = 0; i < reqs.size(); ++i)
-        if (reqs.at(i).url == url &&
-                (url.path().startsWith("/addData/") ||
-                 url.path().startsWith("/Start")  ||
-                 url.path().startsWith("/Ready") ||
-                 url.path().startsWith("/ServerDone") ) )
-            collapse << i;
+    QList<int> collapsed;
+    if (collapse)
+        for (int i = 0; i < reqs.size(); ++i)
+            if (reqs.at(i).url == url &&
+                    (url.path().startsWith("/addData/") ||
+                     url.path().startsWith("/Start")  ||
+                     url.path().startsWith("/Ready") ||
+                     url.path().startsWith("/ServerDone") ) )
+                collapsed << i;
 
-    if (collapse.size() > 0)
+    if (collapsed.size() > 0)
     {
-        qDebug() << "Collapsing responses (0 + " << collapse << ")";
+        qDebug() << "Collapsing responses (0 + " << collapsed << ")";
         QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
 
-        for (auto& i: collapse)
+        for (auto& i: collapsed)
         {
             auto r = reqs.at(i);
             QJsonArray a2 = QCborValue::fromCbor(r.data).toJsonValue().toArray();
@@ -118,7 +119,7 @@ void CheckoutHttpClient::sendQueue()
             }
         }
 
-        for (QList<int>::reverse_iterator it = collapse.rbegin(), e = collapse.rend();
+        for (QList<int>::reverse_iterator it = collapsed.rbegin(), e = collapsed.rend();
              it != e; ++it)
             reqs.removeAt(*it);
 

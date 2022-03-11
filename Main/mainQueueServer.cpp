@@ -447,7 +447,7 @@ void Server::WorkerMonitor()
                         clients[srv] = new CheckoutHttpClient(next_worker.first, next_worker.second);
                         sr = clients[srv];
                     }
-
+//                    sr->setCollapseMode(false);
                     QString taskid = QString("%1@%2#%3#%4!%5#%6:%7")
                         .arg(pr["Username"].toString(), pr["Computer"].toString(),
                              pr["Path"].toString(), pr["WorkID"].toString(),
@@ -467,8 +467,8 @@ void Server::WorkerMonitor()
                 }
 
             }
-
             workers_lock.unlock();
+            QThread::msleep(2);
         }
         else
         {

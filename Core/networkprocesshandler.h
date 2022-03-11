@@ -58,6 +58,9 @@ public:
     void finalize();
 
     void sendQueue();
+
+    void setCollapseMode(bool mode) { collapse = mode; }
+
 protected:
     void timerEvent(QTimerEvent *event) override;
 public:
@@ -67,6 +70,7 @@ public:
     bool         awaiting;
     int          icpus;
     int          procs_counter;
+    bool        collapse;
 };
 
 
