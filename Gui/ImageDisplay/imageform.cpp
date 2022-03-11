@@ -208,6 +208,9 @@ void ImageForm::watcherPixmap()
 
 void ImageForm::updateImageInfos()
 {
+    if (!_interactor || removing) return;
+
+
     //  Well Name C1 (Z: z, t: t, F: f)
     imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
             .arg(_interactor->getSequenceFileModel()->Pos())
@@ -898,7 +901,7 @@ void ImageForm::imageMouseMove(QPointF pos)
 
 void ImageForm::mouseOverImage(QPointF pos)
 {
-    if (!_interactor) return;
+    if (!_interactor || removing) return;
 
     _pos = pos;
     QString str = QString("(%1 x %2 : ").arg((int)pos.x()).arg((int)pos.y());
@@ -1328,10 +1331,11 @@ void ImageForm::popImage()
 
 void ImageForm::removeFromView()
 {
+    removing = true;
     blockSignals(true);
     this->pixItem->blockSignals(true);
 
-    removing = true;
+
     if (_interactor)
         _interactor->clearMemory(this);
 

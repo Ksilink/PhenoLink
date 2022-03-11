@@ -385,15 +385,22 @@ void SequenceInteractor::clearMemory(CoreImage* im)
 
     QString exp = getExperimentName();// +_mdl->Pos();
 
-    for (unsigned ii = 1; ii <= _mdl->getChannels(); ++ii)
-    {
-        QString nm = _mdl->getFile(_timepoint, _field, _zpos, ii);
+       auto chs = _mdl->getChannelsIds();
 
-        bool exists = false;
-        ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), ii, exists, loadkey);
-        info->deleteInstance();
-        delete info;
-        _infos.remove(nm);
+    for (auto ii: chs)
+    {
+        for (unsigned ff = 1; ff <= _mdl->getFieldCount(); ++ff)
+            for (unsigned zz = 1; zz <= _mdl->getZCount(); ++zz)
+                for (unsigned tt = 1; tt <= _mdl->getTimePointCount(); ++tt)
+        {
+            QString nm = _mdl->getFile(tt, ff, zz, ii);
+
+            bool exists = false;
+            ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), ii, exists, loadkey);
+            info->deleteInstance();
+    //        delete info;
+      //      _infos.remove(nm);
+        }
     }
     lock_infos.unlock();
     blockSignals(false);
