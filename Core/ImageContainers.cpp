@@ -22,7 +22,6 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
 {
     static QSemaphore semaphore(4);
 
-    semaphore.acquire();
 
     std::vector<cv::Mat> vec;
     cv::Mat mat;
@@ -34,8 +33,10 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
             if (im >= 0 && im != (int)i) continue;
 
 //            qDebug() << "bp:" << base_path << "file: "<<  data.at((int)i).toString();
-
+            semaphore.acquire();
             cv::Mat m = cv::imread((base_path + data.at((int)i).toString()).toStdString(), 2);
+            semaphore.release();
+
             if (m.type() != CV_16U)
             {
                 cv::Mat t;
@@ -54,9 +55,12 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
     else
     {
 //        qDebug() << "bp:" << base_path << "file: "<<  data.first().toString();
-
+        semaphore.acquire();
         mat = cv::imread((base_path + data.first().toString()).toStdString(), 2);
+        semaphore.release();
+
         if (mat.type() != CV_16U)
+
         {
             cv::Mat t;
             mat.convertTo(t, CV_16U);
@@ -65,7 +69,6 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
 
     }
 
-    semaphore.release();
     return mat;
 }
 
