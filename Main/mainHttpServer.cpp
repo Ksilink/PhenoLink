@@ -328,6 +328,7 @@ void Server::setHttpResponse(QJsonObject& ob,  qhttp::server::QHttpResponse* res
 }
 
 
+
 void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
 {
 

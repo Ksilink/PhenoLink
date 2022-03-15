@@ -79,6 +79,7 @@ public:
 
     int start(quint16 port) ;
     void setHttpResponse(QJsonObject& ob, qhttp::server::QHttpResponse* res, bool binary = true);
+
     void process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res);
     uint serverPort();
     void setPort(uint port) {dport = port;};

@@ -11,7 +11,7 @@
       {
           "name":               "opencv",
           "default-features":   false,
-          "features":           [ "contrib", "tbb", "ipp","dnn","jpeg", "tiff" ]
+          "features":           [ "contrib", "tbb", "ipp","dnn","jpeg", "tiff", "nonfree"]
       },
       {
           "name":               "arrow",

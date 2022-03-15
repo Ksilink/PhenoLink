@@ -365,7 +365,7 @@ void ImageForm::connectInteractor()
     }
     this->_interactor->setCurrent(_interactor);
 
-   // textItem->setPlainText(imageInfos);
+    // textItem->setPlainText(imageInfos);
 }
 
 QString ImageForm::contentPos()
@@ -875,8 +875,8 @@ void ImageForm::imageClick(QPointF pos)
     for(auto item : items)
         if (!item->toolTip().isEmpty())
         {
-          //  qDebug() << "Found item at: " << pos << items.size();
-          //  qDebug() << item->toolTip() << item->data(1) << item->data(2);
+            //  qDebug() << "Found item at: " << pos << items.size();
+            //  qDebug() << item->toolTip() << item->data(1) << item->data(2);
             // how to set this in MainWindow ?
             emit overlayInfos(item->toolTip(), item->data(1).toString(),item->data(2).toInt());
         }
@@ -1099,7 +1099,7 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
     QAction *capture = menu.addAction("Capture Image to clipboard", this, SLOT(captureToClipboard()));
     capture->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
 
-//    menu.addAction("Share on Teams", this, SLOT(sharePicture()));
+    menu.addAction("Share on Teams", this, SLOT(sharePicture()));
 
 
     //    copy->setDisabled(true);
@@ -1365,6 +1365,7 @@ void ImageForm::removeFromView()
 #include "qhttp/qhttpclientrequest.hpp"
 #include "qhttp/qhttpclientresponse.hpp"
 
+#include <QDateTime>
 
 using namespace qhttp::client;
 
@@ -1372,62 +1373,71 @@ using namespace qhttp::client;
 // Checkout Image Webhook
 // https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8
 
+#include <QDir>
 void ImageForm::sharePicture()
 {
+    QSettings set;
 
-     static qhttp::client::QHttpClient*  iclient = 0;
-     if (!iclient)
-         iclient = new qhttp::client::QHttpClient(this);
+    static qhttp::client::QHttpClient*  iclient = 0;
+    if (!iclient)
+        iclient = new qhttp::client::QHttpClient(this);
+
+    QString d=QString("%1/%2/CoolImages/").arg(set.value("databaseDir").toString(),
+                                               _interactor->getProjectName());
+
+    QDir dd; dd.mkpath(d);
+
+    QString path = QString("%1/%2_%3.jpg").arg(d,
+                                               _interactor->getExperimentName(),
+                                               QDateTime::currentDateTime().toString("%Y%M%D_%h%m%s"));
 
     QPixmap pixmap(this->size());
     this->render(&pixmap);
 
-    QBuffer buf;
-    buf.open(QIODevice::WriteOnly);
-    pixmap.save(&buf, "PNG");
-    auto const encoded = buf.data().toBase64();
+    QFile buf(path);
+
+    if (buf.open(QIODevice::WriteOnly))
+        pixmap.save(&buf, "JPG");
+
+    //    auto const encoded = buf.data().toBase64();
 
     // Pixmap to base64 png
     // Create json
     QString json = QString("{ \"type\":\"message\", \"attachments\":[\
-          {\
-             \"contentType\":\"application/vnd.microsoft.card.adaptive\",\
-             \"content\":{\
-                \"$schema\":\"http://adaptivecards.io/schemas/adaptive-card.json\",\
-                \"type\":\"AdaptiveCard\",\
-                \"version\":\"1.2\",\
-                \"body\":[\
-                    {\
-                    \"type\": \"TextBlock\",\
-                    \"text\": \"Project %1 plate %2\"\
-                    }\
-                ]\
-             }\
-          }\
-       ]\
-    }\
-    ").arg(_interactor->getProjectName(),
-        _interactor->getExperimentName(),
-        QString(encoded));
-        /*,\
-                            {\
-                            \"type\": \"Image\",\
-                            \"url\": \"data:image/png;base64,%3\" \
-                            }\ */
+                           {\
+                               \"contentType\":\"application/vnd.microsoft.card.adaptive\",\
+                               \"content\":{\
+                                   \"$schema\":\"http://adaptivecards.io/schemas/adaptive-card.json\",\
+                                   \"type\":\"AdaptiveCard\",\
+                                   \"version\":\"1.2\",\
+                                   \"body\":[\
+                                       {\
+                                           \"type\": \"TextBlock\",\
+                                           \"text\": \"Project %1 plate %2\"\
+                                       },\
+                               {\
+                                   \"type\": \"Image\",\
+                                   \"url\": \"http://192.168.2.127:13380/Images/%3\"\
+                               }\
+                                   ]\
+                               }\
+                           } ] }").arg(_interactor->getProjectName(),
+                                    _interactor->getExperimentName(),
+                                    path);
 
-    // send through http webhook
-    QString webhook("https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8");
+        // send through http webhook
+        QString webhook("https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8");
 
-    iclient->request(qhttp::EHTTP_POST,
+        iclient->request(qhttp::EHTTP_POST,
                      webhook,
                      [json](qhttp::client::QHttpRequest* req)
-                     {
-                        req->addHeader("Content-Type", "application/json");
-                        req->addHeaderValue("content-length", json.size());
-                        req->end(json.toLatin1());
-                        qDebug() << "Sending message" << json;
-    },
-                    [](qhttp::client::QHttpResponse* res ){
+        {
+        req->addHeader("Content-Type", "application/json");
+        req->addHeaderValue("content-length", json.size());
+        req->end(json.toUtf8());
+        qDebug() << "Sending message" << json;
+        },
+        [](qhttp::client::QHttpResponse* res ){
         if (res)
         {
             res->collectData();
@@ -1436,9 +1446,8 @@ void ImageForm::sharePicture()
                 qDebug() << "Result info" << res->collectedData();
             });
         }
-    }
-                     );
-
+        }
+        );
 
 }
 

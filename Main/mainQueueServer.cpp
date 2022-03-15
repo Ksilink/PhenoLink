@@ -487,7 +487,7 @@ QPair<QString, int> Server::pickWorker()
     if (lastsrv.isEmpty())
 
     {
-        
+
         auto next_worker = workers.back();
         int p = 1;
         while (rmWorkers.contains(next_worker) && p < workers.size())  next_worker = workers.at(p++);
@@ -542,6 +542,23 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         setHttpResponse(ob, res, !query.contains("json"));
 
     }
+
+    if (urlpath.startsWith("/Images/"))
+    {
+        QFile of(urlpath.mid(8));
+        if (of.open(QFile::ReadOnly))
+        {
+            QByteArray body = of.readAll();
+
+            res->addHeader("Connection", "close");
+            res->addHeader("Content-Type", "image/jpeg");
+
+            res->addHeaderValue("Content-Length", body.length());
+            res->setStatusCode(qhttp::ESTATUS_OK);
+            res->end(body);
+        }
+    }
+
 
     if (urlpath== "/status.html" || urlpath=="/index.html")
     {

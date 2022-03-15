@@ -716,11 +716,11 @@ void ExperimentFileModel::reloadDatabaseDataCSV(QString file, QString t, bool ag
 
 #define ABORT_ON_FAILURE(expr)                     \
     do {                                             \
-        arrow::Status status_ = (expr);                \
-        if (!status_.ok()) {                           \
-            qDebug() << QString::fromStdString(status_.message()) ; \
-            return ;                                     \
-        }                                              \
+    arrow::Status status_ = (expr);                \
+    if (!status_.ok()) {                           \
+    qDebug() << QString::fromStdString(status_.message()) ; \
+    return ;                                     \
+    }                                              \
     } while (0);
 
 
@@ -1374,9 +1374,9 @@ QString SequenceFileModel::getFile(int timePoint, int fieldIdx, int Zindex, int 
         return QString();
     }
 
-// if (ti->value().contains(channel))
-        return ti->value(channel);
-        /*
+    // if (ti->value().contains(channel))
+    return ti->value(channel);
+    /*
     std::advance(ci, channel-1);
     if (ci==ti->end())
     {
@@ -2066,32 +2066,40 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
     QString xp = pth.back(); pth.pop_back();
     QString xpd = pth.back(); pth.clear();
 
-    QJsonDocument d;
-
-    mongocxx::uri uri("mongodb://192.168.2.127:27017");
-    mongocxx::client client(uri);
-
-    auto db = client["tags"];
-    std::string plate = QString("%1/%2").arg(xpd,xp).toStdString();
-    auto fold = db["tags"].find_one(make_document(kvp("plateAcq", plate)));
-
     QStringList tags, gtags;
 
-    if (fold)
-    {
-        QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).replace("µ","u").toUtf8();
-        //qDebug() << arr;
-        QJsonParseError err;
-        auto doc = QJsonDocument::fromJson(arr, &err);
-        if (err.error != QJsonParseError::NoError)
-            qDebug() << err.errorString();
-        d = doc;
-    }
+    QJsonDocument d;
+    try {
+        mongocxx::uri uri("mongodb://192.168.2.127:27017");
+        mongocxx::client client(uri);
+        auto db = client["tags"];
+        std::string plate = QString("%1/%2").arg(xpd,xp).toStdString();
+        auto fold = db["tags"].find_one(make_document(kvp("plateAcq", plate)));
 
-
-
-    if (false)
-    {
+        if (fold)
+        {
+            QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).replace("µ","u").toUtf8();
+            //qDebug() << arr;
+            QJsonParseError err;
+            auto doc = QJsonDocument::fromJson(arr, &err);
+            if (err.error != QJsonParseError::NoError)
+                qDebug() << err.errorString();
+            d = doc;
+        }
+        else // (false)
+        {
+            QString tfile = dir.absolutePath() + "/tags.json";
+            QFile file;
+            file.setFileName(tfile);
+            if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+            {
+                mdl->setMetadataPath(tfile);
+                QString val = file.readAll();
+                file.close();
+                d = QJsonDocument::fromJson(val.toUtf8());
+            }
+        }
+    }  catch (...) {
         QString tfile = dir.absolutePath() + "/tags.json";
         QFile file;
         file.setFileName(tfile);
@@ -2102,8 +2110,9 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
             file.close();
             d = QJsonDocument::fromJson(val.toUtf8());
         }
-
     }
+
+
 
     if (d.isObject())
     {
@@ -3478,11 +3487,11 @@ double Aggregate(QList<double>& f, QString& ag)
 #undef ABORT_ON_FAILURE
 #define ABORT_ON_FAILURE(expr)                     \
     do {                                             \
-        arrow::Status status_ = (expr);                \
-        if (!status_.ok()) {                           \
-            qDebug() << QString::fromStdString(status_.message()); \
-            return 0;                                     \
-        }                                              \
+    arrow::Status status_ = (expr);                \
+    if (!status_.ok()) {                           \
+    qDebug() << QString::fromStdString(status_.message()); \
+    return 0;                                     \
+    }                                              \
     } while (0);
 
 
@@ -3695,8 +3704,8 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
         auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
         if (!r2.ok())
         {
-                qDebug() << "Arrow Error Not write" << QString::fromStdString(r2.status().ToString());
-                return 0;
+            qDebug() << "Arrow Error Not write" << QString::fromStdString(r2.status().ToString());
+            return 0;
         }
 
 
@@ -4099,11 +4108,11 @@ StructuredMetaData::StructuredMetaData(Dictionnary dict) : DataProperty(dict)
 #undef ABORT_ON_FAILURE
 #define ABORT_ON_FAILURE(expr)                          \
     do {                                                \
-        arrow::Status status_ = (expr);                 \
-        if (!status_.ok()) {                            \
-            qDebug() << QString::fromStdString(status_.message()); \
-            return;                                     \
-        }                                               \
+    arrow::Status status_ = (expr);                 \
+    if (!status_.ok()) {                            \
+    qDebug() << QString::fromStdString(status_.message()); \
+    return;                                     \
+    }                                               \
     } while (0);
 
 StructuredMetaData::~StructuredMetaData()
