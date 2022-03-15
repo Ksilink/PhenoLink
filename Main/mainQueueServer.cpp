@@ -557,6 +557,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             res->setStatusCode(qhttp::ESTATUS_OK);
             res->end(body);
         }
+        return;
     }
 
 

@@ -9,6 +9,8 @@
 #include "ImageContainers.h"
 
 #include <QDir>
+#include <QSemaphore>
+
 
 QString getbasePath(QJsonArray data)
 {
@@ -18,6 +20,10 @@ QString getbasePath(QJsonArray data)
 
 cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
 {
+    static QSemaphore semaphore(4);
+
+    semaphore.acquire();
+
     std::vector<cv::Mat> vec;
     cv::Mat mat;
 
@@ -58,6 +64,8 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
         }
 
     }
+
+    semaphore.release();
     return mat;
 }
 
