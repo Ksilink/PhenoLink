@@ -13,6 +13,7 @@
 #include "qhttpfwd.hpp"
 
 #include <QTcpSocket>
+#include <QSslSocket>
 #include <QLocalSocket>
 #include <QUrl>
 ///////////////////////////////////////////////////////////////////////////////
@@ -56,11 +57,11 @@ public:
     }
 
     bool isOpen() const {
-        if ( ibackendType == ETcpSocket    &&    itcpSocket )
+        if ( (ibackendType == ETcpSocket  || ibackendType == ESslSocket)  &&    itcpSocket )
             return itcpSocket->isOpen()
                 && itcpSocket->state() == QTcpSocket::ConnectedState;
 
-        else if ( ibackendType == ELocalSocket    &&    ilocalSocket )
+        else if ( (ibackendType == ETcpSocket  || ibackendType == ESslSocket)   &&    ilocalSocket )
             return ilocalSocket->isOpen()
                 && ilocalSocket->state() == QLocalSocket::ConnectedState;
 
@@ -74,7 +75,20 @@ public:
 
     void connectTo(const QString& host, quint16 port) {
         if ( itcpSocket )
-            itcpSocket->connectToHost(host, port);
+        {
+            if (ibackendType == ESslSocket)
+            {
+              auto sok =    static_cast<QSslSocket*>(itcpSocket);
+              sok->connectToHostEncrypted(host, port);
+              if (sok->waitForEncrypted())
+                  qDebug() << "Authentification succeeded";
+              else
+                  qDebug() << "Unable to connect to server" << sok->errorString();
+            }
+            else
+                itcpSocket->connectToHost(host, port);
+        }
+
     }
 
     qint64 readRaw(char* buffer, int maxlen) {

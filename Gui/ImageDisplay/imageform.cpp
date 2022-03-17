@@ -1403,51 +1403,50 @@ void ImageForm::sharePicture()
 
     // Pixmap to base64 png
     // Create json
-    QString json = QString("{ \"type\":\"message\", \"attachments\":[\
-                           {\
-                               \"contentType\":\"application/vnd.microsoft.card.adaptive\",\
+    QString json = QString("{ \"type\":\"message\", \"attachments\":[ { \"contentType\":\"application/vnd.microsoft.card.adaptive\",\
                                \"content\":{\
-                                   \"$schema\":\"http://adaptivecards.io/schemas/adaptive-card.json\",\
-                                   \"type\":\"AdaptiveCard\",\
-                                   \"version\":\"1.2\",\
-                                   \"body\":[\
-                                       {\
-                                           \"type\": \"TextBlock\",\
-                                           \"text\": \"Project %1 plate %2\"\
-                                       },\
+                               \"$schema\":\"http://adaptivecards.io/schemas/adaptive-card.json\",\
+                               \"type\":\"AdaptiveCard\",\
+                               \"version\":\"1.2\",\
+                               \"body\":[\
+                               {\
+                                   \"type\": \"TextBlock\",\
+                                   \"text\": \"Project %1 plate %2\"\
+                               },\
                                {\
                                    \"type\": \"Image\",\
                                    \"url\": \"http://192.168.2.127:13380/Images/%3\"\
                                }\
-                                   ]\
-                               }\
-                           } ] }").arg(_interactor->getProjectName(),
-                                    _interactor->getExperimentName(),
-                                    path);
+                               ] } } ] }").arg(_interactor->getProjectName(),
+_interactor->getExperimentName(),
+path);
 
-        // send through http webhook
-        QString webhook("https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8");
+// send through http webhook
+QString webhook("https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8");
 
-        iclient->request(qhttp::EHTTP_POST,
-                     webhook,
-                     [json](qhttp::client::QHttpRequest* req)
-        {
+iclient->request(qhttp::EHTTP_POST,
+                 webhook,
+                 [json](qhttp::client::QHttpRequest* req)
+{
+    if (req)
+    {
         req->addHeader("Content-Type", "application/json");
         req->addHeaderValue("content-length", json.size());
         req->end(json.toUtf8());
         qDebug() << "Sending message" << json;
-        },
-        [](qhttp::client::QHttpResponse* res ){
-        if (res)
-        {
-            res->collectData();
-            res->onEnd([res]() {
-                qDebug() << res->statusString();
-                qDebug() << "Result info" << res->collectedData();
-            });
-        }
-        }
-        );
+    }
+},
+[](qhttp::client::QHttpResponse* res ){
+    if (res)
+    {
+        res->collectData();
+        res->onEnd([res]() {
+            qDebug() << res->statusString();
+            qDebug() << "Result info" << res->collectedData();
+        });
+    }
+}
+);
 
 }
 

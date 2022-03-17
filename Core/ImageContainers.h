@@ -26,7 +26,7 @@ public:
 
     virtual QString basePath(QJsonObject data);
 
-    virtual cv::Mat getImage(size_t i, QString base_path = QString());
+    virtual cv::Mat getImage(size_t channelId, QString base_path = QString());
 
     virtual void  deallocate();
     virtual size_t getChannelCount();

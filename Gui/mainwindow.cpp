@@ -2734,6 +2734,9 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
         // populate with the processing list
 
         menu.addSeparator();
+        QAction* cpact = nullptr;
+        if (ui->treeView->model()->itemData(idx).contains(Qt::UserRole+4))
+            cpact = menu.addAction("Copy Plate Id");
         menu.addAction("Plate Map / Tags", this, SLOT(plateMap()));
         menu.addSeparator();
         menu.addAction("export for CP", this, SLOT(exportToCellProfiler()));
@@ -2755,7 +2758,24 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
 
         this->_icon_model = idx;
 
-        menu.exec(ui->treeView->mapToGlobal(pos));
+        auto res = menu.exec(ui->treeView->mapToGlobal(pos));
+
+        if (res == cpact)
+        {
+
+            auto d =  ui->treeView->model()->itemData(idx)[Qt::UserRole+4];
+            qDebug() << d;
+            QStringList path = d.toString().split('/');
+            if (path.size() > 3)
+            {
+                QString pl = path.at(path.size()-2),
+                        pld = path.at(path.size()-3);
+
+                QGuiApplication::clipboard()->setText(QString("%1/%2").arg(pld,pl));
+            }
+
+        }
+
     }
 }
 

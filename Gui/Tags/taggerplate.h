@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QSortFilterProxyModel>
-#include <QJsonDocument>
+#include <QJsonObject>
 
 namespace Ui {
 class TaggerPlate;
@@ -16,7 +16,7 @@ class TaggerPlate : public QWidget
 public:
     explicit TaggerPlate(QString _plate, QWidget *parent = nullptr);
     ~TaggerPlate();
-    QJsonDocument& getTags();
+    QJsonObject &getTags();
 
     void setPlateAcq(QString pla, QString pl)
     {
@@ -41,7 +41,7 @@ public:
     void setPattern(int r, int c, int patt);
     void setColorFG(int r, int c, QString color);
     void updatePlate();
-    QJsonDocument refreshJson();
+    QJsonObject refreshJson();
 
 
 private slots:
@@ -68,7 +68,7 @@ private:
     QString plateDate, plate, path;
     QSortFilterProxyModel* mdl;
 
-    QJsonDocument tagger;
+    QJsonObject tagger;
 
 };
 

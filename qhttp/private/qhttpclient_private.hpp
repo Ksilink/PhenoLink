@@ -14,6 +14,7 @@
 #include "httpparser.hxx"
 #include "qhttpclientrequest_private.hpp"
 #include "qhttpclientresponse_private.hpp"
+#include <QSslSocket>
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace qhttp {
@@ -80,7 +81,11 @@ public:
 
         } else if ( isocket.ibackendType == ELocalSocket ) {
             initLocalSocket();
+        } else if (isocket.ibackendType == ESslSocket)
+        {
+            initTcpSslSocket();
         }
+
     }
 
 public:
@@ -127,6 +132,38 @@ protected:
     }
 
 private:
+
+    void initTcpSslSocket()
+    {
+        QSslSocket* sok    =  new QSslSocket(q_func());
+
+        sok->setPeerVerifyMode(QSslSocket::VerifyNone);
+
+        isocket.itcpSocket = sok;
+
+        QObject::connect(
+                sok,  &QSslSocket::connected,
+                [this](){ onConnected(); }
+                );
+        QObject::connect(
+                sok,  &QSslSocket::readyRead,
+                [this](){ onReadyRead(); }
+                );
+        QObject::connect(
+                sok,  &QSslSocket::bytesWritten,
+                [this](qint64){
+                    const auto& ts = isocket.itcpSocket;
+                    if ( ts->bytesToWrite() == 0  &&  ilastRequest )
+                        emit ilastRequest->allBytesWritten();
+                });
+        QObject::connect(
+                sok,      &QSslSocket::disconnected,
+                q_func(), &QHttpClient::disconnected
+                );
+    }
+
+
+
     void initTcpSocket() {
         QTcpSocket* sok    =  new QTcpSocket(q_func());
         isocket.itcpSocket = sok;

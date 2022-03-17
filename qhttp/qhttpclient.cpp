@@ -127,15 +127,18 @@ QHttpClient::request(THttpMethod method, QUrl url,
             d->isocket.connectTo(url);
 
     } else {
-        d->isocket.ibackendType = ETcpSocket;
+
+        d->isocket.ibackendType = ((url.scheme().toLower() == "https") ? ESslSocket :  ETcpSocket);
         d->initializeSocket();
 
         requestCreator();
 
         if ( d->isocket.isOpen() )
             d->onConnected();
-        else
+       else
+
             d->isocket.connectTo(url.host(), url.port(80));
+
     }
 
     return true;

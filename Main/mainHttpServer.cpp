@@ -475,7 +475,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QtConcurrent::run(&procs, &CheckoutProcess::startProcessServer,
                           proc, ob);
 
-        if (!proxy.startsWith(refIP)) {
+        if (!proxy.isEmpty() && !proxy.startsWith(refIP)) {
             // Shall tell the proxy we have process ongoing that where not sent from his side
             qDebug() << "Warn the Proxy about used CPU " << proxy << refIP;
             if (client)

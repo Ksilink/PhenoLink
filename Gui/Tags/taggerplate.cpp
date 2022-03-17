@@ -64,7 +64,7 @@ TaggerPlate::~TaggerPlate()
     delete ui;
 }
 
-QJsonDocument &TaggerPlate::getTags() {
+QJsonObject &TaggerPlate::getTags() {
 
     return tagger;
 }
@@ -90,7 +90,7 @@ void TaggerPlate::on_setTags_clicked()
         if (item)
         {
             QString str = item->child(idx.row())->text();
-            qDebug() << item->text() << str << ui->plateMaps->selectedItems().size();
+      //      qDebug() << item->text() << str << ui->plateMaps->selectedItems().size();
 
             for (auto idx: ui->plateMaps->selectionModel()->selectedIndexes())
             {
@@ -99,7 +99,6 @@ void TaggerPlate::on_setTags_clicked()
                 {
                     item = new QTableWidgetItem(str);
                     ui->plateMaps->setItem(idx.row(), idx.column(), item);
-
                 }
                 else
                 {
@@ -110,6 +109,14 @@ void TaggerPlate::on_setTags_clicked()
                     item->setText(tmp.join(";"));
                 }
             }
+            //            item->text() << str
+
+            auto cato = tagger["Categories"].toObject();
+            auto arr = cato[item->text()].toArray();
+            if (!arr.contains(str)) arr.append(str);
+            cato[item->text()] = arr;
+            tagger["Categories"] = cato;
+
         }
         //            currentItem();
     }
@@ -167,25 +174,25 @@ void TaggerPlate::on_pushButton_clicked()
             QByteArray ar = of.readAll();
             auto tags = QJsonDocument::fromJson(ar);
             auto tg = tags.object();
-            auto ftag = tagger.object();
+            //            auto ftag = tagger.object();
             for (auto k : tags.object().keys())
                 if (k != "map")
                 {
-                    ftag[k] = tg[k];
+                    tagger[k] = tg[k];
                 }
                 else
                 {
                     QJsonObject maps = tg[k].toObject(), res;
                     for (auto& v : maps.keys())
                     {
-//                        qDebug() << v;
+                        //                        qDebug() << v;
                         auto k = v;
                         res[v.replace(".", "::")] = maps[k];
                     }
-                    ftag[k] = res;
+                    tagger[k] = res;
                 }
-            tagger = QJsonDocument(ftag);
-            QByteArray bar = tagger.toJson();
+
+            QByteArray bar = QJsonDocument(tagger).toJson();
             updatePlate();
         }
     }
@@ -207,7 +214,7 @@ void TaggerPlate::on_pushButton_2_clicked()
         QFile of(script);
         if (of.open(QIODevice::WriteOnly))
         {
-            of.write(tagger.toJson());
+            of.write(QJsonDocument(tagger).toJson());
         }
     }
 }
@@ -342,6 +349,7 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
 void TaggerPlate::setTag(int r, int c, QString tags)
 {
 
+
     tags = tags.replace("::", ".");
     if (!ui->plateMaps->item(r,c))
         ui->plateMaps->setItem(r,c, new QTableWidgetItem(tags));
@@ -374,7 +382,7 @@ void TaggerPlate::setColor(int r, int c, QString color)
     auto b = item->background();
     b.setStyle(Qt::SolidPattern);
     b.setColor(QColor(color));
-//    qDebug() << r << c << color;
+    //    qDebug() << r << c << color;
 
 }
 
@@ -402,118 +410,114 @@ void TaggerPlate::updatePlate()
 {
     QStringList tags, gtags;
 
-    if (tagger.isObject())
+    if (tagger.contains("meta"))
     {
-        QJsonObject json = tagger.object();
-        QJsonObject& ob = json;
-        if (json.contains("meta"))
+        auto meta = tagger["meta"].toObject();
+
+        if (meta.contains("global_tags"))
         {
-            auto meta = json["meta"].toObject();
+            auto ar = meta["global_tags"].toArray();
 
-            if (meta.contains("global_tags"))
-            {
-                auto ar = meta["global_tags"].toArray();
+            for (auto i : (ar)) gtags << i.toString();
 
-                for (auto i : (ar)) gtags << i.toString();
-
-                //                mdl->setProperties("global_tags", gtags.join(";"));
-            }
-            if (meta.contains("cell_lines"))
-            {
-                auto ar = meta["cell_lines"].toArray();
-                QStringList ll;
-                for (auto i : (ar)) ll << i.toString();
-                //                mdl->setProperties("cell_lines", ll.join(";"));
-            }
+            //                mdl->setProperties("global_tags", gtags.join(";"));
         }
-        if (ob.contains("map"))
-        { // Unroll the tags
-            auto map = ob["map"].toObject();
-            for (auto it = map.begin(), e = map.end(); it != e; ++it)
-            {
-                QString ctag = it.key();
-                ctag = ctag.replace(';', ' ');
-                auto wells = it.value().toObject();
-                for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
-                {
-                    auto arr = k.value().toArray();
-                    int r = k.key().toUtf8().at(0) - 'A';
-                    for (int i = 0; i < arr.size(); ++i)
-                    {
-                        int c = arr[i].toInt();
-                        setTag(r,c, ctag);
-                    }
-                }
-            }
+        if (meta.contains("cell_lines"))
+        {
+            auto ar = meta["cell_lines"].toArray();
+            QStringList ll;
+            for (auto i : (ar)) ll << i.toString();
+            //                mdl->setProperties("cell_lines", ll.join(";"));
         }
-        if (ob.contains("color_map"))
-        { // Unroll the colors
-            auto map = ob["color_map"].toObject();
-            for (auto it = map.begin(), e = map.end(); it != e; ++it)
-            {
-                QString ctag = it.key();
-                auto wells = it.value().toObject();
-                for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
-                {
-                    auto arr = k.value().toArray();
-                    int r = k.key().toUtf8().at(0) - 'A';
-                    for (int i = 0; i < arr.size(); ++i)
-                    {
-                        int c = arr[i].toInt();
-
-                        //qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
-                        setColor(r,c, ctag);
-                    }
-                }
-            }
-        }
-        if (ob.contains("fgcolor_map"))
-        { // Unroll the colors
-            auto map = ob["fgcolor_map"].toObject();
-            for (auto it = map.begin(), e = map.end(); it != e; ++it)
-            {
-                QString ctag = it.key();
-                auto wells = it.value().toObject();
-                for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
-                {
-                    auto arr = k.value().toArray();
-                    int r = k.key().toUtf8().at(0) - 'A';
-                    for (int i = 0; i < arr.size(); ++i)
-                    {
-                        int c = arr[i].toInt();
-
-                        //qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
-                        setColorFG(r,c, ctag);
-                    }
-                }
-            }
-        }
-        if (ob.contains("pattern_map"))
-        { // Unroll the patterns
-            auto map = ob["pattern_map"].toObject();
-            for (auto it = map.begin(), e = map.end(); it != e; ++it)
-            {
-                QString ctag = it.key();
-                auto wells = it.value().toObject();
-                for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
-                {
-                    auto arr = k.value().toArray();
-                    int r = k.key().toUtf8().at(0) - 'A';
-                    for (int i = 0; i < arr.size(); ++i)
-                    {
-                        int c = arr[i].toInt();
-
-                        //qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
-                        setPattern(r,c, ctag.toInt());
-                    }
-                }
-            }
-        }
-
-        ob["serverPath"] = path;
-        ob["plate"] = plate;
-        ob["plateAcq"] = QString("%1/%2").arg(plateDate, plate);
     }
+    if (tagger.contains("map"))
+    { // Unroll the tags
+        auto map = tagger["map"].toObject();
+        for (auto it = map.begin(), e = map.end(); it != e; ++it)
+        {
+            QString ctag = it.key();
+            ctag = ctag.replace(';', ' ');
+            auto wells = it.value().toObject();
+            for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+            {
+                auto arr = k.value().toArray();
+                int r = k.key().toUtf8().at(0) - 'A';
+                for (int i = 0; i < arr.size(); ++i)
+                {
+                    int c = arr[i].toInt();
+                    setTag(r,c, ctag);
+                }
+            }
+        }
+    }
+    if (tagger.contains("color_map"))
+    { // Unroll the colors
+        auto map = tagger["color_map"].toObject();
+        for (auto it = map.begin(), e = map.end(); it != e; ++it)
+        {
+            QString ctag = it.key();
+            auto wells = it.value().toObject();
+            for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+            {
+                auto arr = k.value().toArray();
+                int r = k.key().toUtf8().at(0) - 'A';
+                for (int i = 0; i < arr.size(); ++i)
+                {
+                    int c = arr[i].toInt();
+
+                    //qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
+                    setColor(r,c, ctag);
+                }
+            }
+        }
+    }
+    if (tagger.contains("fgcolor_map"))
+    { // Unroll the colors
+        auto map = tagger["fgcolor_map"].toObject();
+        for (auto it = map.begin(), e = map.end(); it != e; ++it)
+        {
+            QString ctag = it.key();
+            auto wells = it.value().toObject();
+            for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+            {
+                auto arr = k.value().toArray();
+                int r = k.key().toUtf8().at(0) - 'A';
+                for (int i = 0; i < arr.size(); ++i)
+                {
+                    int c = arr[i].toInt();
+
+                    //qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
+                    setColorFG(r,c, ctag);
+                }
+            }
+        }
+    }
+    if (tagger.contains("pattern_map"))
+    { // Unroll the patterns
+        auto map = tagger["pattern_map"].toObject();
+        for (auto it = map.begin(), e = map.end(); it != e; ++it)
+        {
+            QString ctag = it.key();
+            auto wells = it.value().toObject();
+            for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+            {
+                auto arr = k.value().toArray();
+                int r = k.key().toUtf8().at(0) - 'A';
+                for (int i = 0; i < arr.size(); ++i)
+                {
+                    int c = arr[i].toInt();
+
+                    //qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
+                    setPattern(r,c, ctag.toInt());
+                }
+            }
+        }
+    }
+
+    tagger["serverPath"] = path;
+    tagger["plate"] = plate;
+    tagger["plateAcq"] = QString("%1/%2").arg(plateDate, plate);
+
 
 }
 
@@ -559,23 +563,23 @@ void addInfo(QJsonObject& ob, QString map, QString gl, QString row, int col)
 }
 
 
-QJsonDocument TaggerPlate::refreshJson()
+QJsonObject TaggerPlate::refreshJson()
 {
     // We shall update the tags with respect to the content of the GUI
 
     QMap<QString, QMap<QString, QList<int> > > tags, color, fgcolor, pattern;
 
-    auto ob = tagger.object();
 
     QStringList ops =  QStringList() << "map" << "color_map" << "fgcolor_map" << "pattern_map";
-    for (auto& p : ops)if (!ob.contains(p)) ob[p] = QJsonObject();
+    for (auto& p : ops) tagger[p] = QJsonObject(); // Clear the mapping prior to applying the view
+
     ops = QStringList() << "color_map" << "fgcolor_map";
     for (auto m: ops)
-        if (ob[m].toObject().contains("#ffffff"))
+        if (tagger[m].toObject().contains("#ffffff"))
         {
-            auto f = ob[m].toObject();
+            auto f = tagger[m].toObject();
             f.remove("#ffffff");
-            ob[m] = f;
+            tagger[m] = f;
         }
 
 
@@ -589,22 +593,23 @@ QJsonDocument TaggerPlate::refreshJson()
                 QStringList stags = item->text().split(";");
 
                 for (QString& t: stags)
-                    addInfo(ob, "map", t, QString("%1").arg(QLatin1Char('A' + r)), c);
+                    addInfo(tagger, "map", t, QString("%1").arg(QLatin1Char('A' + r)), c);
 
                 if (item->foreground().color().isValid() && item->foreground().color().name() != "#000000" && item->foreground().color().name() != "#ffffff")
-                    addInfo(ob, "fgcolor_map", item->foreground().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
+                    addInfo(tagger, "fgcolor_map", item->foreground().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
 
                 if (item->background().color().isValid() && item->background().color().name() != "#000000" && item->foreground().color().name() != "#ffffff")
-                    addInfo(ob, "color_map", item->background().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
+                    addInfo(tagger, "color_map", item->background().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
 
                 if (item->background().style() != Qt::SolidPattern && item->background().style() != Qt::NoBrush)
-                    addInfo(ob, "pattern_map", QString("%1").arg((int)item->background().style()),QString("%1").arg(QLatin1Char('A'+r)), c);
+                    addInfo(tagger, "pattern_map", QString("%1").arg((int)item->background().style()),QString("%1").arg(QLatin1Char('A'+r)), c);
             }
 
 
+    tagger.insert("plateAcq",QJsonValue(QString("%1/%2").arg(plateDate, plate)));
+    tagger.insert("plate",QJsonValue(plate));
+    tagger.insert("serverPath", QJsonValue(path));
 
-
-    tagger = QJsonDocument(ob);
 
     return tagger;
 }
@@ -765,6 +770,9 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
         for (auto& item: ui->plateMaps->selectedItems())
             if (item)
                 item->setText(QString());
+
+        tagger["map"]=QJsonObject();
+
         return;
     }
 }
