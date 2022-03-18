@@ -167,13 +167,13 @@ private:
                 q_func(), &QHttpClient::disconnected
                 );
 
-        QObject::connect((QObject*)sok, &QSslSocket::sslErrors,
-                         [sok](const QList<QSslError>& errors)
-                        {
-            foreach (const QSslError &error, errors)
-                qDebug() << error.errorString();
-            sok->ignoreSslErrors();
-        });
+//        QObject::connect((QObject*)sok, &QSslSocket::sslErrors,
+//                         [sok](const QList<QSslError>& errors)
+//                        {
+//            foreach (const QSslError &error, errors)
+//                qDebug() << error.errorString();
+//            sok->ignoreSslErrors();
+//        });
     }
 
 
