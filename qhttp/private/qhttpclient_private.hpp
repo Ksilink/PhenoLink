@@ -138,7 +138,7 @@ private:
     {
         QSslSocket* sok    =  new QSslSocket(q_func());
 
-        QSslConfiguration config = sslSocket.sslConfiguration();
+        QSslConfiguration config = sok.sslConfiguration();
         config.setProtocol(QSsl::TlsV1_3OrLater);
         sok.setSslConfiguration(config);
 
