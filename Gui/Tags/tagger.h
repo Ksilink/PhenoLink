@@ -47,6 +47,8 @@ public:
 
     QString getProject();
 
+signals:
+    void populate();
 
 
 private slots:
@@ -62,6 +64,7 @@ private slots:
     void on_pushButton_clicked();
 
     void on_mapcsv();
+    void on_populate();
 
 private:
     QStringList dataset;

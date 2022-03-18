@@ -27,6 +27,7 @@ public:
 
 
   void setBrush(QBrush br);
+  void setPen(QPen pen);
 
   void setWellPosition(QPoint p);
 
@@ -59,6 +60,7 @@ protected:
   QPoint _wellPosition;
   QRectF _rect,_brect;
   QBrush _brush;
+  QPen   _pen;
 
   bool   _drag;
   QPoint _dragStartPosition;

@@ -112,6 +112,41 @@ void ExperimentFileModel::setColor(QPoint Pos, QString col)
 }
 
 
+QString ExperimentFileModel::getFgColor(QPoint Pos)
+{
+    SequenceFileModel& res = _sequences[Pos.x()][Pos.y()];
+    if (res.isValid())
+        return res.getFgColor();
+
+    return QString();
+}
+
+void ExperimentFileModel::setFgColor(QPoint Pos, QString col)
+{
+    SequenceFileModel& res = _sequences[Pos.x()][Pos.y()];
+    if (res.isValid())
+    {
+        res.setFgColor(col);
+    }
+}
+
+QString ExperimentFileModel::getPattern(QPoint Pos)
+{
+    SequenceFileModel& res = _sequences[Pos.x()][Pos.y()];
+    if (res.isValid())
+        return res.getPattern();
+
+    return QString();
+}
+
+void ExperimentFileModel::setPattern(QPoint Pos, QString col)
+{
+    SequenceFileModel& res = _sequences[Pos.x()][Pos.y()];
+    if (res.isValid())
+    {
+        res.setPattern(col);
+    }
+}
 
 
 void ExperimentFileModel::setCurrent(QPoint pos, bool active)
@@ -1335,6 +1370,7 @@ QStringList SequenceFileModel::getChannelNames()
     return    _owner->getChannelNames();
 }
 
+
 void SequenceFileModel::setColor(QString col)
 {
     _color = col;
@@ -1345,6 +1381,25 @@ QString SequenceFileModel::getColor()
     return _color;
 }
 
+void SequenceFileModel::setFgColor(QString col)
+{
+    _fgcolor = col;
+}
+
+QString SequenceFileModel::getFgColor()
+{
+    return _fgcolor;
+}
+
+void SequenceFileModel::setPattern(QString col)
+{
+    _pattern = col;
+}
+
+QString SequenceFileModel::getPattern()
+{
+    return _pattern;
+}
 
 
 
@@ -2174,20 +2229,70 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
             for (auto it = map.begin(), e = map.end(); it != e; ++it)
             {
                 // tags << it.key();
-                auto wells = it.value().toObject();
-                for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+                if (it.key() != "#ffffff" && it.key() != "#000000"  )
                 {
-                    auto arr = k.value().toArray();
-                    int r = k.key().toUtf8().at(0) - 'A';
-                    for (int i = 0; i < arr.size(); ++i)
+                    auto wells = it.value().toObject();
+                    for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
                     {
-                        int c = arr[i].toInt();
-                        QPoint p(r, c);
-                        mdl->setColor(p, it.key());
+                        auto arr = k.value().toArray();
+                        int r = k.key().toUtf8().at(0) - 'A';
+                        for (int i = 0; i < arr.size(); ++i)
+                        {
+                            int c = arr[i].toInt();
+                            QPoint p(r, c);
+                            mdl->setColor(p, it.key());
+                        }
                     }
                 }
             }
         }
+        if (json.contains("fgcolor_map"))
+        {
+            auto map = json["fgcolor_map"].toObject();
+            for (auto it = map.begin(), e = map.end(); it != e; ++it)
+            {
+                // tags << it.key();
+                if (it.key() != "#ffffff" && it.key() != "#000000"  )
+                {
+                    auto wells = it.value().toObject();
+                    for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+                    {
+                        auto arr = k.value().toArray();
+                        int r = k.key().toUtf8().at(0) - 'A';
+                        for (int i = 0; i < arr.size(); ++i)
+                        {
+                            int c = arr[i].toInt();
+                            QPoint p(r, c);
+                            mdl->setFgColor(p, it.key());
+                        }
+                    }
+                }
+            }
+        }
+        if (json.contains("pattern_map"))
+        {
+            auto map = json["pattern_map"].toObject();
+            for (auto it = map.begin(), e = map.end(); it != e; ++it)
+            {
+                // tags << it.key();
+//                if (it.key() != "#ffffff" && it.key() != "#000000"  )
+                {
+                    auto wells = it.value().toObject();
+                    for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
+                    {
+                        auto arr = k.value().toArray();
+                        int r = k.key().toUtf8().at(0) - 'A';
+                        for (int i = 0; i < arr.size(); ++i)
+                        {
+                            int c = arr[i].toInt();
+                            QPoint p(r, c);
+                            mdl->setPattern(p, it.key());
+                        }
+                    }
+                }
+            }
+        }
+
         set.setValue("Tags", tags);
     }
 

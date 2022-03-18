@@ -196,11 +196,27 @@ QRectF GraphicsScreensItem::constructWellRepresentation(ExperimentFileModel* mdl
             if (mdl->hasMeasurements(QPoint(r, col)) && (*mdl)(r,col).isValid())
             {
                 auto w = (*mdl)(r,col);
-                QColor color(Qt::green);
+                QColor color(Qt::green), fgcol(Qt::transparent);
+                QPen pen;
+
                 if (!w.getColor().isEmpty())
                     color = QColor(w.getColor());
-                rc->setBrush(QBrush(color));
+                if (!w.getFgColor().isEmpty())
+                {
+                    fgcol = QColor(w.getFgColor());
+                    pen.setColor(fgcol);
+                }
+                else
+                    pen.setColor(Qt::black);
 
+                QBrush brush(color);
+
+                if (!w.getPattern().isEmpty())
+                    brush.setStyle((Qt::BrushStyle)w.getPattern().toInt());
+
+
+                rc->setBrush(brush);
+                rc->setPen(pen);
                 rc->setFlags(QGraphicsItem::ItemIsSelectable);
                 _items << rc;
                 QString disp = QString("<html><div height='500'>[%1] %2").arg(posToString(r,col)).arg(w.getTags().join(','));

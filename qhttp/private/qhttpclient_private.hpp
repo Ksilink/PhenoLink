@@ -15,6 +15,7 @@
 #include "qhttpclientrequest_private.hpp"
 #include "qhttpclientresponse_private.hpp"
 #include <QSslSocket>
+#include <QSslConfiguration>
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace qhttp {
@@ -137,6 +138,11 @@ private:
     {
         QSslSocket* sok    =  new QSslSocket(q_func());
 
+        QSslConfiguration config = sslSocket.sslConfiguration();
+        config.setProtocol(QSsl::TlsV1_3OrLater);
+        sok.setSslConfiguration(config);
+
+
         sok->setPeerVerifyMode(QSslSocket::VerifyNone);
 
         isocket.itcpSocket = sok;
@@ -160,6 +166,14 @@ private:
                 sok,      &QSslSocket::disconnected,
                 q_func(), &QHttpClient::disconnected
                 );
+
+        QObject::connect((QObject*)sok, &QSslSocket::sslErrors,
+                         [sok](const QList<QSslError>& errors)
+                        {
+            foreach (const QSslError &error, errors)
+                qDebug() << error.errorString();
+            sok->ignoreSslErrors();
+        });
     }
 
 

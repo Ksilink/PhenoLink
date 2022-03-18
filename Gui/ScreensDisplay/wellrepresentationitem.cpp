@@ -47,7 +47,7 @@ void WellRepresentationItem::paint(QPainter *painter, const QStyleOptionGraphics
     else
     {
         painter->setBrush(_brush);
-        painter->setPen(Qt::black);
+        painter->setPen(_pen);//Qt::black);
         painter->drawRect(_rect);
     }
     // Paint borders for selection
@@ -56,14 +56,12 @@ void WellRepresentationItem::paint(QPainter *painter, const QStyleOptionGraphics
     //  qDebug() << "WellRepresentationItem paint (" << _wellPosition << ")";
 
     //  efm
-    QPen pen = painter->pen();
-    pen.setColor(Qt::blue);
+    painter->setPen(_pen);
 
     if (efm->isCurrent(_wellPosition))
     {
         //      qDebug() << "Current";
-        pen.setWidthF(2);
-        painter->setPen(pen);
+        _pen.setWidthF(2);
         painter->drawLine(_brect.topLeft(), _brect.topRight());
         painter->drawLine(_brect.topLeft(), _brect.bottomLeft());
         painter->drawLine(_brect.topRight(), _brect.bottomRight());
@@ -72,9 +70,7 @@ void WellRepresentationItem::paint(QPainter *painter, const QStyleOptionGraphics
     else
         if (/*isSelected()*/ efm->isSelected(_wellPosition)){
             //      qDebug() << "Not Current";
-            pen.setWidthF(2);
-            painter->setPen(pen);
-
+            _pen.setWidthF(2);
             //      if (!efm->isSelected(QPoint(_wellPosition.x(), _wellPosition.y()-1)))
             {
                 painter->drawLine(_brect.topLeft(), _brect.topRight());
@@ -113,6 +109,11 @@ void WellRepresentationItem::paint(QPainter *painter, const QStyleOptionGraphics
 void WellRepresentationItem::setBrush(QBrush br)
 {
     _brush = br;
+}
+
+void WellRepresentationItem::setPen(QPen pen)
+{
+    _pen = pen;
 }
 
 void WellRepresentationItem::setWellPosition(QPoint p)

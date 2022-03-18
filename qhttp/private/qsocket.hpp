@@ -84,6 +84,7 @@ public:
                   qDebug() << "Authentification succeeded";
               else
                   qDebug() << "Unable to connect to server" << sok->errorString();
+              sok->startClientEncryption();
             }
             else
                 itcpSocket->connectToHost(host, port);

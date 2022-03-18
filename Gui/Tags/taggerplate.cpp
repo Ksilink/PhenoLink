@@ -50,7 +50,7 @@ TaggerPlate::TaggerPlate(QString _plate,QWidget *parent) :
                 ui->plateMaps->setItem(r, c, item);
                 auto b = item->background();
                 b.setStyle(Qt::SolidPattern);
-                b.setColor(Qt::white);
+                b.setColor(Qt::transparent);
                 item->setBackground(b);
 
             }
@@ -569,19 +569,10 @@ QJsonObject TaggerPlate::refreshJson()
 
     QMap<QString, QMap<QString, QList<int> > > tags, color, fgcolor, pattern;
 
+    QColor transparent(Qt::transparent);
 
     QStringList ops =  QStringList() << "map" << "color_map" << "fgcolor_map" << "pattern_map";
     for (auto& p : ops) tagger[p] = QJsonObject(); // Clear the mapping prior to applying the view
-
-    ops = QStringList() << "color_map" << "fgcolor_map";
-    for (auto m: ops)
-        if (tagger[m].toObject().contains("#ffffff"))
-        {
-            auto f = tagger[m].toObject();
-            f.remove("#ffffff");
-            tagger[m] = f;
-        }
-
 
     for (int c = 0; c < ui->plateMaps->columnCount(); ++c)
         for (unsigned char r = 0; r < (unsigned char)std::min(255, ui->plateMaps->rowCount()); ++r)
@@ -595,10 +586,10 @@ QJsonObject TaggerPlate::refreshJson()
                 for (QString& t: stags)
                     addInfo(tagger, "map", t, QString("%1").arg(QLatin1Char('A' + r)), c);
 
-                if (item->foreground().color().isValid() && item->foreground().color().name() != "#000000" && item->foreground().color().name() != "#ffffff")
+                if (item->foreground().color().isValid() && item->foreground().color().name() != "#000000" && item->foreground().color().name() != "#ffffff" && item->background().color() != transparent)
                     addInfo(tagger, "fgcolor_map", item->foreground().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
 
-                if (item->background().color().isValid() && item->background().color().name() != "#000000" && item->foreground().color().name() != "#ffffff")
+                if (item->background().color().isValid() && item->background().color().name() != "#000000" && item->background().color().name() != "#ffffff" && item->background().color() != transparent)
                     addInfo(tagger, "color_map", item->background().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
 
                 if (item->background().style() != Qt::SolidPattern && item->background().style() != Qt::NoBrush)
@@ -693,7 +684,7 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
     if (res == ico)
     {
 
-        QColor col = QColorDialog::getColor(Qt::white, this);
+        QColor col = QColorDialog::getColor(Qt::transparent, this);
         if (col.isValid())
         {
             for (auto& item: ui->plateMaps->selectedItems())
@@ -710,7 +701,7 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
     }
     if (res == fco)
     {
-        QColor col = QColorDialog::getColor(Qt::white, this);
+        QColor col = QColorDialog::getColor(Qt::transparent, this);
         if (col.isValid())
         {
             for (auto& item: ui->plateMaps->selectedItems())
@@ -724,7 +715,7 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
     {
         for (auto& item: ui->plateMaps->selectedItems())
             if (item)
-                item->setBackground(QColor(QColorConstants::White));
+                item->setBackground(QColor(Qt::transparent));
 
         return;
     }
@@ -733,7 +724,7 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
         for (auto & item: ui->plateMaps->selectedItems())
             if (item)
             {
-                item->setForeground(QColor(QColorConstants::White));
+                item->setForeground(QColor(Qt::transparent));
             }
         return;
     }

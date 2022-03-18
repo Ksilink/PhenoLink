@@ -201,6 +201,13 @@ public:
     void setColor(QString col);
     QString getColor();
 
+    void setFgColor(QString col);
+    QString getFgColor();
+
+    void setPattern(QString col);
+    QString getPattern();
+
+
     QString getBasePath();
 
 protected:
@@ -218,7 +225,7 @@ protected:
     QList<SequenceFileModel*> _siblings;
     QSet<int> _channelsIds;
     QStringList _tags;
-    QString _color;
+    QString _color, _fgcolor, _pattern;
 
 
 private:
@@ -441,6 +448,15 @@ public:
 
     QString getColor(QPoint pos);
     void setColor(QPoint pos, QString col);
+
+    QString getFgColor(QPoint pos);
+    void setFgColor(QPoint pos, QString col);
+
+    QString getPattern(QPoint pos);
+    void setPattern(QPoint pos, QString col);
+
+
+
 
 
     QList<SequenceFileModel*> getSelection();

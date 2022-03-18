@@ -46,93 +46,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 
     mongocxx::uri uri("mongodb://192.168.2.127:27017");
     mongocxx::client client(uri);
-    for (auto & d: datas)
-    {
-        QStringList str = d.split("/");
-        str.pop_back(); // remove the reference file name
-        QString plate = str.last(); str.pop_back();// should be the plate name
-        QString plateDate = str.last();
-        QStringList date = str.last().replace(plate+"_", "").split("_"); str.pop_back();
-        proj = str.last().simplified();
 
-        if (!proj.isEmpty())
-            _projects.insert(proj);
-
-        TaggerPlate* platet = new TaggerPlate(d, this);
-        platet->setPlateAcq(plateDate, plate);
-        platet->setPath(d);
-        QJsonObject& tags = platet->getTags();
-
-        this->ui->project->clear();
-        this->ui->experiment->setText(plate);
-
-        QStringList lst(_projects.begin(), _projects.end()); lst.sort();
-        this->ui->project->addItems(lst);
-
-
-        // Try to find in the mongo the corresponding plate ?
-        auto db = client["tags"];
-
-        std::string plt = QString("%1/%2").arg(plateDate, plate).toStdString();
-
-        auto fold = db["tags"].find_one(make_document(kvp("plateAcq",plt)));
-
-        if (fold)
-        {
-            QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).toUtf8();
-            //qDebug() << arr;
-            QJsonParseError err;
-            tags=QJsonDocument::fromJson(arr, &err).object();
-            if (err.error != QJsonParseError::NoError)
-                qDebug() << err.errorString();
-            //arr = tags.toJson();
-            qDebug() <<"Mongodb info" << QString("%1/%2").arg(plateDate, plate) << tags["plateAcq"].toString() << tags["_id"].toObject()["$oid"].toString();
-            //qDebug() << arr;
-            if (tags.contains("meta") && tags["meta"].toObject().contains("project"))
-            {
-                proj = tags["meta"].toObject()["project"].toString(); // mandatoringly :D
-                //   qDebug() << proj;
-            }
-
-
-            platet->updatePlate();
-        }
-        else
-        {
-            qDebug() << "Plate Acq not found" << plateDate << "/" << plate;
-
-            tags["plateAcq"]   = QString("%1/%2").arg(plateDate,plate);
-            tags["serverPath"] = d;
-            tags["plate"]      = plate;
-
-            QStringList ops = QStringList() << "map" << "color_map" << "fgcolor_map" << "pattern_map";
-            for (auto& p : ops) tags[p] = QJsonObject();
-
-            QJsonObject meta;
-
-            meta["project"]     = proj;
-            meta["global_tags"] = QJsonArray();
-            meta["operators"]   = QJsonObject();
-            meta["XP"]          = plate;
-            meta["cell_lines"]  = QJsonArray();
-
-
-
-            tags["meta"]=meta;
-
-            platet->updatePlate();
-        }
-
-        int p = std::min(1, date.size()-1);
-        ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(p)));
-
-        if (!proj.isEmpty())
-            this->ui->project->setCurrentText(proj);
-
-        platet->setTags(_grouped_tags, _well_tags, proj);
-
-    }
-
+    connect(this, SIGNAL(populate()), this, SLOT(on_populate()));
 
     this->_tags_of_tags["DMSO"].insert("Drugs"); // Tags a compound corresponding tag as compound
     this->_grouped_tags[""]["Drugs"].insert("DMSO");
@@ -180,6 +95,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             if (!cur.isEmpty())
                 this->ui->project->setCurrentText(cur);
 
+            emit populate();
 
         });
     });
@@ -291,6 +207,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                         this->_grouped_tags[""][map[obj["cat_id"].toString().simplified()]].insert(obj["name"].toString().simplified());
                     }
                 }
+                emit populate();
             });
         }
     });
@@ -356,6 +273,97 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 
     QSettings set;
     this->ui->xp_operator->setCurrentText(set.value("UserName", "").toString());
+
+
+
+    for (auto & d: datas)
+    {
+        QStringList str = d.split("/");
+        str.pop_back(); // remove the reference file name
+        QString plate = str.last(); str.pop_back();// should be the plate name
+        QString plateDate = str.last();
+        QStringList date = str.last().replace(plate+"_", "").split("_"); str.pop_back();
+        proj = str.last().simplified();
+
+        if (!proj.isEmpty())
+            _projects.insert(proj);
+
+        TaggerPlate* platet = new TaggerPlate(d, this);
+        platet->setPlateAcq(plateDate, plate);
+        platet->setPath(d);
+        QJsonObject& tags = platet->getTags();
+
+        this->ui->project->clear();
+        this->ui->experiment->setText(plate);
+
+        QStringList lst(_projects.begin(), _projects.end()); lst.sort();
+        this->ui->project->addItems(lst);
+
+
+        // Try to find in the mongo the corresponding plate ?
+        auto db = client["tags"];
+
+        std::string plt = QString("%1/%2").arg(plateDate, plate).toStdString();
+
+        auto fold = db["tags"].find_one(make_document(kvp("plateAcq",plt)));
+
+        if (fold)
+        {
+            QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).toUtf8();
+            //qDebug() << arr;
+            QJsonParseError err;
+            tags=QJsonDocument::fromJson(arr, &err).object();
+            if (err.error != QJsonParseError::NoError)
+                qDebug() << err.errorString();
+            //arr = tags.toJson();
+            qDebug() <<"Mongodb info" << QString("%1/%2").arg(plateDate, plate) << tags["plateAcq"].toString() << tags["_id"].toObject()["$oid"].toString();
+            //qDebug() << arr;
+            if (tags.contains("meta") && tags["meta"].toObject().contains("project"))
+            {
+                proj = tags["meta"].toObject()["project"].toString(); // mandatoringly :D
+                //   qDebug() << proj;
+            }
+
+
+            platet->updatePlate();
+        }
+        else
+        {
+            qDebug() << "Plate Acq not found" << plateDate << "/" << plate;
+
+            tags["plateAcq"]   = QString("%1/%2").arg(plateDate,plate);
+            tags["serverPath"] = d;
+            tags["plate"]      = plate;
+
+            QStringList ops = QStringList() << "map" << "color_map" << "fgcolor_map" << "pattern_map";
+            for (auto& p : ops) tags[p] = QJsonObject();
+
+            QJsonObject meta;
+
+            meta["project"]     = proj;
+            meta["global_tags"] = QJsonArray();
+            meta["operators"]   = QJsonObject();
+            meta["XP"]          = plate;
+            meta["cell_lines"]  = QJsonArray();
+
+
+
+            tags["meta"]=meta;
+
+            platet->updatePlate();
+        }
+
+        int p = std::min(1, date.size()-1);
+        ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(p)));
+
+        if (!proj.isEmpty())
+            this->ui->project->setCurrentText(proj);
+
+        platet->setTags(_grouped_tags, _well_tags, proj);
+
+    }
+
+
 }
 
 tagger::~tagger()
@@ -502,5 +510,18 @@ void tagger::on_mapcsv()
 {
 
     qDebug() << "Query for CSV & Map CSV file to the plate names";
+}
+
+void tagger::on_populate()
+{
+    if (!proj.isEmpty())
+        for (auto w: this->findChildren<TaggerPlate*>())
+        {
+            if (qobject_cast<TaggerPlate*>(w))
+            {
+                auto platet = qobject_cast<TaggerPlate*>(w);
+                platet->setTags(_grouped_tags, _well_tags, proj);
+            }
+        }
 }
 
