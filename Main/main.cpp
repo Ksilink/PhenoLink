@@ -9,7 +9,6 @@
 #include <QStandardPaths>
 #include <QLocale>
 
-#include <QtSql>
 #include <QDir>
 
 #include "Core/config.h"
@@ -112,29 +111,6 @@ int main(int argc, char *argv[])
 
     _logFile.setFileName(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/WD_CheckoutLog.txt");
     _logFile.open(QIODevice::WriteOnly);
-
-
-    //qDebug()  << QStandardPaths::standardLocations(QStandardPaths::DataLocation);
-
-
-    /*  QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(dir.absolutePath() + "/WD_Checkout" + QString("%1").arg(CHECKOUT_VERSION) + ".db");
-
-    bool ok = db.open();*/
-
-    //Q_UNUSED(ok);
-
-    //if (!db.tables().contains("OpennedScreens"))
-    //{
-    //    QSqlQuery qu = db.exec("create table OpennedScreens (hash text, "
-    //                           "ScreenDirectory text, lastload datetime);");
-    //}
-    //if (!db.tables().contains("Processes"))
-    //{
-    //    QSqlQuery qu = db.exec("create table Processes (process_tag text, "
-    //                           "process_json text, lastload datetime);");
-    //}
-
 
     if (!set.contains("databaseDir"))
         set.setValue("databaseDir", QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/databases/");

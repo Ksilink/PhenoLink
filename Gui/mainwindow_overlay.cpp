@@ -55,7 +55,6 @@
 
 #include <QCheckBox>
 #include <QInputDialog>
-#include <QtSql>
 #include <QMessageBox>
 #include <QTableWidget>
 #include <QLabel>

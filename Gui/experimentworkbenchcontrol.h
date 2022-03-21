@@ -10,7 +10,6 @@
 #include <QStyledItemDelegate>
 
 class ImageForm;
-class QSqlTableModel;
 class ScreensModel;
 class QTableWidget;
 class QCheckBox;

@@ -10,7 +10,6 @@
 
 #include <QString>
 #include <QStandardPaths>
-#include <QtSql>
 #include <Core/wellplatemodel.h>
 #include <Core/checkoutdataloaderplugininterface.h>
 
@@ -99,35 +98,6 @@ extern "C"  PyObject* checkout_availableDatasets(PyObject* self, PyObject*args)
           free(name);
         }
 
-      QSqlDatabase dab = QSqlDatabase::database(mdl->hash());
-
-      foreach (QString t, dab.tables())
-      {
-//      QString t = QString("WellMeasurement_details_%1").arg(mdl->hash());
-          QSqlRecord r = dab.record(t);
-
-          //  qDebug() << dab << t;
-
-          QSet<QString> s = QSet<QString>::fromList(QStringList() << "id" << "timepoint" << "fieldId" << "sliceId" << "channel");
-          for (int c = 0; c < r.count(); ++c)
-            {
-              QString tt = r.fieldName(c);
-              if (!s.contains(tt))
-                {
-                  char* name = strdup((t + '/' + tt).toLatin1());
-                  PyObject* val = Py_BuildValue("s", name);
-                  PyList_Append(list, val);
-                  //              Py_DECREF(val);
-                  free(name);
-                }
-
-            }
-
-          char* name = strdup(mdl->name().toLatin1());
-          PyDict_SetItemString(res, name, list);
-
-          free(name);
-        }
     }
 
   //  Py_DECREF(res);

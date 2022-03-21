@@ -4,7 +4,6 @@
 #include "Core/checkoutdataloaderplugininterface.h"
 #include <Core/checkoutprocess.h>
 
-#include <QtSql>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <opencv2/highgui/highgui.hpp>
@@ -402,77 +401,6 @@ SequenceFileModel& ExperimentFileModel::getFirstValidSequenceFiles()
 
 void ExperimentFileModel::addToDatabase()
 {
-    QDateTime d = QDateTime::currentDateTime();
-    QString date = d.toString(Qt::ISODate);
-    QString hash = this->hash();
-    //          qDebug() << date;
-    QSqlDatabase db = QSqlDatabase::database();
-    QStringList tables = db.tables();
-
-    QSqlQuery q;
-    q.prepare("INSERT OR REPLACE INTO OpennedScreens (hash, ScreenDirectory, lastload) "
-              "VALUES (:hash, :sd, :lastload);");
-
-
-    q.bindValue(":hash", hash);
-    q.bindValue(":sd", property("file"));
-    q.bindValue(":lastload", date);
-    if (!q.exec())
-        qDebug() << q.lastError();
-
-    bool table_exists = true;
-    if (!tables.contains(QString("WellMeasurements_%1").arg(hash)))
-    {
-        if (!q.exec(QString("create table WellMeasurements_%1 (id text,"
-                            "timePointCount integer, fieldCount integer,"
-                            "sliceCount integer, channels integer);").arg(hash)))
-            qDebug() << q.lastError();
-        table_exists = false;
-    }
-
-
-    unsigned char key[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-    if (!table_exists)
-        for (unsigned r = 0; r < getRowCount(); ++r)
-        {
-            for (unsigned c = 0; c < getColCount(); ++c)
-            {
-                if (hasMeasurements(QPoint(r, c)))
-                {
-                    SequenceFileModel& fm = (*this)(r, c);
-
-                    if (!q.exec(QString("insert or replace into WellMeasurements_%1 (id ,"
-                                        "timePointCount , fieldCount ,"
-                                        "sliceCount , channels ) values ('%2', '%3', '%4', '%5', '%6');")
-                                .arg(hash)
-                                .arg(QString("%1%2").arg(QChar(key[r])).arg(c + 1, 2, 10, QLatin1Char('0')))
-                                .arg(fm.getTimePointCount())
-                                .arg(fm.getFieldCount())
-                                .arg(fm.getZCount())
-                                .arg(fm.getChannels())
-                                ))
-                        qDebug() << q.lastError();
-                }
-            }
-        }
-
-
-    if (!tables.contains(QString("WellParameters_%1").arg(hash)))
-        if (!q.exec(QString("create table WellParameters_%1 (id text,"
-                            "timepoint integer, fieldId integer,"
-                            "sliceId integer, channel integer,"
-                            "Imagehash text,"
-                            "MinIntensity real, MaxIntensity real,"
-                            "DispMinIntensity real, DispMaxIntensity real);").arg(hash)))
-            qDebug() << q.lastError();
-
-    if (!tables.contains(QString("WellMeasurement_details_%1").arg(hash)))
-        if (!q.exec(QString("create table WellMeasurement_details_%1 (id text,"
-                            "timepoint integer, fieldId integer,"
-                            "sliceId integer, channel integer);").arg(hash)))
-            qDebug() << q.lastError();
-
 
 }
 
@@ -3506,24 +3434,6 @@ QString ExperimentDataTableModel::getCommitName() { return _commitName; }
 void ExperimentDataTableModel::setAggregationMethod(QString Xp, QString method)
 {
     _aggregation[Xp] = method;
-}
-
-
-// returns true if the table was added
-bool checkOrAlterTable(QSqlQuery& q, QString table, QString col);
-
-void ExperimentDataTableModel::bindValue(QSqlQuery& select, DataHolder& h, QString key)
-{
-    QString pos = posToString(h.pos);
-
-    select.bindValue(":fieldId", h.field);
-    select.bindValue(":slice", h.stackZ);
-    select.bindValue(":time", h.time);
-    select.bindValue(":channel", h.chan);
-    select.bindValue(":id", pos);
-    if (!key.isEmpty())
-        select.bindValue(":data", h.data[key].first()); // FIXME: Only single dimension data is stored...
-
 }
 
 

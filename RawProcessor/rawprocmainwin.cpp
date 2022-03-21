@@ -4,8 +4,6 @@
 #include <Core/checkoutprocess.h>
 #include <Gui/mainwindow.h>
 
-#include <QtSql>
-
 #include <QCheckBox>
 #include <QPushButton>
 #include <QHBoxLayout>
@@ -32,22 +30,6 @@ RawProcMainWin::RawProcMainWin(QWidget *parent) :
 
   CheckoutProcess& handler = CheckoutProcess::handler();
 
-//  QSqlQuery q;
-
-//  if (!q.exec("select distinct process_tag from Processes"))
-//       qDebug() << q.lastQuery() << q.lastError();
-
-//  QStringList l;
-
-//  while (q.next()) {
-//      QString process = q.value(0).toString();
-//         QJsonObject obj;
-//         handler.getParameters(process, obj);
-//        if (!obj.isEmpty())
-//          l << process;
-//     }
-//    ui->comboBox->addItems(l);
-//ui->comboBox
 
     ui->textBrowser->hide();
 }
@@ -59,30 +41,6 @@ RawProcMainWin::~RawProcMainWin()
 
 void RawProcMainWin::on_comboBox_currentTextChanged(const QString &arg1)
 {
-  QSqlQuery q;
-
-  if (! q.exec(QString("select process_json from Processes where process_tag == '%1' order by lastload").arg(arg1)))
-     qDebug() << q.lastQuery() << q.lastError();
-
-  ui->comboBox_2->clear();
-  while (q.next()) {
-      QByteArray process = q.value(0).toByteArray();
-      QJsonObject obj = QJsonDocument::fromJson(process).object();
-      QJsonArray arr = obj["Parameters"].toArray();
-      QString p;
-      for (int i = 0; i < arr.size(); ++i)
-        {
-          QJsonObject ob = arr.at(i).toObject();
-          if (ob.contains("Value"))
-            p += QString("%1: %2; ").arg(
-                  ob["Tag"].toString()).arg(ob["Value"].isString() ?
-                      ob["Value"].toString()
-                  :
-                      QString("%1").arg(ob["Value"].toDouble()));
-        }
-      ui->comboBox_2->addItem(p, process);
-     }
-
 
 }
 

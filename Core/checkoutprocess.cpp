@@ -4,7 +4,7 @@
 
 #include <wellplatemodel.h>
 
-#include <QtSql>
+
 #include <QSharedMemory>
 #include <config.h>
 
@@ -248,7 +248,6 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
         _process_to_start[params["CoreProcess_hash"].toString()] = params;
         _display[params["CoreProcess_hash"].toString()] = true;
 
-        //  QSqlQuery q;
         QJsonObject pp(params);
         //        pp.remove("CommitName");
         //      pp.remove("CoreProcess_hash");
@@ -533,80 +532,6 @@ void CheckoutProcess::networkProcessStarted(QString core, QString hash)
 //    emit processStarted(hash);
 
 }
-
-
-bool checkOrAlterTable(QSqlQuery& q, QString table, QString col)
-{
-    if (!q.exec(QString("select * from %1;").arg(table)))
-        qDebug() << "Last Query" << q.lastQuery() << q.lastError();
-
-    QSqlRecord r = q.record();
-    if (r.indexOf(col) < 0)
-    {
-        if (!q.exec(QString("alter table %1 add column '%2' real;").arg(table).arg(col)))
-            qDebug() << "Last Query" << q.lastQuery() << q.lastError();
-        return true;
-    }
-    return false;
-}
-
-void PrepareTable(QSqlQuery& q, QString hashDetails, QString hashData, QString col)
-{
-    checkOrAlterTable(q, hashDetails, col);
-    checkOrAlterTable(q, hashData, col);
-}
-
-
-void insertOrUpdate(QSqlQuery& q, QString table, QString col, QString value,
-                    QStringList othercol, QStringList values)
-{
-    Q_ASSERT_X(othercol.size() == values.size(), "Database update", "Constraints needs to be same");
-
-    //  qDebug() << table << col << value;
-
-    QString where;
-    for(int i = 0; i < othercol.size()-1; ++i)
-    {
-        where += QString("%1=%2 and ").arg(othercol.at(i)).arg(values.at(i));
-    }
-    where += QString("%1=%2").arg(othercol.back()).arg(values.back());
-
-    if (!q.exec(QString("select %1 from %2 where %3;").arg(col).arg(table).arg(where)))
-        qDebug() << "Last Query" << q.lastQuery() << q.lastError();
-
-    q.next();
-    if (q.isValid())
-    {
-        //      qDebug() << "Update Value";
-        // an update commande shall be called
-        if (! q.exec(QString("update %1  SET %2 = %3 where %4;")
-                     .arg(table).arg(col)
-                     .arg(value).arg(where)))
-            qDebug() << q.lastQuery() << q.lastError();
-        //      qDebug() << q.lastQuery();
-    }
-    else
-    {
-        QString cols, vals;
-        for(int i = 0; i < othercol.size(); ++i)
-        {
-            cols += QString("%1, ").arg(othercol.at(i));
-            vals += QString("%1, ").arg(values.at(i));
-        }
-        cols += col.replace("/", "_").replace(' ', '_').replace('-','_');
-        vals += value;
-
-        // a simple insert is the be issued
-        if (! q.exec(QString("insert into %1 (%2) values (%3);")
-                     .arg(table).arg(cols)
-                     .arg(vals))
-                )
-            qDebug() << q.lastQuery() << q.lastError();
-        //      qDebug() << "Insert Value" << q.lastQuery();
-
-    }
-}
-
 
 int getKeyFromJSON(QString key, QJsonObject ob);
 

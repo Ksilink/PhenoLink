@@ -9,7 +9,7 @@
 
 
 
-cmake_minimum_required(VERSION 3.12.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 set(VCPKG_FEATURE_FLAGS versions)
 project(Checkout)
 
@@ -30,7 +30,7 @@ endif(WIN32)
 set(Checkout_VERSION_MAJOR 2)
 set(Checkout_VERSION_MINOR 0)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 14d)
+set(Checkout_VERSION_RELEASE 15)
 
 message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
 
@@ -88,12 +88,12 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Update to CMake
 if (WIN32)
-        find_package(Qt5 5.15 COMPONENTS  Widgets Charts Xml XmlPatterns
-            OpenGL Concurrent Sql WinExtras  WebView WebEngineWidgets REQUIRED)
+        find_package(Qt5 5.15 COMPONENTS  Widgets  Xml XmlPatterns
+            OpenGL Concurrent WinExtras  WebView WebEngineWidgets REQUIRED)
 ELSE()
     find_package(Qt5 5.15 COMPONENTS
         Widgets Xml XmlPatterns
-        OpenGL Concurrent Sql WebView WebEngineWidgets
+        OpenGL Concurrent WebView WebEngineWidgets
         REQUIRED)
 ENDIF(WIN32)
 

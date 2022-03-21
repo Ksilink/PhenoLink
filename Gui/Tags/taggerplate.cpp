@@ -94,20 +94,7 @@ void TaggerPlate::on_setTags_clicked()
 
             for (auto idx: ui->plateMaps->selectionModel()->selectedIndexes())
             {
-                QTableWidgetItem * item = ui->plateMaps->item(idx.row(), idx.column());
-                if (!item)
-                {
-                    item = new QTableWidgetItem(str);
-                    ui->plateMaps->setItem(idx.row(), idx.column(), item);
-                }
-                else
-                {
-                    QStringList tmp = item->text().split(";", Qt::SkipEmptyParts);
-                    QSet<QString> tags(tmp.begin(), tmp.end());
-                    tags.insert(str);
-                    tmp = QStringList(tags.begin(), tags.end());  tmp.sort(); tmp.removeAll("");
-                    item->setText(tmp.join(";"));
-                }
+                setTag(idx.row(), idx.column(), str);
             }
             //            item->text() << str
 
@@ -116,9 +103,7 @@ void TaggerPlate::on_setTags_clicked()
             if (!arr.contains(str)) arr.append(str);
             cato[item->text()] = arr;
             tagger["Categories"] = cato;
-
         }
-        //            currentItem();
     }
 }
 
@@ -349,7 +334,7 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
 void TaggerPlate::setTag(int r, int c, QString tags)
 {
 
-
+//    qDebug() << "Set Tag" << r << c << tags;
     tags = tags.replace("::", ".");
     if (!ui->plateMaps->item(r,c))
         ui->plateMaps->setItem(r,c, new QTableWidgetItem(tags));
@@ -382,7 +367,7 @@ void TaggerPlate::setColor(int r, int c, QString color)
     auto b = item->background();
     b.setStyle(Qt::SolidPattern);
     b.setColor(QColor(color));
-    //    qDebug() << r << c << color;
+    item->setBackground(b);
 
 }
 
@@ -403,7 +388,6 @@ void TaggerPlate::setColorFG(int r, int c, QString color)
         ui->plateMaps->setItem(r,c, new QTableWidgetItem());
 
     ui->plateMaps->item(r,c)->setForeground(QColor(color));
-
 }
 
 void TaggerPlate::updatePlate()
@@ -456,6 +440,7 @@ void TaggerPlate::updatePlate()
         for (auto it = map.begin(), e = map.end(); it != e; ++it)
         {
             QString ctag = it.key();
+            if (ctag == "#ffffff" || ctag == "#000000") continue;
             auto wells = it.value().toObject();
             for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
             {
@@ -465,7 +450,7 @@ void TaggerPlate::updatePlate()
                 {
                     int c = arr[i].toInt();
 
-                    //qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
+    //                qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
                     setColor(r,c, ctag);
                 }
             }
@@ -477,6 +462,7 @@ void TaggerPlate::updatePlate()
         for (auto it = map.begin(), e = map.end(); it != e; ++it)
         {
             QString ctag = it.key();
+            if (ctag == "#ffffff" || ctag == "#000000") continue;
             auto wells = it.value().toObject();
             for (auto k = wells.begin(), ee = wells.end(); k != ee; ++k)
             {

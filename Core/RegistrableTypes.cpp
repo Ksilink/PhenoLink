@@ -4,7 +4,6 @@
 #include "checkoutprocess.h"
 #include "checkoutprocessplugininterface.h"
 #include <QElapsedTimer>
-#include <QtSql>
 #include "RegistrableTypes.h"
 #include <networkprocesshandler.h>
 

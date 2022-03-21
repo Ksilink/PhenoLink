@@ -17,6 +17,6 @@ QT5_WRAP_UI(rawprocmainwin.ui)
 
 target_include_directories(CheckoutRawProcessor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(CheckoutRawProcessor CheckoutGui CheckoutCore  Qt5::Widgets Qt5::Sql Qt5::Concurrent ${OpenCV_LIBS} )
+target_link_libraries(CheckoutRawProcessor CheckoutGui CheckoutCore  Qt5::Widgets  Qt5::Concurrent ${OpenCV_LIBS} )
 #install_qt5_executable(CheckoutRawProcessor)
 install(TARGETS CheckoutRawProcessor COMPONENT applications DESTINATION bin)

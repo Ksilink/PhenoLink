@@ -324,8 +324,6 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 //   qDebug() << proj;
             }
 
-
-            platet->updatePlate();
         }
         else
         {

@@ -3,7 +3,6 @@
 
 #include "Core/checkoutdataloaderplugininterface.h"
 
-#include <QtSql>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <opencv2/highgui/highgui.hpp>

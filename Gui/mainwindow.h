@@ -17,7 +17,6 @@ class MainWindow;
 extern DllGuiExport QFile _logFile;
 
 class ImageForm;
-class QSqlTableModel;
 class ScreensModel;
 class QTableWidget;
 class QCheckBox;
@@ -322,7 +321,6 @@ private:
 
     ScrollZone* _scrollArea;
 
-//    QSqlTableModel* _mdl;             // Object for representation of the stored data
 
     ScreensModel *mdl;               // Object for Data representation
     SequenceInteractor _sinteractor; // variable keeping track of the interaction with sequences

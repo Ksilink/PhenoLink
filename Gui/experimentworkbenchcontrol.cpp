@@ -15,8 +15,6 @@
 
 #include <QSpinBox>
 
-#include <QtSql>
-
 #include <ctkWidgets/ctkDoubleRangeSlider.h>
 #include <ctkWidgets/ctkCollapsibleGroupBox.h>
 #include <ctkWidgets/ctkRangeSlider.h>

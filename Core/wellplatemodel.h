@@ -285,7 +285,7 @@ protected:
 
 
 class MatrixDataModel;
-class QSqlQuery;
+
 
 class DllCoreExport ExperimentDataTableModel: public QAbstractTableModel
 {
@@ -360,7 +360,6 @@ protected:
     QMap<QString, QString> _aggregation;
     static QMutex _lock;
 
-    void bindValue(QSqlQuery& select, DataHolder& h, QString key = QString());
 
     bool modified;
 
