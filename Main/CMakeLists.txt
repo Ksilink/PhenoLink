@@ -1,28 +1,28 @@
 IF(WIN32)
 
-SET(GUI_TYPE WIN32)
-SET(AppRCFILE "../Gui/AppIcon.rc")
-SET(SrvRCFILE "../Gui/SrvIcon.rc" "../Gui/rcs.qrc")
+    SET(GUI_TYPE WIN32)
+    SET(AppRCFILE "../Gui/AppIcon.rc")
+    SET(SrvRCFILE "../Gui/SrvIcon.rc" "../Gui/rcs.qrc")
 
 
 
-add_executable(Checkout ${GUI_TYPE} main.cpp ${AppRCFILE} )
-if (MSVC)
-    target_compile_options(Checkout PRIVATE /WX)
-endif()
+    add_executable(Checkout ${GUI_TYPE} main.cpp ${AppRCFILE} )
+    if (MSVC)
+        target_compile_options(Checkout PRIVATE /WX)
+    endif()
 
-target_include_directories(Checkout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(Checkout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(Checkout CheckoutGui  ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WinExtras Qt::WebView ${OpenCV_LIBS} )
-#install_qt5_executable(Checkout)
-install(TARGETS Checkout COMPONENT applications DESTINATION bin)
+    target_link_libraries(Checkout CheckoutGui CheckoutCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WinExtras Qt::WebView ${OpenCV_LIBS} )
+    #install_qt5_executable(Checkout)
+    install(TARGETS Checkout COMPONENT applications DESTINATION bin)
 ELSE()
 
     add_executable(Checkout ${GUI_TYPE} main.cpp )
 
     target_include_directories(Checkout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-    target_link_libraries(Checkout CheckoutGui  ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WebView  Qt::WebEngineWidgets ${OpenCV_LIBS} )
+    target_link_libraries(Checkout CheckoutGui CheckoutCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WebView  Qt::WebEngineWidgets ${OpenCV_LIBS}  arrow mongo::mongocxx_static mongo::bsoncxx_static  Boost::boost )
 
     install(TARGETS Checkout COMPONENT applications DESTINATION bin)
 
