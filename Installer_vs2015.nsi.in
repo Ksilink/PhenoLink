@@ -39,7 +39,7 @@ SetOutPath $INSTDIR\bin
 File "@CMAKE_BINARY_DIR@\bin\Release\Checkout.exe"
 File "@CMAKE_BINARY_DIR@\bin\Release\CheckoutHttpServer.exe"
 File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
-File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll" # Grrr hack for DLL to be imported by the loader
+#File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll" # Grrr hack for DLL to be imported by the loader
 File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 
 File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
@@ -79,7 +79,7 @@ Section "Plugin Installer Section"
 # define output path
 SetOutPath $INSTDIR\bin\plugins
 File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
-
+File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll" # Grrr hack for DLL to be imported by the loader
 ;SetOutPath $INSTDIR\bin\Release\accessible
 ;File "@CMAKE_BINARY_DIR@\bin\accessible\*.dll"
 
