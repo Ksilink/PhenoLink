@@ -18,7 +18,7 @@
 #include <QPainter>
 
 
-#include <QFileDialog>
+#include <QFileDialog>f
 #include <QFile>
 
 
@@ -158,7 +158,9 @@ void TaggerPlate::on_pushButton_clicked()
         {
             QByteArray ar = of.readAll();
             auto tags = QJsonDocument::fromJson(ar);
+
             auto tg = tags.object();
+            tg.remove("_id");
             //            auto ftag = tagger.object();
             for (auto k : tags.object().keys())
                 if (k != "map")
@@ -197,9 +199,12 @@ void TaggerPlate::on_pushButton_2_clicked()
     {
         refreshJson();
         QFile of(script);
+        auto tg = tagger;
+
         if (of.open(QIODevice::WriteOnly))
         {
-            of.write(QJsonDocument(tagger).toJson());
+            tg.remove("_id");
+            of.write(QJsonDocument(tg).toJson());
         }
     }
 }
