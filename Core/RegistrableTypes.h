@@ -1,37 +1,46 @@
 #ifndef REGISTRABLETYPES_H
 #define REGISTRABLETYPES_H
 
-
 #include <QtCore>
 #include <typeinfo>
-
 
 class DllPluginManagerExport RegistrableParent
 {
 
 public:
-
     typedef RegistrableParent Self;
 
-    enum Level { Basic, Advanced, VeryAdvanced, Debug };
-    enum AggregationType { Sum, Mean, Median, Min, Max };
+    enum Level
+    {
+        Basic,
+        Advanced,
+        VeryAdvanced,
+        Debug
+    };
+    enum AggregationType
+    {
+        Sum,
+        Mean,
+        Median,
+        Min,
+        Max
+    };
 
-
-    RegistrableParent():  _position(-1), _wasSet(false), _level(Basic), _isProduct(false),
-        _isOptional(false), _isFinished(false), _isPerChannel(false),_isSync(false),
-        _keepInMem(false), _optionalDefault(false), _duped(false), _hidden(false)
+    RegistrableParent() : _position(-1), _wasSet(false), _level(Basic), _isProduct(false),
+                          _isOptional(false), _isFinished(false), _isPerChannel(false), _isSync(false),
+                          _keepInMem(false), _optionalDefault(false), _duped(false), _hidden(false)
     {
     }
 
     // set Tag & set Comment shall not be exposed to the end user
 
-    RegistrableParent& setTag(QString tag)
+    RegistrableParent &setTag(QString tag)
     {
         _tag = tag;
         return *this;
     }
 
-    RegistrableParent& setComment(QString com)
+    RegistrableParent &setComment(QString com)
     {
         _comment = com;
         return *this;
@@ -43,14 +52,15 @@ public:
     {
         _isProduct = true;
     }
+
 public:
-    RegistrableParent& setPosition(int pos)
+    RegistrableParent &setPosition(int pos)
     {
         _position = pos;
         return *this;
     }
 
-    RegistrableParent& setLevel(Level lvl)
+    RegistrableParent &setLevel(Level lvl)
     {
         _level = lvl;
         return *this;
@@ -74,9 +84,8 @@ public:
         if (json.contains("DataHash"))
             _hash = json["DataHash"].toString();
 
-
         if (json.contains("PerChannelParameter"))
-            _isPerChannel  = json["PerChannelParameter"].toBool();
+            _isPerChannel = json["PerChannelParameter"].toBool();
 
         if (json.contains("hidden"))
             _hidden = json["hidden"].toBool();
@@ -92,8 +101,7 @@ public:
         //
     }
 
-
-    Self& setIf(QString tag, int value)
+    Self &setIf(QString tag, int value)
     {
         _enableIf << qMakePair(tag, value);
         return *this;
@@ -107,9 +115,9 @@ public:
         json["PerChannelParameter"] = _isPerChannel;
         json["IsSync"] = _isSync;
         json["DataHash"] = _hash;
-        json["Level"] = QString(_level == Basic ? "Basic" :
-                                                  _level == Advanced ? "Advanced" :
-                                                                       _level == VeryAdvanced ? "VeryAdvanced" : "Debug");
+        json["Level"] = QString(_level == Basic ? "Basic" : _level == Advanced   ? "Advanced"
+                                                        : _level == VeryAdvanced ? "VeryAdvanced"
+                                                                                 : "Debug");
 
         json["isSlider"] = false;
         if (!_enableIf.isEmpty())
@@ -118,7 +126,8 @@ public:
             QPair<QString, int> p;
             foreach (p, _enableIf)
             {
-                QJsonObject ob; ob[p.first] = p.second;
+                QJsonObject ob;
+                ob[p.first] = p.second;
                 en.push_back(ob);
             }
             json["enableIf"] = en;
@@ -148,7 +157,7 @@ public:
         return _tag;
     }
 
-    Self& setGroup(QString g)
+    Self &setGroup(QString g)
     {
         _group = g;
         return *this;
@@ -159,58 +168,54 @@ public:
         return _group;
     }
 
-
-
-    Self& setAsOptional(bool val)
+    Self &setAsOptional(bool val)
     {
         _isOptional = true;
         _optionalDefault = val;
         return *this;
-
     }
 
-    Self& setFinished()
+    Self &setFinished()
     {
         _isFinished = true;
         return *this;
     }
 
     // Use this function to tell the plugin that this is a "per channel" option
-    Self& setPerChannel(bool val = true)
+    Self &setPerChannel(bool val = true)
     {
         _isPerChannel = val;
         return *this;
     }
 
-    Self& perChannels()
+    Self &perChannels()
     {
         _isPerChannel = true;
         return *this;
     }
 
-
-    Self& setSync(bool val = true)
+    Self &setSync(bool val = true)
     {
         _isSync = val;
         return *this;
     }
 
-    Self& isHidden(bool val = true)
+    Self &isHidden(bool val = true)
     {
         _hidden = val;
         return *this;
     }
 
-    Self& setPath(QString p)
+    Self &setPath(QString p)
     {
         _path = p;
         return *this;
     }
 
     //    virtual void clone()  = 0;
-    virtual RegistrableParent* dup() = 0;
-    void setHash(QString s) {_hash = s; /*qDebug() << "Data Hash" << _tag << _hash; */}
-    QString getHash() const {return _hash; }
+    virtual RegistrableParent *dup() = 0;
+    void setHash(QString s) { _hash = s; /*qDebug() << "Data Hash" << _tag << _hash; */ }
+    QString getHash() const { return _hash; }
 
     void keepInMem(bool mem) { _keepInMem = mem; }
 
@@ -225,9 +230,7 @@ public:
         return _path;
     }
 
-
 protected:
-
     QString _tag, _comment, _hash;
     int _position;
     bool _wasSet;
@@ -235,27 +238,24 @@ protected:
     bool _isProduct, _isFinished;
     bool _isOptional, _optionalDefault;
     bool _isPerChannel, _isSync;
-    QList<QPair<QString, int> > _enableIf;
+    QList<QPair<QString, int>> _enableIf;
     QString _group;
     bool _keepInMem;
     bool _duped;
     bool _hidden;
     QString _path;
-
 };
 
 template <class Type>
-class Registrable: public RegistrableParent
+class Registrable : public RegistrableParent
 {
 public:
-    typedef Registrable< Type> Self;
-    typedef  Type DataType;
+    typedef Registrable<Type> Self;
+    typedef Type DataType;
 
-    Registrable(): _value(0)
+    Registrable() : _value(0)
     {
-
     }
-
 
     ~Registrable()
     {
@@ -264,7 +264,7 @@ public:
     }
 
     // Value & setValuePointer shall not be exposed to the user
-    DataType& value()
+    DataType &value()
     {
         return *_value;
     }
@@ -275,11 +275,11 @@ public:
         *_value = t;
     }
 
-    Self& setValuePointer(DataType *v)
+    Self &setValuePointer(DataType *v)
     {
         if (_value && _duped)
         {
-           delete _value;
+            delete _value;
             _duped = false;
         }
 
@@ -298,15 +298,13 @@ public:
         return QString("%1").arg(*_value);
     }
 
-
-
-    virtual RegistrableParent* dup()
+    virtual RegistrableParent *dup()
     {
         _duped = true;
-        DataType* data = new DataType();
+        DataType *data = new DataType();
         *data = *_value;
 
-        Self* s = new Self();
+        Self *s = new Self();
         s->setValuePointer(data);
 
         s->setTag(this->_tag);
@@ -316,17 +314,17 @@ public:
         return s;
     }
 
-
 protected:
-    DataType* _value;
+    DataType *_value;
 };
 
-template <class T> inline QString tostr(T& val)
+template <class T>
+inline QString tostr(T &val)
 {
     return QString("%1").arg(val);
 }
 template <>
-inline QString tostr(std::vector<int>& val)
+inline QString tostr(std::vector<int> &val)
 {
     QString r;
     for (auto i : val)
@@ -334,11 +332,11 @@ inline QString tostr(std::vector<int>& val)
     return r;
 }
 
+namespace RegPair_details
+{
 
-namespace RegPair_details {
-
-    template <class T> inline
-    void setValue(T* val, QString v, const QJsonObject& json)
+    template <class T>
+    inline void setValue(T *val, QString v, const QJsonObject &json)
     {
         if (json[v].isArray())
             *val = json[v].toArray().at(0).toInt();
@@ -346,11 +344,12 @@ namespace RegPair_details {
             *val = json[v].toInt();
     }
 
-    template <> inline
-    void setValue(std::vector<int>* val, QString v,const QJsonObject& json)
+    template <>
+    inline void setValue(std::vector<int> *val, QString v, const QJsonObject &json)
     {
         (*val).clear();
-        if (!json.contains(v)) return;
+        if (!json.contains(v))
+            return;
         if (json[v].isArray())
         { // Might need magick c++ tricks for type dispatch :(
             QJsonArray ar = json[v].toArray();
@@ -361,18 +360,21 @@ namespace RegPair_details {
             (*val).push_back(json[v].toInt());
     }
 
-
- template <typename T> inline QJsonValue tojson(const T& def)
-     {
-         static_assert(sizeof(T) == -1, "You have to have a specialization for to json");
-         return QJsonValue();
-         }
-    template <> inline QJsonValue tojson(const int& def)  { return  QJsonValue((int)def); }
-    template <> inline QJsonValue tojson(const double& def)  { return  QJsonValue((double)def); }
-    template <> inline QJsonValue tojson(const float& def)  { return  QJsonValue((double)def); }
+    template <typename T>
+    inline QJsonValue tojson(const T &def)
+    {
+        static_assert(sizeof(T) == -1, "You have to have a specialization for to json");
+        return QJsonValue();
+    }
+    template <>
+    inline QJsonValue tojson(const int &def) { return QJsonValue((int)def); }
+    template <>
+    inline QJsonValue tojson(const double &def) { return QJsonValue((double)def); }
+    template <>
+    inline QJsonValue tojson(const float &def) { return QJsonValue((double)def); }
 
     template <>
-    inline QJsonValue tojson(const std::vector<int>& vals)
+    inline QJsonValue tojson(const std::vector<int> &vals)
     {
         QJsonArray res;
         for (int i = 0; i < vals.size(); ++i)
@@ -380,20 +382,17 @@ namespace RegPair_details {
         return res;
     }
 
-
 }
 
 template <class Type>
-class RegistrablePair: public RegistrableParent
+class RegistrablePair : public RegistrableParent
 {
 public:
-    typedef RegistrablePair< Type> Self;
-    typedef  Type DataType;
+    typedef RegistrablePair<Type> Self;
+    typedef Type DataType;
 
-
-    RegistrablePair(): _hasDefault(false), _value1(0), _value2(0)
+    RegistrablePair() : _hasDefault(false), _value1(0), _value2(0)
     {
-
     }
 
     ~RegistrablePair()
@@ -404,7 +403,7 @@ public:
             delete _value2;
     }
     // Value & setValuePointer shall not be exposed to the user
-    DataType& value()
+    DataType &value()
     {
         return *_value1;
     }
@@ -416,17 +415,17 @@ public:
         *_value2 = t;
     }
 
-    Self& setValuePointer(DataType *v1, DataType* v2)
+    Self &setValuePointer(DataType *v1, DataType *v2)
     {
 
         if (_value1 && _duped)
         {
-           delete _value1;
+            delete _value1;
             _duped = false;
         }
         if (_value2 && _duped)
         {
-           delete _value2;
+            delete _value2;
             _duped = false;
         }
 
@@ -449,8 +448,7 @@ public:
         return QString("%1;%2").arg(tostr(*_value1)).arg(tostr(*_value2));
     }
 
-
-    Self& setComments(QString s1, QString s2)
+    Self &setComments(QString s1, QString s2)
     {
         _comment = s1;
         _comment2 = s2;
@@ -459,11 +457,10 @@ public:
     }
 
     template <class T>
-    void setValue(T* val, QString v, const QJsonObject& json)
-     {
-         RegPair_details::setValue(val, v, json);
-     }
-
+    void setValue(T *val, QString v, const QJsonObject &json)
+    {
+        RegPair_details::setValue(val, v, json);
+    }
 
     virtual void read(const QJsonObject &json)
     {
@@ -481,17 +478,15 @@ public:
         setValue(_value2, "Value2", json);
     }
 
-    virtual RegistrableParent* dup()
+    virtual RegistrableParent *dup()
     {
         _duped = true;
-        DataType* data1 = new DataType();
-        DataType* data2 = new DataType();
+        DataType *data1 = new DataType();
+        DataType *data2 = new DataType();
         *data1 = *_value1;
         *data2 = *_value2;
 
-
-
-        Self* s = new Self();
+        Self *s = new Self();
         s->setValuePointer(data1, data2);
 
         s->setTag(this->_tag);
@@ -501,11 +496,11 @@ public:
         return s;
     }
 
-    template <typename T> inline QJsonValue tojson(const T& def) const {
+    template <typename T>
+    inline QJsonValue tojson(const T &def) const
+    {
         return RegPair_details::tojson(def);
-        }
-
-
+    }
 
     virtual void write(QJsonObject &json) const
     {
@@ -516,14 +511,10 @@ public:
         json["Comment"] = _comment;
         json["Comment2"] = _comment2;
 
-
-
         if (std::numeric_limits<DataType>::has_infinity)
             json["isIntegral"] = false;
         else
             json["isIntegral"] = true;
-
-
 
         if (_isOptional)
         {
@@ -531,24 +522,18 @@ public:
             json["optionalState"] = _optionalDefault;
         }
 
-
         if (_hasDefault)
         {
             json["Default"] = tojson(_default1);
             json["Default2"] = tojson(_default2);
         }
 
-
         json["Range/Set"] = _hasRange;
         json["Range/Low"] = tojson(_minRange);
         json["Range/High"] = tojson(_maxRange);
-
-
     }
 
-
-
-    Self& setDefault(DataType  d1, DataType d2)
+    Self &setDefault(DataType d1, DataType d2)
     {
         _hasDefault = true;
         _default1 = d1;
@@ -557,12 +542,10 @@ public:
         (*_value1) = d1;
         (*_value2) = d2;
 
-
         return *this;
     }
 
-
-    Self& setRange(DataType mi, DataType ma)
+    Self &setRange(DataType mi, DataType ma)
     {
         _hasRange = true;
 
@@ -573,8 +556,8 @@ public:
     }
 
 protected:
-    DataType* _value1;
-    DataType* _value2;
+    DataType *_value1;
+    DataType *_value2;
 
     QString _comment2;
 
@@ -583,21 +566,19 @@ protected:
 
     bool _hasRange;
     DataType _minRange, _maxRange;
-
 };
 
-
-
 template <typename Type>
-class RegistrableEnum: public RegistrableParent
+class RegistrableEnum : public RegistrableParent
 {
 
 public:
-    typedef RegistrableEnum< Type> Self;
-    typedef  Type DataType;
+    typedef RegistrableEnum<Type> Self;
+    typedef Type DataType;
 
-    RegistrableEnum(): _value(0)
-    {}
+    RegistrableEnum() : _value(0)
+    {
+    }
 
     ~RegistrableEnum()
     {
@@ -605,7 +586,7 @@ public:
             delete _value;
     }
 
-    DataType& value()
+    DataType &value()
     {
         return *_value;
     }
@@ -616,11 +597,11 @@ public:
         *_value = t;
     }
 
-    Self& setValuePointer(DataType *v)
+    Self &setValuePointer(DataType *v)
     {
         if (_value && _duped)
         {
-           delete _value;
+            delete _value;
             _duped = false;
         }
 
@@ -631,13 +612,13 @@ public:
         return *this;
     }
 
-    Self& setEnum(QStringList val)
+    Self &setEnum(QStringList val)
     {
         _enum = val;
         return *this;
     }
 
-    Self& setDefault(DataType v)
+    Self &setDefault(DataType v)
     {
         _hasDefault = true;
         _default = v;
@@ -645,12 +626,10 @@ public:
         return *this;
     }
 
-
     virtual QString toString() const
     {
         return _enum.at(*_value);
     }
-
 
     virtual void read(const QJsonObject &json)
     {
@@ -664,7 +643,7 @@ public:
             QString vals = json["Value"].isArray() ? json["Value"].toArray().at(0).toString() : json["Value"].toString();
             for (int i = 0; i < _enum.size(); ++i)
                 if (vals == _enum[i])
-                        val = i;
+                    val = i;
             *_value = (DataType)val;
         }
     }
@@ -675,13 +654,13 @@ public:
         json["Enum"] = QJsonArray::fromStringList(_enum);
     }
 
-    virtual RegistrableParent* dup()
+    virtual RegistrableParent *dup()
     {
         _duped = true;
-        DataType* data = new DataType();
+        DataType *data = new DataType();
         *data = *_value;
 
-        Self* s = new Self();
+        Self *s = new Self();
         s->setValuePointer(data);
 
         s->setTag(this->_tag);
@@ -690,41 +669,36 @@ public:
 
         return s;
     }
+
 protected:
-    DataType* _value;
+    DataType *_value;
     QStringList _enum;
 
     bool _hasDefault;
     DataType _default;
 };
 
-
-
-
-
-
-
-
 template <>
-class Registrable<ChannelSelectionType>: public RegistrableParent
+class Registrable<ChannelSelectionType> : public RegistrableParent
 {
 
 public:
     typedef Registrable<ChannelSelectionType> Self;
-    typedef  ChannelSelectionType DataType;
+    typedef ChannelSelectionType DataType;
 
-    Registrable(): _value(0)
-    {}
+    Registrable() : _value(0)
+    {
+    }
 
     ~Registrable()
     {
         if (_value && _duped)
         {
-           delete _value;
+            delete _value;
         }
     }
 
-    DataType& value()
+    DataType &value()
     {
         return *_value;
     }
@@ -735,11 +709,11 @@ public:
         *_value = t;
     }
 
-    Self& setValuePointer(DataType *v)
+    Self &setValuePointer(DataType *v)
     {
         if (_value && _duped)
         {
-           delete _value;
+            delete _value;
             _duped = false;
         }
         _value = v;
@@ -749,7 +723,7 @@ public:
         return *this;
     }
 
-    Self& setDefault(int v)
+    Self &setDefault(int v)
     {
         _hasDefault = true;
         _default = v;
@@ -757,7 +731,7 @@ public:
         return *this;
     }
 
-    Self& setRegex(QString match)
+    Self &setRegex(QString match)
     {
         // Suggested Nuclei  regex like : "i(nuclei)|(hoechst).*"
         // TODO: 'i' starting  regex shall be case insensitive...
@@ -765,12 +739,10 @@ public:
         return *this;
     }
 
-
     virtual QString toString() const
     {
         return QString("%1").arg((*_value)());
     }
-
 
     virtual void read(const QJsonObject &json)
     {
@@ -779,13 +751,13 @@ public:
         {
 
             QString cur = json["Value"].toString();
-            QJsonArray ar= json["Enum"].toArray();
+            QJsonArray ar = json["Enum"].toArray();
             int val = 0;
             for (int i = 0; i < ar.size(); ++i)
                 if (cur == ar.at(i).toString())
                 {
                     val = i;
-                    break;  // Stop on first value if multiple of same are given
+                    break; // Stop on first value if multiple of same are given
                 }
             _value->setValue(val);
         }
@@ -800,13 +772,13 @@ public:
         RegistrableParent::write(json);
     }
 
-    virtual RegistrableParent* dup()
+    virtual RegistrableParent *dup()
     {
         _duped = true;
-        DataType* data = new DataType();
+        DataType *data = new DataType();
         *data = *_value;
 
-        Self* s = new Self();
+        Self *s = new Self();
         s->setValuePointer(data);
 
         s->setTag(this->_tag);
@@ -815,38 +787,36 @@ public:
 
         return s;
     }
+
 protected:
-    DataType* _value;
+    DataType *_value;
     QStringList _enum;
     QString _regex;
     bool _hasDefault;
     int _default;
 };
 
-
 template <>
-class Registrable<QString>: public RegistrableParent
+class Registrable<QString> : public RegistrableParent
 {
 public:
     typedef Registrable<QString> Self;
     typedef QString DataType;
 
-    Registrable(): _hasDefault(false), _isPath(false), _isDbPath(false), _value(0)
+    Registrable() : _hasDefault(false), _isPath(false), _isDbPath(false), _value(0)
     {
-
     }
-
 
     ~Registrable()
     {
         if (_value && _duped)
         {
-           delete _value;
+            delete _value;
             _duped = false;
         }
     }
 
-    DataType& value()
+    DataType &value()
     {
         return *_value;
     }
@@ -855,11 +825,11 @@ public:
         _wasSet = true;
         *_value = t;
     }
-    Self& setValuePointer(DataType *v)
+    Self &setValuePointer(DataType *v)
     {
         if (_value && _duped)
         {
-           delete _value;
+            delete _value;
             _duped = false;
         }
         _value = v;
@@ -867,10 +837,9 @@ public:
             (*_value) = _default;
 
         return *this;
-
     }
 
-    Self& setDefault(DataType v)
+    Self &setDefault(DataType v)
     {
         _hasDefault = true;
         _default = v;
@@ -878,13 +847,13 @@ public:
         return *this;
     }
 
-    virtual Self& isPath(bool p = true)
+    virtual Self &isPath(bool p = true)
     {
         _isPath = p;
         return *this;
     }
 
-    virtual Self& isDBPath(bool p = true)
+    virtual Self &isDBPath(bool p = true)
     {
         _isPath = p;
         _isDbPath = p;
@@ -903,7 +872,6 @@ public:
             _wasSet = true;
             *_value = (DataType)json["Value"].toString();
         }
-
     }
 
     virtual void write(QJsonObject &json) const
@@ -916,7 +884,6 @@ public:
             json["Default"] = _default;
         }
         json["isDbPath"] = _isDbPath;
-
     }
 
     virtual QString toString() const
@@ -924,13 +891,13 @@ public:
         return QString("%1").arg(*_value);
     }
 
-    virtual RegistrableParent* dup()
+    virtual RegistrableParent *dup()
     {
         _duped = true;
-        DataType* data = new DataType();
+        DataType *data = new DataType();
         *data = *_value;
 
-        Self* s = new Self();
+        Self *s = new Self();
         s->setValuePointer(data);
 
         s->setTag(this->_tag);
@@ -941,14 +908,12 @@ public:
         return s;
     }
 
-
 protected:
-    DataType* _value;
+    DataType *_value;
     bool _isPath, _isDbPath;
     bool _hasDefault;
     DataType _default;
 };
-
 
 #define THE_TYPE int
 #include "RegistrableIntegralType.h"
@@ -966,7 +931,6 @@ protected:
 #include "RegistrableIntegralType.h"
 #undef THE_TYPE
 
-
 #define THE_TYPE float
 #include "RegistrableFloatType.h"
 #undef THE_TYPE
@@ -975,12 +939,10 @@ protected:
 #include "RegistrableFloatType.h"
 #undef THE_TYPE
 
-
 #include "RegistrableImageType.h"
 
 #include "RegistrableSecondOrderType.h"
 
 #include "RegistrableStdContainerType.h"
-
 
 #endif // REGISTRABLETYPES_H
