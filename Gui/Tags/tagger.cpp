@@ -13,6 +13,8 @@
 #include "qhttp/qhttpclientrequest.hpp"
 #include "qhttp/qhttpclientresponse.hpp"
 
+#include <QInputDialog>
+
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -126,6 +128,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
         QString cur=this->ui->project->currentText();
         this->ui->project->clear();
         QStringList lst(_projects.begin(), _projects.end()); lst.sort();
+        lst.push_front("");
+
 
         this->ui->project->addItems(lst);
         if (!cur.isEmpty())
@@ -293,10 +297,12 @@ tagger::tagger(QStringList datas, QWidget *parent) :
         platet->setPath(d);
         QJsonObject& tags = platet->getTags();
 
-        this->ui->project->clear();
+
         this->ui->experiment->setText(plate);
 
+        this->ui->project->clear();
         QStringList lst(_projects.begin(), _projects.end()); lst.sort();
+        lst.push_front("");
         this->ui->project->addItems(lst);
 
 
@@ -358,7 +364,6 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             this->ui->project->setCurrentText(proj);
 
         platet->setTags(_grouped_tags, _well_tags, proj);
-
     }
 
 
@@ -428,8 +433,10 @@ void tagger::on_project_currentIndexChanged(const QString &arg1)
         return;
 
     _projects.insert(arg1);
+
     proj = arg1;
-    for (auto w: this->findChildren<TaggerPlate*>())
+
+    for (auto & w: this->findChildren<TaggerPlate*>())
     {
         //        qDebug() << w->objectName();
 
@@ -457,6 +464,15 @@ void tagger::on_pushButton_clicked()
     // Retrieve the jsons
     // push to mongodb :p
 
+    if (proj.isEmpty())
+    {
+        bool ok;
+        proj = QInputDialog::getText(this, tr("Please set Project name"),
+                                                 "", QLineEdit::Normal,
+                                                 proj, &ok);
+        if (!ok) return;
+    }
+
     mongocxx::uri uri("mongodb://192.168.2.127:27017");
     mongocxx::client client(uri);
 
@@ -472,7 +488,7 @@ void tagger::on_pushButton_clicked()
 
             QJsonObject meta = json["meta"].toObject();
 
-            meta["project"] = ui->project->currentText();
+            meta["project"] = proj;
 
             auto ops = meta["operators"].toObject();
             ops["XP"] = ui->xp_operator->currentText();

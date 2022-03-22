@@ -40,3 +40,4 @@ CMakeLists.txt.user
 *.pyc
 out/
 *.autosave
+*.TMP

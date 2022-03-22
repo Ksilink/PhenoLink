@@ -316,7 +316,8 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
             root->appendRow(item);
             for (auto& prod: data[k][key])
             {
-                item->appendRow(new QStandardItem(prod));
+                if (!prod.simplified().isEmpty())
+                    item->appendRow(new QStandardItem(prod));
                 for (const QString& ot: othertags[project])
                 {
                     if (ot.startsWith(prod))
@@ -325,11 +326,45 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
             }
         }
 
+    if (tagger.contains("Categories"))
+    {
+        auto cats = tagger["Categories"].toObject();
+
+        for (const auto & k : cats.keys())
+        {
+            QStandardItem* r = nullptr;
+            for (int i = 0; i < root->rowCount(); ++i)
+                if (root->child(i)->text() == k)
+                    r = root->child(i);
+            if (!r) {
+                r = new QStandardItem(k);
+                root->appendRow(r);
+            }
+
+            auto ar = cats[k].toArray();
+            for (const auto &p: ar)
+            {
+                QString it = p.toString();
+                QStandardItem* ap = nullptr;
+                for (int i = 0; i < r->rowCount(); ++i)
+                    if (r->child(i)->text() == it)
+                        ap = r->child(i);
+                if (!ap) {
+                    r->appendRow(new QStandardItem(it));
+                }
+
+            }
+
+
+        }
+    }
+
+
     auto others = new QStandardItem("Others");
     root->appendRow(others);
 
     for (const QString& ot: othertags[project])
-        if (!skip.contains(ot))
+        if (!skip.contains(ot) && !ot.simplified().isEmpty())
         {
             others->appendRow(new QStandardItem(ot));
         }
