@@ -18,7 +18,7 @@
 #include <QPainter>
 
 
-#include <QFileDialog>f
+#include <QFileDialog>
 #include <QFile>
 
 
@@ -166,6 +166,7 @@ void TaggerPlate::on_pushButton_clicked()
                 if (k != "map")
                 {
                     tagger[k] = tg[k];
+
                 }
                 else
                 {
