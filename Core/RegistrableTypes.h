@@ -661,9 +661,10 @@ public:
         if (json.contains("Value"))
         {
             int val = 0;
+            QString val = json["Value"].isArray() ? json["Value"].toArray().front().toString() : json["Value"].toString();
             for (int i = 0; i < _enum.size(); ++i)
-                if (json["Value"].toString() == _enum[i])
-                    val = i;
+                if (val == _enum[i])
+                        val = i;
             *_value = (DataType)val;
         }
     }
