@@ -35,6 +35,9 @@ using namespace qhttp::server;
 
 #include "checkouthttpserver.h"
 #include <Core/networkprocesshandler.h>
+#include <Core/Dll.h>
+
+extern int DllCoreExport read_semaphore;
 
 
 std::ofstream outfile("c:/temp/CheckoutServer_log.txt");
@@ -222,6 +225,15 @@ int main(int ac, char** av)
         server.affinity(affinity)        ;
     }
 
+    if (data.contains("-rs"))
+    {
+        int idx = data.indexOf("-rs")+1;
+        if (data.size() > idx) {
+            bool ok = true;
+            int rs = data.at(idx).toInt(&ok);
+            if (ok) read_semaphore = rs;
+        }
+    }
 
     if (data.contains("-proxy"))
     {

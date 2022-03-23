@@ -10,6 +10,11 @@
 
 #include <QDir>
 #include <QSemaphore>
+#include <Dll.h>
+
+
+
+int DllCoreExport  read_semaphore = 4;
 
 
 QString getbasePath(QJsonArray data)
@@ -20,7 +25,7 @@ QString getbasePath(QJsonArray data)
 
 cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
 {
-    static QSemaphore semaphore(4);
+    static QSemaphore semaphore(read_semaphore);
 
 
     std::vector<cv::Mat> vec;
@@ -453,6 +458,7 @@ void TimeImageXP::loadFromJSON(QJsonObject data, QString base_path )
 
 QString TimeImageXP::basePath(QJsonObject json)
 {
+    Q_UNUSED(json);
     QJsonArray stack =    _data["Data"].toArray();
     QJsonObject ob = stack.first().toObject();
     TimeImage im;
