@@ -1264,7 +1264,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
             box->addItem(pp[i].toString());
         }
         if (reloaded && par.contains("Value"))
-            box->setCurrentText(par["Value"].toString());
+            box->setCurrentText(par["Value"].isArray() ? par["Value"].toArray().at(0).toString() : par["Value"].toString());
         else
             box->setCurrentIndex(par["Default"].toInt());
 
