@@ -1019,6 +1019,25 @@ void MainWindow::conditionChanged(QWidget* sen, int val)
             }
 
         }
+
+        foreach(QWidget* w, _disable[sen])
+        { // hide all groups that are empty
+             auto*  widget = w->parentWidget();
+//             qDebug() << widget->objectName();
+             bool visible = false;
+             for (auto obj: widget->findChildren<QWidget*>())
+                 if (obj != widget && !obj->objectName().isEmpty() && !obj->objectName().startsWith("qt_"))
+                     {
+//                     qDebug() << "visible" << visible << obj->objectName() << obj->isHidden();
+                         visible |= (!obj->isHidden());
+                     }
+
+             if (!visible) // if all are hiden
+                 widget->hide();
+             else
+                 widget->show();
+        }
+
     }
 
 }
@@ -1744,6 +1763,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
         }
     }
+
 
 
     // Add context dependent parameters
