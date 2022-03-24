@@ -995,6 +995,7 @@ void MainWindow::conditionChanged(QWidget* sen, int val)
         foreach(QWidget* w, _disable[sen])
         {
             //QWidget* w = _disable[sen];//->hide();
+            if (!w || !w->parentWidget()) continue;
             w->hide();
             // Check if parent is a Ctk group and show hide depending on the status of the childs
             QFormLayout* lay = dynamic_cast<QFormLayout*>(w->parentWidget()->layout());
@@ -1022,6 +1023,8 @@ void MainWindow::conditionChanged(QWidget* sen, int val)
 
         foreach(QWidget* w, _disable[sen])
         { // hide all groups that are empty
+            if (!w || !w->parentWidget()) continue;
+
              auto*  widget = w->parentWidget();
 //             qDebug() << widget->objectName();
              bool visible = false;
