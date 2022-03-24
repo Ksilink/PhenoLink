@@ -290,6 +290,47 @@ public:
         return *this;
     }
 
+    Self &setDefault(DataType d1)
+    {
+        this->_hasDefault = true;
+        this->_default = d1;
+
+        (*_value) = d1;
+
+        return *this;
+    }
+
+    Self &setRange(DataType mi, DataType ma)
+    {
+        this->_hasRange = true;
+
+        this->_minRange = mi;
+        this->_maxRange = ma;
+
+        return *this;
+    }
+
+
+
+
+    virtual void write(QJsonObject &json) const
+    {
+        RegistrableParent::write(json);
+
+        if (_hasDefault)
+        {
+            json["Default"] = tojson(_default);
+        }
+
+        json["Range/Set"] = _hasRange;
+        json["Range/Low"] = tojson(_minRange);
+        json["Range/High"] = tojson(_maxRange);
+    }
+
+
+
+
+
     virtual QString toString() const
     {
         // if the following code does not compile,
