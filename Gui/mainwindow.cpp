@@ -106,7 +106,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
 {
     ui->setupUi(this);
 
-//    ui->logWindow->hide(); // Hide the log window, since the content display is hidden now
+    //    ui->logWindow->hide(); // Hide the log window, since the content display is hidden now
     tabifyDockWidget(ui->logWindow, ui->computed_features);
     // QErrorMessage::qtHandler();
 
@@ -714,7 +714,7 @@ void MainWindow::updateCurrentSelection()
 
 
 
-//    unsigned channels = inter->getChannels();
+    //    unsigned channels = inter->getChannels();
     // qDebug() << "#of Channels" << channels;
 
     QWidget* wwid = 0;
@@ -989,13 +989,14 @@ void MainWindow::refreshProcessMenu()
 
 void MainWindow::conditionChanged(QWidget* sen, int val)
 {
-    //  qDebug() << "Changed !!!" << sen;
+//    qDebug() << "Changed conditionnal display" << sen->objectName();
     if (_enableIf.contains(sen))
     {
         foreach(QWidget* w, _disable[sen])
         {
             //QWidget* w = _disable[sen];//->hide();
             w->hide();
+            // Check if parent is a Ctk group and show hide depending on the status of the childs
             QFormLayout* lay = dynamic_cast<QFormLayout*>(w->parentWidget()->layout());
 
             if (lay && lay->labelForField(w))
@@ -1523,11 +1524,11 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
         if (par.contains("group"))
         {
-            QString nm = par["group"].toString();
+            QString nm = QString("Group%1").arg(par["group"].toString());
             lay = mapper[nm];
             if (!lay)
             {
-                ctkCollapsibleGroupBox* gbox = new ctkCollapsibleGroupBox(nm);
+                ctkCollapsibleGroupBox* gbox = new ctkCollapsibleGroupBox(par["group"].toString());
                 gbox->setObjectName(nm);
                 lay = new QFormLayout(gbox);
                 lay->setLabelAlignment(Qt::AlignVCenter | Qt::AlignRight);
@@ -1704,8 +1705,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
         if (wid)
         {
-//            if (!wid->objectName().isEmpty())
-//                qDebug() << "Created Widget:" << wid << wid->objectName();
+            //            if (!wid->objectName().isEmpty())
+            //                qDebug() << "Created Widget:" << wid << wid->objectName();
 
             bool show = true;
 
@@ -1726,20 +1727,20 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
             }
 
             if (par.contains("hidden") && par["hidden"].toBool())
-                  show = false;
+                show = false;
 
 
 
-                wid->setAttribute(Qt::WA_DeleteOnClose, true);
-                wid->setObjectName(par["Tag"].toString());
-                //            qDebug() << par["Tag"].toString();
-                if (par["PerChannelParameter"].toBool() || !show)
-                    lay->addRow(wid);
-                else
-                    lay->addRow(par["Tag"].toString(), wid);
-                wid->setToolTip(par["Comment"].toString());
+            wid->setAttribute(Qt::WA_DeleteOnClose, true);
+            wid->setObjectName(par["Tag"].toString());
+            //            qDebug() << par["Tag"].toString();
+            if (par["PerChannelParameter"].toBool() || !show)
+                lay->addRow(wid);
+            else
+                lay->addRow(par["Tag"].toString(), wid);
+            wid->setToolTip(par["Comment"].toString());
 
-                if (!show) wid->hide();
+            if (!show) wid->hide();
 
         }
     }
@@ -1762,60 +1763,62 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                 QStringList keys = ar[i].toObject().keys();
                 foreach(QString r, keys)
                 {
-                    QWidget* ll = ui->processingArea->findChild<QWidget*>(r);
-                    int val = ar[i].toObject()[r].toInt();
-
-                    //qDebug() << rs << ww << r << ll;
-
-                    _enableIf[ll][val] << ww;
-                    _disable[ll] << ww;
-
-                    QComboBox* box = dynamic_cast<QComboBox*>(ll);
-                    if (box)
+                    for (QWidget* ll : ui->processingArea->findChildren<QWidget*>(r))
                     {
-                        //                        qDebug() << "connect";
-                        connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(conditionChanged(int)));
-                        box->setCurrentIndex(box->currentIndex());
-                        conditionChanged(box, box->currentIndex());
+                        //                    QWidget* ll = ui->processingArea->findChild<QWidget*>(r);
+                        int val = ar[i].toObject()[r].toInt();
 
+                        //qDebug() << rs << ww << r << ll;
+
+                        _enableIf[ll][val] << ww;
+                        _disable[ll] << ww;
+
+                        QComboBox* box = dynamic_cast<QComboBox*>(ll);
+                        if (box)
+                        {
+                            //                        qDebug() << "connect";
+                            connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(conditionChanged(int)));
+                            box->setCurrentIndex(box->currentIndex());
+                            conditionChanged(box, box->currentIndex());
+
+                        }
+
+                        QSpinBox* ss = dynamic_cast<QSpinBox*>(ll);
+                        if (ss)
+                        {
+                            //                        qDebug() << "connect 2";
+                            connect(ss, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
+                            ss->setValue(ss->value());
+                            conditionChanged(ss, ss->value());
+                        }
+
+                        QDoubleSpinBox* dss = dynamic_cast<QDoubleSpinBox*>(ll);
+                        if (dss)
+                        {
+                            //                        qDebug() << "connect 2";
+                            connect(dss, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
+                            dss->setValue(dss->value());
+                            conditionChanged(dss, dss->value());
+                        }
+                        QSlider* qs = dynamic_cast<QSlider*>(ll);
+                        if (qs)
+                        {
+                            //                        qDebug() << "connect 2";
+                            connect(qs, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
+                            qs->setValue(qs->value());
+                            conditionChanged(qs, qs->value());
+                        }
+                        ctkDoubleSlider* cds = dynamic_cast<ctkDoubleSlider*>(ll);
+                        if (cds)
+                        {
+                            //                        qDebug() << "connect 2";
+                            connect(cds, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
+                            cds->setValue(cds->value());
+                            conditionChanged(cds, cds->value());
+                        }
                     }
 
-                    QSpinBox* ss = dynamic_cast<QSpinBox*>(ll);
-                    if (ss)
-                    {
-                        //                        qDebug() << "connect 2";
-                        connect(ss, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
-                        ss->setValue(ss->value());
-                        conditionChanged(ss, ss->value());
-                    }
-
-                    QDoubleSpinBox* dss = dynamic_cast<QDoubleSpinBox*>(ll);
-                    if (dss)
-                    {
-                        //                        qDebug() << "connect 2";
-                        connect(dss, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
-                        dss->setValue(dss->value());
-                        conditionChanged(dss, dss->value());
-                    }
-                    QSlider* qs = dynamic_cast<QSlider*>(ll);
-                    if (qs)
-                    {
-                        //                        qDebug() << "connect 2";
-                        connect(qs, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
-                        qs->setValue(qs->value());
-                        conditionChanged(qs, qs->value());
-                    }
-                    ctkDoubleSlider* cds = dynamic_cast<ctkDoubleSlider*>(ll);
-                    if (cds)
-                    {
-                        //                        qDebug() << "connect 2";
-                        connect(cds, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
-                        cds->setValue(cds->value());
-                        conditionChanged(cds, cds->value());
-                    }
                 }
-
-
 
             }
         }
@@ -1880,7 +1883,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     QStringList names;
     if (simpleImage) names << "Current Image";
     if (!wellplate)  names << "Current Well" << "All loaded Sequences"  << "Selected Wells";
-             /* <<  "Images in View" << "Current Screen" */
+    /* <<  "Images in View" << "Current Screen" */
     names << "Selected Screens" << "Selected Screens and Filter" << "All Loaded Screens";
 
     _typeOfprocessing->addItems(names);
@@ -1976,7 +1979,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -2488,7 +2491,7 @@ void MainWindow::exportToCellProfiler()
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                  | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -2553,7 +2556,7 @@ void MainWindow::exportToCellProfiler()
 
     //int slice = 1;
 
-//    QString t = dir;
+    //    QString t = dir;
     QFile file(dir);//t.replace(".csv", QString("_%1.csv").arg(slice++, 4, 10, QChar('0'))));
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
         return ;
@@ -2717,7 +2720,7 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
 
     QModelIndex idx = ui->treeView->indexAt(pos);
 
-//    if (ui->treeView->rootIndex() == idx.parent())
+    //    if (ui->treeView->rootIndex() == idx.parent())
     {
         QMenu menu(this);
 
@@ -2786,7 +2789,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
                                                       set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;
@@ -2921,10 +2924,10 @@ void MainWindow::on_actionDisplay_Remaining_Processes_triggered()
     auto & hdlr = CheckoutProcess::handler();
     ui->textLog->insertPlainText(    hdlr.dumpProcesses()
 
-                        );
+                                     );
 
-//    for (Process)
-//    ui->textLog->insertPlainText();
+    //    for (Process)
+    //    ui->textLog->insertPlainText();
 }
 
 #include <Tags/tagger.h>
@@ -2932,7 +2935,7 @@ void MainWindow::on_actionDisplay_Remaining_Processes_triggered()
 void MainWindow::plateMap()
 {
     //
-//    mdl->clearCheckedDirectories();
+    //    mdl->clearCheckedDirectories();
     mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
     QStringList checked = mdl->getCheckedDirectories(false);
     if (checked.size())
@@ -2965,6 +2968,6 @@ void MainWindow::on_actionNever_triggered(bool checked)
 {
     QSettings set;
     set.setValue("NeverUnpack", checked);
-     ui->actionAlways->setChecked(!checked);
+    ui->actionAlways->setChecked(!checked);
 }
 

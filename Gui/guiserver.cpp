@@ -117,6 +117,9 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
     { // Now let's do the fun part :)
         auto ob = QCborValue::fromCbor(data);
 
+        qDebug() << "Add Image" << ob.toMap().keys();
+
+
         QList<SequenceFileModel*> lsfm;
         lsfm << ScreensHandler::getHandler().addProcessResultImage(ob);
 

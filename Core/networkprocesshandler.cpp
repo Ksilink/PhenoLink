@@ -612,7 +612,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
 
     QString commitName = ds["CommitName"].toString();
 
-
+    qDebug() << "Filter Binary" << ds.keys();
 
     if (ds.contains("Data"))
     {
@@ -738,6 +738,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                 ob.insert(QCborValue("Payload"), cbar);
                 ob.insert(QCborValue("DataHash"), dhash);
                 ob.insert(QCborValue("Hash"), hash);
+                qDebug() << ob.keys();
                 res << ob;
             }
         }
