@@ -915,10 +915,10 @@ public:
 #if WIN32
             *_value = (DataType)json["Value"].toString();
 #else
-#include <Core/checkoutprocess.h>
-            if (_isPath || _isDbPath)
-                *_value = (DataType)QString("%1/%2").arg(CheckoutProcess::getDriveMap(),json["Value"].toString().replace(":",""));
-            else
+//#include <Core/checkoutprocess.h>
+//            if (_isPath || _isDbPath)
+ //               *_value = (DataType)QString("%1/%2").arg(CheckoutProcess::getDriveMap(),json["Value"].toString().replace(":",""));
+  //          else
                 *_value = (DataType)json["Value"].toString();
 #endif
         }
