@@ -419,7 +419,7 @@ QJsonArray& MainWindow::adjustParameterFromWidget(SequenceFileModel* sfm, QJsonO
             // qDebug() << cchans.size() << _channelsIds.values();
             for (int i = 0; i < _channelsIds.size(); ++i)
             {
-                tag = QString("%1_%2").arg(par["Tag"].toString()).arg(i+1);
+                tag = QString("%1_%2").arg(par["Tag"].toString()).arg(i);
                 auto l = ui->processingArea->findChildren<QWidget*>(tag);
                 //                    qDebug() << "Searching Tag:" << tag << l.size();
 

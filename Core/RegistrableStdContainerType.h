@@ -13,6 +13,21 @@
 //
 
 
+int toValI(QJsonValue& v)
+{
+    if (v.isString())
+        return v.toString().toInt();
+    return v.toInt();
+}
+
+double toValF(QJsonValue& v)
+{
+    if (v.isString())
+        return v.toString().toDouble();
+    return v.toDouble();
+}
+
+
 #define Str(arg) #arg
 
 #define RegistrableCont(ContName, InnerType) \
@@ -74,16 +89,16 @@
                     QJsonArray ar = json["Value"].toArray();\
                     for (int i = 0; i < ar.size(); ++i)\
                         if (Str(InnerType) == "double" || Str(InnerType) == "float")\
-                            (*_value).push_back((InnerType)ar.at(i).toDouble());\
+                            (*_value).push_back((InnerType)toValF(ar.at(i)));\
                         else\
-                            (*_value).push_back((InnerType)ar.at(i).toInt());\
+                            (*_value).push_back((InnerType)toValI(ar.at(i)));\
                 }\
                 else\
                 {\
                     if (Str(InnerType) == "double" || Str(InnerType) == "float")\
-                        (*_value).push_back((InnerType) json["Value"].toDouble());\
+                        (*_value).push_back((InnerType) toValF(json["Value"]));\
                     else\
-                        (*_value).push_back((InnerType) json["Value"].toInt());\
+                        (*_value).push_back((InnerType) toValI(json["Value"]));\
                 }\
             }\
         }\

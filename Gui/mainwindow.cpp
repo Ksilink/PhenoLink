@@ -989,7 +989,7 @@ void MainWindow::refreshProcessMenu()
 
 void MainWindow::conditionChanged(QWidget* sen, int val)
 {
-//    qDebug() << "Changed conditionnal display" << sen->objectName();
+    //    qDebug() << "Changed conditionnal display" << sen->objectName();
     if (_enableIf.contains(sen))
     {
         foreach(QWidget* w, _disable[sen])
@@ -1025,20 +1025,20 @@ void MainWindow::conditionChanged(QWidget* sen, int val)
         { // hide all groups that are empty
             if (!w || !w->parentWidget()) continue;
 
-             auto*  widget = w->parentWidget();
-//             qDebug() << widget->objectName();
-             bool visible = false;
-             for (auto obj: widget->findChildren<QWidget*>())
-                 if (obj != widget && !obj->objectName().isEmpty() && !obj->objectName().startsWith("qt_"))
-                     {
-//                     qDebug() << "visible" << visible << obj->objectName() << obj->isHidden();
-                         visible |= (!obj->isHidden());
-                     }
+            auto*  widget = w->parentWidget();
+            //             qDebug() << widget->objectName();
+            bool visible = false;
+            for (auto obj: widget->findChildren<QWidget*>())
+                if (obj != widget && !obj->objectName().isEmpty() && !obj->objectName().startsWith("qt_"))
+                {
+                    //                     qDebug() << "visible" << visible << obj->objectName() << obj->isHidden();
+                    visible |= (!obj->isHidden());
+                }
 
-             if (!visible) // if all are hiden
-                 widget->hide();
-             else
-                 widget->show();
+            if (!visible) // if all are hiden
+                widget->hide();
+            else
+                widget->show();
         }
 
     }
@@ -1167,10 +1167,22 @@ int getValInt(QJsonObject& par, QString v)
     if (par.contains(v))
     {
         if (par[v].isArray())
-            low = par[v].toArray()[0].toInt();
+        {
+            if (par[v].toArray()[0].isString())
+                low = par[v].toArray()[0].toString().toInt();
+            else
+                low = par[v].toArray()[0].toInt();
+        }
         else
-            low = par[v].toInt();
+        {
+            if (par[v].isString())
+                low = par[v].toString().toInt();
+            else
+                low = par[v].toInt();
+
+        }
     }
+//    qDebug() << par["Tag"] << v << par[v] << "Value" << low;
     return low;
 }
 
@@ -1181,9 +1193,19 @@ double getValDouble(QJsonObject& par, QString v)
     if (par.contains(v))
     {
         if (par[v].isArray())
-            low = par[v].toArray()[0].toDouble();
+        {
+            if (par[v].toArray()[0].isString())
+                low = par[v].toArray()[0].toString().toDouble();
+            else
+                low = par[v].toArray()[0].toDouble();
+        }
         else
-            low = par[v].toDouble();
+        {
+            if (par[v].isString())
+                low = par[v].toString().toDouble();
+            else
+                low = par[v].toDouble();
+        }
     }
     return low;
 }
@@ -1350,7 +1372,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
                 ScreensHandler& handler = ScreensHandler::getHandler();
                 auto screens = handler.getScreens();
                 if (screens.size())
-                    v=QString("%1/%2/Checkout_Results/").arg(v).arg(screens[0]->property("project"));
+                    v=QString("%1/%2/Checkout_Results/").arg(v, screens[0]->property("project"));
                 le->setCurrentPath(v);
             }
             wid = le;
@@ -1613,7 +1635,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
         }
         else  if (par.contains("Type") && par["Type"].toString() == "Container")
         {
-            if (par.contains("PerChannelParameter") && par["PerChannelParameter"].toBool())
+            if (par["PerChannelParameter"].toBool(false))
             {
 
                 QList<int> list = _channelsIds.values();
@@ -1623,7 +1645,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                 int start = par["startChannel"].toInt();
                 int end = par["endChannel"].toInt();
                 end = end < 0 ? list.size() : end;
-                int c_def = par.contains("Default") ? par["Default"].toInt() : start;
+                int c_def = par.contains("Default") ? (par["Default"].isArray() ? par["Default"].toArray().first().toInt() : par["Default"].toInt() ) : start;
                 //                qDebug() << "Mapping data Per channel value";
                 foreach(int i, list)
                 {
@@ -1638,7 +1660,13 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                     else
                         nm = QString("Channel %1").arg(i);
 
-                    lay = mapper[nm];
+                    if (par.contains("group"))
+                    {
+                        QString nm = QString("Group%1").arg(par["group"].toString());
+                        lay = mapper[nm];
+                    }
+                    else
+                        lay = mapper[nm];
 
                     if (!lay)
                     {
@@ -1652,8 +1680,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                     }
                     par["Type"] = par["InnerType"];
 
-                    if (par["InnerType"].toString() == "unsigned") par["isIntegral"] = true;
-                    if (par["InnerType"].toString() == "double") par["isIntegral"] = false;
+                    if (par["InnerType"].toString() == "unsigned" || par["InnerType"].toString() == "int") par["isIntegral"] = true;
+                    if (par["InnerType"].toString() == "double" || par["InnerType"].toString() == "float") par["isIntegral"] = false;
                     if (par["Type"].toString() == "ChannelSelector")
                     {
                         if (reloaded && par.contains("Value"))
@@ -1675,7 +1703,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                     {
                         w->setAttribute(Qt::WA_DeleteOnClose, true);
                         w->setObjectName(QString("%1_%2").arg(par["Tag"].toString()).arg(c));
-                        lay->addRow(par["Tag"].toString(), w);
+                        lay->addRow(par["Tag"].toString() + " " + nm, w);
                         w->setToolTip(par["Comment"].toString());
                     }
                     c++;
@@ -1787,11 +1815,12 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                 foreach(QString r, keys)
                 {
                     for (QWidget* ll : ui->processingArea->findChildren<QWidget*>(r))
+                        //if (ll->objectName() != "" && ll->objectName().startsWith("qt_"))
                     {
                         //                    QWidget* ll = ui->processingArea->findChild<QWidget*>(r);
                         int val = ar[i].toObject()[r].toInt();
 
-                        //qDebug() << rs << ww << r << ll;
+                        //                        qDebug() << rs << ww << r << ll;
 
                         _enableIf[ll][val] << ww;
                         _disable[ll] << ww;
@@ -2002,7 +2031,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -2514,7 +2543,7 @@ void MainWindow::exportToCellProfiler()
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -2812,7 +2841,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
                                                       set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;

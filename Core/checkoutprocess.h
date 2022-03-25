@@ -99,6 +99,7 @@ public:
   void getStatus(QJsonObject &ob);
   QString dumpProcesses();
 
+  QString getDriveMap();
 public slots:
 
   void updatePath();

@@ -168,6 +168,27 @@ public:
         return *r;
     }
 
+
+//    template <>
+//    Registrable<QMap<QString, float> >& produces(QMap<QString, float>* value)
+//    {
+//        static char t = '0';
+//        QString tag = QString("%1").arg(t);
+
+//        Registrable<Type>* r = new Registrable<Type>();
+
+//        r->setAsProduct();
+//        r->setValuePointer(value);
+//        r->setTag(tag);
+//        r->setComment(comment);
+
+//        _results[tag] = r;
+
+//        t++;
+//        return *r;
+//    }
+
+
     // This function is to be called in plugins constructor to declare to the handler the name of the processing
     // This name also has a purpose of presenting the processing in a tree like approach (called path, i.e.: a tree like representation separated by '/')
     // The authors allows the user to list the authors of the algorithm

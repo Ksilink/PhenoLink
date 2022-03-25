@@ -102,6 +102,14 @@ QString CheckoutProcess::setDriveMap(QString map)
     return drive_map;
 }
 
+
+QString CheckoutProcess::getDriveMap()
+{
+    return drive_map;
+}
+
+
+
 void CheckoutProcess::setProcessCounter(int *count)
 {
     _counter = count;

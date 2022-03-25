@@ -2111,6 +2111,8 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
             {
                 mdl->setProperties("project", meta["project"].toString());
             }
+            else
+                qDebug() << "No project detected";
             if (meta.contains("global_tags"))
             {
                 auto ar = meta["global_tags"].toArray();
