@@ -13,14 +13,14 @@
 //
 
 
-int toValI(QJsonValue& v)
+inline int toValI(QJsonValue& v)
 {
     if (v.isString())
         return v.toString().toInt();
     return v.toInt();
 }
 
-double toValF(QJsonValue& v)
+inline double toValF(QJsonValue& v)
 {
     if (v.isString())
         return v.toString().toDouble();
