@@ -984,6 +984,46 @@ protected:
 
 #include "RegistrableSecondOrderType.h"
 
+
+template <class inner>
+QJsonArray tojson(inner& img)
+{
+    QJsonArray res;
+
+    for (const auto& r: img)
+        res.append(QString("%1").arg(r));
+    return res;
+}
+
+
+
 #include "RegistrableStdContainerType.h"
+
+RegistrableCont(std::vector, float)
+RegistrableCont(std::vector, double)
+RegistrableCont(std::vector, int)
+RegistrableCont(std::vector, unsigned)
+
+RegistrableCont(std::list, float)
+RegistrableCont(std::list, double)
+RegistrableCont(std::list, int)
+RegistrableCont(std::list, unsigned)
+
+
+
+RegistrableCont(QList, float)
+RegistrableCont(QList, double)
+RegistrableCont(QList, int)
+RegistrableCont(QList, unsigned)
+
+
+RegistrableCont(QVector, float)
+RegistrableCont(QVector, double)
+RegistrableCont(QVector, int)
+RegistrableCont(QVector, unsigned)
+
+
+#include "RegistrableStdContainerTypeSpecial.h"
+
 
 #endif // REGISTRABLETYPES_H

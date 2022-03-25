@@ -35,7 +35,7 @@ add_library(CheckoutCore SHARED
             Dll.h
             RegistrableTypes.cpp RegistrableTypes.h
             RegistrableImageType.cpp  RegistrableImageType.h
-            RegistrableIntegralType.h RegistrableStdContainerType.h
+            RegistrableIntegralType.h RegistrableStdContainerType.h RegistrableStdContainerTypeSpecial.h
             RegistrableSecondOrderType.h
             ImageContainers.cpp ImageContainers.h
             matrixdatamodel.cpp matrixdatamodel.h
