@@ -317,14 +317,14 @@ public:
     {
         RegistrableParent::write(json);
 
-        if (_hasDefault)
+        if (this->_hasDefault)
         {
-            json["Default"] = tojson(_default);
+            json["Default"] = tojson(this->_default);
         }
 
-        json["Range/Set"] = _hasRange;
-        json["Range/Low"] = tojson(_minRange);
-        json["Range/High"] = tojson(_maxRange);
+        json["Range/Set"] = this->_hasRange;
+        json["Range/Low"] = tojson(this->_minRange);
+        json["Range/High"] = tojson(this->_maxRange);
     }
 
 
