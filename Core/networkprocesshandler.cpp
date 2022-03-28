@@ -738,7 +738,8 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                 ob.insert(QCborValue("Payload"), cbar);
                 ob.insert(QCborValue("DataHash"), dhash);
                 ob.insert(QCborValue("Hash"), hash);
-                qDebug() << ob.keys();
+                ob.insert(QCborValue("ProcessStartId"), ds["ProcessStartId"].toInt());
+//                qDebug() << ob.keys();
                 res << ob;
             }
         }

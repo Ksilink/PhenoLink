@@ -1168,10 +1168,13 @@ int getValInt(QJsonObject& par, QString v)
     {
         if (par[v].isArray())
         {
-            if (par[v].toArray()[0].isString())
-                low = par[v].toArray()[0].toString().toInt();
-            else
-                low = par[v].toArray()[0].toInt();
+            if ( par[v].toArray().size() > 0)
+            {
+                if (par[v].toArray()[0].isString())
+                    low = par[v].toArray()[0].toString().toInt();
+                else
+                    low = par[v].toArray()[0].toInt();
+            }
         }
         else
         {
@@ -1182,7 +1185,7 @@ int getValInt(QJsonObject& par, QString v)
 
         }
     }
-//    qDebug() << par["Tag"] << v << par[v] << "Value" << low;
+
     return low;
 }
 
@@ -1192,12 +1195,15 @@ double getValDouble(QJsonObject& par, QString v)
 
     if (par.contains(v))
     {
-        if (par[v].isArray())
+        if (par[v].isArray() )
         {
-            if (par[v].toArray()[0].isString())
-                low = par[v].toArray()[0].toString().toDouble();
-            else
-                low = par[v].toArray()[0].toDouble();
+            if ( par[v].toArray().size() > 0)
+            {
+                if (par[v].isArray() && par[v].toArray().size() > 0 && par[v].toArray()[0].isString())
+                    low = par[v].toArray()[0].toString().toDouble();
+                else
+                    low = par[v].toArray()[0].toDouble();
+            }
         }
         else
         {
@@ -1209,7 +1215,6 @@ double getValDouble(QJsonObject& par, QString v)
     }
     return low;
 }
-
 
 template <class Widget>
 Widget* setupProcessParameterInt(Widget* s, QJsonObject& par, QString def)
@@ -2031,7 +2036,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -2543,7 +2548,7 @@ void MainWindow::exportToCellProfiler()
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -2841,7 +2846,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
                                                       set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;

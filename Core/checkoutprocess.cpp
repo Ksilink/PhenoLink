@@ -73,7 +73,8 @@ QStringList CheckoutProcess::pluginPaths(bool withVersion)
         if (plugin)
         {
             l << (withVersion ?
-                     QString("%1 - %2 (%3 - last git %4)").arg(plugin->getPath(), plugin->plugin_version(), plugin->buildTime(), plugin->gitTime())
+                     QString("%1 - %2 (%3 - last git %4)").arg(plugin->getPath(), plugin->plugin_version(),
+                                                               plugin->buildTime(), plugin->gitTime())
                      :
                      plugin->getPath() );
         }
@@ -284,7 +285,7 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
         }
 
         pp["Parameters"] = rra;
-        auto l = QStringList() << "Comment" << "ProcessStartId" << "State" << "authors" << "shallDisplay";
+        auto l = QStringList() << "Comment"  << "State" << "authors" << "shallDisplay";
         for (auto key: l)
             pp.remove(key);
 

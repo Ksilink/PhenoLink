@@ -2854,7 +2854,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
     SequenceFileModel* rmdl = 0;
 
     QString hash = ob.take(QCborValue("DataHash")).toString();
-    QString hh = ob.take(QCborValue("Hash")).toString();
+    QString hh = QString("%1%2").arg(ob.take(QCborValue("Hash")).toString()).arg(ob.take(QCborValue("ProcessStartId")).toInteger());
     QString tag = ob.take(QCborValue("Tag")).toString();
 
     if (!_mscreens.contains(hash))

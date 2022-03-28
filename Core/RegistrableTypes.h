@@ -911,16 +911,7 @@ public:
         if (json.contains("Value"))
         {
             _wasSet = true;
-
-#if WIN32
             *_value = (DataType)json["Value"].toString();
-#else
-#include <Core/checkoutprocess.h>
-            if (_isPath || _isDbPath)
-                *_value = (DataType)QString("%1/%2").arg(CheckoutProcess::getDriveMap(),json["Value"].toString().replace(":",""));
-            else
-                *_value = (DataType)json["Value"].toString();
-#endif
         }
     }
 
@@ -1017,8 +1008,6 @@ RegistrableCont(std::list, float)
 RegistrableCont(std::list, double)
 RegistrableCont(std::list, int)
 RegistrableCont(std::list, unsigned)
-
-
 
 RegistrableCont(QList, float)
 RegistrableCont(QList, double)
