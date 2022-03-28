@@ -351,6 +351,7 @@ void NetworkProcessHandler::getParameters(QString process)
 
 void NetworkProcessHandler::setParameters(QJsonObject ob)
 {
+    qDebug() << ob;
     emit parametersReady(ob);
 }
 

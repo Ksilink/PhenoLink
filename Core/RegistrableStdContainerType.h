@@ -131,10 +131,10 @@ inline double toValF(QJsonValue v)
             json["startChannel"] = _startChannel;\
             json["endChannel"] = _endChannel;\
     \
-            json["Default"] = tojson(_def);\
+            json["Default"] = tojsonArr(_def);\
             json["Range/Set"] = _hasRange;\
-            json["Range/Low"] = tojson(_low);\
-            json["Range/High"] = tojson(_high);\
+            json["Range/Low"] = tojsonArr(_low);\
+            json["Range/High"] = tojsonArr(_high);\
             json["Aggregation"] = QString(_aggreg == Sum ? "Sum" :\
                                                            ( _aggreg == Mean ? "Mean" :\
                                                                                ( _aggreg == Median ? "Median" :\

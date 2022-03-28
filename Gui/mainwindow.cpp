@@ -1219,16 +1219,35 @@ double getValDouble(QJsonObject& par, QString v)
 template <class Widget>
 Widget* setupProcessParameterInt(Widget* s, QJsonObject& par, QString def)
 {
-    s->setRange(getValInt(par, "Range/Low"), getValInt(par,"Range/High"));
+    double low = getValInt(par,"Range/Low"), high =  getValInt(par,"Range/High");
+
+    if (!par.contains("Range/Low")) low = std::numeric_limits<int>::min();
+    if (!par.contains("Range/High")) high = std::numeric_limits<int>::max();
+    s->setRange(low, high);
+
+
     if (par.contains(def))
+    {
         s->setValue(getValInt(par, def));
+    }
     return s;
 }
 
 template <class Widget>
 Widget* setupProcessParameterDouble(Widget* s, QJsonObject& par, QString def)
 {
-    s->setRange(getValDouble(par,"Range/Low"), getValDouble(par,"Range/High"));
+
+    double low = getValDouble(par,"Range/Low"), high =  getValDouble(par,"Range/High");
+
+    if (!par.contains("Range/Low")) low = -std::numeric_limits<double>::max();
+    if (!par.contains("Range/High")) high = std::numeric_limits<double>::max();
+
+    s->setRange(low, high);
+    if (high-low < 1)
+    {
+        s->setSingleStep(0.01);
+    }
+
     if (par.contains(def))
         s->setValue(getValDouble(par,def));
     return s;
@@ -1660,7 +1679,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
                     QString nm;
 
-                    if (_channelsNames.size() == _channelsIds.size())
+                    if (i < _channelsNames.size())
                         nm = QString(_channelsNames[i]);
                     else
                         nm = QString("Channel %1").arg(i);

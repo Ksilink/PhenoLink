@@ -987,7 +987,7 @@ protected:
 
 
 template <class inner>
-QJsonArray tojson(inner& img)
+QJsonArray tojsonArr(inner& img)
 {
     QJsonArray res;
 
