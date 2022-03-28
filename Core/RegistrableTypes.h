@@ -912,6 +912,7 @@ public:
         {
             _wasSet = true;
             *_value = (DataType)json["Value"].toString();
+
         }
     }
 
