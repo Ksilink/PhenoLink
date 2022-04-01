@@ -49,7 +49,7 @@ public:
     QPixmap getSubPixmap(QString overlay, int id);
     void setTag(QString overlay, int id, QStringList tags);
     QStringList getTag(QString overlay, int id);
-
+    int getTagSize(QString overlay);
 
     QImage getPixmapChannels(int field, bool bias_correction = false, float scale = 1.);
     QList<unsigned> getData(QPointF d, int& field, bool packed = true, bool bias = false);
@@ -133,6 +133,8 @@ public slots:
                 ;
     }
     void overlayChangeCmap(QString name, QString id);
+    void setTagFilter(QStringList t);
+    QStringList tagFilter();
 protected:
 
     SequenceFileModel* _mdl;
@@ -158,6 +160,9 @@ protected:
     float last_scale;
     bool _updating, _changed;
     double _overlay_width;
+
+    QStringList overlay_tag_filter;
+
 };
 
 

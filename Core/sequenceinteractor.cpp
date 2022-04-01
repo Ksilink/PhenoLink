@@ -183,6 +183,16 @@ void SequenceInteractor::overlayChangeCmap(QString name, QString id)
     modifiedImage();
 }
 
+void SequenceInteractor::setTagFilter(QStringList t)
+{
+    overlay_tag_filter = t;
+}
+
+QStringList SequenceInteractor::tagFilter()
+{
+    return overlay_tag_filter;
+}
+
 
 void SequenceInteractor::setOverlayId(QString name, int tile)
 {
@@ -385,22 +395,22 @@ void SequenceInteractor::clearMemory(CoreImage* im)
 
     QString exp = getExperimentName();// +_mdl->Pos();
 
-       auto chs = _mdl->getChannelsIds();
+    auto chs = _mdl->getChannelsIds();
 
     for (auto ii: chs)
     {
         for (unsigned ff = 1; ff <= _mdl->getFieldCount(); ++ff)
             for (unsigned zz = 1; zz <= _mdl->getZCount(); ++zz)
                 for (unsigned tt = 1; tt <= _mdl->getTimePointCount(); ++tt)
-        {
-            QString nm = _mdl->getFile(tt, ff, zz, ii);
+                {
+                    QString nm = _mdl->getFile(tt, ff, zz, ii);
 
-            bool exists = false;
-            ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), ii, exists, loadkey);
-            info->deleteInstance();
-    //        delete info;
-      //      _infos.remove(nm);
-        }
+                    bool exists = false;
+                    ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), ii, exists, loadkey);
+                    info->deleteInstance();
+                    //        delete info;
+                    //      _infos.remove(nm);
+                }
     }
     lock_infos.unlock();
     blockSignals(false);
@@ -1687,8 +1697,17 @@ QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
                     drawItem(feat, lcols, it.key(), feats, group, disp);
                 }
                 else
-                    for (disp.r = 0; disp.r < feat.rows; ++disp.r)
-                        drawItem(feat, lcols, it.key(), feats, group, disp);
+                {
+                    //                    _mdl->getMetas();
+                    if (overlay_tag_filter.isEmpty())
+                        for (disp.r = 0; disp.r < feat.rows; ++disp.r)
+                            drawItem(feat, lcols, it.key(), feats, group, disp);
+                    else
+                        for (disp.r = 0; disp.r < feat.rows; ++disp.r)
+                            if (overlay_tag_filter.contains(k.getTag(disp.r).join(";")))
+                                drawItem(feat, lcols, it.key(), feats, group, disp);
+
+                }
 
                 res << group;
             }
@@ -1784,6 +1803,23 @@ QStringList SequenceInteractor::getTag(QString overlay, int id)
     }
 
     return QStringList();
+}
+
+int SequenceInteractor::getTagSize(QString overlay)
+{
+    int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
+
+    for (int c = 1; c <= cns; ++c)
+    {
+        QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
+        if (data.contains(overlay))
+        {
+            StructuredMetaData& k = data[overlay];
+
+            return k.length();
+        }
+    }
+    return -1;
 }
 
 

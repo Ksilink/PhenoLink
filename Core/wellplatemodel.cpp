@@ -4199,11 +4199,11 @@ cv::Mat& StructuredMetaData::content() { return _content; }
 
 void StructuredMetaData::setContent(cv::Mat cont)
 {
-    // Ensure datatype is CV_32F as later on we use it forced to float
-    if (cont.type() != CV_32F)
-        cont.convertTo(_content, CV_32F);
-    else
-        _content = cont;
+    _content = cv::Mat(cont.rows, cont.cols+1, CV_32F);
+
+    cv::Rect cr(0,0,cont.cols, cont.rows);
+
+    _content(cr) = cont; // add one color for tags embedding
 
     _tags.resize(_content.rows);
 }
@@ -4212,6 +4212,7 @@ void StructuredMetaData::setContent(cv::Mat cont)
 
 void StructuredMetaData::setTag(int id, QStringList d)
 {
+    d.sort();
     if (id < _tags.size())
         _tags[id] = d;
 }

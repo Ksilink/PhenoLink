@@ -34,6 +34,9 @@ class QWinTaskbarProgress;
 class QCloseEvent;
 class QShortcut;
 class QPushButton;
+class QListWidget;
+class OverlayFilter;
+
 
 #include "experimentworkbenchcontrol.h"
 
@@ -369,8 +372,10 @@ private:
     QPushButton* load_data;
 
 
-    QDockWidget* overlay_filter;
-    QStringList overlay_filter_or, overlay_filter_and, overlay_filter_not;
+    QDockWidget* overlay_filter_dock;
+    OverlayFilter* overlay_filter;
+//    QStringList overlay_filter_list;//, overlay_filter_and, overlay_filter_not;
+
     int overlay_t, overlay_f, overlay_z, overlay_c;
 
 };

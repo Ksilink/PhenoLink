@@ -58,6 +58,7 @@
 #include <QMessageBox>
 #include <QTableWidget>
 #include <QLabel>
+#include <QListWidget>
 
 #include <QtTest/QSignalSpy>
 
@@ -88,6 +89,7 @@
 
 #include <QColorDialog>
 
+#include <Widgets/overlayfilter.h>
 
 #undef signals
 #include <arrow/api.h>
@@ -96,6 +98,7 @@
 #include <arrow/ipc/writer.h>
 #include <arrow/ipc/reader.h>
 #include <arrow/ipc/api.h>
+
 
 
 namespace fs = arrow::fs;
@@ -141,16 +144,17 @@ void MainWindow::change_overlay_details(QString values, QString overlay, int id)
 
 void MainWindow::on_prevOverlay_clicked()
 {
+
     //
     overlayClearTags();
     int val = std::max(0, ui->overlayId->text().toInt() - 1);
+    SequenceInteractor* inter = _sinteractor.current();
 
     for (auto sp : ui->overlayControl->findChildren<QSpinBox*>(ui->pickOverlay->currentText()))
         if (sp)
         {
             sp->setValue(val);
 
-            SequenceInteractor* inter = _sinteractor.current();
             ui->showOverlay->setPixmap(inter->getSubPixmap(ui->pickOverlay->currentText(), val));
 
             QStringList tags = inter->getTag(ui->pickOverlay->currentText(), val);
@@ -160,7 +164,6 @@ void MainWindow::on_prevOverlay_clicked()
 
         }
     ui->overlayId->setText(QString("%1").arg(val));
-
 }
 
 
@@ -216,7 +219,7 @@ void MainWindow::on_addTag_clicked()
 void MainWindow::on_delTag_clicked()
 {
     auto tg = ui->tagList->currentItem()->text();
-//    auto tg =ui->tagSelector->currentText();
+    //    auto tg =ui->tagSelector->currentText();
     QStringList names;
 
     for (int i =0; i <   ui->tagList->count();++i)
@@ -312,7 +315,7 @@ void ReadFeather(QString file, StructuredMetaData& data)
             if (tag->IsValid(s))
             {
                 std::string t = tag->GetString(s);
-//                qDebug() << "Reading:" << r+s << QString::fromStdString(t);
+                //                qDebug() << "Reading:" << r+s << QString::fromStdString(t);
                 data.setTag(r+s, QString::fromStdString(t).split(";"));
             }
         r+=tag->length();
@@ -351,8 +354,8 @@ void MainWindow::importOverlay()
         return;
     }
 
-   bool ok;
-   QString scom = QInputDialog::getItem(this, "Select Commit Name data", "Commit Name:", coms.keys(), 0, false, &ok);
+    bool ok;
+    QString scom = QInputDialog::getItem(this, "Select Commit Name data", "Commit Name:", coms.keys(), 0, false, &ok);
 
     if (ok & !scom.isEmpty())
     {
@@ -387,9 +390,9 @@ void MainWindow::importOverlay()
 
             QString meta_name = key.join("_");
             inter->getSequenceFileModel()->addMeta(
-                    overlay_t,
-                    overlay_f,
-                    overlay_z,
+                        overlay_t,
+                        overlay_f,
+                        overlay_z,
                         overlay_c,
                         meta_name,
                         meta);
@@ -440,14 +443,38 @@ void MainWindow::on_filterOverlay_clicked()
     //inter->getTag()
     if (!overlay_filter)
     {
-        overlay_filter = new QDockWidget(this);
+        overlay_filter_dock = new QDockWidget(this);
 
-        addDockWidget(Qt::TopDockWidgetArea, overlay_filter);
-        overlay_filter->setFloating(true);
+        addDockWidget(Qt::TopDockWidgetArea, overlay_filter_dock);
+        overlay_filter_dock->setFloating(true);
+
+        overlay_filter = new OverlayFilter();
+        overlay_filter_dock->setWidget(overlay_filter);
     }
+    overlay_filter_dock->show();
 
-    //    QStringList tags = inter->getTag(ui->pickOverlay->currentText(), val);
+    QMap<QString, int> tagCounter;
+
+    for (int i = 0; i < inter->getTagSize(ui->pickOverlay->currentText()); ++i)
+    {
+        QStringList tags = inter->getTag(ui->pickOverlay->currentText(), i);
+        for (auto& t : tags)
+            tagCounter[t]++;
+    }
+    //    qDebug() << tagCounter;
+
+    //    overlay_list->clear();
+    QStringList str;
+    for (auto it = tagCounter.begin(), e = tagCounter.end(); it != e; ++it)
+        str <<  QString("%1 (%2)").arg(it.key()).arg(it.value());
 
 
+    overlay_filter->setTagList(str);
+
+    connect(overlay_filter, &OverlayFilter::filterChanged, [this](QStringList t)
+    {
+        this->_sinteractor.current()->setTagFilter(t);
+    });
 
 }
+

@@ -19,10 +19,16 @@ class GuiServer : public QHttpServer
     Q_OBJECT
 public:
     GuiServer(MainWindow* parent);
+    void processSig(qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res);
 
 private:
-    void process(qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res);
     void setHttpResponse(QJsonObject ob, qhttp::server::QHttpResponse *res, bool binary = true);
+
+signals:
+    void reply(qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res);
+public slots:
+    void process(qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res);
+
 
 protected:
     MainWindow* win;

@@ -30,6 +30,11 @@ GuiServer::GuiServer(MainWindow* par): win(par)
         //        qDebug() << "Connection to GuiServer ! ";
         //            << c->tcpSocket()->errorString();
     });
+
+    connect(this, SIGNAL(reply(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res)),
+            this, SLOT(process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res))
+            );
+
     quint16 port = 8020;
 
     bool isListening = listen(QString::number(port),
@@ -37,7 +42,7 @@ GuiServer::GuiServer(MainWindow* par): win(par)
             //            qDebug() << "Listenning to socket!";
             req->collectData();
             req->onEnd([this, req, res](){
-                    this->process(req, res);
+                    this->processSig(req, res);
                     });
             });
 
@@ -48,6 +53,11 @@ GuiServer::GuiServer(MainWindow* par): win(par)
     }
     //    else
     //        qDebug() << "Gui Server Started";
+}
+
+void GuiServer::processSig(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res)
+{
+    emit reply(req, res);
 }
 
 inline QString stringIP(quint32 ip)
@@ -86,6 +96,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         QStringList hashes;
         for (auto item : (ob))
             hashes << item.toObject()["hash"].toString();
+
         NetworkProcessHandler::handler().removeHash(hashes);
         QString refIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
 

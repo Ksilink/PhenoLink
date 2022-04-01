@@ -55,6 +55,7 @@ set(CheckoutGui_SRC
                # ctkWidgets/ctkCheckableComboBoxEventTranslator.h ctkWidgets/ctkCheckableComboBoxEventTranslator.cpp
                Tags/tagger.h Tags/tagger.cpp  Tags/tagger.ui
                Tags/taggerplate.h Tags/taggerplate.cpp Tags/taggerplate.ui
+               Widgets/overlayfilter.h Widgets/overlayfilter.cpp Widgets/overlayfilter.ui
 
                rcs.qrc
     )
