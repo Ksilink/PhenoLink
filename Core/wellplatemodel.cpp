@@ -3465,6 +3465,7 @@ double AggregateMean(QList<double>& f)
 
 double AggregateMedian(QList<double>& f)
 {
+    if (f.size() < 1) return 0;
     if (f.size() == 1) return f.at(0);
     std::sort(f.begin(), f.end());
     return f.at(f.size() / 2);
@@ -3472,6 +3473,7 @@ double AggregateMedian(QList<double>& f)
 
 double AggregateMin(QList<double>& f)
 {
+    if (f.size() < 1) return 0;
     if (f.size() == 1) return f.at(0);
     double r = std::numeric_limits<double>::max();
     foreach(double ff, f)
@@ -3481,6 +3483,7 @@ double AggregateMin(QList<double>& f)
 
 double AggregateMax(QList<double>& f)
 {
+    if (f.size() < 1) return 0;
     if (f.size() == 1) return f.at(0);
     double r = std::numeric_limits<double>::min();
     foreach(double ff, f)

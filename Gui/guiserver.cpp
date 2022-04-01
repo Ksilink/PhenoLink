@@ -71,6 +71,8 @@ inline QString stringIP(quint32 ip)
 
 void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res)
 {
+    if (!req || !res)
+        return;
     const QByteArray data = req->collectedData();
     QString urlpath = req->url().path(), query = req->url().query();
 
