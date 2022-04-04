@@ -31,8 +31,8 @@ GuiServer::GuiServer(MainWindow* par): win(par)
         //            << c->tcpSocket()->errorString();
     });
 
-    connect(this, SIGNAL(reply(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res)),
-            this, SLOT(process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res))
+    connect(this, &GuiServer::reply,
+            this, &GuiServer::process
             );
 
     quint16 port = 8020;

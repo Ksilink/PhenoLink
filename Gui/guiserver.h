@@ -12,9 +12,8 @@
 
 class MainWindow;
 
-using namespace qhttp::server;
 
-class GuiServer : public QHttpServer
+class GuiServer : public qhttp::server::QHttpServer
 {
     Q_OBJECT
 public:
@@ -26,6 +25,7 @@ private:
 
 signals:
     void reply(qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res);
+
 public slots:
     void process(qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res);
 
