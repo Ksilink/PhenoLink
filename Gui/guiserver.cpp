@@ -71,6 +71,8 @@ inline QString stringIP(quint32 ip)
 
 void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res)
 {
+
+    static QMutex mutex;
     if (!req || !res)
         return;
     const QByteArray data = req->collectedData();
@@ -103,6 +105,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         QString refIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
 
         //qDebug() << "Client Adding data" << refIP << NetworkProcessHandler::handler().remainingProcess().size();
+        mutex.lock();
 
         for (auto item : (ob))
         {
@@ -123,6 +126,8 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 win->on_wellPlateViewTab_tabBarClicked(-1);
             }
         }
+
+        mutex.unlock();
     }
 
 
