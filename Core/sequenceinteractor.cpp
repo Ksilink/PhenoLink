@@ -1816,7 +1816,7 @@ int SequenceInteractor::getTagSize(QString overlay)
         {
             StructuredMetaData& k = data[overlay];
 
-            return k.length();
+            return (int)k.length();
         }
     }
     return -1;
