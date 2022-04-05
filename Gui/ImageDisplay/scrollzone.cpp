@@ -20,8 +20,8 @@
 
 
 ScrollZone::ScrollZone(QWidget *parent) :
-    QScrollArea(parent)/*,
-      _progDiag(0x0)*/
+    QScrollArea(parent),
+      _progDiag(nullptr)
 {
 
     QWidget* wid = new QWidget(this);
