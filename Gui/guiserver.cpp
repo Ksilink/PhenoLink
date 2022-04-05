@@ -100,8 +100,10 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         QStringList hashes;
         for (auto item : (ob))
             hashes << item.toObject()["hash"].toString();
-
+        mutex.lock();
         NetworkProcessHandler::handler().removeHash(hashes);
+        mutex.unlock();
+        qDebug() << "Removing " << hashes.size();
         QString refIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
 
         //qDebug() << "Client Adding data" << refIP << NetworkProcessHandler::handler().remainingProcess().size();
@@ -113,7 +115,9 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
             //qDebug() << oj;
             bool finished = (0 == NetworkProcessHandler::handler().remainingProcess().size());
             auto hash = oj["DataHash"].toString();
-            //   qDebug() << "Process finished" << oj;
+//            auto hash = oj["DataHash"].toString();
+
+            qDebug() << "Process finished" << hash << oj["DataHash"].toString() << finished << NetworkProcessHandler::handler().remainingProcess().size();
             auto mdl = ScreensHandler::getHandler().addDataToDb(hash, commit, oj, false);
 
             if (mdl && finished)
@@ -137,11 +141,12 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
         qDebug() << "Add Image" << ob.toMap().keys();
 
-
+        mutex.lock();
         QList<SequenceFileModel*> lsfm;
         lsfm << ScreensHandler::getHandler().addProcessResultImage(ob);
 
         win->networkRetrievedImage(lsfm);
+        mutex.unlock();
         return;
     }
 

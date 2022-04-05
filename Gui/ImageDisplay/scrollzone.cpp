@@ -267,7 +267,7 @@ void ScrollZone::insertImage(SequenceFileModel* sfm, SequenceInteractor* iactor)
             _mainwin, SLOT(change_overlay_details(QString, QString, int)));
 
 
-    qApp->processEvents();
+   // qApp->processEvents();
 }
 
 
