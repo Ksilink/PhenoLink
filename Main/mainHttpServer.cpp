@@ -435,6 +435,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         if (client)
         {
+            qDebug() << "Reseting proxy";
             delete client;
             client = nullptr;
         }
