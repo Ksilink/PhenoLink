@@ -48,7 +48,7 @@ protected:
     QMap<SequenceFileModel*, ImageForm*> _seq_toImg;
     QList<ImageForm*> _selection;
     MainWindow* _mainwin;
-//    QProgressDialog* _progDiag;
+    QProgressDialog* _progDiag;
 
     QWidget* _wid;
 

@@ -141,6 +141,8 @@ void ScrollZone::dropEvent(QDropEvent *event)
 
 }
 
+static QMutex mutex;
+
 void ScrollZone::addSelectedWells()
 {
     QList<SequenceFileModel*> sfm_list;
@@ -176,18 +178,20 @@ void ScrollZone::addSelectedWells()
         SequenceViewContainer::getHandler().setCurrent(last);
         //          _mainwin->updateCurrentSelection();
     }
-    //  if (!_progDiag) {
-    //      _progDiag = new QProgressDialog();
-    //    }
-    //  _progDiag->setLabelText("Loading Wells");
-    //  _progDiag->setMaximum(count);
+      if (!_progDiag) {
+          _progDiag = new QProgressDialog();
+        }
+      _progDiag->setLabelText("Loading Wells");
+      _progDiag->setMaximum(count);
 
     struct InsertFctor {
-        InsertFctor(ScrollZone* s) : sz(s)
+        InsertFctor(ScrollZone* s, QProgressDialog* diag) : sz(s), pr(diag)
         {
 
         }
         ScrollZone* sz;
+        QProgressDialog* pr;
+
 
         typedef SequenceInteractor* result_type;
 
@@ -195,19 +199,22 @@ void ScrollZone::addSelectedWells()
             SequenceInteractor* intr = new SequenceInteractor(sfm, QString("0"));
             intr->preloadImage();
             intr->moveToThread(sz->thread());
+            mutex.lock();
+            pr->setValue(pr->value()+1);
+            mutex.unlock();
             return intr;
         }
     };
 
-    QList< SequenceInteractor*> all =  QtConcurrent::blockingMapped(sfm_list, InsertFctor(this));
+    QList< SequenceInteractor*> all =  QtConcurrent::blockingMapped(sfm_list, InsertFctor(this, _progDiag));
 
     foreach(SequenceInteractor* m, all)
     {
         insertImage(m->getSequenceFileModel(), m);
     }
-    //  _progDiag->close();
-    //  delete _progDiag;
-    //  _progDiag = 0;
+      _progDiag->close();
+      delete _progDiag;
+      _progDiag = 0;
 }
 
 int ScrollZone::items()

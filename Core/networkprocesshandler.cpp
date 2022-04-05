@@ -480,7 +480,7 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
                         met = obj["Meta"].toObject();
 
                     auto txt = QStringList() << "FieldId" << "Pos" << "TimePos" << "Channel" << "zPos" << "DataHash";
-                    for (auto s: txt)
+                    for (auto& s: txt)
                         if (met.contains(s))
                         {
                             ob[s] = met[s];
