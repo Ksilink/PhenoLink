@@ -589,13 +589,35 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
             std::string uri = tofile.toStdString();
             std::string root_path;
 
-            auto fs = fs::FileSystemFromUriOrPath(uri, &root_path).ValueOrDie();
+            auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
+            if (!r0.ok())
+            {
+                qDebug() << "Arrow Error not able to load" << tofile;
+                return;
+            }
 
-            auto output = fs->OpenOutputStream(uri).ValueOrDie();
+            auto fs = r0.ValueOrDie();
+
+            auto r1 = fs->OpenOutputStream(uri);
+
+            if (!r1.ok())
+            {
+                qDebug() << "Arrow Error to Open Stream";
+                return;
+            }
+            auto output = r1.ValueOrDie();
             arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
             //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
-            auto writer = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options).ValueOrDie();
+            auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
+
+            if (!r2.ok())
+            {
+                qDebug() << "Arrow Unable to make file writer";
+                return;
+            }
+
+            auto writer = r2.ValueOrDie();
 
             writer->WriteTable(*table.get());
             writer->Close();

@@ -687,6 +687,10 @@ void ExperimentFileModel::reloadDatabaseDataCSV(QString file, QString t, bool ag
     } while (0);
 
 
+#define ArrowGet(var, id, call, msg) \
+    auto id = call; if (!id.ok()) { qDebug() << msg; return ; } auto var = id.ValueOrDie();
+
+
 void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, bool , bool load)
 {
     ExperimentDataModel* data = databaseDataModel(t);
@@ -694,11 +698,11 @@ void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, boo
         return;
 
     std::string uri = file.toStdString(), root_path;
-    auto fs = fs::FileSystemFromUriOrPath(uri, &root_path).ValueOrDie();
 
-    auto input = fs->OpenInputFile(uri).ValueOrDie();
+    ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow file not loading" << file);
 
-    auto reader = arrow::ipc::RecordBatchFileReader::Open(input).ValueOrDie();
+    ArrowGet(input, r1, fs->OpenInputFile(uri), "Arrow open error");
+    ArrowGet(reader, r2, arrow::ipc::RecordBatchFileReader::Open(input), "Arrow error creating batch reader ");
 
     auto schema = reader->schema();
 
@@ -713,7 +717,11 @@ void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, boo
         }
     }
 
-    qDebug() << "Nb Rows: " << reader->CountRows().ValueOrDie();
+
+    ArrowGet(count, r3, reader->CountRows(), "Arrow No rows available");
+
+
+    qDebug() << "Nb Rows: " << count;
 
     qDebug() << "Fields content";
 
@@ -730,7 +738,9 @@ void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, boo
 
     for (int record = 0; record < reader->num_record_batches(); ++record)
     {
-        auto rb = reader->ReadRecordBatch(record).ValueOrDie();
+
+        ArrowGet(rb, r0, reader->ReadRecordBatch(record), "Arrow Error loading record");
+
         auto well = std::static_pointer_cast<arrow::StringArray>(rb->GetColumnByName("Well"));
         auto  fieldid = std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("fieldId")),
                 sliceId = std::static_pointer_cast<arrow::Int16Array>(rb->GetColumnByName("sliceId")),
