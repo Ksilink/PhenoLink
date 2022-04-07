@@ -2862,9 +2862,15 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
     QList<SequenceFileModel*> mdls;
 
     SequenceFileModel* rmdl = 0;
+    auto va = ob.value("ProcessStartId");
+    QString aa;
+    if (va.isInteger()) aa = QString("%1").arg(va.toInteger());
+    if (va.isDouble()) aa = QString("%1").arg(va.toDouble());
+    if (va.isString()) aa = va.toString();
+
 
     QString hash = ob.take(QCborValue("DataHash")).toString();
-    QString hh = QString("%1%2").arg(ob.take(QCborValue("Hash")).toString()).arg(ob.take(QCborValue("ProcessStartId")).toInteger());
+    QString hh = QString("%1%2").arg(ob.take(QCborValue("Hash")).toString()).arg(aa);
     QString tag = ob.take(QCborValue("Tag")).toString();
 
     if (!_mscreens.contains(hash))
@@ -2875,7 +2881,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
     }
 
 
-    ExperimentFileModel* mdl = _mscreens[hash]->getSibling(tag + hash);
+    ExperimentFileModel* mdl = _mscreens[hash]->getSibling(tag + hh);
     mdl->setOwner(_mscreens[hash]);
     mdl->setProperties("hash", hash);
     mdl->merge(*_mscreens[hash]);

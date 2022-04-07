@@ -629,13 +629,14 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
 QCborArray filterBinary(QString hash, QJsonObject ds)
 {
 
+
 //    QString tmp = QJsonDocument(ds).toJson();
 
     QCborArray res;
 
-    QString commitName = ds["CommitName"].toString();
+//    QString commitName = ds["CommitName"].toString();
 
-    qDebug() << "Filter Binary" << ds.keys();
+    qDebug() << "Filter Binary" << ds.keys() << ds["ProcessStartId"];
 
     if (ds.contains("Data"))
     {

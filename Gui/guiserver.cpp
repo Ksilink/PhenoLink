@@ -139,7 +139,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
     { // Now let's do the fun part :)
         auto ob = QCborValue::fromCbor(data);
 
-        qDebug() << "Add Image" << ob.toMap().keys();
+//        qDebug() << "Add Image" << ob.toMap().value("ProcessStartId");
 
         mutex.lock();
         QList<SequenceFileModel*> lsfm;
@@ -158,7 +158,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         //        qDebug() << "Load" << queries;
         bool unpacked=false;
         QStringList pars = QStringList() << "field" << "time" << "zpos" << "tile" << "project" << "drive";
-        QString tile;
+//        QString tile;
         std::map<QString, QString> params;
 
         for (auto q : (queries) )
