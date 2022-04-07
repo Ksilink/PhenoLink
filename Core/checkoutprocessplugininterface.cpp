@@ -377,6 +377,9 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     ob["State"] = QString(_state == Running ? "Running" : (_state == Finished ? "Finished" : "NotStarted"));
     ob["Pos"] = getPosition();
     ob["shallDisplay"] = _shallDisplay;
+    qDebug() << "In plugin processStartId" << processStartId << _callParams["ProcessStartId"];
+
+
     ob["ProcessStartId"] = processStartId;
     auto d = QStringList() << "XP" << "DataHash" << "CommitName" << "ReplyTo" << "Parameters" << "StartTime" << "TaskID" << "WorkID" ;
     for (auto s: d)
@@ -403,6 +406,7 @@ void CheckoutProcessPluginInterface::read(const QJsonObject &json)
     setPosition(json["Pos"].toString());
     _shallDisplay = json["shallDisplay"].toBool();
     processStartId =  json["ProcessStartId"].toInt();
+    qDebug() << "processStartId" << processStartId;
 
     QJsonArray params = json["Parameters"].toArray();
     for (int i = 0; i < params.size(); ++i)
