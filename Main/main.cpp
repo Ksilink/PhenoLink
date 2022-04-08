@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
         if (!server.waitForStarted())
             qDebug() << "Server not properly started" << server.errorString() << r;
 
-        QThread::sleep(5);
+     //   QThread::sleep(5);
     }
 
 
