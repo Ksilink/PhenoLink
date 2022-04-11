@@ -1029,6 +1029,12 @@ void MainWindow::on_pluginhistory(QString )
 {
     auto cb = qobject_cast<QComboBox*>(sender());
 
+    pluginHistory(cb);
+}
+
+void MainWindow::pluginHistory(QComboBox * cb)
+{
+
     QString path = cb->currentData().toString();
     // Reload the json !
     if (path.isEmpty())
@@ -1052,14 +1058,18 @@ void MainWindow::on_pluginhistory(QString )
     reloaded = QJsonDocument::fromJson(jfile.readAll()).object();
     // Check file contains Path & that this path is our process :p
     if (!reloaded.contains("Path") || reloaded["Path"] != this->_preparedProcess )
-        return;
+    {
+        QJsonObject params;
+        CheckoutProcess::handler().getParameters(_preparedProcess, params);
+        int idx = cb->currentIndex();
+        if (idx >= 0)
+            setupProcessCall(params, idx);
+    }
 
     // Quick & dirty check for file content if missing skip history reload
     for (auto str: { "Parameters" , "PluginVersion", "Project", "Experiments" })
         if (!reloaded.contains(QString(str)))
             return;
-    //if (reloaded.contains())
-//    qDebug() << reloaded;
 
     setupProcessCall(reloaded, cb->currentIndex());
 }

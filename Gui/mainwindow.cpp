@@ -93,6 +93,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     networking(true),
     ui(new Ui::MainWindow),
     _typeOfprocessing(0),
+    _history(0),
     //    _numberOfChannels(0),
     //	_startingProcesses(false),
     _commitName(0),
@@ -989,15 +990,17 @@ void MainWindow::refreshProcessMenu()
 
 void MainWindow::conditionChanged(QWidget* sen, int val)
 {
-    //    qDebug() << "Changed conditionnal display" << sen->objectName();
+//    qDebug() << "Changed conditionnal display" << sen->objectName();
+    if (!_typeOfprocessing) return;
+
     if (_enableIf.contains(sen))
     {
         foreach(QWidget* w, _disable[sen])
         {
+            qDebug() << _disable[sen];
             //QWidget* w = _disable[sen];//->hide();
             if (!w) continue;
             if (!w->parentWidget()) continue;
-
             w->hide();
             // Check if parent is a Ctk group and show hide depending on the status of the childs
             QFormLayout* lay = dynamic_cast<QFormLayout*>(w->parentWidget()->layout());
@@ -1481,14 +1484,14 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
     }
     // sooooo many !!!!
     jsons.sort();
-    //    qDebug() << jsons << commits;
     QStringList disp, paths;
     disp << "Default";
     paths << QString();
 
     for (auto it = jsons.rbegin(), e= jsons.rend(); it != e; ++it)
     {
-        for (auto r: commits)
+        qDebug() << *it;
+        for (auto & r: commits)
             if (r.contains(*it))
             {
                 paths << r;
@@ -1507,6 +1510,8 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
                 QString date = j.takeLast();
 
                 disp << QString("%1 %2 %3:%4:%5").arg(commitName, date, hours.mid(0, 2), hours.mid(2,2), hours.mid(4));
+                qDebug() << disp.last();
+
             }
         if (disp.size() > 9)
             break;
@@ -1522,22 +1527,26 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 {
     bool reloaded = idx > 0;
 
+    QMap<QString, QList<QWidget*> > spc_widgets;
 
     _syncmapper.clear();
 
     QString process = obj["Path"].toString();
     //    qDebug() << obj;
 
-    QList<QWidget*> list = ui->processingArea->findChildren<QWidget*>();
+//    QList<QWidget*> list = ui->processingArea->findChildren<QWidget*>();
     _enableIf.clear();
     _disable.clear();
 
-    foreach(QWidget* wid, list)
-    {
-        wid->hide();
-        wid->close();
-        ui->processingArea->layout()->removeWidget(wid);
-    }
+    _commitName = nullptr;
+    _typeOfprocessing = nullptr;
+
+//    foreach(QWidget* wid, list)
+//    {
+//        wid->hide();
+//        wid->close();
+////        ui->processingArea->layout()->removeWidget(wid);
+//    }
 
     QFormLayout* layo = dynamic_cast<QFormLayout*>(ui->processingArea->layout());
     if (!layo) {
@@ -1547,7 +1556,11 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     while (layo->count() != 0) // Check this first as warning issued if no items when calling takeAt(0).
     {
         QLayoutItem *forDeletion = layo->takeAt(0);
-        forDeletion->widget()->close();
+        if (forDeletion->widget() != _history)
+        {
+            forDeletion->widget()->close();
+            delete forDeletion->widget();
+        }
         delete forDeletion;
     }
 
@@ -1562,17 +1575,38 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     lb->setToolTip(obj["Comment"].toString());
     layo->addRow(lb);
 
-    auto cb = new QComboBox();
-    layo->addRow(cb);
-    constructHistoryComboBox(cb, process);
-    if (idx > 0) cb->setCurrentIndex(idx);
-    connect(cb, SIGNAL(currentTextChanged(QString)), this, SLOT(on_pluginhistory(QString)));
-
-    if (idx < 0 && cb->count() > 1)
+    if (!_history)
+        _history = new QComboBox();
+    else
     {
-        cb->setCurrentIndex(1);
+        disconnect(_history, SIGNAL(currentTextChanged(QString)), this, SLOT(on_pluginhistory(QString)));
+    }
+
+    _history->show();
+
+    if (idx < 0)
+    {
+        _history->clear();
+        constructHistoryComboBox(_history, process);
+    }
+
+    QStringList h;
+    for (int i = 0; i < _history->count(); ++i) h <<  _history->itemText(i);
+    qDebug() << h;
+
+    if (idx > 0) _history->setCurrentIndex(idx);
+    else if (idx < 0 && _history->count() > 1)
+    {
+        _history->setCurrentIndex(1);
+        pluginHistory(_history);
+//        delete cb;
         return;
     }
+
+
+    layo->addRow(_history);
+    connect(_history, SIGNAL(currentTextChanged(QString)), this, SLOT(on_pluginhistory(QString)));
+
 
     // FIXME: Properly handle the "Position" of parameter2
     // FIXME: Properly handle other data types
@@ -1682,7 +1716,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
                     QString nm;
 
-                    if (i < _channelsNames.size())
+                    if (_channelsNames.size() == _channelsIds.size())
                         nm = QString(_channelsNames[i]);
                     else
                         nm = QString("Channel %1").arg(i);
@@ -1709,6 +1743,9 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
                     if (par["InnerType"].toString() == "unsigned" || par["InnerType"].toString() == "int") par["isIntegral"] = true;
                     if (par["InnerType"].toString() == "double" || par["InnerType"].toString() == "float") par["isIntegral"] = false;
+
+
+
                     if (par["Type"].toString() == "ChannelSelector")
                     {
                         if (reloaded && par.contains("Value"))
@@ -1717,12 +1754,22 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                                 par["Default"] = par["Value"].toArray().at(c);
                             else
                                 par["Default"] = par["Value"];
+                            reloaded = false;
                         }
                         else {
                             par["Default"] = c_def; // increment the default value for each channel.
                             c_def++;
                         }
                     }
+                    else
+                        if (par.contains("Value"))
+                        {
+                            if (par["Value"].isArray())
+                                par["Default"] = par["Value"].toArray().at(c);
+                            else
+                                par["Default"] = par["Value"];
+                            reloaded = false;
+                        }
                     //                    qDebug() << c;
 
                     QWidget* w = widgetFromJSON(par, reloaded);
@@ -1747,7 +1794,6 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
         if (par.contains("ImageType") && _channelsIds.size() != 0)
         { // Per Channel Processsing add Channel Picker
 
-            foreach(QCheckBox* b, _ChannelPicker)  delete b;
             _ChannelPicker.clear();
 
             QVBoxLayout *vbox = new QVBoxLayout;
@@ -1761,7 +1807,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
             {
                 QCheckBox* box = nullptr;
                 if (_channelsNames.size() == _channelsIds.size())
-                    box = new QCheckBox(_channelsNames[list.at(channels-1)]);
+                    box = new QCheckBox(_channelsNames[channels]);
                 else
                     box = new QCheckBox(QString("Channel %1").arg(p++));
                 box->setObjectName(QString("Channel_%1").arg(channels));
@@ -1810,6 +1856,10 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
             wid->setAttribute(Qt::WA_DeleteOnClose, true);
             wid->setObjectName(par["Tag"].toString());
+
+            if (show) // not usefull to add hidden stuff here
+                spc_widgets[par["Tag"].toString()].append(wid);
+
             //            qDebug() << par["Tag"].toString();
             if (par["PerChannelParameter"].toBool() || !show)
                 lay->addRow(wid);
@@ -1832,80 +1882,52 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
         if (par.contains("enableIf"))
         {
             QString rs = par["Tag"].toString();
-            QWidget* ww = ui->processingArea->findChild<QWidget*>(rs);
-
-            QJsonArray ar = par["enableIf"].toArray();
-            for (int i = 0; i < ar.size(); ++i)
+            for (QWidget* ww : spc_widgets[rs])
             {
-                //                qDebug() << r << ar.at(i);
-                QStringList keys = ar[i].toObject().keys();
-                foreach(QString r, keys)
+
+                QJsonArray ar = par["enableIf"].toArray();
+                for (int i = 0; i < ar.size(); ++i)
                 {
-                    for (QWidget* ll : ui->processingArea->findChildren<QWidget*>(r))
-                        //if (ll->objectName() != "" && ll->objectName().startsWith("qt_"))
+                    //                qDebug() << r << ar.at(i);
+                    QStringList keys = ar[i].toObject().keys();
+                    foreach(QString r, keys)
                     {
-                        //                    QWidget* ll = ui->processingArea->findChild<QWidget*>(r);
-                        int val = ar[i].toObject()[r].toInt();
+                        for (QWidget* ll : spc_widgets[r])
+                            if (!ll->objectName().isEmpty())
+                            {
+                                //                    QWidget* ll = ui->processingArea->findChild<QWidget*>(r);
+                                int val = ar[i].toObject()[r].toInt();
 
-                        //                        qDebug() << rs << ww << r << ll;
+                                //                        qDebug() << rs << ww << r << ll;
 
-                        _enableIf[ll][val] << ww;
-                        _disable[ll] << ww;
+                                _enableIf[ll][val] << ww;
+                                _disable[ll] << ww;
 
-                        QComboBox* box = dynamic_cast<QComboBox*>(ll);
-                        if (box)
-                        {
-                            //                        qDebug() << "connect";
-                            connect(box, SIGNAL(currentIndexChanged(int)), this, SLOT(conditionChanged(int)));
-                            box->setCurrentIndex(box->currentIndex());
-                            conditionChanged(box, box->currentIndex());
+#define SetCondition(Type, setter, accessor, change) \
+                                { Type b = dynamic_cast<Type>(ll); \
+                    if (b) { \
+                    connect(b, SIGNAL(change(int)), this, SLOT(conditionChanged(int))); \
+                    b->setter(b->accessor()); } }
 
-                        }
 
-                        QSpinBox* ss = dynamic_cast<QSpinBox*>(ll);
-                        if (ss)
-                        {
-                            //                        qDebug() << "connect 2";
-                            connect(ss, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
-                            ss->setValue(ss->value());
-                            conditionChanged(ss, ss->value());
-                        }
+                                SetCondition(QComboBox*, setCurrentIndex, currentIndex, currentIndexChanged);
+                                SetCondition(QSpinBox*, setValue, value, valueChanged);
+                                SetCondition(QDoubleSpinBox*, setValue, value, valueChanged);
+                                SetCondition(QSlider*, setValue, value, valueChanged);
+                                SetCondition(ctkDoubleSlider*, setValue, value, valueChanged);
+                            }
 
-                        QDoubleSpinBox* dss = dynamic_cast<QDoubleSpinBox*>(ll);
-                        if (dss)
-                        {
-                            //                        qDebug() << "connect 2";
-                            connect(dss, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
-                            dss->setValue(dss->value());
-                            conditionChanged(dss, dss->value());
-                        }
-                        QSlider* qs = dynamic_cast<QSlider*>(ll);
-                        if (qs)
-                        {
-                            //                        qDebug() << "connect 2";
-                            connect(qs, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
-                            qs->setValue(qs->value());
-                            conditionChanged(qs, qs->value());
-                        }
-                        ctkDoubleSlider* cds = dynamic_cast<ctkDoubleSlider*>(ll);
-                        if (cds)
-                        {
-                            //                        qDebug() << "connect 2";
-                            connect(cds, SIGNAL(valueChanged(int)), this, SLOT(conditionChanged(int)));
-                            cds->setValue(cds->value());
-                            conditionChanged(cds, cds->value());
-                        }
                     }
 
                 }
-
             }
         }
-
-
     }
-    //}
 
+
+
+//    qDebug() << "Enable If" << _enableIf;
+//    qDebug() << "Disable" << _disable;
 
     params = obj["ReturnData"].toArray();
     int resWidgets = 0;
@@ -1956,7 +1978,6 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
         delete retVbox;
     }
 
-    if (_typeOfprocessing) delete _typeOfprocessing;
     _typeOfprocessing = new QComboBox();
 
     QStringList names;
@@ -1969,7 +1990,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     if (_scrollArea->items() == 0)
         _typeOfprocessing->setCurrentText( "Selected Screens");//Index(_typeOfprocessing->setCurrentText())
 
-    if (_commitName) delete _commitName;
+   // if (_commitName) delete _commitName;
     _commitName = new QLineEdit();
     _commitName->setToolTip("If non empty data will be saved to database with table having specified name");
 
@@ -1986,10 +2007,29 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
     _commitName->setFocus();
 
+
+    for (auto wi : _enableIf.keys())
+    {
+#define changed(Type, accessor) { Type b = dynamic_cast<Type>(wi); if (b) { conditionChanged(b, b-> accessor() ); }}
+
+        changed(QComboBox*, currentIndex);
+        changed(QSpinBox*,  value );
+        changed(QDoubleSpinBox*,  value );
+        changed(QSlider*,  value );
+        changed(ctkDoubleSlider*,  value );
+    }
+    //}
+
+
+
     QPushButton* button = new QPushButton("Start");
     button->setObjectName("ProcessStartButton");
     connect(button, SIGNAL(pressed()), this, SLOT(startProcess()));
     layo->addRow(button);
+
+
+
+
 }
 
 

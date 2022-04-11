@@ -246,7 +246,7 @@ public slots:
     void networkRetrievedImage(QList<SequenceFileModel*> lsfm);
 
     void on_pluginhistory(QString selection);
-
+    void pluginHistory(QComboBox*);
 
     void rangeChange(double mi, double ma);
 
@@ -328,7 +328,7 @@ private:
     ScreensModel *mdl;               // Object for Data representation
     SequenceInteractor _sinteractor; // variable keeping track of the interaction with sequences
     QString    _preparedProcess; // Name of the current process
-    QComboBox* _typeOfprocessing; // Keep tracks of the user selected type of processing (current image, current well, all screens, etc...)
+    QComboBox* _typeOfprocessing, *_history; // Keep tracks of the user selected type of processing (current image, current well, all screens, etc...)
     QLineEdit* _commitName;       // If non empty shall be used to commit the data to a database
 
 //    QCheckBox* _shareTags;
