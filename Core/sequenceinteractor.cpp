@@ -12,8 +12,8 @@
 #include <QElapsedTimer>
 
 
-QMutex sequence_interactorMutex(QMutex::NonRecursive);
-QMutex lock_infos(QMutex::NonRecursive);
+QMutex sequence_interactorMutex;
+QMutex lock_infos;
 
 SequenceInteractor::SequenceInteractor() :
     _mdl(0),
@@ -440,8 +440,8 @@ QPointF SequenceInteractor::getFieldPosition(int field)
 {
     if (field < 0) field = _field;
 
-    QRegExp x(QString("f%1s.*X").arg(field));
-    QRegExp y(QString("f%1s.*Y").arg(field));
+    QRegularExpression x(QString("f%1s.*X").arg(field));
+    QRegularExpression y(QString("f%1s.*Y").arg(field));
 
     return QPoint(_mdl->property(x).toDouble(), _mdl->property(y).toDouble());
 }
@@ -849,8 +849,8 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
         for (int i = 0; i < toStitch.size(); ++i)
         {
             auto d = toStitch[i];
-            rows = std::max(rows, li.size() * d.second.width());
-            cols = std::max(cols, li.first().size() * d.second.height());
+            rows = std::max(rows, (int)(li.size() * d.second.width()));
+            cols = std::max(cols, (int)(li.first().size() * d.second.height()));
         }
 
 
@@ -1316,7 +1316,7 @@ QList<QString> SequenceInteractor::getMetaList()
         l += data.keys();
     }
 
-    return std::move(l);
+    return l;
 }
 
 int SequenceInteractor::getOverlayMax(QString name)

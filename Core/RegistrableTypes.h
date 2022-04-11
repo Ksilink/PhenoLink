@@ -983,7 +983,6 @@ protected:
 
 #include "RegistrableImageType.h"
 
-#include "RegistrableSecondOrderType.h"
 
 
 template <class inner>
@@ -1010,10 +1009,10 @@ RegistrableCont(std::list, double)
 RegistrableCont(std::list, int)
 RegistrableCont(std::list, unsigned)
 
-RegistrableCont(QList, float)
-RegistrableCont(QList, double)
-RegistrableCont(QList, int)
-RegistrableCont(QList, unsigned)
+//RegistrableCont(QList, float)
+//RegistrableCont(QList, double)
+//RegistrableCont(QList, int)
+//RegistrableCont(QList, unsigned)
 
 
 RegistrableCont(QVector, float)

@@ -8,11 +8,11 @@
 #include <QSharedMemory>
 #include <config.h>
 
-QMutex process_mutex(QMutex::NonRecursive);
-QMutex hash_to_save_mtx(QMutex::NonRecursive);
+QMutex process_mutex;
+QMutex hash_to_save_mtx;
 
 CheckoutProcess::CheckoutProcess():
-    _counter(0), mutex_dataupdate(QMutex::NonRecursive)
+    _counter(0)
 {
     startTimer(100);
 }
@@ -363,7 +363,7 @@ QJsonValue remap(QJsonValue v, QString map)
     if (v.isString())
     {
         QString value = v.toString();
-        if (value[1]==":")
+        if (value[1]==':')
         {
             QJsonValue res = map + value.remove(1,1);
             //            qDebug() << "Remap" << v << res;

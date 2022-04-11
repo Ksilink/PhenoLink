@@ -242,7 +242,7 @@ NetworkProcessHandler::NetworkProcessHandler():
     last_serv_pos(0)
 {
 
-    data = new QFile( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/HashLogs.txt");
+    data = new QFile( QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() + "/HashLogs.txt");
     if (data->open(QFile::WriteOnly | QFile::Truncate)) {
         hash_logfile= new QTextStream(data);
     }

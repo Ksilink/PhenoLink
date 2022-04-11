@@ -13,7 +13,7 @@ IF(WIN32)
 
     target_include_directories(Checkout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-    target_link_libraries(Checkout CheckoutGui CheckoutCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WinExtras Qt::WebView ${OpenCV_LIBS} )
+    target_link_libraries(Checkout CheckoutGui CheckoutCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WebView ${OpenCV_LIBS} )
     #install_qt5_executable(Checkout)
     install(TARGETS Checkout COMPONENT applications DESTINATION bin)
 ELSE()
@@ -67,7 +67,7 @@ add_executable(CheckoutHttpServer mainHttpServer.cpp checkouthttpserver.h ${SrvR
 target_include_directories(CheckoutHttpServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (WIN32)
-    target_link_libraries( CheckoutHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::WinExtras ${OpenCV_LIBS})
+    target_link_libraries( CheckoutHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets  ${OpenCV_LIBS})
 else()
     target_link_libraries( CheckoutHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets  ${OpenCV_LIBS})
 endif(WIN32)
@@ -78,7 +78,7 @@ add_executable(CheckoutQueueServer mainQueueServer.cpp checkouqueuserver.h ${Srv
 target_include_directories(CheckoutQueueServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (WIN32)
-    target_link_libraries( CheckoutQueueServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::WinExtras ${OpenCV_LIBS})
+    target_link_libraries( CheckoutQueueServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets ${OpenCV_LIBS})
 else()
     target_link_libraries( CheckoutQueueServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets ${OpenCV_LIBS})
 endif(WIN32)

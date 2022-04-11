@@ -56,7 +56,7 @@ void loadPlugins(bool isServer)
 
     CheckoutDataLoader& loader = CheckoutDataLoader::handler();
     CheckoutProcess & process = CheckoutProcess::handler();
-    QMutex mutex(QMutex::NonRecursive);
+    QMutex mutex;
 
     struct paraLoader{
         paraLoader(CheckoutDataLoader& l, CheckoutProcess & p, QDir pl, bool serv, QMutex& mut):

@@ -223,7 +223,7 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
 
     for (unsigned field = 1; field <= seq->getFieldCount(); ++field)
     {
-        QRegExp k(QString("f%1s.*X").arg(field));
+        QRegularExpression k(QString("f%1s.*X").arg(field));
         double v = seq->property(k).toDouble();
         x.insert(v);
         k.setPattern(QString("f%1s.*Y").arg(field));
@@ -243,7 +243,7 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
 
 QPointF getFieldPos(SequenceFileModel* seq, int field, int /*z*/, int /*t*/, int /*c*/)
 {
-    QRegExp k(QString("^f%1s.*X$").arg(field));
+    QRegularExpression k(QString("^f%1s.*X$").arg(field));
     double x = seq->property(k).toDouble();
     k.setPattern(QString("^f%1s.*Y$").arg(field));
     double y = seq->property(k).toDouble();
@@ -278,7 +278,7 @@ void ExperimentFileModel::setFieldPosition()
 
                 for (unsigned field = 1; field <= mdl->getFieldCount(); ++field)
                 {
-                    QRegExp k(QString("^f%1s.*X$").arg(field));
+                    QRegularExpression k(QString("^f%1s.*X$").arg(field));
                     QString prop = mdl->property(k);
                     if (prop.isEmpty()) continue;
                     x.insert(prop.toDouble());
@@ -901,7 +901,7 @@ QString ExperimentFileModel::property(QString tag) const
     return r;
 }
 
-QString ExperimentFileModel::property(QRegExp tag) const
+QString ExperimentFileModel::property(QRegularExpression tag) const
 {
     QString r = DataProperty::property(tag);
     if (r.isEmpty() && getOwner())
@@ -923,12 +923,12 @@ QString DataProperty::property(QString tag) const
     return _properties[tag].toString();
 }
 
-QString DataProperty::property(QRegExp& re) const
+QString DataProperty::property(QRegularExpression &re) const
 {
     // qDebug() << re;
     for (auto it = _properties.begin(), e = _properties.end(); it != e; ++it)
     {
-        if (re.indexIn(it.key()) >= 0)
+        if (re.match(it.key()).hasMatch())
             return it.value().toString();
     }
     return QString();
@@ -1199,7 +1199,7 @@ QList<SequenceFileModel*> SequenceFileModel::getSiblings()
     return _siblings;
 }
 
-QString SequenceFileModel::property(QRegExp& tag) const
+QString SequenceFileModel::property(QRegularExpression &tag) const
 {
     QString r = DataProperty::property(tag);
     if (r.isEmpty() && this->getOwner())
@@ -1426,7 +1426,7 @@ ExperimentFileModel* SequenceFileModel::getOwner() const
 
 
 QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
-                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher)
+                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegularExpression siteMatcher)
 {
     Q_UNUSED(imageType);
     Q_UNUSED(siteMatcher);
@@ -1489,7 +1489,7 @@ QJsonObject SequenceFileModel::getMeta(QStringList& keys, QString prefix)
     QJsonObject props;
     for (auto k : keys)
     {
-        QRegExp mtag(QString("%2.*%1").arg(k).arg(prefix));
+        QRegularExpression mtag(QString("%2.*%1").arg(k).arg(prefix));
         QString t = this->property(mtag);
         if (!t.isEmpty())
             props[k] = t;
@@ -1567,7 +1567,7 @@ QJsonObject SequenceFileModel::getMeta(SequenceFileModel::MetaDataHandler& h)
 }
 
 QList<QJsonObject> SequenceFileModel::toJSONvector(TimeLapse times,
-                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher)
+                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegularExpression siteMatcher)
 {
     QList<QJsonObject> res;
 
@@ -1610,7 +1610,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(TimeLapse times,
 
 
 QList<QJsonObject> SequenceFileModel::toJSONvector(ImageStack stack,
-                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher)
+                                                   QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegularExpression siteMatcher)
 {
     QList<QJsonObject> res;
 
@@ -1657,7 +1657,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(ImageStack stack,
 QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(Channel channels,
                                                                   QString imageType,
                                                                   QList<bool> selectedChanns
-                                                                  , MetaDataHandler& h, QRegExp siteMatcher)
+                                                                  , MetaDataHandler& h, QRegularExpression siteMatcher)
 {
     QMap<int, QList<QJsonObject> > res;
 
@@ -1699,7 +1699,7 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(Channel channe
 
 
 QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(TimeLapse times,
-                                                                  QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher)
+                                                                  QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegularExpression siteMatcher)
 {
     QMap<int, QList<QJsonObject> > res;
 
@@ -1748,7 +1748,7 @@ QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(TimeLapse time
 
 
 QMap<int, QList<QJsonObject> > SequenceFileModel::toJSONnonVector(ImageStack stack,
-                                                                  QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher)
+                                                                  QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegularExpression siteMatcher)
 {
     QMap<int, QList<QJsonObject> > res;
 
@@ -1806,7 +1806,7 @@ typedef QMap<int, ImageStack> FieldImaging;
 
 QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorImage,
                                              QList<bool> selectedChanns, QStringList& metaData,
-                                             QRegExp siteMatcher)
+                                             QRegularExpression siteMatcher)
 {
     QList<QJsonObject> res;
     MetaDataHandler handler;
@@ -1830,7 +1830,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
             for (FieldImaging::iterator it = _data.begin(), e = _data.end(); it != e; ++it)
             {
                 QString fi = QString("%1").arg((int)it.key(), 2, 10, QChar('0'));
-                if (!siteMatcher.isEmpty() && !siteMatcher.exactMatch(fi))
+                if (!siteMatcher.pattern().isEmpty() && !siteMatcher.match(fi).hasMatch())
                     continue;
 
                 handler.fieldIdx = it.key();
@@ -1865,7 +1865,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
         {
             handler.fieldIdx = it.key();
             QString fi=QString("%1").arg(it.key(), 2, 10, QChar('0'));
-            if (!siteMatcher.isEmpty() && !siteMatcher.exactMatch(fi))
+            if (!siteMatcher.pattern().isEmpty() && !siteMatcher.match(fi).hasMatch())
                 continue;
 
             QList<QJsonObject> s = toJSONvector(it.value(), imageType, selectedChanns, handler,siteMatcher);
@@ -1897,7 +1897,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
             for (FieldImaging::iterator it = _data.begin(), e = _data.end(); it != e; ++it)
             {
                 QString fi=QString("%1").arg((int)it.key(), 2, 10, QChar('0'));
-                if (!siteMatcher.isEmpty() && !siteMatcher.exactMatch(fi))
+                if (!siteMatcher.pattern().isEmpty() && !siteMatcher.match(fi).hasMatch())
                     continue;
 
                 handler.fieldIdx = it.key();
@@ -1936,7 +1936,7 @@ QList<QJsonObject> SequenceFileModel::toJSON(QString imageType, bool asVectorIma
         {
             handler.fieldIdx = it.key();
             QString fi=QString("%1").arg((int)it.key(), 2, 10, QChar('0'));
-            if (!siteMatcher.isEmpty() && !siteMatcher.exactMatch(fi))
+            if (!siteMatcher.pattern().isEmpty() && !siteMatcher.match(fi).hasMatch())
                 continue;
 
             QMap<int, QList<QJsonObject> > v = toJSONnonVector(it.value(), imageType, selectedChanns, handler, siteMatcher);
@@ -2071,7 +2071,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
 
         if (fold)
         {
-            QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).replace("µ","u").toUtf8();
+            QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).replace("ï¿½","u").toUtf8();
             //qDebug() << arr;
             QJsonParseError err;
             auto doc = QJsonDocument::fromJson(arr, &err);
@@ -2437,7 +2437,7 @@ QString ScreensHandler::findPlate(QString plate, QStringList projects, QString d
 
 
     QStringList platesplit = plate.split('_');
-    for (int i = std::max(platesplit.size() - 2, 1); i < platesplit.size(); i++)    platesplit.pop_back();
+    for (int i = std::max((int)(platesplit.size() - 2), 1); i < platesplit.size(); i++)    platesplit.pop_back();
     QString searchplate = platesplit.join("_");
 
     qDebug() << "Will search" << searchPaths << "for plate" << searchplate << plate << "searching for files" << raw << "and if not found with widlcards" << wildcards;
@@ -2457,7 +2457,7 @@ void stringToPos(QString pos, int& row, int& col)
     unsigned char key[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     for (int j = 0; j < 27; ++j)
-        if (pos.at(0) == key[j])
+        if (pos.at(0) == QChar(key[j]))
             row = j;
 
     col = pos.remove(0, 1).toInt() - 1;
@@ -2508,7 +2508,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject& ob)
                 return rmdl;
             }
 
-            ExperimentFileModel* mdl = _mscreens[hash]->getSibling(tag + procId);
+            ExperimentFileModel* mdl = _mscreens[hash]->getSibling(tag + QChar(procId));
             mdl->setProperties("hash", hash);
             mdl->setName(_mscreens[hash]->name());
 
@@ -3199,7 +3199,7 @@ void SequenceViewContainer::setCurrent(SequenceFileModel* mdl)
     _current = mdl;
 }
 
-QMutex ExperimentDataModel::_lock(QMutex::NonRecursive);
+QMutex ExperimentDataModel::_lock;
 
 ExperimentDataTableModel::ExperimentDataTableModel(ExperimentFileModel* parent, int nX, int nY) :
     _owner(parent), nbX(nX), nbY(nY),

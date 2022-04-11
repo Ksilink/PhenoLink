@@ -5,7 +5,7 @@
 
 #include <Core/checkouterrorhandler.h>
 
-QMutex ImageInfos::_lockImage(QMutex::NonRecursive);
+QMutex ImageInfos::_lockImage;
 
 ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString fname, QString platename, int channel):
     QObject(par),
@@ -67,7 +67,7 @@ QString ImageInfos::key(QString k)
     return str;
 }
 
-QMutex protect_iminfos(QMutex::NonRecursive);
+QMutex protect_iminfos;
 
 
 QPair<ImageInfosShared* , QMap<QString, ImageInfos*> *>
@@ -485,7 +485,7 @@ QJsonObject& ImageInfos::getStoredParams()
 
     if (ob.isEmpty())
     {
-        QDir dir( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
+        QDir dir( QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first());
 
         QFile cbfile(dir.path() + "/context.cbor");
         if (!cbfile.open(QIODevice::ReadOnly)) {

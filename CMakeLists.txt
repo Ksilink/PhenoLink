@@ -87,15 +87,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Update to CMake
-if (WIN32)
-        find_package(Qt5 5.15 COMPONENTS  Widgets  Xml XmlPatterns
-            OpenGL Concurrent WinExtras  WebView WebEngineWidgets REQUIRED)
-ELSE()
-    find_package(Qt5 5.15 COMPONENTS
-        Widgets Xml XmlPatterns
-        OpenGL Concurrent WebView WebEngineWidgets
-        REQUIRED)
-ENDIF(WIN32)
+find_package(Qt6 COMPONENTS  Widgets  Xml
+                OpenGL Concurrent  WebView WebEngineWidgets REQUIRED)
 
 find_package(bsoncxx   REQUIRED)
 find_package(mongocxx   REQUIRED)

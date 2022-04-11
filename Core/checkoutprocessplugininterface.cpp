@@ -7,7 +7,7 @@
 
 
 
-QMutex CheckoutProcessPluginInterface::mutex(QMutex::NonRecursive);
+QMutex CheckoutProcessPluginInterface::mutex;
 QMap<QString, QVector<cv::Mat*> > CheckoutProcessPluginInterface::_hashtoBias;
 QMap<QString, int > CheckoutProcessPluginInterface::_hashtoBiasCount;
 

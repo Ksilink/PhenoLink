@@ -62,7 +62,7 @@ QVector<QVector<double> > MatrixDataModel::getColumns(QString feature)
 
 QVector<QVector<double> > MatrixDataModel::getColumnsGroup(MatrixDataModel::Group g, QString groupValue, QString feature)
 {
-  QRegExp r(QString("f%1s%2t%3dc%4%5").arg(g==Field ? groupValue :  "\\d")
+  QRegularExpression r(QString("f%1s%2t%3dc%4%5").arg(g==Field ? groupValue :  "\\d")
             .arg(g== Stack ? groupValue :  "\\d")
             .arg(g== Time ? groupValue :  "\\d")
             .arg(g== Channel ? groupValue :  "\\d").arg(feature));
@@ -70,7 +70,7 @@ QVector<QVector<double> > MatrixDataModel::getColumnsGroup(MatrixDataModel::Grou
   QVector<QVector<double> > res;
   foreach (QString s, _colNames.keys())
     {
-      if (r.indexIn(s) != -1)
+      if (r.match(s).hasMatch())
         res.push_back(_dataset[_colNames[s]]);
     }
   return res;
