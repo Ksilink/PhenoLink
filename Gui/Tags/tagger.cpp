@@ -64,7 +64,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
         req->addHeader("X-LC-APP-Auth", key.toLatin1());
         req->addHeader("Accept", "application/json");
         QByteArray body;
-        req->addHeaderValue("content-length", body.length());
+        req->addHeader("content-length", QString::number(body.length()).toLatin1());
         req->end(body);
     },
 
@@ -174,7 +174,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             req->addHeader("X-LC-APP-Auth", key.toLatin1());
             req->addHeader("Accept", "application/json");
             QByteArray body;
-            req->addHeaderValue("content-length", body.length());
+            req->addHeader("content-length", QString::number(body.length()).toLatin1());
             req->end(body);
         }
     },
@@ -357,7 +357,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             platet->updatePlate();
         }
 
-        int p = std::min(1, date.size()-1);
+        int p = std::min(1, (int)(date.size()-1));
         ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(p)));
 
         if (!proj.isEmpty())

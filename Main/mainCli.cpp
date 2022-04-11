@@ -74,7 +74,7 @@ void helper::listParams(QJsonObject ob)
         qApp->exit();
 }
 
-void helper::startProcess(QJsonObject ob, QRegExp siteMatcher)
+void helper::startProcess(QJsonObject ob, QRegularExpression siteMatcher)
 {
 
     QJsonArray startParams;
@@ -320,7 +320,7 @@ void helper::setHttpResponse(QJsonObject ob, qhttp::server::QHttpResponse* res, 
     else
         res->addHeader("Content-Type", "application/json");
 
-    res->addHeaderValue("Content-Length", body.length());
+    res->addHeader("Content-Length", QString::number(body.length()).toLatin1());
     res->setStatusCode(qhttp::ESTATUS_OK);
     res->end(body);
 }
@@ -395,7 +395,7 @@ void startServer(QCoreApplication* a,QProcess& server, QStringList var )
     {
         // Start the network worker for processes
         //        server.setProcessChannelMode(QProcess::MergedChannels);
-        server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() +"/CheckoutServer_log.txt");
+        server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() +"/CheckoutServer_log.txt");
         server.setWorkingDirectory(a->applicationDirPath());
         QString r = "CheckoutHttpServer.exe";
 
@@ -475,13 +475,13 @@ int main(int ac, char** av)
 
     QSettings set;
 
-    QDir dir( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
+    QDir dir( QStandardPaths::standardLocations(QStandardPaths::AppDataLocation ).first());
     //QDir dir("P:/DATABASES");
     dir.mkpath(dir.absolutePath() + "/databases/");
     dir.mkpath(dir.absolutePath());
 
     if (!set.contains("databaseDir"))
-        set.setValue("databaseDir", QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/databases/");
+        set.setValue("databaseDir", QStandardPaths::standardLocations(QStandardPaths::AppDataLocation ).first() + "/databases/");
 
     QStringList var = set.value("Server", QStringList() << "127.0.0.1").toStringList();
 

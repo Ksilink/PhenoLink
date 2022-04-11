@@ -35,7 +35,7 @@ PythonOptionEditor::PythonOptionEditor(QWidget *parent) :
                 "Python init script"               ,
                 QStringList() << "Python (*.py)",
                 ctkPathLineEdit::Files | ctkPathLineEdit::Readable);
-    init_script->setCurrentPath(set.value("Python/InitScript", QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/checkout_init.py").toString() );
+    init_script->setCurrentPath(set.value("Python/InitScript", QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() + "/checkout_init.py").toString() );
     lay->addRow("Python Init script", init_script);
 
     connect(init_script, SIGNAL(currentPathChanged(QString)), this, SLOT(updatePaths()));
@@ -608,9 +608,10 @@ QWidget *GlobalOptions::appDirectory()
     QFormLayout* mainLayout = new QFormLayout;
 
     mainLayout->addRow("Startup Python script",
-                       buildPaths( set.value("Python/InitScript", QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/checkout_init.py").toString()));
+                       buildPaths( set.value("Python/InitScript",
+                                             QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() + "/checkout_init.py").toString()));
     mainLayout->addRow("Core Application Log file",
-                       buildPaths( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/WD_CheckoutLog.txt"));
+                       buildPaths( QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() + "/WD_CheckoutLog.txt"));
     mainLayout->addRow("Server Application Log file",
                        buildPaths( "c:/temp/CheckoutServer_log.txt"));
 
@@ -688,7 +689,7 @@ void GlobalOptions::openDirectory()
 {
     QVariant var = sender()->property("path");
 
-    if (var.isNull() || !var.canConvert(QMetaType::QString)) return;
+    if (var.isNull() || !var.canConvert<QString>()) return;
 
 
     showInGraphicalShell(this, var.toString());
@@ -698,7 +699,7 @@ void GlobalOptions::copyDirectory()
 {
     QVariant var = sender()->property("path");
 
-    if (var.isNull() || !var.canConvert(QMetaType::QString)) return;
+    if (var.isNull() || !var.canConvert<QString>()) return;
 
     QApplication::clipboard()->setText(var.toString());
 

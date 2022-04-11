@@ -39,9 +39,6 @@
 #include <QClipboard>
 #include <QtConcurrent/QtConcurrent>
 
-#ifdef WIN32
-#include <QtWinExtras/QWinTaskbarProgress>
-#endif
 
 
 #include <ctkWidgets/ctkDoubleRangeSlider.h>

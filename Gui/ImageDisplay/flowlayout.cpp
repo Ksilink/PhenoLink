@@ -109,7 +109,11 @@ QSize FlowLayout::minimumSize() const
         size = size.expandedTo(item->minimumSize());
 
     QSettings q;
-    size += QSize(2*margin(), 2*margin());
+
+    int l,r;
+    getContentsMargins(&l, nullptr, &r, nullptr);
+
+    size += QSize(2*l, 2*r);
     //size.setHeight(size.height() * (int)ceil(itemList.size() / (float)q.value("Image Flow/Count", _ncols).toInt()));
     //qDebug() << "Minimum size reported:" << size;
     return size;

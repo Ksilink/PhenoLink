@@ -35,7 +35,7 @@ TaggerPlate::TaggerPlate(QString _plate,QWidget *parent) :
     QStringList header;
 
     for (int i = 0; i < 'Q'; ++i)
-        header << QString('A'+i);
+        header << QString('A'+QChar((char)i));
 
     ui->plateMaps->setVerticalHeaderLabels(header);
 

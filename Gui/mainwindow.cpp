@@ -35,10 +35,6 @@
 #include <QClipboard>
 #include <QtConcurrent/QtConcurrent>
 
-#ifdef WIN32
-#include <QtWinExtras/QWinTaskbarProgress>
-#endif
-
 
 #include <ctkWidgets/ctkDoubleRangeSlider.h>
 #include <ctkWidgets/ctkCollapsibleGroupBox.h>
@@ -794,7 +790,7 @@ void MainWindow::updateCurrentSelection()
             bvl->addWidget(colorWidgetSetup(new ctkColorPickerButton(wwid), fo, trueChan), i, 4);
 
             shrt_binarize.append(new QShortcut(this));
-            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, (Qt::Key_0+i) + Qt::KeypadModifier));
+            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, (Qt::Key)(0x30+i) + Qt::KeypadModifier));
             shrt_binarize.last()->setObjectName(QString("%1").arg(trueChan));
             connect(shrt_binarize.last(), &QShortcut::activated, this, [this](){
                 int trueChan = this->sender()->objectName().toInt();
@@ -2581,7 +2577,7 @@ void MainWindow::exportToCellProfiler()
     QStringList tag_filter = filtertags.isEmpty() ? QStringList() :
                                                     filtertags.split(';');
     QStringList remTags;
-    QRegExp wellMatcher, siteMatcher;
+    QRegularExpression wellMatcher, siteMatcher;
 
     for (auto f : tag_filter)
     {
@@ -2732,14 +2728,14 @@ void MainWindow::exportToCellProfiler()
             auto wPos = seq->Pos();
             values["Metadata_Well"] = wPos;
 
-            if (!wellMatcher.isEmpty() && !wellMatcher.exactMatch(wPos))
+            if (!wellMatcher.pattern().isEmpty() && !wellMatcher.match(wPos).hasMatch())
                 continue;
 
 
             for (unsigned int t = 0; t < seq->getTimePointCount(); ++t)
                 for (unsigned f = 0; f < seq->getFieldCount(); ++f)
                 {
-                    if (!siteMatcher.isEmpty() && !siteMatcher.exactMatch(QString("%1").arg(f)))
+                    if (!siteMatcher.pattern().isEmpty() && !siteMatcher.match(QString("%1").arg(f)).hasMatch())
                         continue;
 
                     for (unsigned z = 0; z < seq->getZCount(); ++z)
@@ -2780,7 +2776,7 @@ bool MainWindow::close()
     for (auto frm : imf)
         inters.insert(frm);
 
-    QDir dir( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
+    QDir dir( QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first());
 
     QFile cbfile(dir.path() + "/context.cbor");
     if (!cbfile.open(QIODevice::ReadWrite)) {

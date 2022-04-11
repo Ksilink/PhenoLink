@@ -1430,7 +1430,7 @@ iclient->request(qhttp::EHTTP_POST,
     if (req)
     {
         req->addHeader("Content-Type", "application/json");
-        req->addHeaderValue("content-length", json.size());
+        req->addHeader("content-length", QString::number(json.size()).toLatin1());
         req->end(json.toUtf8());
         qDebug() << "Sending message" << json;
     }

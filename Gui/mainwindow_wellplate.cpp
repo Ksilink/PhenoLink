@@ -349,17 +349,17 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
         ui->textLog->append(err);
         ui->textLog->show();
 
-//        err.truncate(80);
-//        QMessageBox::StandardButton reply;
+        //        err.truncate(80);
+        //        QMessageBox::StandardButton reply;
 
-//        reply = QMessageBox::warning(this, "Data Loading",
-//                                     QString("A problem occured during data loading:  \n'%1...'").arg(err),
-//                                     QMessageBox::Abort | QMessageBox::Ignore
-////                                     );
-//        QSettings set;
+        //        reply = QMessageBox::warning(this, "Data Loading",
+        //                                     QString("A problem occured during data loading:  \n'%1...'").arg(err),
+        //                                     QMessageBox::Abort | QMessageBox::Ignore
+        ////                                     );
+        //        QSettings set;
 
-//        if (!set.value("UserMode/VeryAdvanced", false).toBool() &&  reply == QMessageBox::Abort)
-//            data.clear();
+        //        if (!set.value("UserMode/VeryAdvanced", false).toBool() &&  reply == QMessageBox::Abort)
+        //            data.clear();
 
     }
 
@@ -446,7 +446,7 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
                         ui->textLog->toPlainText()
                         +
                         "\r\nWarning: corrupted data in loading the file, Wellplate structure could not be reconstructed");
-//            QMessageBox::warning(this, "Loading error", "Warning: corrupted data in loading the file, Wellplate structure could not be reconstructed");
+            //            QMessageBox::warning(this, "Loading error", "Warning: corrupted data in loading the file, Wellplate structure could not be reconstructed");
         }
 
         QList<SequenceFileModel *>  l  = mdl->getAllSequenceFiles();
@@ -476,15 +476,17 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
     view->update();
 
     if (!set.value("AlwaysUnpack", false).toBool() || !set.value("AlwaysUnpack", false).toBool())
+    {
         if (multifield)
             multifield = (QMessageBox::question(this, "Multi Field Detected", "Do you want to automatically unpack wells on display ?") == QMessageBox::Yes);
+    }
     else
-        {
-            if (set.value("AlwaysUnpack", false).toBool())
-                multifield = true;
-            if (set.value("NeverUnpack", false).toBool())
-                multifield = false;
-        }
+    {
+        if (set.value("AlwaysUnpack", false).toBool())
+            multifield = true;
+        if (set.value("NeverUnpack", false).toBool())
+            multifield = false;
+    }
 
 
     foreach (ExperimentFileModel* mdl, data)
@@ -643,7 +645,7 @@ void MainWindow::addDirectoryName(QString dir)
         l << dir;
     set.setValue("ScreensDirectory", l);
 
-    QtConcurrent::run(mdl, &ScreensModel::addDirectoryTh,  dir);
+    auto fut = QtConcurrent::run(&ScreensModel::addDirectoryTh, mdl,  dir);
 }
 
 #include <QHBoxLayout>
@@ -699,7 +701,7 @@ void MainWindow::createWellPlateViews(ExperimentFileModel* data)
 void MainWindow::wellplateClose(int tabId)
 {
 
-//    Screens& data = ScreensHandler::getHandler().getScreens();
+    //    Screens& data = ScreensHandler::getHandler().getScreens();
     ExperimentFileModel* tmdl = assoc_WellPlateWidget[ui->wellPlateViewTab->widget(tabId)];
     if (!tmdl) return;
 
@@ -778,8 +780,8 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
             if (mdl->hasMeasurements(QPoint(r, c)))
             {
 
-                QString img2Path = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+r)
-                                      + colname + ".jpg";
+                QString img2Path = QString(dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+QChar(r))
+                                           + colname + ".jpg");
                 if (QFile::exists(img2Path))
                     hasBirdview2 = true;
                 break;
@@ -814,12 +816,12 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         out << "<html>"
             << "<head>"
             <<"<link rel='stylesheet' href='" << dbP << "/Code/HTML/birdview.css'>"
-            <<"<script src='"<< dbP << "/Code/HTML/jquery.js'></script>"
-            <<"<script src='"<< dbP << "/Code/HTML/ksilink.js'></script>"
-            << "</head>"
-            << "<body><h1>" << mdl->name() << " " << chanChange << "<label class='switch'><input type='checkbox' id='togBtn' onchange='toBW();'><div class='slider round' id='bw'></div></label></h1>"
-            << "<div id='largeImg' class='Center' hidden=True></div>"
-            <<"<table width='100%' >";
+           <<"<script src='"<< dbP << "/Code/HTML/jquery.js'></script>"
+          <<"<script src='"<< dbP << "/Code/HTML/ksilink.js'></script>"
+         << "</head>"
+         << "<body><h1>" << mdl->name() << " " << chanChange << "<label class='switch'><input type='checkbox' id='togBtn' onchange='toBW();'><div class='slider round' id='bw'></div></label></h1>"
+         << "<div id='largeImg' class='Center' hidden=True></div>"
+         <<"<table width='100%' >";
 
         out  << "<thead>" << "<tr><th></th>"; // Empty col for row name
 
@@ -830,21 +832,21 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         out   <<"<tbody>";
         for (unsigned r = 0; r < mdl->getRowCount(); ++r)
         {
-            out << "<tr><td>" << QString(('A'+r)) << "</td>";
+            out << "<tr><td>" << QString((QChar('A'+r))) << "</td>";
             for (unsigned c = 0; c < mdl->getColCount(); ++c)
             {
                 auto colname =  (QString("%1").arg(((int)c+1), 2, 10,QChar('0')));
                 if (mdl->hasMeasurements(QPoint(r, c)))
                 {
 
-                    QString imgPath = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
-                                          + colname + ".jpg";
-                    QString img2Path = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+r)
-                                          + colname + ".jpg";
+                    QString imgPath = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString(QChar('A'+r))
+                            + colname + ".jpg";
+                    QString img2Path = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString(QChar('A'+r))
+                            + colname + ".jpg";
 
 
                     out <<    "<td><img width='100%' src='file://"
-                    <<  (hasBirdview2 ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+r) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'" <<"/></td>";
+                           <<  (hasBirdview2 ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString(QChar('A'+r)) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString(QChar('A'+r)) << colname << "&json'" <<"/></td>";
                     if (res.isEmpty())
                         res = imgPath;
                 }
@@ -852,141 +854,141 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
                     out << "<td>-</td>";
             }
             out <<      "</tr>";
-             }
-                        out  <<"</tbody>";
-            out         <<"</table>"
-            <<"</body>"
-             << "</html>";
         }
-    return res;
+        out  <<"</tbody>";
+        out         <<"</table>"
+                   <<"</body>"
+                  << "</html>";
     }
+    return res;
+}
 
 
 
-    void MainWindow::createBirdView()
+void MainWindow::createBirdView()
+{
+    // Check if the plate's birdview HTML exists or write it
+
+    QString xpName = ui->wellPlateViewTab->tabText(ui->wellPlateViewTab->currentIndex());
+    if (xpName.isEmpty())
     {
-        // Check if the plate's birdview HTML exists or write it
-
-        QString xpName = ui->wellPlateViewTab->tabText(ui->wellPlateViewTab->currentIndex());
-        if (xpName.isEmpty())
+        QMessageBox::warning(this, "Warning: adding Workbench", "Experiment Workbenches can only be added after being loaded!");
+        return;
+    }
+    ScreensGraphicsView* owner = qobject_cast<ScreensGraphicsView*>(ui->wellPlateViewTab->currentWidget());
+    ExperimentFileModel* mdl = 0x0;
+    QList<QGraphicsItem *> items = owner->items();
+    foreach (QGraphicsItem * it, items)
+    {
+        GraphicsScreensItem* gsi = dynamic_cast<GraphicsScreensItem*>(it);
+        if (gsi)
         {
-            QMessageBox::warning(this, "Warning: adding Workbench", "Experiment Workbenches can only be added after being loaded!");
-            return;
+            mdl = gsi->currentRepresentation();
         }
-        ScreensGraphicsView* owner = qobject_cast<ScreensGraphicsView*>(ui->wellPlateViewTab->currentWidget());
-        ExperimentFileModel* mdl = 0x0;
-        QList<QGraphicsItem *> items = owner->items();
-        foreach (QGraphicsItem * it, items)
-        {
-            GraphicsScreensItem* gsi = dynamic_cast<GraphicsScreensItem*>(it);
-            if (gsi)
-            {
-                mdl = gsi->currentRepresentation();
-            }
-        }
-        if (!mdl) { qDebug() << "No model found" ; return ; }
+    }
+    if (!mdl) { qDebug() << "No model found" ; return ; }
 
-        QDir dir(QDir::cleanPath(mdl->fileName()));
-        dir.cdUp(); dir.cdUp();
-        QString platename = mdl->name();
-//        qDebug() << dir.path() << platename;
+    QDir dir(QDir::cleanPath(mdl->fileName()));
+    dir.cdUp(); dir.cdUp();
+    QString platename = mdl->name();
+    //        qDebug() << dir.path() << platename;
 
-        QString fpath(QString("%1/birdview_%2.html").arg(dir.path(), mdl->name()));
-        QFile file(fpath);
-        QString imgName = generatePlate(file, mdl);
-        file.close();
+    QString fpath(QString("%1/birdview_%2.html").arg(dir.path(), mdl->name()));
+    QFile file(fpath);
+    QString imgName = generatePlate(file, mdl);
+    file.close();
 
-        QStringList ds=dir.path().split("/").last().split('_');
+    QStringList ds=dir.path().split("/").last().split('_');
 #if _WIN64
-        if (ds.size() >= 3)
-        {
-            QString time = ds.last(); ds.pop_back();
-            QString date = ds.last();
-            QDateTime dt = QDateTime::fromString(QString("%1#%2").arg(date, time), "yyyyMMdd#hhmmss");
-            qDebug() << dt;
-            auto pt = dir.path().replace("/","\\").toLocal8Bit();
-            struct tm tmm;
-            struct _utimbuf ut;
+    if (ds.size() >= 3)
+    {
+        QString time = ds.last(); ds.pop_back();
+        QString date = ds.last();
+        QDateTime dt = QDateTime::fromString(QString("%1#%2").arg(date, time), "yyyyMMdd#hhmmss");
+        qDebug() << dt;
+        auto pt = dir.path().replace("/","\\").toLocal8Bit();
+        struct tm tmm;
+        struct _utimbuf ut;
 
-            tmm.tm_hour = dt.time().hour();
-            tmm.tm_min = dt.time().minute();
-            tmm.tm_sec = dt.time().second();
+        tmm.tm_hour = dt.time().hour();
+        tmm.tm_min = dt.time().minute();
+        tmm.tm_sec = dt.time().second();
 
-            tmm.tm_year = dt.date().year() - 1900;
-            tmm.tm_mday = dt.date().day();
-            tmm.tm_mon = dt.date().month()- 1 ;
+        tmm.tm_year = dt.date().year() - 1900;
+        tmm.tm_mday = dt.date().day();
+        tmm.tm_mon = dt.date().month()- 1 ;
 
-            tmm.tm_wday = 0;
-            tmm.tm_yday = 0;
-            tmm.tm_isdst = 0;
+        tmm.tm_wday = 0;
+        tmm.tm_yday = 0;
+        tmm.tm_isdst = 0;
 
-            ut.actime = mktime(&tmm);
-            ut.modtime = mktime(&tmm);
+        ut.actime = mktime(&tmm);
+        ut.modtime = mktime(&tmm);
 
-            int retval = _utime(pt.data(), &ut);
-            qDebug() << "Adjusting creation time of" << fpath << "to" << dt << "utime: " << retval;
+        int retval = _utime(pt.data(), &ut);
+        qDebug() << "Adjusting creation time of" << fpath << "to" << dt << "utime: " << retval;
 
-        }
+    }
 #endif
 
-          // Launch the HTML viewer on the birdview file
+    // Launch the HTML viewer on the birdview file
 
-        QWebEngineView *view = new QWebEngineView(this);
-        QUrl url(fpath);
-        view->load(url);
-        ui->tabWidget->addTab(view, "Birdview");
-    }
+    QWebEngineView *view = new QWebEngineView(this);
+    QUrl url(fpath);
+    view->load(url);
+    ui->tabWidget->addTab(view, "Birdview");
+}
 
 
-    void MainWindow::addExperimentWorkbench()
+void MainWindow::addExperimentWorkbench()
+{
+    // First get the current workbench from tab
+
+    QString xpName = ui->wellPlateViewTab->tabText(ui->wellPlateViewTab->currentIndex());
+    if (xpName.isEmpty())
     {
-        // First get the current workbench from tab
-
-        QString xpName = ui->wellPlateViewTab->tabText(ui->wellPlateViewTab->currentIndex());
-        if (xpName.isEmpty())
-        {
-            QMessageBox::warning(this, "Warning: adding Workbench", "Experiment Workbenches can only be added after being loaded!");
-            return;
-        }
-        ScreensGraphicsView* owner = qobject_cast<ScreensGraphicsView*>(ui->wellPlateViewTab->currentWidget());
-
-        int count = 1;
-        for (int i = 0; i < ui->tabWidget->count(); ++i)
-            if (ui->tabWidget->tabText(i).startsWith(xpName)) count++;
-
-        xpName = QString("%1 %2").arg(xpName).arg(count);
-
-        ScreensGraphicsView* view = new ScreensGraphicsView();
-        if (!view->scene()) view->setScene(new QGraphicsScene());
-
-        int tab = ui->tabWidget->addTab(view, xpName);
-
-
-        ExperimentFileModel* mdl = 0x0;
-        QList<QGraphicsItem *> items = owner->items();
-        foreach (QGraphicsItem * it, items)
-        {
-            GraphicsScreensItem* gsi = dynamic_cast<GraphicsScreensItem*>(it);
-            if (gsi)
-            {
-                mdl = gsi->currentRepresentation();
-            }
-        }
-        if (!mdl) { qDebug() << "No model found" ; return ; }
-        GraphicsScreensItem* gfx = new GraphicsScreensItem;
-        connect(gfx, SIGNAL(selectionChanged()), this, SLOT(on_wellSelectionChanged()));
-
-        gfx->constructWellRepresentation(mdl, view);
-
-        // Construct the GUI for the
-        ExperimentWorkbenchControl* wid = new ExperimentWorkbenchControl(mdl, gfx, ui->dockExperimentControl);
-
-        ui->dockExperimentControl->setWidget(wid);
-
-        // Connect the interactions
-        ui->tabWidget->setCurrentIndex(tab);//Widget(view);
-
-        ui->tabWidget->setTabToolTip(tab, mdl->groupName());
+        QMessageBox::warning(this, "Warning: adding Workbench", "Experiment Workbenches can only be added after being loaded!");
+        return;
     }
+    ScreensGraphicsView* owner = qobject_cast<ScreensGraphicsView*>(ui->wellPlateViewTab->currentWidget());
+
+    int count = 1;
+    for (int i = 0; i < ui->tabWidget->count(); ++i)
+        if (ui->tabWidget->tabText(i).startsWith(xpName)) count++;
+
+    xpName = QString("%1 %2").arg(xpName).arg(count);
+
+    ScreensGraphicsView* view = new ScreensGraphicsView();
+    if (!view->scene()) view->setScene(new QGraphicsScene());
+
+    int tab = ui->tabWidget->addTab(view, xpName);
+
+
+    ExperimentFileModel* mdl = 0x0;
+    QList<QGraphicsItem *> items = owner->items();
+    foreach (QGraphicsItem * it, items)
+    {
+        GraphicsScreensItem* gsi = dynamic_cast<GraphicsScreensItem*>(it);
+        if (gsi)
+        {
+            mdl = gsi->currentRepresentation();
+        }
+    }
+    if (!mdl) { qDebug() << "No model found" ; return ; }
+    GraphicsScreensItem* gfx = new GraphicsScreensItem;
+    connect(gfx, SIGNAL(selectionChanged()), this, SLOT(on_wellSelectionChanged()));
+
+    gfx->constructWellRepresentation(mdl, view);
+
+    // Construct the GUI for the
+    ExperimentWorkbenchControl* wid = new ExperimentWorkbenchControl(mdl, gfx, ui->dockExperimentControl);
+
+    ui->dockExperimentControl->setWidget(wid);
+
+    // Connect the interactions
+    ui->tabWidget->setCurrentIndex(tab);//Widget(view);
+
+    ui->tabWidget->setTabToolTip(tab, mdl->groupName());
+}
 
 

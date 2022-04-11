@@ -64,7 +64,7 @@ public:
 
   void restartProcessOnErrors();
 
-  void startProcessServer(QString process, QJsonArray &array);
+  void startProcessServer(QString process, QJsonArray array);
   void refreshProcessStatus();
   QJsonObject refreshProcessStatus(QString hash);
 

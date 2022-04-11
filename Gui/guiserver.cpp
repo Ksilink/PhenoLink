@@ -208,7 +208,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
             if (sc.isEmpty())
             {
-                if (plate[1]==":")
+                if (plate[1]==':')
                 {
                     sc = win->loadSelection(QStringList() << plate, false);
                 }
@@ -300,7 +300,7 @@ void GuiServer::setHttpResponse(QJsonObject ob, qhttp::server::QHttpResponse* re
     else
         res->addHeader("Content-Type", "application/json");
 
-    res->addHeaderValue("Content-Length", body.length());
+    res->addHeader("Content-Length", QString::number(body.length()).toLatin1());
     res->setStatusCode(qhttp::ESTATUS_OK);
     res->end(body);
 }

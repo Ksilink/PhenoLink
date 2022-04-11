@@ -104,7 +104,7 @@ protected:
    void WorkerMonitor();
 
 
-   QPair<QString, int> pickWorker();
+   QString pickWorker();
    QQueue<QJsonObject> &getHighestPriorityJob(QString server);
 
 
@@ -116,8 +116,8 @@ protected:
     unsigned dport;
 
     // We need to maintain a worker list
-    QQueue<QPair<QString, int> > workers;
-    QSet<QPair<QString, int> > rmWorkers;
+    QQueue<QString > workers;
+    QSet<QString> rmWorkers;
 
 
     // Who's connected

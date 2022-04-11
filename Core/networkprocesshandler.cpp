@@ -141,7 +141,7 @@ void CheckoutHttpClient::sendQueue()
         {
             req->addHeader("Content-Type", "application/cbor");
 
-            req->addHeaderValue("content-length", body.length());
+            req->addHeader("content-length", QString::number(body.length()).toLatin1());
             req->end(body);
         }
         else

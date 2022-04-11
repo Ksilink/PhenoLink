@@ -15,9 +15,6 @@
 #include <QSettings>
 
 #include <QProgressBar>
-#ifdef WIN32
-#include <QtWinExtras/QWinTaskbarProgress>
-#endif
 #include <QScrollBar>
 
 #include <ScreensDisplay/graphicsscreensitem.h>
@@ -185,7 +182,7 @@ bool sortWidgets(QWidget* a, QWidget* b)
 
 
 QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
-                                    QList<bool> selectedChanns, QRegExp siteMatcher )
+                                    QList<bool> selectedChanns, QRegularExpression siteMatcher )
 {
 
     static size_t crypto_offset = 0;
@@ -468,7 +465,7 @@ QJsonArray& MainWindow::adjustParameterFromWidget(SequenceFileModel* sfm, QJsonO
 
 
 void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                         bool started, QRegExp siteMatcher)//, QMap<QString, QSet<QString> > tags_map)
+                                         bool started, QRegularExpression siteMatcher)//, QMap<QString, QSet<QString> > tags_map)
 {
     static int WorkID = 1;
 
@@ -908,7 +905,7 @@ void MainWindow::startProcessRun()
 
     }
 
-    QRegExp siteMatcher;
+    QRegularExpression siteMatcher;
     if ( _typeOfprocessing->currentText() == "Selected Screens and Filter")
     {
         // Add the filtering part !!!
@@ -923,8 +920,8 @@ void MainWindow::startProcessRun()
         QStringList tag_filter = filtertags.isEmpty() ? QStringList() :
                                                         filtertags.split(';');
         QStringList remTags;
-        QRegExp wellMatcher;
-        QList<QRegExp> tagRegexps;
+        QRegularExpression wellMatcher;
+        QList<QRegularExpression> tagRegexps;
 
         for (auto f : tag_filter)
         {
@@ -941,7 +938,7 @@ void MainWindow::startProcessRun()
             if (f.startsWith("T:"))
             {
                 remTags << f;
-                QRegExp r;
+                QRegularExpression r;
                 r.setPattern(f.replace("T:", ""));
                 tagRegexps << r;
             }
@@ -960,14 +957,14 @@ void MainWindow::startProcessRun()
                 matches += tgs.contains(t);
 
             auto wPos = sfm->Pos();
-            if (!wellMatcher.isEmpty() && wellMatcher.exactMatch(wPos))
+            if (!wellMatcher.pattern().isEmpty() && wellMatcher.match(wPos).hasMatch())
                 matches ++;
 
-            for (auto r: tagRegexps) for (auto t: tgs) if (r.exactMatch(t))  matches++;
+            for (auto r: tagRegexps) for (auto t: tgs) if (r.match(t).hasMatch())  matches++;
 
             if (matches > 0)
                 lsfm2 << sfm;
-            if (tagRegexps.isEmpty() && wellMatcher.isEmpty())
+            if (tagRegexps.isEmpty() && wellMatcher.pattern().isEmpty())
                 lsfm2 << sfm;
         }
 

@@ -399,7 +399,7 @@ QJsonObject remap(QJsonObject ob, QString map)
 }
 
 
-void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
+void CheckoutProcess::startProcessServer(QString process, QJsonArray array)
 {
 
     qDebug() << "Remaining unstarted processes" << _process_to_start.size()

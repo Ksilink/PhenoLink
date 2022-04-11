@@ -202,7 +202,7 @@ int Server::start(quint16 port)
     }
 
     qDebug() << "Starting monitor thread";
-    QtConcurrent::run(this, &Server::WorkerMonitor);
+    auto res = QtConcurrent::run(&Server::WorkerMonitor, this);
     qDebug() << "Done";
 
     return qApp->exec();
@@ -219,7 +219,7 @@ void Server::setHttpResponse(QJsonObject& ob,  qhttp::server::QHttpResponse* res
     else
         res->addHeader("Content-Type", "application/json");
 
-    res->addHeaderValue("Content-Length", body.length());
+    res->addHeader("Content-Length", QString::number(body.length()).toLatin1());
     res->setStatusCode(qhttp::ESTATUS_OK);
     res->end(body);
 }
@@ -241,19 +241,15 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
     QMap<QString, int > servers;
 
     for (auto& srv: workers)
-        if (!rmWorkers.contains(qMakePair(srv.first, srv.second)))
-    {
-
-        auto id = QString("%1:%2").arg(srv.first).arg(srv.second);
-        servers[id] ++;
-    }
+        if (!rmWorkers.contains(srv))
+            servers[srv] ++;
 
     body += "<h3>Cores Listing</h3>";
     //for (auto it = runni)
     for (auto it = workers_status.begin(), e = workers_status.end(); it != e; ++it)
     {
         auto t = it.key().split(":");
-        if (rmWorkers.contains(qMakePair(t.front(), t.back().toInt()))) continue;
+        if (rmWorkers.contains(it.key())) continue;
         QStringList  aff;
         for (auto af = project_affinity.begin(), e = project_affinity.end(); af != e; ++af)
             if (af.value() == it.key()) aff << af.key();
@@ -285,7 +281,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
 
 
     res->setStatusCode(qhttp::ESTATUS_OK);
-    res->addHeaderValue("content-length", message.size());
+    res->addHeader("content-length", QString::number(message.size()).toLatin1());
     res->end(message.toUtf8());
 }
 
@@ -407,7 +403,7 @@ void sendByteArray(qhttp::client::QHttpClient& iclient, QUrl& url, QByteArray ob
                     [ob]( qhttp::client::QHttpRequest* req){
         auto body = ob;
         req->addHeader("Content-Type", "application/cbor");
-        req->addHeaderValue("content-length", body.length());
+        req->addHeader("content-length", QString::number(body.length()).toLatin1());
         req->end(body);
     },
 
@@ -428,9 +424,9 @@ void Server::WorkerMonitor()
         {
             workers_lock.lock();
             auto next_worker = pickWorker();
-            if (!next_worker.first.isEmpty())
+            if (!next_worker.isEmpty())
             {
-                QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker.first);
+                QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker);
 
                 // Hey hey look what we have here: the job to be run by next_worker let's call the start func then :
                 // start it :)
@@ -438,13 +434,14 @@ void Server::WorkerMonitor()
                 {
 
                     QJsonObject pr = queue.dequeue();
-                    QString srv = QString("%1:%2").arg(next_worker.first).arg(next_worker.second); // Set proxy name
+                    QString srv = next_worker; // Set proxy name
                     CheckoutHttpClient* sr = nullptr;
                     if (clients[srv])
                         sr = clients[srv];
                     else
                     {
-                        clients[srv] = new CheckoutHttpClient(next_worker.first, next_worker.second);
+                        auto t = next_worker.split(":");
+                        clients[srv] = new CheckoutHttpClient(t[0], t[1].toInt());
                         sr = clients[srv];
                     }
 //                    sr->setCollapseMode(false);
@@ -461,7 +458,7 @@ void Server::WorkerMonitor()
                     sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
 
                     workers.removeOne(next_worker);
-                    workers_status[QString("%1:%2").arg(next_worker.first).arg(next_worker.second)]--;
+                    workers_status[next_worker]--;
 
                     running[taskid] = pr;
                 }
@@ -479,31 +476,30 @@ void Server::WorkerMonitor()
     }
 }
 
-QPair<QString, int> Server::pickWorker()
+QString Server::pickWorker()
 {
     static QString lastsrv;
 
     //    QMutexLocker locker(&workers_lock);
     if (lastsrv.isEmpty())
-
     {
-
         auto next_worker = workers.back();
         int p = 1;
         while (rmWorkers.contains(next_worker) && p < workers.size())  next_worker = workers.at(p++);
 
-        lastsrv=next_worker.first;
+        lastsrv=next_worker;
         return next_worker;
     }
+
     for(auto& nxt: workers)
-        if (lastsrv != nxt.first && !rmWorkers.contains(nxt) )
+        if (lastsrv != nxt && !rmWorkers.contains(nxt) )
         {
-            lastsrv = nxt.first;
+            lastsrv = nxt;
             return nxt;
         }
 
     auto next = workers.back();
-    lastsrv = next.first;
+    lastsrv = next;
     return next;
 
 }
@@ -553,7 +549,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             res->addHeader("Connection", "close");
             res->addHeader("Content-Type", "image/jpeg");
 
-            res->addHeaderValue("Content-Length", body.length());
+            res->addHeader("Content-Length", QString::number(body.length()).toLatin1());
             res->setStatusCode(qhttp::ESTATUS_OK);
             res->end(body);
         }
@@ -619,31 +615,30 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         qDebug() << reset << avail << cpu << workid;
         QMutexLocker lock(&workers_lock);
+        QString w = QString("%1:%2").arg(serverIP).arg(port);
+
+
         if (reset) // Occurs if servers reconnect
         {
-            workers.removeAll(qMakePair(serverIP, port));
-            workers_status[QString("%1:%2").arg(serverIP).arg(port)]=0;
+            workers.removeAll(w);
+            workers_status[w]=0;
         }
         auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
 
         if (avail && ob.size() == 0 )
         {
-            if (workers_status[QString("%1:%2").arg(serverIP).arg(port)] >= 0)
+            if (workers_status[w] >= 0)
             {
-                if (cpu.isEmpty())
-
-                    workers.enqueue(qMakePair(serverIP, port));
-                else
-                    for (int i= 0; i< cpu.toInt(); ++i)
-                        workers.enqueue(qMakePair(serverIP, port));
+                for (int i= 0; i< (cpu.isEmpty() ? 1 : cpu.toInt()); ++i)
+                    workers.enqueue(w);
             }
         }
 
 
         if (!cpu.isEmpty())
-            workers_status[QString("%1:%2").arg(serverIP).arg(port)]+=cpu.toInt();
+            workers_status[w]+=cpu.toInt();
         else if (ob.size() == 0)
-            workers_status[QString("%1:%2").arg(serverIP).arg(port)]++;
+            workers_status[w]++;
 
         if (!workid.isEmpty())
         {
@@ -656,8 +651,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             if (obj.contains("TaskID"))
             {
                 running.remove(obj["TaskID"].toString());
-                workers.enqueue(qMakePair(serverIP, port));
-                workers_status[QString("%1:%2").arg(serverIP).arg(port)]++;
+                workers.enqueue(w);
+                workers_status[w]++;
             }
         }
 
@@ -731,7 +726,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             delete client;
         }
 
-        rmWorkers.remove(qMakePair(srv, port.toInt()));
+        rmWorkers.remove(QString("%1:%2").arg(srv, port));
 
         client = new CheckoutHttpClient(srv, port.toUInt());
         client->send("/Proxy", QString("port=%1").arg(dport), QJsonArray());
@@ -752,7 +747,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         {
 //            QMutexLocker lock(&workers_lock);
 
-            rmWorkers.insert(qMakePair(srv, port.toInt()));
+            rmWorkers.insert(QString("%1:%2").arg(srv, port));
             //workers_status.remove(QString("%1:%2").arg(srv,port));
         }
 
@@ -909,8 +904,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         qDebug() << "Suspending" << serverIP << "CPU on port" << port;
         QMutexLocker lock(&workers_lock);
         //        workers.enqueue(qMakePair(serverIP, port));
-        for (int i = 0; i < cpus; ++i) workers.removeOne(qMakePair(serverIP, port));
-        workers_status[QString("%1:%2").arg(serverIP).arg(port)] -= cpus;;
+        QString w = QString("%1:%2").arg(serverIP).arg(port);
+        for (int i = 0; i < cpus; ++i) workers.removeOne(w);
+        workers_status[w] -= cpus;;
 
     }
 
@@ -972,7 +968,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             const static char KMessage[] = "Invalid json format!";
             res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
             res->addHeader("connection", "close");
-            res->addHeaderValue("content-length", strlen(KMessage));
+            res->addHeader("content-length", QString::number(strlen(KMessage)).toLatin1());
             res->end(KMessage);
             return;
         }
@@ -986,7 +982,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         QByteArray body = QJsonDocument(root).toJson();
         //        res->addHeader("connection", "keep-alive");
-        res->addHeaderValue("content-length", body.length());
+        res->addHeader("content-length", QString::number(body.length()).toLatin1());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body);
     }
@@ -994,7 +990,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
         QString body = QString("Server Query received, with empty content (%1)").arg(urlpath);
         //        res->addHeader("connection", "close");
-        res->addHeaderValue("content-length", body.length());
+        res->addHeader("content-length", QString::number(body.length()).toLatin1());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body.toLatin1());
     }

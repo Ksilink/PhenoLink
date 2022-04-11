@@ -22,7 +22,6 @@
 #include <QApplication>
 #include <QAbstractItemView>
 #include <QDebug>
-#include <QDesktopWidget>
 #include <QItemDelegate>
 #include <QLayout>
 #include <QMouseEvent>
@@ -145,7 +144,7 @@ void ctkCheckableComboBoxPrivate::init()
   Q_Q(ctkCheckableComboBox);
   this->CheckableModelHelper = new ctkCheckableModelHelper(Qt::Horizontal, q);
   this->CheckableModelHelper->setForceCheckability(true);
-  
+
   q->setCheckableModel(q->model());
   q->view()->installEventFilter(q);
   q->view()->viewport()->installEventFilter(q);
@@ -257,7 +256,7 @@ bool ctkCheckableComboBox::eventFilter(QObject *o, QEvent *e)
     case QEvent::MouseButtonRelease:
       {
       QMouseEvent *m = static_cast<QMouseEvent *>(e);
-      if (this->view()->isVisible() && 
+      if (this->view()->isVisible() &&
           this->view()->rect().contains(m->pos()) &&
           this->view()->currentIndex().isValid()
           //&& !blockMouseReleaseTimer.isActive()
@@ -280,7 +279,7 @@ bool ctkCheckableComboBox::eventFilter(QObject *o, QEvent *e)
         }
       d->MouseButtonPressed = false;
       break;
-      } 
+      }
     default:
         break;
     }

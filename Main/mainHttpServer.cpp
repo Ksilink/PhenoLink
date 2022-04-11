@@ -334,7 +334,7 @@ void Server::setHttpResponse(QJsonObject& ob,  qhttp::server::QHttpResponse* res
     else
         res->addHeader("Content-Type", "application/json");
 
-    res->addHeaderValue("Content-Length", body.length());
+    res->addHeader("Content-Length", QString::number(body.length()).toLatin1());
     res->setStatusCode(qhttp::ESTATUS_OK);
     res->end(body);
 }
@@ -351,7 +351,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res)
     message = procs.dumpHtmlStatus();
 
     res->setStatusCode(qhttp::ESTATUS_OK);
-    res->addHeaderValue("content-length", message.size());
+    res->addHeader("content-length", QString::number(message.size()).toLatin1());
     res->end(message.toUtf8());
 }
 
@@ -485,8 +485,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         //        qDebug() << ob << refIP; // Address to push results to !
 
         setHttpResponse(obj, res, !query.contains("json"));
-        QtConcurrent::run(&procs, &CheckoutProcess::startProcessServer,
-                          proc, ob);
+        auto res = QtConcurrent::run(&CheckoutProcess::startProcessServer, &procs,  proc, ob);
 
         if (!proxy.isEmpty() && !proxy.startsWith(refIP)) {
             // Shall tell the proxy we have process ongoing that where not sent from his side
@@ -506,7 +505,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             const static char KMessage[] = "Invalid json format!";
             res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
             res->addHeader("connection", "close");
-            res->addHeaderValue("content-length", strlen(KMessage));
+            res->addHeader("content-length", QString::number(strlen(KMessage)).toLatin1());
             res->end(KMessage);
             return;
         }
@@ -520,7 +519,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         QByteArray body = QJsonDocument(root).toJson();
         //        res->addHeader("connection", "keep-alive");
-        res->addHeaderValue("content-length", body.length());
+        res->addHeader("content-length", QString::number(body.length()).toLatin1());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body);
     }
@@ -528,7 +527,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
         QString body = QString("Server Query received, with empty content (%1)").arg(urlpath);
         res->addHeader("connection", "close");
-        res->addHeaderValue("content-length", body.length());
+        res->addHeader("content-length", QString::number(body.length()).toLatin1());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body.toLatin1());
     }
@@ -555,7 +554,7 @@ void sendByteArray(qhttp::client::QHttpClient& iclient, QUrl& url, QByteArray ob
                     [ob]( qhttp::client::QHttpRequest* req){
         auto body = ob;
         req->addHeader("Content-Type", "application/cbor");
-        req->addHeaderValue("content-length", body.length());
+        req->addHeader("content-length", QString::number(body.length()).toLatin1());
         req->end(body);
     },
 

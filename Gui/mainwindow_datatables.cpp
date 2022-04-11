@@ -15,9 +15,6 @@
 #include <QSettings>
 
 #include <QProgressBar>
-#if WIN32
-#include <QtWinExtras/QWinTaskbarProgress>
-#endif
 
 #include <QScrollBar>
 
@@ -150,7 +147,7 @@ void MainWindow::copyDataToClipBoard()
                 QVariant v = mdl->data(idx);
                 raw += v.toString() + ",";
                 str += QString("<td %1>%2</td>")
-                        .arg(v.canConvert(QVariant::Double)  ? "x:num" : "")
+                        .arg(v.canConvert<double>()  ? "x:num" : "")
                         .arg(v.toString());
             }
             else
@@ -694,7 +691,7 @@ void MainWindow::commitTableToDatabase()
 
     ExperimentDataModel* datamdl = mdl->computedDataModel();
 
-    QtConcurrent::run(datamdl, &ExperimentDataModel::commitToDatabase, hash, txt->text());
+    auto fut = QtConcurrent::run(&ExperimentDataModel::commitToDatabase, datamdl, hash, txt->text());
 
     // Update Text for next call
     txt->setText(   QDateTime::currentDateTime().toString("yyyyMMddHHmmss"));
