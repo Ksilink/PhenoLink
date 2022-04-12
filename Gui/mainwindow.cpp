@@ -194,7 +194,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     ui->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
 
 
-    connect(server, SIGNAL(error(QProcess::ProcessError)),
+    connect(server, SIGNAL(errorOccurred(QProcess::ProcessError)),
             this, SLOT(server_processError(QProcess::ProcessError)));
 
     connect(server, SIGNAL(finished(int, QProcess::ExitStatus)),
@@ -255,11 +255,11 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     connect(ui->pickOverlay, SIGNAL(currentTextChanged(const QString &)), this, SLOT(overlay_selection(const QString&)));
 
     shrt_startR = new QShortcut(this);
-    shrt_startR->setKey(Qt::CTRL + Qt::Key_Return);
+    shrt_startR->setKey(Qt::CTRL | Qt::Key_Return);
     connect(shrt_startR, SIGNAL(activated()), this, SLOT(startProcess()));
 
     shrt_startEnt = new QShortcut(this);
-    shrt_startEnt->setKey(Qt::CTRL + Qt::Key_Enter);
+    shrt_startEnt->setKey(Qt::CTRL | Qt::Key_Enter);
     connect(shrt_startEnt, SIGNAL(activated()), this, SLOT(startProcess()));
 
     ui->actionNever->setChecked(set.value("AlwaysUnpack", false).toBool());
@@ -790,14 +790,14 @@ void MainWindow::updateCurrentSelection()
             bvl->addWidget(colorWidgetSetup(new ctkColorPickerButton(wwid), fo, trueChan), i, 4);
 
             shrt_binarize.append(new QShortcut(this));
-            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, (Qt::Key)(0x30+i) + Qt::KeypadModifier));
+            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL | Qt::Key_B, (Qt::Key)(0x30+i) | Qt::KeypadModifier));
             shrt_binarize.last()->setObjectName(QString("%1").arg(trueChan));
             connect(shrt_binarize.last(), &QShortcut::activated, this, [this](){
                 int trueChan = this->sender()->objectName().toInt();
                 this->_sinteractor.current()->getChannelImageInfos(trueChan)->toggleBinarized();
             });
             shrt_binarize.append(new QShortcut(this));
-            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, (Qt::Key_0+i) ));
+            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL | Qt::Key_B, (Qt::Key)(0x30+i) | Qt::NoModifier));
             shrt_binarize.last()->setObjectName(QString("%1").arg(trueChan));
             connect(shrt_binarize.last(), &QShortcut::activated, this, [this](){
                 int trueChan = this->sender()->objectName().toInt();
@@ -2340,7 +2340,7 @@ void MainWindow::changeFpsValue(double val)
 void MainWindow::on_actionRe_start_Server_triggered()
 {
     // Avoid being told for error
-    disconnect(server, SIGNAL(error(QProcess::ProcessError)),
+    disconnect(server, SIGNAL(errorOccurred(QProcess::ProcessError)),
                this, SLOT(server_processError(QProcess::ProcessError)));
 
     disconnect(server, SIGNAL(finished(int, QProcess::ExitStatus)),
@@ -2349,7 +2349,7 @@ void MainWindow::on_actionRe_start_Server_triggered()
     server->close();
 
 
-    connect(server, SIGNAL(error(QProcess::ProcessError)),
+    connect(server, SIGNAL(errorOccurred(QProcess::ProcessError)),
             this, SLOT(server_processError(QProcess::ProcessError)));
 
     connect(server, SIGNAL(finished(int, QProcess::ExitStatus)),

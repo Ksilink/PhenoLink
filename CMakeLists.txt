@@ -101,6 +101,11 @@ include_directories( ${OpenCV_INCLUDE_DIRS})
 
 
 find_package(Boost 1.56.0 REQUIRED)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(GSL REQUIRED )
+find_package(FFTW3 CONFIG REQUIRED)
+
+
 
 if(BUILD_WITH_VTK)
     find_package(VTK)
