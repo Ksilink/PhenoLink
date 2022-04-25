@@ -1391,7 +1391,7 @@ QList<QString> SequenceInteractor::getMetaOptionsList(QString meta)
         }
     }
 
-    return std::move(l);
+    return l;
 }
 
 typedef struct dispType {
