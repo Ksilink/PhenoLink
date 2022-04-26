@@ -26,6 +26,19 @@
       {
           "name":               "mongo-cxx-driver",
           "version>=":          "3.6.5#2"
-      }
+      },
+            {
+                "name": "eigen3",
+                "version>=": "3.3.9#1"
+            },
+            {
+                "name" :"gsl",
+                "version>=": "2.7.1"
+          },
+          {
+              "name": "fftw3",
+              "features": ["avx2","threads"],
+              "version>=": "3.3.10#3"
+          }
   ]
 }
