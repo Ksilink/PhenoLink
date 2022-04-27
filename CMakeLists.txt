@@ -19,7 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Git REQUIRED)
 
-find_package(Arrow REQUIRED)
+find_package(Arrow CONFIG REQUIRED)
 
 if(WIN32)
 else()
@@ -73,7 +73,6 @@ set(PLUGIN_NWD_OLY OFF)
 
 set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../CheckoutPlugins")
 
-find_package(Arrow REQUIRED)
 include_directories(${ARROW_INCLUDE_DIR})
 
 message(STATUS "Found Arrow: ${ARROW_INCLUDE_DIR} ")

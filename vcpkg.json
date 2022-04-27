@@ -14,13 +14,6 @@
           "features":           [ "contrib", "dnn","jpeg", "tiff", "nonfree"]
       },
       {
-          "name":               "arrow",
-
-          "default-features":   true,
-
-          "features":           [ "filesystem", "dataset" ]
-      },
-      {
           "name":               "dlib"
       },
       {
