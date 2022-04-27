@@ -4218,11 +4218,10 @@ cv::Mat& StructuredMetaData::content() { return _content; }
 
 void StructuredMetaData::setContent(cv::Mat cont)
 {
-    _content = cv::Mat(cont.rows, cont.cols+1, CV_32F);
+    _content = cont; //cv::Mat(cont.rows, cont.cols+1, CV_32F);
 
-    cv::Rect cr(0,0,cont.cols, cont.rows);
-
-    _content(cr) = cont; // add one color for tags embedding
+//    cv::Rect cr(0,0,cont.cols, cont.rows);
+//    _content(cr) = cont; // add one color for tags embedding
 
     _tags.resize(_content.rows);
 }

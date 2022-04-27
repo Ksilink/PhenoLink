@@ -88,7 +88,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Update to CMake
 find_package(Qt6 COMPONENTS  Widgets  Xml
-                OpenGL Concurrent  WebView WebEngineWidgets REQUIRED)
+                OpenGL Concurrent  WebView WebEngineWidgets Network REQUIRED)
 
 find_package(bsoncxx   REQUIRED)
 find_package(mongocxx   REQUIRED)

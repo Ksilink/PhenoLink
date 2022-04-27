@@ -140,7 +140,7 @@ private:
         QSslSocket* sok    =  new QSslSocket(q_func());
 
         QSslConfiguration config = sok->sslConfiguration();
-        config.setProtocol(QSsl::TlsV1_1OrLater);
+        config.setProtocol(QSsl::TlsV1_3OrLater);
         sok->setSslConfiguration(config);
         sok->ignoreSslErrors();
 
@@ -168,13 +168,13 @@ private:
                 q_func(), &QHttpClient::disconnected
                 );
 
-//        QObject::connect(
-//                    sok, &QSslSocket::sslErrors,
-//                     [this](const QList<QSslError>& errors){
-//                            foreach ( const QSslError &error, errors)
-//                                qDebug() << error.errorString();
+        QObject::connect(
+                    sok, &QSslSocket::sslErrors,
+                     [this](const QList<QSslError>& errors){
+                            foreach ( const QSslError &error, errors)
+                                qDebug() << error.errorString();
 
-//                        });
+                        });
     }
 
 
