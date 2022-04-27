@@ -1375,10 +1375,10 @@ QList<QString> SequenceInteractor::getMetaOptionsList(QString meta)
 
             QStringList sp = cols.split(";");
 
-            for (auto s : sp)
+            for (auto& s : sp)
             {
                 bool add = true;
-                for (auto ss : sub)
+                for (auto& ss : sub)
                 {
                     if (s.contains(ss))
                     {
