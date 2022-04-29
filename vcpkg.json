@@ -1,12 +1,13 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
 
-  "name": "checkout",
+    "name": "checkout",
 
-  "version": "2.0",
+    "version": "2.0",
 
-  "builtin-baseline": "0fd31b9dbb96e1ab86e0c9ee930790990a974bd3",
+    "builtin-baseline": "0fd31b9dbb96e1ab86e0c9ee930790990a974bd3",
 
+<<<<<<< HEAD
   "dependencies": [
       {
           "name":               "opencv",
@@ -35,3 +36,39 @@
           }
   ]
 }
+=======
+    "dependencies": [{
+            "name": "opencv",
+            "default-features": false,
+            "features": ["contrib", "dnn", "jpeg", "tiff", "nonfree"]
+        },
+        {
+            "name": "arrow",
+
+            "default-features": true,
+
+            "features": ["filesystem", "dataset"]
+        },
+        {
+            "name": "dlib"
+        },
+        {
+            "name": "mongo-cxx-driver",
+            "version>=": "3.6.5#2"
+        },
+        {
+            "name": "eigen3",
+            "version>=": "3.3.9#1"
+        },
+        {
+            "name": "gsl",
+            "version>=": "2.7.1"
+        },
+        {
+            "name": "fftw3",
+            "features": ["avx2", "threads"],
+            "version>=": "3.3.10#3"
+        }
+    ]
+}
+>>>>>>> d00205ddea1a2be26e99eab62fded404d5676d6b
