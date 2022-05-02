@@ -106,9 +106,9 @@ message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} ${OpenCV_LIBS} ")
 include_directories( ${OpenCV_INCLUDE_DIRS})
 
 find_package(Boost 1.56.0 REQUIRED)
-#find_package(Eigen3 CONFIG REQUIRED )
-#find_package(GSL REQUIRED )
-#find_package(FFTW3 CONFIG REQUIRED)
+find_package(Eigen3 CONFIG REQUIRED )
+find_package(GSL REQUIRED )
+find_package(FFTW3 CONFIG REQUIRED)
 
 if(BUILD_WITH_VTK)
     find_package(VTK)
