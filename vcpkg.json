@@ -37,7 +37,7 @@
         {
             "name": "fftw3",
             "features": ["avx2", "threads"],
-            "version>=": "3.3.10#3"
+            "version>=": "3.3.10#2"
         }
     ]
 }
