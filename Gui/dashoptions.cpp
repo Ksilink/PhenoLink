@@ -135,7 +135,7 @@ void DashOptions::populateDataset()
             QStringList opts;
             opts  << t << (info.birthTime().toString("yyyyMMdd hh:mm:ss")) << (QString("%1 kB").arg(info.size()/1024));
             auto ti = new QTreeWidgetItem(rw, opts);
-            ti->setData(0, Qt::UserRole, l);
+            ti->setData(0, Qt::UserRole, l.replace("&", "%26"));
             //             ti->setData(0, Qt::UserRole+1, QVariant::fromValue(it));
             ti->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
             ti->setCheckState(0, Qt::Unchecked);
@@ -151,7 +151,7 @@ void DashOptions::populateDataset()
             opts  << t << (info.birthTime().toString("yyyyMMdd hh:mm:ss")) << (QString("%1 kB").arg(info.size()/1024));
             auto ti = new QTreeWidgetItem(ag, opts);
 
-            ti->setData(0, Qt::UserRole, l);
+            ti->setData(0, Qt::UserRole, l.replace("&", "%26"));
             //            ti->setData(0, Qt::UserRole+1, QVariant::fromValue(it));
 
             ti->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
