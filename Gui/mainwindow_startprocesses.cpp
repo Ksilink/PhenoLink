@@ -267,7 +267,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                 QCheckBox* wid = ui->processingArea->findChild<QCheckBox*>(tag);
 
                 if (!wid) continue;
-                if (_typeOfprocessing->currentText() == "Selected Screens" || _typeOfprocessing->currentText() == "Selected Screens and Filter")
+                if (_typeOfprocessing->currentText().contains("Selected Screens"))
                 {
                     // Do not reclaim images if we are running heavy duty informations!!!
                     par["optionalState"] = false;
@@ -956,8 +956,9 @@ void MainWindow::startProcessRun()
         {
             QStringList tgs = sfm->getTags();
             int matches = 0;
-            for (auto t : tag_filter)
-                matches += tgs.contains(t);
+            for (auto& tf : tag_filter)
+                for (auto& t : tgs)
+                    matches += t.contains(tf);
 
             auto wPos = sfm->Pos();
             if (!wellMatcher.isEmpty() && wellMatcher.exactMatch(wPos))
@@ -967,8 +968,8 @@ void MainWindow::startProcessRun()
 
             if (matches > 0)
                 lsfm2 << sfm;
-            if (tagRegexps.isEmpty() && wellMatcher.isEmpty())
-                lsfm2 << sfm;
+            //if (tagRegexps.isEmpty() && wellMatcher.isEmpty())
+            //    lsfm2 << sfm;
         }
 
 

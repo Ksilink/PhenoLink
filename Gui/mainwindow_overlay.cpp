@@ -244,6 +244,8 @@ void MainWindow::on_delTag_clicked()
     } while (0);
 
 
+#define ArrowGet(var, id, call, msg) \
+    auto id = call; if (!id.ok()) { qDebug() << msg; return ; } auto var = id.ValueOrDie();
 
 
 void ReadFeather(QString file, StructuredMetaData& data)
@@ -252,11 +254,15 @@ void ReadFeather(QString file, StructuredMetaData& data)
 
     std::string uri = file.toStdString(), root_path;
 
-    auto fs = fs::FileSystemFromUriOrPath(uri, &root_path).ValueOrDie();
 
-    auto input = fs->OpenInputFile(uri).ValueOrDie();
+    // Fix Value or Die ...
 
-    auto reader = arrow::ipc::RecordBatchFileReader::Open(input).ValueOrDie();
+
+
+    ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file);
+
+    ArrowGet(input, r1, fs->OpenInputFile(uri), "Error openning arrow file" << file);
+    ArrowGet(reader, r2, arrow::ipc::RecordBatchFileReader::Open(input), "Error Reading records");
 
     auto schema = reader->schema();
 
@@ -276,16 +282,19 @@ void ReadFeather(QString file, StructuredMetaData& data)
         field_pos << pos;
     }
 
-    cv::Mat mat(reader->CountRows().ValueOrDie(), fields.size(), CV_32F);
+
+    ArrowGet(rowC, r3, reader->CountRows(), "Error reading row count");
+    cv::Mat mat(rowC, fields.size(), CV_32F);
+
     data.setProperties("ChannelNames", fields.join(";"));
 
     int r = 0;
     for (int record = 0; record < reader->num_record_batches(); ++record)
     {
-        auto rb = reader->ReadRecordBatch(record).ValueOrDie();
+        ArrowGet(rb, r4, reader->ReadRecordBatch(record), "Error Get Record");
         int c = 0, mr = 0;
 
-        for (auto field : fields)
+        for (auto& field : fields)
         {
             auto array = std::static_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(field.toStdString()));
             if (array)

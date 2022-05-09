@@ -136,6 +136,13 @@ int main(int ac, char** av)
     else
         qDebug() << "Server port :" << port;
 
+
+    if (data.contains("-Crashed"))
+    { // recovering from crashed session, how to tell the user the queue crashed???
+
+    }
+
+
 #if WIN32
 
     if (data.contains("-d"))
@@ -462,7 +469,7 @@ void Server::WorkerMonitor()
 
                     workers.removeOne(next_worker);
                     workers_status[QString("%1:%2").arg(next_worker.first).arg(next_worker.second)]--;
-
+                    pr["SendTime"] = QDateTime::currentDateTime().toSecsSinceEpoch();
                     running[taskid] = pr;
                 }
 
@@ -491,7 +498,7 @@ QPair<QString, int> Server::pickWorker()
         auto next_worker = workers.back();
         int p = 1;
         while (rmWorkers.contains(next_worker) && p < workers.size())  next_worker = workers.at(p++);
-
+        if (p==workers.size()) return qMakePair(QString(), 0);
         lastsrv=next_worker.first;
         return next_worker;
     }
@@ -585,6 +592,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         bool reset = false;
         bool avail = true;
+        bool crashed = false;
         for (auto q : queries)
         {
             if (q.startsWith("affinity"))
@@ -611,6 +619,12 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             }
             if (q.startsWith("available="))
                 avail = (q == "available=1");
+            if (q.startsWith("crashed="))
+            {
+                crashed = (q=="crashed=true");
+                // We need to tell all the users with processes that went to the originating server that it crashed,
+                // We need either to cancel the process in that case
+            }
 
             if (q=="reset")
                 reset = true;
@@ -648,6 +662,12 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         if (!workid.isEmpty())
         {
             qDebug() << "Finished " << workid;
+            auto t = QDateTime::currentDateTime().toSecsSinceEpoch() - running[workid]["SendTime"].toInt();
+            QString ww = workid.split("!")[0];
+
+            run_time[ww] += t;
+            run_count[ww] ++;
+
             running.remove(workid);
         }
         for (int i = 0; i < ob.size(); ++i)
@@ -655,6 +675,14 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             auto obj = ob[i].toObject();
             if (obj.contains("TaskID"))
             {
+
+
+                auto t = QDateTime::currentDateTime().toSecsSinceEpoch() - running[obj["TaskID"].toString()]["SendTime"].toInt();
+                QString ww = workid.split("!")[0];
+
+                run_time[ww] += t;
+                run_count[ww] ++;
+
                 running.remove(obj["TaskID"].toString());
                 workers.enqueue(qMakePair(serverIP, port));
                 workers_status[QString("%1:%2").arg(serverIP).arg(port)]++;
