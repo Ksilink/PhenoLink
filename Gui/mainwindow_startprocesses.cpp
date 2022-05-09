@@ -267,7 +267,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                 QCheckBox* wid = ui->processingArea->findChild<QCheckBox*>(tag);
 
                 if (!wid) continue;
-                if (_typeOfprocessing->currentText() == "Selected Screens" || _typeOfprocessing->currentText() == "Selected Screens and Filter")
+                if (_typeOfprocessing->currentText().contains("Selected Screens"))
                 {
                     // Do not reclaim images if we are running heavy duty informations!!!
                     par["optionalState"] = false;

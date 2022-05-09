@@ -646,25 +646,11 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
 
 
             auto obj = itd.toObject();
-            //  qDebug() << "Filtering" << obj["Tag"] << obj;
+
+            qDebug() << "Filtering" << obj["Tag"] << obj.keys();
             if (obj["Data"].toString() == "Image results" && obj.contains("Payload"))
             {
-                if (obj.contains("isOptional") && !obj["optionalState"].toBool())
-                {
-                    auto ps = obj["Payload"].toArray();
-                    QCborArray cbar;
-                    for (auto pp : ps)
-                    {
-                        auto pay = pp.toObject();
-                        if (pay.contains("DataHash"))
-                        {
-                            QString dhash = pay["DataHash"].toString();
-                            auto buf = CheckoutProcess::handler().detachPayload(dhash);
-                            buf.clear();
-                        }
-                    }
-                    continue;
-                }
+
 
                 QCborMap ob;
 
@@ -763,8 +749,10 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
                 ob.insert(QCborValue("DataHash"), dhash);
                 ob.insert(QCborValue("Hash"), hash);
                 ob.insert(QCborValue("ProcessStartId"), ds["ProcessStartId"].toInt());
-//                qDebug() << ob.keys();
-                res << ob;
+
+                // Only add the result object if not optional & not a run
+                if (!(obj.contains("isOptional") && !obj["optionalState"].toBool()))
+                    res << ob;
             }
         }
     }

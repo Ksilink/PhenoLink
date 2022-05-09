@@ -80,6 +80,8 @@ public:
             _isOptional = true;
             _optionalDefault = json["optionalState"].toBool();
         }
+        else
+            _isOptional = false;
 
         if (json.contains("DataHash"))
             _hash = json["DataHash"].toString();

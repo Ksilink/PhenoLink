@@ -136,6 +136,13 @@ int main(int ac, char** av)
     else
         qDebug() << "Server port :" << port;
 
+
+    if (data.contains("-Crashed"))
+    { // recovering from crashed session, how to tell the user the queue crashed???
+
+    }
+
+
 #if WIN32
 
     if (data.contains("-d"))
@@ -585,6 +592,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         bool reset = false;
         bool avail = true;
+        bool crashed = false;
         for (auto q : queries)
         {
             if (q.startsWith("affinity"))
@@ -611,6 +619,12 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             }
             if (q.startsWith("available="))
                 avail = (q == "available=1");
+            if (q.startsWith("crashed="))
+            {
+                crashed = (q=="crashed=true");
+                // We need to tell all the users with processes that went to the originating server that it crashed,
+                // We need either to cancel the process in that case
+            }
 
             if (q=="reset")
                 reset = true;

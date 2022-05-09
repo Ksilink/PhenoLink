@@ -312,8 +312,8 @@ public:
         //        _value.
         if (this->_isProduct && this->_isFinished)
         {
-            if (this->_isOptional && this->_optionalDefault != true)
-                return;
+//            if (this->_isOptional && this->_optionalDefault != true)
+//                return;
 
             std::vector<cv::Mat> split;
             if (_value->channels() == 1) split.push_back(*_value);
@@ -483,8 +483,8 @@ public:
         //        _value.
         if (this->_isProduct && this->_isFinished)
         {
-            if (this->_isOptional && this->_optionalDefault != true)
-                return;
+//            if (this->_isOptional && this->_optionalDefault != true)
+//                return;
             auto ar = QJsonArray();
 
             for (size_t item = 0; item < _value->count(); ++item)
@@ -690,8 +690,8 @@ public:
         //        _value.
         if (this->_isProduct && this->_isFinished)
         {
-            if (this->_isOptional && this->_optionalDefault != true)
-                return;
+//            if (this->_isOptional && this->_optionalDefault != true)
+//                return;
             auto ar = QJsonArray();
 
             for (size_t item = 0; item < _value->count(); ++item)

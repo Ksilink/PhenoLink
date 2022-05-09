@@ -8,6 +8,8 @@
 #include <QSharedMemory>
 #include <config.h>
 
+#include <opencv2/core.hpp>
+
 QMutex process_mutex(QMutex::NonRecursive);
 QMutex hash_to_save_mtx(QMutex::NonRecursive);
 
@@ -35,6 +37,8 @@ CheckoutProcess& CheckoutProcess::handler()
 
         proc->connect(&NetworkProcessHandler::handler(), SIGNAL(updateProcessStatusMessage(QJsonArray)),
                       proc, SLOT(networkupdateProcessStatus(QJsonArray)))  ;
+
+
     }
 
     return *proc;
