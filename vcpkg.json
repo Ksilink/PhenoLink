@@ -14,9 +14,7 @@
         },
         {
             "name": "arrow",
-
             "default-features": true,
-
             "features": ["filesystem", "dataset"]
         },
         {
