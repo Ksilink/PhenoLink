@@ -232,7 +232,7 @@ int main(int ac, char** av)
     }
     else
     { // We ain't on a windows system, so let's default the mapping to a default value
-        server.setDriveMap("/mnt/shares");
+        server.setDriveMap("/mnt/shares/");
     }
 #endif
     if (data.contains("-a"))
