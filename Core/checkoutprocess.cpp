@@ -35,6 +35,8 @@ CheckoutProcess& CheckoutProcess::handler()
 
         proc->connect(&NetworkProcessHandler::handler(), SIGNAL(updateProcessStatusMessage(QJsonArray)),
                       proc, SLOT(networkupdateProcessStatus(QJsonArray)))  ;
+
+
     }
 
     return *proc;

@@ -20,6 +20,10 @@
 // Process/<ProcPath>
 //
 
+
+
+#include <QMessageBox>
+
 using namespace qhttp::server;
 
 GuiServer::GuiServer(MainWindow* par): win(par)
@@ -150,6 +154,11 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         return;
     }
 
+    if (urlpath.startsWith("/Message"))
+    {
+        QString message(data);
+        QMessageBox::information(win, "Remote Message", message);
+    }
 
     if (urlpath.startsWith("/Load"))
     {

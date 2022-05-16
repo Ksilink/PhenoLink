@@ -1403,25 +1403,25 @@ void ImageForm::sharePicture()
     // Pixmap to base64 png
     // Create json
     QString json = QString("{ \"type\":\"message\", \"attachments\":[ { \"contentType\":\"application/vnd.microsoft.card.adaptive\",\
-                               \"content\":{\
-                               \"$schema\":\"http://adaptivecards.io/schemas/adaptive-card.json\",\
-                               \"type\":\"AdaptiveCard\",\
-                               \"version\":\"1.2\",\
-                               \"body\":[\
-                               {\
-                                   \"type\": \"TextBlock\",\
-                                   \"text\": \"Project %1 plate %2\"\
-                               },\
-                               {\
-                                   \"type\": \"Image\",\
-                                   \"url\": \"http://192.168.2.127:13380/Images/%3\"\
-                               }\
-                               ] } } ] }").arg(_interactor->getProjectName(),
+                           \"content\":{\
+                           \"$schema\":\"http://adaptivecards.io/schemas/adaptive-card.json\",\
+                           \"type\":\"AdaptiveCard\",\
+                           \"version\":\"1.2\",\
+                           \"body\":[\
+                           {\
+                               \"type\": \"TextBlock\",\
+                               \"text\": \"Project %1 plate %2\"\
+                           },\
+                           {\
+                               \"type\": \"Image\",\
+                               \"url\": \"http://192.168.2.127:13380/Images/%3\"\
+                           }\
+                           ] } } ] }").arg(_interactor->getProjectName(),
 _interactor->getExperimentName(),
 path);
 
 // send through http webhook
-QString webhook("https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8");
+QString webhook("http://192.168.2.127:8122/"); //"https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8");
 
 iclient->request(qhttp::EHTTP_POST,
                  webhook,

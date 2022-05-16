@@ -39,6 +39,8 @@ using namespace qhttp::server;
 
 extern int DllCoreExport read_semaphore;
 
+#include <opencv2/core/utility.hpp>
+
 
 std::ofstream outfile("c:/temp/CheckoutServer_log.txt");
 
@@ -132,6 +134,19 @@ void startup_execute(QString file)
 
 }
 
+
+int CheckoutOpenCVErrorCallback( int status, const char* func_name,
+                                       const char* err_msg, const char* file_name,
+                                       int line, void* )
+{
+
+    qDebug() << "OpenCV issued error";
+    qDebug() << "Status" << status << "Function" << func_name << "file: " << file_name << "@" << line;
+    qDebug() << "Error message" << err_msg;
+    throw cv::Exception(status, err_msg, func_name, file_name, line);
+    return 1;
+}
+
 int main(int ac, char** av)
 {
 #ifdef WIN32
@@ -144,6 +159,9 @@ int main(int ac, char** av)
     app.setApplicationVersion(CHECKOUT_VERSION);
     app.setOrganizationDomain("WD");
     app.setOrganizationName("WD");
+
+    cv::setBreakOnError(true);
+    cv::redirectError(&CheckoutOpenCVErrorCallback);
 
 
 //    qDebug() << "Runtime PATH" << QString("%1").arg(getenv("PATH"));
@@ -214,7 +232,7 @@ int main(int ac, char** av)
     }
     else
     { // We ain't on a windows system, so let's default the mapping to a default value
-        server.setDriveMap("/mnt/shares");
+        server.setDriveMap("/mnt/shares/");
     }
 #endif
     if (data.contains("-a"))
@@ -250,9 +268,9 @@ int main(int ac, char** av)
         else
             qDebug() << "Proxy server :" << proxy;
 
+        //if (data.contains("-Crashed"))
+
         server.proxyAdvert(ps[0], ps.size() == 2 ? ps[1].toInt() : 13378);
-
-
 
     }
 
@@ -274,6 +292,9 @@ void Server::setDriveMap(QString map)
 }
 
 #endif
+
+
+
 
 
 QString stringIP(quint32 ip)
@@ -565,7 +586,7 @@ void sendByteArray(qhttp::client::QHttpClient& iclient, QUrl& url, QByteArray ob
 
 #include <Core/networkprocesshandler.h>
 
-void Server::proxyAdvert(QString host, int port)
+void Server::proxyAdvert(QString host, int port, bool crashed)
 {
     // send /Ready/ command to proxy
     client = new CheckoutHttpClient(host, port);
@@ -592,7 +613,8 @@ void Server::proxyAdvert(QString host, int port)
 
     int processor_count = QThreadPool::globalInstance()->maxThreadCount();
     client->send(QString("/Ready/%1").arg(processor_count),
-                 QString("affinity=%1&port=%2&cpu=%3&reset&available=1").arg(affinity_list.join(",")).arg(dport).arg(processor_count),
+                 QString("affinity=%1&port=%2&cpu=%3&reset&available=1&crashed=%4")
+                    .arg(affinity_list.join(",")).arg(dport).arg(processor_count).arg(crashed),
                  QJsonArray());
 }
 

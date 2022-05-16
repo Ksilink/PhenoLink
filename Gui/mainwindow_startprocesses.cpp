@@ -264,7 +264,7 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
                 QCheckBox* wid = ui->processingArea->findChild<QCheckBox*>(tag);
 
                 if (!wid) continue;
-                if (_typeOfprocessing->currentText() == "Selected Screens" || _typeOfprocessing->currentText() == "Selected Screens and Filter")
+                if (_typeOfprocessing->currentText().contains("Selected Screens"))
                 {
                     // Do not reclaim images if we are running heavy duty informations!!!
                     par["optionalState"] = false;
@@ -721,7 +721,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
     QDir dir(set.value("databaseDir").toString());
 
-    QString writePath = QString("%1/%2/Checkout_Results/").arg(dir.absolutePath(), lsfm[0]->getOwner()->property("project"))
+    QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/").arg(dir.absolutePath(), lsfm[0]->getOwner()->property("project"))
             ;
 
     dir.mkpath(writePath + st);
@@ -953,8 +953,9 @@ void MainWindow::startProcessRun()
         {
             QStringList tgs = sfm->getTags();
             int matches = 0;
-            for (auto t : tag_filter)
-                matches += tgs.contains(t);
+            for (auto& tf : tag_filter)
+                for (auto& t : tgs)
+                    matches += t.contains(tf);
 
             auto wPos = sfm->Pos();
             if (!wellMatcher.pattern().isEmpty() && wellMatcher.match(wPos).hasMatch())
@@ -964,8 +965,8 @@ void MainWindow::startProcessRun()
 
             if (matches > 0)
                 lsfm2 << sfm;
-            if (tagRegexps.isEmpty() && wellMatcher.pattern().isEmpty())
-                lsfm2 << sfm;
+            //if (tagRegexps.isEmpty() && wellMatcher.isEmpty())
+            //    lsfm2 << sfm;
         }
 
 

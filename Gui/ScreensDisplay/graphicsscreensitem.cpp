@@ -221,7 +221,7 @@ QRectF GraphicsScreensItem::constructWellRepresentation(ExperimentFileModel* mdl
                 _items << rc;
                 QString disp = QString("<html><div height='500'>[%1] %2").arg(posToString(r,col)).arg(w.getTags().join(','));
                 // do we have some image from BirdView ?
-                QString imgPath = dbP + "/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + posToString(r,col) + ".jpg";
+                QString imgPath = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + posToString(r,col) + ".jpg";
                 if (QFile::exists(imgPath))
                 {
 //                    qDebug() << imgPath;

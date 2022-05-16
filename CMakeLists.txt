@@ -19,7 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Git REQUIRED)
 
-find_package(Arrow REQUIRED)
+find_package(Arrow CONFIG REQUIRED)
 
 if(WIN32)
 else()
@@ -30,7 +30,7 @@ endif(WIN32)
 set(Checkout_VERSION_MAJOR 2)
 set(Checkout_VERSION_MINOR 0)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 17)
+set(Checkout_VERSION_RELEASE 18)
 
 message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
 
@@ -73,7 +73,6 @@ set(PLUGIN_NWD_OLY OFF)
 
 set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../CheckoutPlugins")
 
-find_package(Arrow REQUIRED)
 include_directories(${ARROW_INCLUDE_DIR})
 
 message(STATUS "Found Arrow: ${ARROW_INCLUDE_DIR} ")
@@ -99,13 +98,10 @@ message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} ${OpenCV_LIBS} ")
 
 include_directories( ${OpenCV_INCLUDE_DIRS})
 
-
 find_package(Boost 1.56.0 REQUIRED)
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 CONFIG REQUIRED )
 find_package(GSL REQUIRED )
 find_package(FFTW3 CONFIG REQUIRED)
-
-
 
 if(BUILD_WITH_VTK)
     find_package(VTK)

@@ -129,6 +129,7 @@ protected:
     // Pending
     QMap<QString, QJsonObject > running;
 
+    QMap<QString, unsigned int> run_time, run_count;
     // Project Affinity map
     QMap<QString, QString> project_affinity; // projection of project name to server name
 
