@@ -27,8 +27,8 @@ public:
     };
 
     RegistrableParent() : _position(-1), _wasSet(false), _level(Basic), _isProduct(false),
-        _isOptional(false), _isFinished(false), _isPerChannel(false), _isSync(false),
-        _keepInMem(false), _optionalDefault(false), _duped(false), _hidden(false)
+                          _isOptional(false), _isFinished(false), _isPerChannel(false), _isSync(false),
+                          _keepInMem(false), _optionalDefault(false), _duped(false), _hidden(false)
     {
     }
 
@@ -80,6 +80,8 @@ public:
             _isOptional = true;
             _optionalDefault = json["optionalState"].toBool();
         }
+        else
+            _isOptional = false;
 
         if (json.contains("DataHash"))
             _hash = json["DataHash"].toString();
@@ -116,8 +118,8 @@ public:
         json["IsSync"] = _isSync;
         json["DataHash"] = _hash;
         json["Level"] = QString(_level == Basic ? "Basic" : _level == Advanced   ? "Advanced"
-                                                                                 : _level == VeryAdvanced ? "VeryAdvanced"
-                                                                                                          : "Debug");
+                                                        : _level == VeryAdvanced ? "VeryAdvanced"
+                                                                                 : "Debug");
 
         json["isSlider"] = false;
         if (!_enableIf.isEmpty())
@@ -376,52 +378,52 @@ inline QString tostr(std::vector<int> &val)
 namespace RegPair_details
 {
 
-template <class T>
-inline void setValue(T *val, QString v, const QJsonObject &json)
-{
-    if (json[v].isArray())
-        *val = json[v].toArray().at(0).toInt();
-    else
-        *val = json[v].toInt();
-}
-
-template <>
-inline void setValue(std::vector<int> *val, QString v, const QJsonObject &json)
-{
-    (*val).clear();
-    if (!json.contains(v))
-        return;
-    if (json[v].isArray())
-    { // Might need magick c++ tricks for type dispatch :(
-        QJsonArray ar = json[v].toArray();
-        for (int i = 0; i < ar.size(); ++i)
-            (*val).push_back(ar.at(i).toInt());
+    template <class T>
+    inline void setValue(T *val, QString v, const QJsonObject &json)
+    {
+        if (json[v].isArray())
+            *val = json[v].toArray().at(0).toInt();
+        else
+            *val = json[v].toInt();
     }
-    else
-        (*val).push_back(json[v].toInt());
-}
 
-template <typename T>
-inline QJsonValue tojson(const T &def)
-{
-    static_assert(sizeof(T) == -1, "You have to have a specialization for to json");
-    return QJsonValue();
-}
-template <>
-inline QJsonValue tojson(const int &def) { return QJsonValue((int)def); }
-template <>
-inline QJsonValue tojson(const double &def) { return QJsonValue((double)def); }
-template <>
-inline QJsonValue tojson(const float &def) { return QJsonValue((double)def); }
+    template <>
+    inline void setValue(std::vector<int> *val, QString v, const QJsonObject &json)
+    {
+        (*val).clear();
+        if (!json.contains(v))
+            return;
+        if (json[v].isArray())
+        { // Might need magick c++ tricks for type dispatch :(
+            QJsonArray ar = json[v].toArray();
+            for (int i = 0; i < ar.size(); ++i)
+                (*val).push_back(ar.at(i).toInt());
+        }
+        else
+            (*val).push_back(json[v].toInt());
+    }
 
-template <>
-inline QJsonValue tojson(const std::vector<int> &vals)
-{
-    QJsonArray res;
-    for (int i = 0; i < vals.size(); ++i)
-        res.push_back(vals[i]);
-    return res;
-}
+    template <typename T>
+    inline QJsonValue tojson(const T &def)
+    {
+        static_assert(sizeof(T) == -1, "You have to have a specialization for to json");
+        return QJsonValue();
+    }
+    template <>
+    inline QJsonValue tojson(const int &def) { return QJsonValue((int)def); }
+    template <>
+    inline QJsonValue tojson(const double &def) { return QJsonValue((double)def); }
+    template <>
+    inline QJsonValue tojson(const float &def) { return QJsonValue((double)def); }
+
+    template <>
+    inline QJsonValue tojson(const std::vector<int> &vals)
+    {
+        QJsonArray res;
+        for (int i = 0; i < vals.size(); ++i)
+            res.push_back(vals[i]);
+        return res;
+    }
 
 }
 
@@ -617,7 +619,7 @@ public:
     typedef RegistrableEnum<Type> Self;
     typedef Type DataType;
 
-    RegistrableEnum() : _value(0),  _startChannel(0), _endChannel(-1)
+    RegistrableEnum() : _value(0)
     {
     }
 
@@ -669,7 +671,6 @@ public:
 
     virtual QString toString() const
     {
-
         return _enum.at(*_value);
     }
 
@@ -694,23 +695,7 @@ public:
     {
         RegistrableParent::write(json);
         json["Enum"] = QJsonArray::fromStringList(_enum);
-        json["startChannel"] = _startChannel;
-        json["endChannel"] = _endChannel;
     }
-
-
-    Self& startChannel(int p)
-    {
-        _startChannel = p;
-        return *this;
-    }
-
-    Self& endChannel(int p)
-    {
-        _endChannel = p;
-        return *this;
-    }
-
 
     virtual RegistrableParent *dup()
     {
@@ -732,8 +717,6 @@ protected:
     DataType *_value;
     QStringList _enum;
 
-    int _startChannel, _endChannel;
-
     bool _hasDefault;
     DataType _default;
 };
@@ -746,7 +729,7 @@ public:
     typedef Registrable<ChannelSelectionType> Self;
     typedef ChannelSelectionType DataType;
 
-    Registrable() : _value(0), _startChannel(0), _endChannel(-1)
+    Registrable() : _value(0)
     {
     }
 
@@ -829,8 +812,6 @@ public:
         json["Default"] = _default;
         json["DefaultValue"] = _default;
         json["regex"] = _regex;
-        json["startChannel"] = _startChannel;
-        json["endChannel"] = _endChannel;
         RegistrableParent::write(json);
     }
 
@@ -850,26 +831,12 @@ public:
         return s;
     }
 
-    Self& startChannel(int p)
-    {
-        _startChannel = p;
-        return *this;
-    }
-
-    Self& endChannel(int p)
-    {
-        _endChannel = p;
-        return *this;
-    }
-
-
 protected:
     DataType *_value;
     QStringList _enum;
     QString _regex;
     bool _hasDefault;
     int _default;
-    int _startChannel, _endChannel;
 };
 
 template <>
@@ -1018,6 +985,7 @@ protected:
 
 #include "RegistrableImageType.h"
 
+#include "RegistrableSecondOrderType.h"
 
 
 template <class inner>
@@ -1048,6 +1016,13 @@ RegistrableCont(QList, float)
 RegistrableCont(QList, double)
 RegistrableCont(QList, int)
 RegistrableCont(QList, unsigned)
+
+
+RegistrableCont(QVector, float)
+RegistrableCont(QVector, double)
+RegistrableCont(QVector, int)
+RegistrableCont(QVector, unsigned)
+
 
 #include "RegistrableStdContainerTypeSpecial.h"
 
