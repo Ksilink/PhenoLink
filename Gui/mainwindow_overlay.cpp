@@ -340,7 +340,7 @@ void MainWindow::importOverlay()
     SequenceInteractor* inter = _sinteractor.current();
 
     // Regular Expression for finding Commit names:
-    QDir dir(QString("%1/%2/Checkout_Results/").arg(dbP,inter->getProjectName()));
+    QDir dir(QString("%1/PROJECTS/%2/Checkout_Results/").arg(dbP,inter->getProjectName()));
 
     QMap<QString, QStringList> coms;
 
@@ -348,7 +348,7 @@ void MainWindow::importOverlay()
     {
         if (QFile::exists(ent.absoluteFilePath()+"/"+inter->getSequenceFileModel()->getOwner()->name()+".fth"))
         {
-            QString commitName = ent.absoluteFilePath().replace(QString("%1/%2/Checkout_Results/").arg(dbP,inter->getProjectName()) , "");
+            QString commitName = ent.absoluteFilePath().replace(QString("%1/PROJECTS/%2/Checkout_Results/").arg(dbP,inter->getProjectName()) , "");
             QDir dir(ent.absoluteFilePath());
             for (auto item: dir.entryInfoList( QStringList() << QString("%1_%2_*.fth").arg(inter->getSequenceFileModel()->getOwner()->name(),inter->getSequenceFileModel()->Pos()), QDir::Files | QDir::NoDotAndDotDot))
             {

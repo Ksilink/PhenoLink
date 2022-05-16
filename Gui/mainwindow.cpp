@@ -1402,7 +1402,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
                 ScreensHandler& handler = ScreensHandler::getHandler();
                 auto screens = handler.getScreens();
                 if (screens.size())
-                    v=QString("%1/%2/Checkout_Results/").arg(v, screens[0]->property("project"));
+                    v=QString("%1/PROJECTS/%2/Checkout_Results/").arg(v, screens[0]->property("project"));
                 le->setCurrentPath(v);
             }
             wid = le;
@@ -1470,7 +1470,7 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
     for (QString proj: projects)
     {
 
-        QString writePath = QString("%1/%2/Checkout_Results/").arg(dir.absolutePath(), proj);
+        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/").arg(dir.absolutePath(), proj);
         QDir prdir(writePath);
         QStringList dirs = prdir.entryList(QStringList() << "*", QDir::Dirs | QDir::NoDotAndDotDot);
         for (auto dir : dirs)

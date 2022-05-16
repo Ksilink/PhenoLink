@@ -856,14 +856,14 @@ QPair<QStringList, QStringList> ExperimentFileModel::databases()
 
 
     { // New settings
-        QString writePath = QString("%1/%2/Checkout_Results/").arg(set.value("databaseDir").toString())
+        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/").arg(set.value("databaseDir").toString())
                 .arg(property("project"));
         getDBs(writePath, name(), raw, ag);
     }
 
     {
 
-        QString writePath = QString("%1/%2/Checkout_Results/").arg(set.value("databaseDir").toString())
+        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/").arg(set.value("databaseDir").toString())
                 .arg(property("project"));
         getDBFeather(writePath, name(), raw, ag);
     }
@@ -3085,7 +3085,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
                     QSettings set;
                     QString dbP=set.value("databaseDir").toString();
 
-                    filename = QString("%1/%2/Checkout_Results/%3/%4_%5_%6.fth")
+                    filename = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4_%5_%6.fth")
                             .arg(dbP,
                                  seq.getOwner()->getProjectName(),
                                  ob.value("CommitName").toString(),
@@ -3621,7 +3621,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
                 arrow::schema(fields, meta);
         auto table = arrow::Table::Make(schema, data);
         QDir dir(set.value("databaseDir").toString());
-        QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath(), _owner->property("project"), prefix)
+        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/").arg(dir.absolutePath(), _owner->property("project"), prefix)
                 ;
         QString fname = writePath + _owner->name() + ".fth";
 
@@ -3712,7 +3712,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
                 arrow::schema(fields, meta);
         auto table = arrow::Table::Make(schema, data);
         QDir dir(set.value("databaseDir").toString());
-        QString writePath = QString("%1/%2/Checkout_Results/%3/ag").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
+        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/ag").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
                 ;
         QString fname = writePath + _owner->name() + ".fth";
 
@@ -3762,7 +3762,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
         // Now: Assuming the following reordering:
         // dir + {tag.project} + Checkout_Results/ + prefix + / PlateName + .csv
         // If file exists move previous file with a post_fix info
-        QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
+        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
                 ;
         QString fname = _owner->name() + ".csv";
 
@@ -3803,7 +3803,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
     {
         QDir dir(set.value("databaseDir").toString());
 
-        QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix);
+        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix);
         QString fname = "ag" + _owner->name() + ".csv";
         QFile file(writePath + fname);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
@@ -3838,7 +3838,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
         QDir dir(set.value("databaseDir").toString());
 
 
-        QString writePath = QString("%1/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix);
+        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix);
 
         meta.copy(writePath + "/" + _owner->name() + "_tags.json");
     }

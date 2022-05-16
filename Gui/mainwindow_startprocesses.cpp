@@ -724,7 +724,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
     QDir dir(set.value("databaseDir").toString());
 
-    QString writePath = QString("%1/%2/Checkout_Results/").arg(dir.absolutePath(), lsfm[0]->getOwner()->property("project"))
+    QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/").arg(dir.absolutePath(), lsfm[0]->getOwner()->property("project"))
             ;
 
     dir.mkpath(writePath + st);

@@ -493,26 +493,15 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
     res << ob;
     return res;
 }
-/* "Meta": [
-{
-    "CommitName": "",
-        "DataHash" : "6720e3901999886bbbf948ec48683880",
-        "FieldId" : -1,
-        "Pos" : "C03",
-        "TimePos" : 1,
-        "Channel" : -1,
-        "zPos" : 1
-}
-    ],
-*/
+
 #include <iostream>
 #define ABORT_ON_FAILURE(expr)                     \
     do {                                             \
-    arrow::Status status_ = (expr);                \
-    if (!status_.ok()) {                           \
-    std::cerr << status_.message() << std::endl; \
-    abort();                                     \
-    }                                              \
+        arrow::Status status_ = (expr);                \
+        if (!status_.ok()) {                           \
+            std::cerr << status_.message() << std::endl; \
+            abort();                                     \
+        }                                              \
     } while (0);
 
 
@@ -647,7 +636,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
 
             auto obj = itd.toObject();
 
-            qDebug() << "Filtering" << obj["Tag"] << obj.keys();
+//            qDebug() << "Filtering" << obj["Tag"] << obj.keys();
             if (obj["Data"].toString() == "Image results" && obj.contains("Payload"))
             {
 

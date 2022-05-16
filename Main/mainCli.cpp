@@ -173,7 +173,7 @@ void helper::startProcess(QJsonObject ob, QRegExp siteMatcher)
                 if (par["isDbPath"].toBool())
                 {
                     QString v = set.value("databaseDir", par["Default"].toString()).toString();
-                    v=QString("%1/%2/Checkout_Results/").arg(v).arg(sfm->getOwner()->property("project"));
+                    v=QString("%1/PROJECTS/%2/Checkout_Results/").arg(v).arg(sfm->getOwner()->property("project"));
                     par["Value"]=v;
                     params.replace(i, par);
                 }
