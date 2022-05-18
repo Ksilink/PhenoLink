@@ -108,7 +108,7 @@ void ScrollZone::dropEvent(QDropEvent *event)
     //  qDebug() << "Drop event" << this->objectName();
 
     QString key = _mainwin->workbenchKey();
-    if (event->keyboardModifiers() == Qt::ControlModifier)
+    if (event->modifiers() == Qt::ControlModifier)
     {
         key += QString("%1").arg(groupId);
         groupId++;
