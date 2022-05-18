@@ -290,7 +290,7 @@ void ImageForm::modifiedImage()
 
 void ImageForm::changeFps(double fps)
 {
-    if (video_status!=VideoStop)
+    if (video_status!=VideoStop && _interactor->getTimePointCount() > 1)
     {
         killTimer(timer_id);
         timer_id=startTimer(ceil(1000/fps));
@@ -1096,7 +1096,7 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
     menu.addAction("Copy Image to clipboard", this, SLOT(copyToClipboard()));
 
     QAction *capture = menu.addAction("Capture Image to clipboard", this, SLOT(captureToClipboard()));
-    capture->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
+    capture->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_C));
 
     menu.addAction("Share on Teams", this, SLOT(sharePicture()));
 

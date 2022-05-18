@@ -465,7 +465,7 @@ void Server::WorkerMonitor()
                     sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
 
                     workers.removeOne(next_worker);
-                    workers_status[QString("%1:%2").arg(next_worker.first).arg(next_worker.second)]--;
+                    workers_status[next_worker]--;
                     pr["SendTime"] = QDateTime::currentDateTime().toSecsSinceEpoch();
                     running[taskid] = pr;
                 }
@@ -493,8 +493,8 @@ QString Server::pickWorker()
         auto next_worker = workers.back();
         int p = 1;
         while (rmWorkers.contains(next_worker) && p < workers.size())  next_worker = workers.at(p++);
-        if (p==workers.size()) return qMakePair(QString(), 0);
-        lastsrv=next_worker.first;
+        if (p==workers.size()) return QString();
+        lastsrv=next_worker;
         return next_worker;
     }
 

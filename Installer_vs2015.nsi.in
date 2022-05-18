@@ -52,9 +52,6 @@ File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
 SetOutPath $INSTDIR\bin\styles
 File "@CMAKE_BINARY_DIR@\bin\styles\*.dll"
 
-SetOutPath $INSTDIR\bin\bearer
-File "@CMAKE_BINARY_DIR@\bin\bearer\*.dll"
-
 SetOutPath $INSTDIR\bin\iconengines
 File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"
 

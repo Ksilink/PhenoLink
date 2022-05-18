@@ -179,38 +179,29 @@ void ScrollZone::addSelectedWells()
         //          _mainwin->updateCurrentSelection();
     }
       if (!_progDiag) {
-          _progDiag = new QProgressDialog();
+          _progDiag = new QProgressDialog(this);
+          _progDiag->setWindowModality(Qt::WindowModal);
         }
       _progDiag->setLabelText("Loading Wells");
-      _progDiag->setMaximum(count);
-
-    struct InsertFctor {
-        InsertFctor(ScrollZone* s, QProgressDialog* diag) : sz(s), pr(diag)
-        {
-
-        }
-        ScrollZone* sz;
-        QProgressDialog* pr;
+      _progDiag->setMaximum(2*count);
 
 
-        typedef SequenceInteractor* result_type;
+   QList< SequenceInteractor*> all;
+   for (auto& sfm : sfm_list)
+   {
+       SequenceInteractor* intr = new SequenceInteractor(sfm, QString("0"));
+       intr->preloadImage();
+       _progDiag->setValue(_progDiag->value()+1);
+       all << intr;
+       qApp->processEvents();
+   }
 
-        SequenceInteractor* operator()(SequenceFileModel* sfm) {
-            SequenceInteractor* intr = new SequenceInteractor(sfm, QString("0"));
-            intr->preloadImage();
-            intr->moveToThread(sz->thread());
-            mutex.lock();
-            pr->setValue(pr->value()+1);
-            mutex.unlock();
-            return intr;
-        }
-    };
-
-    QList< SequenceInteractor*> all =  QtConcurrent::blockingMapped(sfm_list, InsertFctor(this, _progDiag));
-
+    _progDiag->setLabelText("Displaying Wells");
     foreach(SequenceInteractor* m, all)
     {
+        _progDiag->setValue(_progDiag->value()+1);
         insertImage(m->getSequenceFileModel(), m);
+        qApp->processEvents();
     }
       _progDiag->close();
       delete _progDiag;
