@@ -253,12 +253,6 @@ void ReadFeather(QString file, StructuredMetaData& data)
     data.setProperties("Filename", file);
 
     std::string uri = file.toStdString(), root_path;
-
-
-    // Fix Value or Die ...
-
-
-
     ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file);
 
     ArrowGet(input, r1, fs->OpenInputFile(uri), "Error openning arrow file" << file);

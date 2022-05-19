@@ -761,9 +761,14 @@ void SequenceInteractor::preloadImage()
 {
 
     QList<QPair<int, QString> > list = getAllChannel();
-    for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it)
+    if (list.size() == 1)
+        imageInfos(list.at(0).second, list.at(0).first, loadkey)->image();
+    else
     {
-        imageInfos(it->second, it->first, loadkey)->image();
+        QList<ImageInfos*> ll;
+        for (auto& it: list) ll << imageInfos(it.second, it.first, loadkey);
+        QtConcurrent::blockingMap(ll, [](ImageInfos* i)
+        {  i->image();  })        ;
     }
 
 }
