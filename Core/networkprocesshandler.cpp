@@ -322,6 +322,12 @@ void NetworkProcessHandler::setNoProxyMode()
     srv=QString();
 }
 
+void NetworkProcessHandler::addProxyPort(uint16_t port) {
+    srv = QString("%1%2").arg(srv).arg(port);
+}
+
+
+
 
 void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient* cl)
 {

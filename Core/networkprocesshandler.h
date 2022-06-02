@@ -92,6 +92,7 @@ public:
     void establishNetworkAvailability();
 
     void setNoProxyMode();
+    void addProxyPort(uint16_t port);
 
     QStringList getProcesses();
     void getParameters(QString process);

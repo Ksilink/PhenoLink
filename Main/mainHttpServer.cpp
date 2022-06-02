@@ -271,7 +271,7 @@ int main(int ac, char** av)
         //if (data.contains("-Crashed"))
 
         server.proxyAdvert(ps[0], ps.size() == 2 ? ps[1].toInt() : 13378);
-
+        NetworkProcessHandler::handler().addProxyPort(ps.size() == 2 ? ps[1].toInt() : 13378);
     }
     else
         NetworkProcessHandler::handler().setNoProxyMode();
