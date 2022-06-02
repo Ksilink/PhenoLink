@@ -1381,7 +1381,7 @@ void ImageForm::sharePicture()
     if (!iclient)
         iclient = new qhttp::client::QHttpClient(this);
 
-    QString d=QString("%1/%2/CoolImages/").arg(set.value("databaseDir").toString(),
+    QString d=QString("%1/PROJECTS/%2/CoolImages/").arg(set.value("databaseDir").toString(),
                                                _interactor->getProjectName());
 
     QDir dd; dd.mkpath(d);
