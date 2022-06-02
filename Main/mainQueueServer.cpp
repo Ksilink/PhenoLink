@@ -569,7 +569,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     if (urlpath.startsWith("/Images/"))
     {
-        QFile of(urlpath.mid(8));
+        QString fp = urlpath.mid(8);
+        qDebug() << "Exposing file" << fp;
+
+
+        QFile of(fp);
         if (of.open(QFile::ReadOnly))
         {
             QByteArray body = of.readAll();
