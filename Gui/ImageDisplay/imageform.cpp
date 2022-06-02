@@ -1388,7 +1388,7 @@ void ImageForm::sharePicture()
 
     QString path = QString("%1/%2_%3.jpg").arg(d,
                                                _interactor->getExperimentName(),
-                                               QDateTime::currentDateTime().toString("%Y%M%D_%h%m%s"));
+                                               QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss"));
 
     QPixmap pixmap(this->size());
     this->render(&pixmap);
@@ -1410,7 +1410,7 @@ void ImageForm::sharePicture()
                            \"body\":[\
                            {\
                                \"type\": \"TextBlock\",\
-                               \"text\": \"Project %1 plate %2\"\
+                               \"text\": \"Project: %1 \r\nplate: %2\"\
                            },\
                            {\
                                \"type\": \"Image\",\

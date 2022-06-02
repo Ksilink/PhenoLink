@@ -39,6 +39,18 @@ CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addDependencies(
     return *this;
 }
 
+CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addPostProcess(QStringList dep)
+{
+    for (auto& d : dep)  _postprocess << d;
+    return *this;
+}
+
+CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addPostProcess(QString d)
+{
+    _postprocess << d;
+    return *this;
+}
+
 
 
 void CheckoutProcessPluginInterface::write(QJsonObject &json) const
@@ -64,6 +76,8 @@ void CheckoutProcessPluginInterface::write(QJsonObject &json) const
     json["Comment"] = comments;
     auto deps = QSet<QString>(_dependencies.begin(), _dependencies.end());
     json["Dependencies"] =  QJsonArray::fromStringList(QStringList(deps.begin(), deps.end()));
+
+    json["PostProcesses"] = QJsonArray::fromStringList(_postprocess);
 
     json["Parameters"] = params;
     json["ReturnData"] = ret;
@@ -369,6 +383,8 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     }
 
     ob["Infos"] = QJsonArray::fromStringList(_infos);
+    ob["WellTags"]=_callParams["WellTags"];
+    ob["Project"]=_callParams["Project"];
     ob["LoadingTime"] = _result["LoadingTime"];
     ob["Data"] = arr;
     ob["Path"] = getPath();

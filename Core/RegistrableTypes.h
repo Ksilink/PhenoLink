@@ -26,6 +26,15 @@ public:
         Max
     };
 
+    enum DevectorizeType
+    {
+        None,
+        Time,
+        Field,
+        Stack,
+        Channel
+    };
+
     RegistrableParent() : _position(-1), _wasSet(false), _level(Basic), _isProduct(false),
                           _isOptional(false), _isFinished(false), _isPerChannel(false), _isSync(false),
                           _keepInMem(false), _optionalDefault(false), _duped(false), _hidden(false)

@@ -26,6 +26,9 @@ extern  QTextStream *hash_logfile;
 #include "qhttp/qhttpclientrequest.hpp"
 #include "qhttp/qhttpclientresponse.hpp"
 
+
+
+
 using namespace qhttp::client;
 
 struct Req
@@ -76,7 +79,7 @@ public:
 
 // faking :)
 typedef CheckoutHttpClient CheckoutHost;
-
+struct DataFrame;
 
 class DllCoreExport NetworkProcessHandler: public QObject
 {
@@ -87,6 +90,8 @@ public:
 
     static NetworkProcessHandler& handler();
     void establishNetworkAvailability();
+
+    void setNoProxyMode();
 
     QStringList getProcesses();
     void getParameters(QString process);
@@ -112,6 +117,15 @@ public:
     QStringList remainingProcess();
     void setProcesses(QJsonArray ar, CheckoutHttpClient* cl);
     void handleHashMapping(QJsonArray Core, QJsonArray Run);
+
+
+     void timerEvent(QTimerEvent *event) override;
+     void storeData(QString plate);
+
+
+protected:
+    QCborArray filterBinary(QString hash, QJsonObject ds);
+    QJsonArray filterObject(QString hash, QJsonObject ds);
 
 private slots:
     void displayError(QAbstractSocket::SocketError socketError);
@@ -141,6 +155,15 @@ protected:
 
     int last_serv_pos;
     QFile* data;
+
+    // For datastorage
+
+    QString srv;
+
+    QMap<QString, DataFrame*> plateData;
+    QMap<int, QString> storageTimer;
+    QMap<QString, int> rstorageTimer;
+
 };
 
 #endif // NETWORKPROCESSHANDLER_H

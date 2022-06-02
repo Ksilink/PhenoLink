@@ -759,10 +759,11 @@ void CheckoutProcess::finishedProcess(QString hash, QJsonObject result)
     CheckoutProcessPluginInterface* intf = _status[hash];
     if (dynamic_cast<ProcessDataHolder*>(intf))  return ;
 
-    //    qDebug() << "Process finished " << hash << "emiting signal";
-    emit finishedJob(hash, result);
     _status.remove(hash);
     _finished[hash] = result;
+
+    emit finishedJob(hash, result);
+
 
     qDebug() << "process finished, remaining" << _status.size();
     //    qDebug() << "Removing" << hash;
@@ -810,6 +811,20 @@ unsigned CheckoutProcess::errors()
 {
     return NetworkProcessHandler::handler().errors();
 }
+
+void CheckoutProcess::setServerName(QString n)
+{
+    server_name = n;
+}
+
+QString CheckoutProcess::serverName()
+{
+    return server_name;
+
+}
+
+
+
 
 void CheckoutProcess::getStatus(QJsonObject& ob)
 {

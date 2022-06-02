@@ -30,6 +30,14 @@ using namespace qhttp::client;
 
 namespace fs = arrow::fs;
 
+struct DataFrame
+{
+    QString outfile;
+
+    QMap<QString, QString> fuseT;
+    QMap<QString, QMap<QString, float   >  > arrFl;
+    QMap<QString, QMap<QString, QString > > arrStr;
+};
 
 
 CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(false), icpus(0), collapse(true)
@@ -246,6 +254,16 @@ NetworkProcessHandler::NetworkProcessHandler():
     if (data->open(QFile::WriteOnly | QFile::Truncate)) {
         hash_logfile= new QTextStream(data);
     }
+
+    QList<QHostAddress> list = QNetworkInterface::allAddresses();
+
+    for(QHostAddress& addr: list)
+    {
+        if(!addr.isLoopback())
+            if (addr.protocol() == QAbstractSocket::IPv4Protocol )
+                srv = QString("_%1").arg(addr.toString().replace(".", ""));
+        if (!srv.isEmpty()) break; // stop on non empty
+    }
 }
 
 NetworkProcessHandler::~NetworkProcessHandler()
@@ -297,6 +315,11 @@ void NetworkProcessHandler::establishNetworkAvailability()
     }
 
 
+}
+
+void NetworkProcessHandler::setNoProxyMode()
+{
+    srv=QString();
 }
 
 
@@ -449,27 +472,56 @@ void NetworkProcessHandler::getProcessMessageStatus(QString process, QList<QStri
 }
 
 
-QJsonArray FilterObject(QString hash, QJsonObject ds)
+QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds)
 {
     QJsonArray res;
     QJsonObject ob;
     ob["hash"] = hash;
 
-    if (ds.contains("DataHash"))
-        ob["DataHash"] = ds["DataHash"];
+
+    //    qDebug() << ds;
+    auto l = QStringList() << "TaskID" << "DataHash" << "WorkID";
+    for (auto& k : l) if (ds.contains(k)) ob[k] = ds[k];
+
+    QString plate = ds["XP"].toString(), commit = ds["CommitName"].toString();
+
+    if (!plateData.contains(plate))
+        plateData.insert(plate, new DataFrame);
+
+    DataFrame& store =  *plateData[plate];
+
+    if (store.outfile.isEmpty())
+    {
+        QSettings set;
+        QString dbP = set.value("databaseDir", "L:").toString();
+#ifndef  WIN32
+        dbP = QString("/mnt/shares/") + dbP.replace(":","");
+#endif
+
+        dbP.replace("\\", "/").replace("//", "/");
+
+        store.outfile = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5.fth").arg(dbP, ds["Project"].toString(), commit, plate, srv).replace("\\", "/").replace("//", "/");;
+
+    }
+
+
+    std::map<QString, QString> tr={ {"FieldId", "fieldId"}, {"zPos", "sliceId"},
+                                    {"TimePos", "timepoint"}, {"Channel", "channel"}, {"Pos", "Well"}, {"WellTags", "tags"}};
+
+
+    auto txt = QStringList() << "Pos" << "TimePos" << "FieldId" << "zPos" << "Channel"  ;
 
 
     if (ds.contains("Data"))
     {
-        auto arr = ds["Data"].toArray();
+        auto arr = ds["Data"].toArray(); // Theorically at this level only one Data in this table
         for (auto itd : arr)
         {
             auto obj = itd.toObject();
             if (obj["Data"].toString() != "Image results" )
             {
 
-                ob[obj["Tag"].toString()] = obj["Data"];
-                ob[QString("%1_Agg").arg(obj["Tag"].toString())] = obj["Aggregation"];
+                QString dfKey;
 
                 if (obj.contains("Meta"))
                 {
@@ -479,34 +531,90 @@ QJsonArray FilterObject(QString hash, QJsonObject ds)
                     if (obj["Meta"].isObject())
                         met = obj["Meta"].toObject();
 
-                    auto txt = QStringList() << "FieldId" << "Pos" << "TimePos" << "Channel" << "zPos" << "DataHash";
+
+                    ob["DataHash"] = met["DataHash"];
+
                     for (auto& s: txt)
                         if (met.contains(s))
                         {
-                            ob[s] = met[s];
+                            auto v =  ds.contains(s) ? ds[s] : met[s];
+
+                            if (commit.isEmpty())
+                                ob[s] =  v;
+                            else
+                                dfKey += (v.isString() ? v.toString() : QString("%1").arg((int)v.toDouble())) + ";" ;
                         }
+                        else
+                        {
+                            if (!commit.isEmpty())
+                                dfKey += "-1;";
+                        }
+                }
+
+                QString name = obj["Tag"].toString();
+
+                if (!commit.isEmpty())
+                {
+                    // qDebug() << "Appending" << name << dfKey << obj["Data"];
+                    if (obj["Data"].isDouble())
+                        store.arrFl[name][dfKey] = obj["Data"].toDouble();
+                    else
+                        store.arrFl[name][dfKey] = obj["Data"].toString().toDouble();
+
+
+                    store.fuseT[name]=obj["Aggregation"].toString();
+                    store.arrStr["tags"][dfKey]=ds["WellTags"].toString();
+                }
+                else
+                {
+                    ob[name] = obj["Data"];
+                    ob[QString("%1_Agg").arg(name)] = obj["Aggregation"];
                 }
             }
         }
-
     }
+
     res << ob;
+
+    //storageTimer.values().indexOf(plate)
+    if (rstorageTimer.contains(plate))
+        killTimer(rstorageTimer[plate]);
+
+    int timer = startTimer(30000); // reset the current timer to 30s since last modification
+
+    storageTimer[timer] = plate;
+    rstorageTimer[plate] = timer;
+
+    if (CheckoutProcess::handler().numberOfRunningProcess() <= 0) // Directly save if no more process running
+    {
+        for (auto & k: rstorageTimer) killTimer(k); // End timers
+        for (auto &k: storageTimer)   storeData(k); // perfom storage
+
+        // Cleanup
+        storageTimer.clear();
+        rstorageTimer.clear();
+    }
+
+
     return res;
 }
 
 #include <iostream>
 #define ABORT_ON_FAILURE(expr)                     \
     do {                                             \
-        arrow::Status status_ = (expr);                \
-        if (!status_.ok()) {                           \
-            std::cerr << status_.message() << std::endl; \
-            abort();                                     \
-        }                                              \
+    arrow::Status status_ = (expr);                \
+    if (!status_.ok()) {                           \
+    std::cerr << status_.message() << std::endl; \
+    abort();                                     \
+    }                                              \
     } while (0);
 
 
 void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like to serialize this one
 {
+
+
+
     QString plate = ds["XP"].toString(), commit = ds["CommitName"].toString();
 
     if (!commit.isEmpty() && par.contains(QString("SavePath")) && !par.value("SavePath").toString().isEmpty())
@@ -615,15 +723,13 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
     }
 }
 
-QCborArray filterBinary(QString hash, QJsonObject ds)
+QCborArray NetworkProcessHandler::filterBinary(QString hash, QJsonObject ds)
 {
 
-
-//    QString tmp = QJsonDocument(ds).toJson();
+    //    QString tmp = QJsonDocument(ds).toJson();
 
     QCborArray res;
-
-//    QString commitName = ds["CommitName"].toString();
+    QString commitName = ds["CommitName"].toString();
 
     qDebug() << "Filter Binary" << ds.keys() << ds["ProcessStartId"];
 
@@ -636,7 +742,7 @@ QCborArray filterBinary(QString hash, QJsonObject ds)
 
             auto obj = itd.toObject();
 
-//            qDebug() << "Filtering" << obj["Tag"] << obj.keys();
+            //            qDebug() << "Filtering" << obj["Tag"] << obj.keys();
             if (obj["Data"].toString() == "Image results" && obj.contains("Payload"))
             {
 
@@ -767,9 +873,9 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
 
     qDebug() << "Server side Process Finished" << hash;
 
-    QJsonArray data = FilterObject(hash, res);
-
+    QJsonArray data = filterObject(hash, res);
     QCborArray bin = filterBinary(hash, res);
+
     for (auto b: bin)
     {
         client->send(QString("/addImage/"), QString(), b.toCbor());
@@ -844,6 +950,166 @@ void NetworkProcessHandler::handleHashMapping(QJsonArray Core, QJsonArray Run)
 
 }
 
+void NetworkProcessHandler::timerEvent(QTimerEvent *event)
+{
+
+    //    qDebug() << "Timer event" << event->timerId() << storageTimer.keys();
+    if (storageTimer.contains(event->timerId()))
+    {
+        int timer = event->timerId();
+        QString d = storageTimer[timer];
+        rstorageTimer.remove(d);
+        storageTimer.remove(timer);
+
+        killTimer(timer);
+
+        storeData(d);
+    }
+}
+
+void NetworkProcessHandler::storeData(QString d)
+{
+    // Generate the storage for the data of the time
+    DataFrame& df = *plateData[d];
+    //        QStringList headers =  + df.arrInt.keys() + df.arrStr.keys();
+
+    std::vector<std::shared_ptr<arrow::Field> > fields;
+
+    auto txt = QStringList()  << "timepoint" << "fieldId" << "sliceId" << "channel"  ;
+    fields.push_back(arrow::field("Well", arrow::utf8()) );
+    fields.push_back(arrow::field("Plate", arrow::utf8()) );
+
+    for (auto& k: txt)
+        fields.push_back(arrow::field(k.toStdString(), arrow::int16()) );
+    for (auto& h: df.arrStr.keys())
+    {
+        std::shared_ptr<arrow::KeyValueMetadata>  meta = NULLPTR;
+        if (df.fuseT.contains(h))
+            meta = arrow::KeyValueMetadata::Make({ "Aggregation" }, { df.fuseT[h].toStdString() });
+        fields.push_back(arrow::field(h.toStdString(), arrow::utf8(), meta) );
+    }
+    for (auto& h: df.arrFl.keys())
+    {
+        std::shared_ptr<arrow::KeyValueMetadata>  meta = NULLPTR;
+        if (df.fuseT.contains(h))
+            meta = arrow::KeyValueMetadata::Make({ "Aggregation" }, { df.fuseT[h].toStdString() });
+
+        fields.push_back(arrow::field(h.toStdString(), arrow::float32(), meta) );
+    }
+
+
+    QSet<QString> items;
+    for (auto& i: df.arrStr.keys())
+    {
+        auto l = df.arrStr.value(i).keys();
+        QSet<QString> k(l.begin(), l.end());
+        items.unite(k);
+    }
+
+    // items contains now the unique set of keys for each data produced !
+    // now we need to iterate through them to generate the data frames
+
+    std::vector<std::shared_ptr<arrow::Array> > dat(fields.size());
+    // We need to go columns wise
+    {
+        arrow::StringBuilder wells,plate;
+        arrow::NumericBuilder<arrow::Int16Type> tp,fi,zp,ch;
+
+        for (auto& k: items)
+        {
+            auto v = k.split(";");
+            wells.Append(v[0].toStdString());
+            plate.Append(d.toStdString());
+
+            tp.Append(v[1].toInt());
+            fi.Append(v[2].toInt());
+            zp.Append(v[3].toInt());
+            ch.Append(v[4].toInt());
+        }
+
+        wells.Finish(&dat[0]);
+        plate.Finish(&dat[1]);
+        tp.Finish(&dat[2]);
+        fi.Finish(&dat[3]);
+        zp.Finish(&dat[4]);
+        ch.Finish(&dat[5]);
+
+        int dp = 6;
+        for (auto& sk : df.arrStr.keys())
+        {
+            QMap<QString, QString >& mp = df.arrStr[sk];
+
+            arrow::StringBuilder bldr;
+            for (auto&  k: items)
+            {
+                if (mp.contains(k))
+                    bldr.Append(mp.value(k).toStdString());
+                else
+                    bldr.AppendNull();
+            }
+            bldr.Finish(&dat[dp]);
+            dp++;
+        }
+
+        for (auto& sk : df.arrFl.keys())
+        {
+            QMap<QString, float >& mp = df.arrFl[sk];
+
+            arrow::NumericBuilder<arrow::FloatType> bldr;
+            for (auto&  k: items)
+            {
+                if (mp.contains(k))
+                    bldr.Append(mp.value(k));
+                else
+                    bldr.AppendNull();
+            }
+            bldr.Finish(&dat[dp]);
+            dp++;
+        }
+
+    }
+
+    auto schema =
+            arrow::schema(fields);
+    auto table = arrow::Table::Make(schema, dat);
+
+    std::string uri = df.outfile.toStdString();
+    std::string root_path;
+
+    auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
+    if (!r0.ok())
+    {
+        qDebug() << "Arrow Error not able to load" << df.outfile;
+        return;
+    }
+
+    auto fs = r0.ValueOrDie();
+
+    auto r1 = fs->OpenOutputStream(uri);
+
+    if (!r1.ok())
+    {
+        qDebug() << "Arrow Error to Open Stream" << df.outfile;
+        return;
+    }
+    auto output = r1.ValueOrDie();
+    arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
+    //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+
+    auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
+
+    if (!r2.ok())
+    {
+        qDebug() << "Arrow Unable to make file writer";
+        return;
+    }
+
+    auto writer = r2.ValueOrDie();
+
+    writer->WriteTable(*table.get());
+    writer->Close();
+}
+
 
 QStringList NetworkProcessHandler::remainingProcess()
 {
@@ -856,12 +1122,6 @@ void NetworkProcessHandler::displayError(QAbstractSocket::SocketError socketErro
 
     QTcpSocket* tcpSocket = qobject_cast<QTcpSocket*>(sender());
     if (!tcpSocket) return;
-
-
-
-    //  QMessageBox::information(0, tr("Checkout Network Client"),
-    //                           tr("The following error occurred: %1.")
-    //                           .arg(tcpSocket->errorString()));
 
 }
 

@@ -2885,7 +2885,7 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
         {
 
             auto d =  ui->treeView->model()->itemData(idx)[Qt::UserRole+4];
-            qDebug() << d;
+            //            qDebug() << d;
             QStringList path = d.toString().split('/');
             if (path.size() > 3)
             {

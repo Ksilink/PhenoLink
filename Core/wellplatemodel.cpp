@@ -706,24 +706,23 @@ void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, boo
 
     auto schema = reader->schema();
 
-    if (schema->HasMetadata())
-    {
-        auto meta = schema->metadata();
-        qDebug() << "Metadatas";
-        for (auto key : meta->keys())
-        {
-            qDebug() << QString::fromStdString(key) << QString::fromStdString(meta->Get(key).ValueOrDie());
-
-        }
-    }
-
-
-    ArrowGet(count, r3, reader->CountRows(), "Arrow No rows available");
+    //    if (schema->HasMetadata())
+    //    {
+    //        auto meta = schema->metadata();
+    //        qDebug() << "Metadatas";
+    //        for (auto key : meta->keys())
+    //        {
+    //            qDebug() << QString::fromStdString(key) << QString::fromStdString(meta->Get(key).ValueOrDie());
+    //        }
+    //    }
 
 
-    qDebug() << "Nb Rows: " << count;
+//    ArrowGet(count, r3, reader->CountRows(), "Arrow No rows available");
 
-    qDebug() << "Fields content";
+
+//    qDebug() << "Nb Rows: " << count;
+
+//    qDebug() << "Fields content";
 
     std::list<std::string> fields;
     for (auto f : schema->fields())
@@ -759,14 +758,7 @@ void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, boo
                     data->addData(QString::fromStdString(field), fieldid->Value(s), sliceId->Value(s), tp->Value(s), chan->Value(s), pos, array->Value(s));
             }
         }
-
     }
-
-
-
-
-
-
 }
 
 
@@ -2811,10 +2803,19 @@ ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, Q
     datamdl->setCommitName(commit);
 
     QString id = data.take("Pos").toString();
+
+    if (id.isEmpty())
+    {
+        return 0;
+    }
+
     int fieldId = data.take("FieldId").toInt(),
             timepoint = data.take("TimePos").toInt(),
             sliceId = data.take("zPos").toInt(),
             channel = data.take("Channel").toInt();
+
+    if (data.contains("TaskID"))  data.take("TaskID");
+    if (data.contains("WorkID"))  data.take("WorkID");
 
     data.take("hash");
     data.take("DataHash");

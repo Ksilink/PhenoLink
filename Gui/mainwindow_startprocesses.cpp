@@ -493,7 +493,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     QJsonArray procArray;
     int count = 0;
     QMap<QString, int > adapt;
-//    bool deb = set.value("UserMode/Debug", false).toBool();
+    //    bool deb = set.value("UserMode/Debug", false).toBool();
 
 
     QSet<QString> xps;
@@ -578,7 +578,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                     adjustParameterFromWidget(sfm, oo, params, bias);
 
                     int channel = -1,
-                        fieldId = recurseField(data, "FieldId");
+                            fieldId = recurseField(data, "FieldId");
 
                     if (channel == -1 && !asVectorImage)
                         channel = recurseField(data, "Channel");
@@ -977,7 +977,6 @@ void MainWindow::startProcessRun()
         lsfm = lsfm2;
     }
 
-
     if (lsfm.isEmpty())
     {
 
@@ -999,6 +998,40 @@ void MainWindow::startProcessRun()
 
     lsfm = QSet<SequenceFileModel*>(lsfm.begin(), lsfm.end()).values(); // To remove duplicates
 
+    // Let's check if we are in some data reconstruction mode, i.e. we want to complete some of the processings we already performed
+    // if the commit name exists & plate name .fth we compute the missing processings & ask the user if he/she wants to perform the full process
+    // or just continue with the missings data
+
+    if (!_commitName->text().isEmpty())
+    {
+
+        QSet<QString> pls;
+        for (auto& v: lsfm) pls.insert( v->getOwner()->name() );
+
+        QSettings set;
+        QDir dir(set.value("databaseDir").toString());
+
+
+        for (auto& pl: pls)
+        {
+            QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4.fth")
+                    .arg(dir.absolutePath(),
+                         lsfm[0]->getOwner()->property("project"),
+                    _commitName->text(),
+                    pl);
+            qDebug() << writePath;
+        }
+
+
+
+
+        ;
+
+//        qDebug() << writePath;
+    }
+
+
+
     process_starttime = QDateTime::currentDateTime();
 
     qDebug() << "Wells to process" << lsfm.size() << " - "<< process_starttime.toString("yyyyMMdd hh:mm:ss.zzz");
@@ -1008,12 +1041,11 @@ void MainWindow::startProcessRun()
     // Start the computation.
     if (!_StatusProgress)
     {
-
         _StatusProgress = new QProgressBar(this);
         this->statusBar()->addPermanentWidget(_StatusProgress);
         _StatusProgress->setFormat("%v / %m");
-
     }
+
     _StatusProgress->setRange(0,0);
 
     run_time.start();

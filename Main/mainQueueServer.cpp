@@ -249,11 +249,11 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
 
     for (auto& srv: workers)
         if (!rmWorkers.contains(qMakePair(srv.first, srv.second)))
-    {
+        {
 
-        auto id = QString("%1:%2").arg(srv.first).arg(srv.second);
-        servers[id] ++;
-    }
+            auto id = QString("%1:%2").arg(srv.first).arg(srv.second);
+            servers[id] ++;
+        }
 
     body += "<h3>Cores Listing</h3>";
     //for (auto it = runni)
@@ -371,7 +371,7 @@ QStringList Server::pendingTasks()
 
 QQueue<QJsonObject>& Server::getHighestPriorityJob(QString server)
 {
-   // QMutexLocker locker(&workers_lock);
+    // QMutexLocker locker(&workers_lock);
 
     if (jobs.contains(server)) // does this server have some affinity with the current process ?
     { // if yes we dequeue from this one
@@ -446,6 +446,12 @@ void Server::WorkerMonitor()
 
                     QJsonObject pr = queue.dequeue();
                     QString srv = QString("%1:%2").arg(next_worker.first).arg(next_worker.second); // Set proxy name
+                    if (!proc_params[pr["Path"].toString()].contains(srv))
+                    {
+                        next_worker = pickWorker(pr["Path"].toString());
+
+                    }
+
                     CheckoutHttpClient* sr = nullptr;
                     if (clients[srv])
                         sr = clients[srv];
@@ -454,11 +460,11 @@ void Server::WorkerMonitor()
                         clients[srv] = new CheckoutHttpClient(next_worker.first, next_worker.second);
                         sr = clients[srv];
                     }
-//                    sr->setCollapseMode(false);
+                    //                    sr->setCollapseMode(false);
                     QString taskid = QString("%1@%2#%3#%4!%5#%6:%7")
-                        .arg(pr["Username"].toString(), pr["Computer"].toString(),
-                             pr["Path"].toString(), pr["WorkID"].toString(),
-                             pr["XP"].toString(), pr["Pos"].toString(), pr["Process_hash"].toString());
+                            .arg(pr["Username"].toString(), pr["Computer"].toString(),
+                            pr["Path"].toString(), pr["WorkID"].toString(),
+                            pr["XP"].toString(), pr["Pos"].toString(), pr["Process_hash"].toString());
 
                     pr["TaskID"] = taskid;
 
@@ -486,8 +492,11 @@ void Server::WorkerMonitor()
     }
 }
 
-QPair<QString, int> Server::pickWorker()
+QPair<QString, int> Server::pickWorker(QString )
 {
+    //    if (process.isEmpty())
+    //    {
+
     static QString lastsrv;
 
     //    QMutexLocker locker(&workers_lock);
@@ -512,6 +521,14 @@ QPair<QString, int> Server::pickWorker()
     auto next = workers.back();
     lastsrv = next.first;
     return next;
+    //    }
+    //    else
+    //    {
+
+
+
+
+    //    }
 
 }
 
@@ -645,7 +662,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             if (workers_status[QString("%1:%2").arg(serverIP).arg(port)] >= 0)
             {
                 if (cpu.isEmpty())
-
                     workers.enqueue(qMakePair(serverIP, port));
                 else
                     for (int i= 0; i< cpu.toInt(); ++i)
@@ -670,20 +686,26 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
             running.remove(workid);
         }
+
         for (int i = 0; i < ob.size(); ++i)
         {
             auto obj = ob[i].toObject();
             if (obj.contains("TaskID"))
             {
-
-
                 auto t = QDateTime::currentDateTime().toSecsSinceEpoch() - running[obj["TaskID"].toString()]["SendTime"].toInt();
                 QString ww = workid.split("!")[0];
 
                 run_time[ww] += t;
                 run_count[ww] ++;
+                work_count[ww] --;
+
+                if (work_count.value(ww) == 0)
+                {
+                    qDebug() << "Work ID finished" << ww << "Aggregate & collate data";
+                }
 
                 running.remove(obj["TaskID"].toString());
+
                 workers.enqueue(qMakePair(serverIP, port));
                 workers_status[QString("%1:%2").arg(serverIP).arg(port)]++;
             }
@@ -778,14 +800,14 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 srv = q.replace("host=", "");
         }
         {
-//            QMutexLocker lock(&workers_lock);
+            //            QMutexLocker lock(&workers_lock);
 
             rmWorkers.insert(qMakePair(srv, port.toInt()));
             //workers_status.remove(QString("%1:%2").arg(srv,port));
         }
 
         HTMLstatus(res, QString("Removed server %1:%2").arg(srv,port));
-      return;
+        return;
     }
 
     if (urlpath.startsWith("/Status"))
@@ -886,6 +908,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 QString jobname  = job[1];
                 QString workid = job.back();
 
+                qDebug() << "rm job command:" << name << jobname << workid;
                 for (auto& srv: jobs)
                 {
                     for (auto& q: srv)
@@ -901,6 +924,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                                 torm << item;
                         }
                         cancelProcs = (int)torm.size();
+
+                        qDebug() << "Trying to remove" << cancelProcs;
                         for (auto& it : torm)
                             q.removeAll(it);
 
@@ -929,8 +954,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             }
             if (q.startsWith("cpus"))
             {
-                    cpus = q.replace("cpus=","").toInt();
-                    if (cpus < 1) cpus = 1;
+                cpus = q.replace("cpus=","").toInt();
+                if (cpus < 1) cpus = 1;
             }
         }
 
@@ -944,6 +969,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     if (urlpath.startsWith("/Start/"))
     {
+
+
         QString refIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
         QString proc = urlpath.mid(7);
 
@@ -953,6 +980,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         for (int i = 0; i < ob.size(); ++i)
         {
             QJsonObject obj = ob.at(i).toObject();
+
 
             QByteArray arr = QCborValue::fromJsonValue(obj).toCbor();
             arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
@@ -978,6 +1006,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
             workers_lock.unlock();
 
+            QString workid = QString("%1@%2#%3#%4")
+                    .arg(obj["Username"].toString(), obj["Computer"].toString(),
+                    obj["Path"].toString(), obj["WorkID"].toString());
+
+            work_count[workid]++;
 
             ob.replace(i, obj);
         }

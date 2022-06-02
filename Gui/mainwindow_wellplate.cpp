@@ -886,51 +886,17 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         }
         if (!mdl) { qDebug() << "No model found" ; return ; }
 
-        QDir dir(QDir::cleanPath(mdl->fileName()));
-        dir.cdUp(); dir.cdUp();
-        QString platename = mdl->name();
-//        qDebug() << dir.path() << platename;
 
-        QString fpath(QString("%1/birdview_%2.html").arg(dir.path(), mdl->name()));
+        QSettings set;
+        QString dbP=set.value("databaseDir").toString();
+
+        QString fpath = QString("%1/PROJECTS/%2/Checkout_Results/BirdView/birdview_%3.html").arg(dbP,mdl->getProjectName(), mdl->name());
+
         QFile file(fpath);
         QString imgName = generatePlate(file, mdl);
         file.close();
 
-        QStringList ds=dir.path().split("/").last().split('_');
-#if _WIN64
-        if (ds.size() >= 3)
-        {
-            QString time = ds.last(); ds.pop_back();
-            QString date = ds.last();
-            QDateTime dt = QDateTime::fromString(QString("%1#%2").arg(date, time), "yyyyMMdd#hhmmss");
-            qDebug() << dt;
-            auto pt = dir.path().replace("/","\\").toLocal8Bit();
-            struct tm tmm;
-            struct _utimbuf ut;
-
-            tmm.tm_hour = dt.time().hour();
-            tmm.tm_min = dt.time().minute();
-            tmm.tm_sec = dt.time().second();
-
-            tmm.tm_year = dt.date().year() - 1900;
-            tmm.tm_mday = dt.date().day();
-            tmm.tm_mon = dt.date().month()- 1 ;
-
-            tmm.tm_wday = 0;
-            tmm.tm_yday = 0;
-            tmm.tm_isdst = 0;
-
-            ut.actime = mktime(&tmm);
-            ut.modtime = mktime(&tmm);
-
-            int retval = _utime(pt.data(), &ut);
-            qDebug() << "Adjusting creation time of" << fpath << "to" << dt << "utime: " << retval;
-
-        }
-#endif
-
           // Launch the HTML viewer on the birdview file
-
         QWebEngineView *view = new QWebEngineView(this);
         QUrl url(fpath);
         view->load(url);

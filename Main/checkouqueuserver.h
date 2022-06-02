@@ -104,7 +104,7 @@ protected:
    void WorkerMonitor();
 
 
-   QPair<QString, int> pickWorker();
+   QPair<QString, int> pickWorker(QString process = QString());
    QQueue<QJsonObject> &getHighestPriorityJob(QString server);
 
 
@@ -129,7 +129,7 @@ protected:
     // Pending
     QMap<QString, QJsonObject > running;
 
-    QMap<QString, unsigned int> run_time, run_count;
+    QMap<QString, unsigned int> run_time, run_count, work_count;
     // Project Affinity map
     QMap<QString, QString> project_affinity; // projection of project name to server name
 

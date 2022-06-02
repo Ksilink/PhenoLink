@@ -168,25 +168,79 @@ public:
         return *r;
     }
 
+    QList<Registrable<float>* > produces(QMap<QString, float>* value)
+    {
 
-//    template <>
-//    Registrable<QMap<QString, float> >& produces(QMap<QString, float>* value)
-//    {
-//        static char t = '0';
-//        QString tag = QString("%1").arg(t);
+        QList<Registrable<float>* > l;
 
-//        Registrable<Type>* r = new Registrable<Type>();
+        for (auto it = value->begin(), e = value->end(); it != e; ++it)
+        {
+            Registrable<float>* r = new Registrable<float>();
 
-//        r->setAsProduct();
-//        r->setValuePointer(value);
-//        r->setTag(tag);
-//        r->setComment(comment);
+            r->setAsProduct();
+            r->setValuePointer(&(it.value()));
+            r->setTag(QString(it.key()).replace(" ", "_"));
+            r->setComment("");
 
-//        _results[tag] = r;
+            l << r;
+        }
 
-//        t++;
-//        return *r;
-//    }
+        return l;
+    }
+
+    QList<Registrable<double>* > produces(QMap<QString, double>* value)
+    {
+
+        QList<Registrable<double>* > l;
+
+        for (auto it = value->begin(), e = value->end(); it != e; ++it)
+        {
+            Registrable<double>* r = new Registrable<double>();
+
+            r->setAsProduct();
+            r->setValuePointer(&(it.value()));
+            r->setTag(QString(it.key()).replace(" ", "_"));
+            r->setComment("");
+
+            l << r;
+        }
+
+        return l;
+    }
+
+
+    QList<Registrable<double>* > produces(QMap<QString, QList<double> >* value, RegistrableParent::DevectorizeType vectorize)
+    {
+
+        QList<Registrable<double>* > l;
+
+        for (auto it = value->begin(), e = value->end(); it != e; ++it)
+        {
+            int p = 0;
+            for (auto it2 = it.value().begin(), ee = it.value().end(); it2 != ee; ++it2)
+            {
+                Registrable<double>* r = new Registrable<double>();
+
+                r->setAsProduct();
+                r->setValuePointer(&(*it2));
+                r->setTag(QString(it.key()).replace(" ", "_"));
+                r->setVectorizeMode(vectorize);
+                r->setVector(p);
+                r->setComment("");
+
+                l << r;
+                p++;
+            }
+
+        }
+
+        return l;
+    }
+
+
+
+
+
 
 
     // This function is to be called in plugins constructor to declare to the handler the name of the processing
@@ -248,6 +302,18 @@ public:
     {
         return _callParams["CommitName"].toString();
     }
+
+
+    QStringList postProcesses()
+    {
+        return _postprocess;
+    }
+
+
+    CheckoutProcessPluginInterface& addPostProcess(QStringList dep);
+
+    CheckoutProcessPluginInterface& addPostProcess(QString d);
+
 
 protected:
     QString recurseSearch(QJsonObject ob, QString key)
@@ -373,6 +439,8 @@ public:
         return comments;
     }
 
+
+
     virtual void read(const QJsonObject &json);
 
     virtual void write(QJsonObject &json) const;
@@ -425,6 +493,8 @@ protected:
     QMap<QString, RegistrableParent*> _parameters;
     QMap<QString, RegistrableParent*> _results;
 
+    QMap<QString, RegistrableParent*> _dangling;
+
 
     QString _message, _stepMessage;
     float overallEvolution; // 0 to 1, tell the global process advances
@@ -442,6 +512,8 @@ protected:
     static QMap<QString, int> _hashtoBiasCount;
 
     QList<InputImageMetaData> _meta;
+
+    QStringList _postprocess;
 
 };
 

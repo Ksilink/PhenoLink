@@ -273,7 +273,8 @@ int main(int ac, char** av)
         server.proxyAdvert(ps[0], ps.size() == 2 ? ps[1].toInt() : 13378);
 
     }
-
+    else
+        NetworkProcessHandler::handler().setNoProxyMode();
 
 
     return server.start(port);
@@ -466,10 +467,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     if (urlpath.startsWith("/Start/"))
     {
+        QString srvIp = stringIP(req->connection()->tcpSocket()->localAddress().toIPv4Address());
         QString refIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
         QString proc = urlpath.mid(7);
-
-
 
         auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
         QJsonArray Core,Run;
@@ -504,6 +504,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         // Response is obj
         //        qDebug() << ob << refIP; // Address to push results to !
+        procs.setServerName(srvIp);
 
         setHttpResponse(obj, res, !query.contains("json"));
         QtConcurrent::run(&procs, &CheckoutProcess::startProcessServer,
@@ -617,6 +618,8 @@ void Server::proxyAdvert(QString host, int port, bool crashed)
                  QString("affinity=%1&port=%2&cpu=%3&reset&available=1&crashed=%4")
                     .arg(affinity_list.join(",")).arg(dport).arg(processor_count).arg(crashed),
                  QJsonArray());
+
+
 }
 
 void Server::finished(QString hash, QJsonObject ob)
