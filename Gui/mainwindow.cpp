@@ -268,6 +268,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
 
     ui->actionNever->setChecked(set.value("AlwaysUnpack", false).toBool());
     ui->actionAlways->setChecked(set.value("NeverUnpack", false).toBool());
+    ui->actionShare_Intensity_Controls->setChecked(set.value("ShareControls", false).toBool());
 }
 
 
@@ -3088,5 +3089,13 @@ void MainWindow::on_actionNever_triggered(bool checked)
     QSettings set;
     set.setValue("NeverUnpack", checked);
     ui->actionAlways->setChecked(!checked);
+}
+
+
+void MainWindow::on_actionShare_Intensity_Controls_toggled(bool checked)
+{
+    QSettings set;
+    set.setValue("ShareControls", checked);
+    ui->actionShare_Intensity_Controls->setChecked(!checked);
 }
 

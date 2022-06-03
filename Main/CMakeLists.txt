@@ -65,7 +65,7 @@ add_executable(CheckoutQueueServer mainQueueServer.cpp checkouqueuserver.h ${Srv
 target_include_directories(CheckoutQueueServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (WIN32)
-    target_link_libraries( CheckoutQueueServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::WinExtras ${OpenCV_LIBS})
+    target_link_libraries( CheckoutQueueServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::WinExtras ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS})
 else()
         target_link_libraries( CheckoutQueueServer PRIVATE ${CheckoutLibs} QHttp Qt::Concurrent Qt::Core Qt::Network Qt::Widgets arrow ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS})
 endif(WIN32)

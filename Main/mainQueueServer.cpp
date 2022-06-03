@@ -532,6 +532,182 @@ QPair<QString, int> Server::pickWorker(QString )
 
 }
 
+#undef max
+#undef min
+#undef signals
+
+#include <arrow/api.h>
+#include <arrow/filesystem/filesystem.h>
+#include <arrow/util/iterator.h>
+#include <arrow/ipc/writer.h>
+#include <arrow/ipc/reader.h>
+#include <arrow/ipc/api.h>
+
+
+namespace fs = arrow::fs;
+
+template<class K,class V>
+struct QMapWrapper {
+    const QMap<K,V> map;
+    QMapWrapper(const QMap<K,V>& map) : map(map) {}
+    auto begin() { return map.keyValueBegin(); }
+    auto end()   { return map.keyValueEnd();   }
+};
+template<class K,class V>
+QMapWrapper<K,V> wrapQMap(const QMap<K,V>& map) {
+    return QMapWrapper<K,V>(map);
+}
+#define ArrowGet(var, id, call, msg) \
+    auto id = call; if (!id.ok()) { qDebug() << msg; return ; } auto var = id.ValueOrDie();
+
+
+
+template <class Bldr, class ColType>
+std::shared_ptr<arrow::Array> concat(const QList<std::shared_ptr<arrow::Array> >& list)
+{
+
+    std::shared_ptr<arrow::Array> res;
+
+    Bldr bldr;
+
+    for (auto& ar: list)
+    {
+        auto c = std::static_pointer_cast<ColType>(ar);
+        for (int s = 0; s < c->length(); ++s)
+        {
+            if (c->IsValid(s))
+                bldr.Append(c->Value(s));
+            else
+                bldr.AppendNull();
+        }
+
+    }
+
+
+    bldr.Finish(&res);
+
+    return res;
+
+}
+
+
+void fuseArrow(QStringList files, QString out)
+{
+
+    QMap<std::string, QList<  std::shared_ptr<arrow::Array> > > datas;
+    QMap<std::string, std::shared_ptr<arrow::Field> > fields;
+
+    int counts = 0;
+    for (auto file: files)
+    {
+        QList<std::string> lists;
+
+        std::string uri = file.toStdString(), root_path;
+        ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file);
+
+        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error openning arrow file" << file);
+        ArrowGet(reader, r2, arrow::ipc::RecordBatchFileReader::Open(input), "Error Reading records");
+
+        auto schema = reader->schema();
+
+        ArrowGet(rowC, r3, reader->CountRows(), "Error reading row count");
+
+
+        for (int record = 0; record < reader->num_record_batches(); ++record)
+        {
+            ArrowGet(rb, r4, reader->ReadRecordBatch(record), "Error Get Record");
+            for (auto f : schema->fields())
+            {
+                if (!fields.contains(f->name()))
+                    fields[f->name()] = f;
+                if (counts != 0 && !datas.contains(f->name()))
+                { // Assure that we add non existing cols with empty data if in case
+                    std::shared_ptr<arrow::Array> ar;
+
+                    arrow::NumericBuilder<arrow::FloatType> bldr;
+                    bldr.AppendNulls(counts);
+                    bldr.Finish(&ar);
+                    datas[f->name()].append(ar);
+                }
+                datas[f->name()].append(rb->GetColumnByName(f->name()));
+                lists << f->name();
+            }
+        }
+
+        for (auto& f: datas.keys())
+        { // Make sure we add data to empty columns
+            if (!lists.contains(f))
+                datas[f].append(std::shared_ptr<arrow::NullArray>(new arrow::NullArray(rowC)));
+        }
+
+        counts += rowC;
+    }
+
+
+
+    std::vector<std::shared_ptr<arrow::Field> > ff;
+    for (auto& item: datas.keys())
+        ff.push_back(fields[item]);
+
+
+    std::vector<std::shared_ptr<arrow::Array> > dat(ff.size());
+
+    int p = 0;
+    for (auto wd: wrapQMap(datas))
+    {
+//        wd.first;
+        if (std::static_pointer_cast<arrow::FloatArray>(wd.second.first()))
+            dat[p] = concat<arrow::NumericBuilder<arrow::FloatType> , arrow::FloatArray >(wd.second);
+        if (std::static_pointer_cast<arrow::Int16Array>(wd.second.first()))
+            dat[p] = concat<arrow::NumericBuilder<arrow::Int16Type> , arrow::Int16Array >(wd.second);
+        if (std::static_pointer_cast<arrow::StringArray>(wd.second.first()))
+            dat[p] = concat<arrow::StringBuilder, arrow::StringArray > (wd.second);
+    }
+
+
+    auto schema =
+            arrow::schema(ff);
+    auto table = arrow::Table::Make(schema, dat);
+
+
+    std::string uri = out.toStdString();
+    std::string root_path;
+
+    auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
+    if (!r0.ok())
+    {
+        qDebug() << "Arrow Error not able to load" << out;
+        return;
+    }
+
+    auto fs = r0.ValueOrDie();
+
+    auto r1 = fs->OpenOutputStream(uri);
+
+    if (!r1.ok())
+    {
+        qDebug() << "Arrow Error to Open Stream" << out;
+        return;
+    }
+    auto output = r1.ValueOrDie();
+    arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
+    //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+
+    auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
+
+    if (!r2.ok())
+    {
+        qDebug() << "Arrow Unable to make file writer";
+        return;
+    }
+
+    auto writer = r2.ValueOrDie();
+
+    writer->WriteTable(*table.get());
+    writer->Close();
+}
+
+
 void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpResponse* res)
 {
 
@@ -697,15 +873,52 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             if (obj.contains("TaskID"))
             {
                 auto t = QDateTime::currentDateTime().toSecsSinceEpoch() - running[obj["TaskID"].toString()]["SendTime"].toInt();
-                QString ww = workid.split("!")[0];
+                QString ww = obj["TaskID"].toString().split("!")[0];
 
                 run_time[ww] += t;
                 run_count[ww] ++;
                 work_count[ww] --;
 
+                //                  qDebug() << "Work ID finished" << obj["TaskID"] << ww << work_count.value(ww);
                 if (work_count.value(ww) == 0)
                 {
                     qDebug() << "Work ID finished" << ww << "Aggregate & collate data";
+                    QSettings set;
+                    QString dbP = set.value("databaseDir", "L:").toString();
+
+#ifndef  WIN32
+                    if (dbP.contains(":"))
+                        dbP = QString("/mnt/shares/") + dbP.replace(":","");
+#endif
+
+                    dbP.replace("\\", "/").replace("//", "/");
+                    auto agg = running[obj["TaskID"].toString()];
+
+                    QString path = QString("%1/PROJECTS/%2/Checkout_Results/%3").arg(dbP,
+                                                                                     agg["Project"].toString(),
+                            agg["CommitName"].toString()).replace("\\", "/").replace("//", "/");;
+
+                    QDir dir(path);
+
+                    QStringList files = dir.entryList(QStringList() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
+
+                    if (files.size() == 1)
+                    {
+                        dir.rename(QString("%1/%2").arg(path,files[0]), QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/","")));
+                    }
+                    else
+                    { // Heavy Arrow factoring here
+                        fuseArrow(files, QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/","")));
+
+                    }
+
+
+                    qDebug() << path <<  files;
+
+
+
+
+
                 }
 
                 running.remove(obj["TaskID"].toString());

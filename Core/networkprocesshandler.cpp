@@ -501,12 +501,15 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds)
         QSettings set;
         QString dbP = set.value("databaseDir", "L:").toString();
 #ifndef  WIN32
-        dbP = QString("/mnt/shares/") + dbP.replace(":","");
+        if (dbP.contains(":"))
+            dbP = QString("/mnt/shares/") + dbP.replace(":","");
 #endif
 
         dbP.replace("\\", "/").replace("//", "/");
 
-        store.outfile = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5.fth").arg(dbP, ds["Project"].toString(), commit, plate, srv).replace("\\", "/").replace("//", "/");;
+        store.outfile = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5.fth").arg(dbP,
+                                                                                   ds["Project"].toString(),
+                commit, plate, srv).replace("\\", "/").replace("//", "/");;
 
     }
 

@@ -114,6 +114,7 @@ void ScrollZone::dropEvent(QDropEvent *event)
         groupId++;
     }
 
+
     //    qDebug() << "Loading with key" << key;
 
     ImageInfos::key(key);

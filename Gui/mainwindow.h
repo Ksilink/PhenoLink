@@ -215,6 +215,8 @@ private slots:
 
     void on_actionNever_triggered(bool checked);
 
+    void on_actionShare_Intensity_Controls_toggled(bool arg1);
+
 public slots:
 
     void updateCurrentSelection();

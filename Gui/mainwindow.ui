@@ -154,6 +154,7 @@
     <addaction name="menuInfos"/>
     <addaction name="separator"/>
     <addaction name="menuUnpack"/>
+    <addaction name="actionShare_Intensity_Controls"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -1100,6 +1101,14 @@
    </property>
    <property name="toolTip">
     <string>Never Unpack</string>
+   </property>
+  </action>
+  <action name="actionShare_Intensity_Controls">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Share Intensity Controls</string>
    </property>
   </action>
  </widget>
