@@ -591,8 +591,9 @@ std::shared_ptr<arrow::Array> concat(const QList<std::shared_ptr<arrow::Array> >
 }
 
 
-void fuseArrow(QStringList files, QString out)
+void fuseArrow(QString bp, QStringList files, QString out)
 {
+
 
     QMap<std::string, QList<  std::shared_ptr<arrow::Array> > > datas;
     QMap<std::string, std::shared_ptr<arrow::Field> > fields;
@@ -602,7 +603,7 @@ void fuseArrow(QStringList files, QString out)
     {
         QList<std::string> lists;
 
-        std::string uri = file.toStdString(), root_path;
+        std::string uri = (bp+file).toStdString(), root_path;
         ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file);
 
         ArrowGet(input, r1, fs->OpenInputFile(uri), "Error openning arrow file" << file);
@@ -897,6 +898,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                                                                                      agg["Project"].toString(),
                             agg["CommitName"].toString()).replace("\\", "/").replace("//", "/");;
 
+                    QThread::sleep(5); // Let time to sync
+
                     QDir dir(path);
 
                     QStringList files = dir.entryList(QStringList() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
@@ -907,17 +910,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                     }
                     else
                     { // Heavy Arrow factoring here
-                        fuseArrow(files, QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/","")));
-
+                        fuseArrow(path, files, QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/","")));
                     }
-
-
-                    qDebug() << path <<  files;
-
-
-
-
-
                 }
 
                 running.remove(obj["TaskID"].toString());
