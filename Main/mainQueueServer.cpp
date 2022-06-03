@@ -655,7 +655,6 @@ void fuseArrow(QStringList files, QString out)
     int p = 0;
     for (auto wd: wrapQMap(datas))
     {
-//        wd.first;
         if (std::static_pointer_cast<arrow::FloatArray>(wd.second.first()))
             dat[p] = concat<arrow::NumericBuilder<arrow::FloatType> , arrow::FloatArray >(wd.second);
         if (std::static_pointer_cast<arrow::Int16Array>(wd.second.first()))
