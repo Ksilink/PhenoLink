@@ -496,7 +496,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds)
 
     DataFrame& store =  *plateData[plate];
 
-    if (store.outfile.isEmpty())
+    if (store.outfile.isEmpty()&&!commit.isEmpty())
     {
         QSettings set;
         QString dbP = set.value("databaseDir", "L:").toString();
@@ -1081,6 +1081,8 @@ void NetworkProcessHandler::storeData(QString d)
     auto schema =
             arrow::schema(fields);
     auto table = arrow::Table::Make(schema, dat);
+
+    qDebug() << "Storing DataFile to:" << df.outfile;
 
     std::string uri = df.outfile.toStdString();
     std::string root_path;

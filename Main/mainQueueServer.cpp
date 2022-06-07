@@ -561,6 +561,31 @@ QMapWrapper<K,V> wrapQMap(const QMap<K,V>& map) {
     auto id = call; if (!id.ok()) { qDebug() << msg; return ; } auto var = id.ValueOrDie();
 
 
+template <class T>
+struct mytrait
+{
+    typedef typename T::value_type   value_type;
+};
+
+template<>
+struct mytrait<class arrow::StringArray>
+{
+    typedef std::string value_type;
+};
+
+template <class T>
+typename mytrait<T>::value_type  _get(std::shared_ptr<T> ar, int s)
+{
+    return ar->Value(s);
+}
+
+
+template<>
+mytrait<arrow::StringArray>::value_type _get(std::shared_ptr<arrow::StringArray> ar, int s)
+{
+    return ar->GetString(s);
+}
+
 
 template <class Bldr, class ColType>
 std::shared_ptr<arrow::Array> concat(const QList<std::shared_ptr<arrow::Array> >& list)
@@ -576,7 +601,7 @@ std::shared_ptr<arrow::Array> concat(const QList<std::shared_ptr<arrow::Array> >
         for (int s = 0; s < c->length(); ++s)
         {
             if (c->IsValid(s))
-                bldr.Append(c->Value(s));
+                bldr.Append(_get(c, s));
             else
                 bldr.AppendNull();
         }
@@ -659,6 +684,9 @@ float Aggregate(QList<float>& f, QString& ag)
 
 void fuseArrow(QString bp, QStringList files, QString out)
 {
+
+    qDebug() << "Fusing" << files << "to" << out;
+
     QMap<std::string, QList<  std::shared_ptr<arrow::Array> > > datas;
     QMap<std::string, std::shared_ptr<arrow::Field> >     fields;
     QMap<std::string, QMap<std::string, QList<float> > >  agg;
@@ -668,10 +696,10 @@ void fuseArrow(QString bp, QStringList files, QString out)
     {
         QList<std::string> lists;
 
-        std::string uri = (bp+file).toStdString(), root_path;
+        std::string uri = (bp+"/"+file).toStdString(), root_path;
         ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file);
 
-        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error openning arrow file" << file);
+        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error openning arrow file" << bp+file);
         ArrowGet(reader, r2, arrow::ipc::RecordBatchFileReader::Open(input), "Error Reading records");
 
         auto schema = reader->schema();
@@ -687,7 +715,7 @@ void fuseArrow(QString bp, QStringList files, QString out)
 
 
             for (auto f : schema->fields())
-                if (f->name() != "Well")
+
                 {
                     if (!fields.contains(f->name()))
                         fields[f->name()] = f;
@@ -703,7 +731,7 @@ void fuseArrow(QString bp, QStringList files, QString out)
                     datas[f->name()].append(rb->GetColumnByName(f->name()));
 
                     auto array = std::static_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(f->name()));
-                    if (array)
+                    if (array &&   (f->name() != "Well"))
                         for (int s = 0; s < array->length(); ++s)
                             agg[f->name()][well->GetString(s)].append(array->Value(s));
 
@@ -820,6 +848,7 @@ void fuseArrow(QString bp, QStringList files, QString out)
         QStringList repath = out.split("/");
         repath.last() = QString("ag%1").arg(repath.last());
 
+        qDebug() << "Aggregating to " << (repath.join("/"));
         std::string uri = (repath.join("/")).toStdString();
         std::string root_path;
 
@@ -859,7 +888,12 @@ void fuseArrow(QString bp, QStringList files, QString out)
     }
 
 
+// We are lucky enough to get up to here... let's remove the file
 
+    QDir dir(bp);
+
+    for (auto f: files)
+        dir.remove(f);
 
 
 
@@ -1062,11 +1096,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
                     QStringList files = dir.entryList(QStringList() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
 
-                    if (files.size() == 1)
-                    {
-                        dir.rename(QString("%1/%2").arg(path,files[0]), QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/","")));
-                    }
-                    else
+//                    if (files.size() == 1)
+//                    {
+//                        dir.rename(QString("%1/%2").arg(path,files[0]), QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/","")));
+//                    }
+//                    else
                     { // Heavy Arrow factoring here
                         fuseArrow(path, files, QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/","")));
                     }
