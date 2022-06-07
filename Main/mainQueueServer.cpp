@@ -591,12 +591,77 @@ std::shared_ptr<arrow::Array> concat(const QList<std::shared_ptr<arrow::Array> >
 }
 
 
-void fuseArrow(QString bp, QStringList files, QString out)
+double AggregateSum(QList<float>& f)
 {
 
+    if (f.size() == 1) return f.at(0);
 
+    double r = 0;
+    foreach(double ff, f)
+        r += ff;
+
+    return r;
+}
+double AggregateMean(QList<float>& f)
+{
+    if (f.size() == 1) return f.at(0);
+    double r = 0;
+    foreach(double ff, f)
+        r += ff;
+    r /= (double)f.size();
+    return r;
+}
+
+
+
+
+double AggregateMedian(QList<float>& f)
+{
+    if (f.size() < 1) return 0;
+    if (f.size() == 1) return f.at(0);
+    std::sort(f.begin(), f.end());
+    return f.at(f.size() / 2);
+}
+
+double AggregateMin(QList<float>& f)
+{
+    if (f.size() < 1) return 0;
+    if (f.size() == 1) return f.at(0);
+    double r = std::numeric_limits<float>::max();
+    foreach(double ff, f)
+        if (ff < r) r = ff;
+    return r;
+}
+
+double AggregateMax(QList<float>& f)
+{
+    if (f.size() < 1) return 0;
+    if (f.size() == 1) return f.at(0);
+    double r = std::numeric_limits<float>::min();
+    foreach(double ff, f)
+        if (ff > r) r = ff;
+    return r;
+}
+
+
+float Aggregate(QList<float>& f, QString& ag)
+{
+    if (ag == "Sum") return AggregateSum(f);
+    if (ag == "Mean") return AggregateMean(f);
+    if (ag == "Median") return AggregateMedian(f);
+    if (ag == "Min") return AggregateMin(f);
+    if (ag == "Max") return AggregateMax(f);
+
+    qDebug() << "Aggregation error!" << ag << "Not found";
+    return -1.;
+}
+
+
+void fuseArrow(QString bp, QStringList files, QString out)
+{
     QMap<std::string, QList<  std::shared_ptr<arrow::Array> > > datas;
-    QMap<std::string, std::shared_ptr<arrow::Field> > fields;
+    QMap<std::string, std::shared_ptr<arrow::Field> >     fields;
+    QMap<std::string, QMap<std::string, QList<float> > >  agg;
 
     int counts = 0;
     for (auto file: files)
@@ -617,22 +682,33 @@ void fuseArrow(QString bp, QStringList files, QString out)
         for (int record = 0; record < reader->num_record_batches(); ++record)
         {
             ArrowGet(rb, r4, reader->ReadRecordBatch(record), "Error Get Record");
-            for (auto f : schema->fields())
-            {
-                if (!fields.contains(f->name()))
-                    fields[f->name()] = f;
-                if (counts != 0 && !datas.contains(f->name()))
-                { // Assure that we add non existing cols with empty data if in case
-                    std::shared_ptr<arrow::Array> ar;
 
-                    arrow::NumericBuilder<arrow::FloatType> bldr;
-                    bldr.AppendNulls(counts);
-                    bldr.Finish(&ar);
-                    datas[f->name()].append(ar);
+            auto well = std::static_pointer_cast<arrow::StringArray>(rb->GetColumnByName("Well"));
+
+
+            for (auto f : schema->fields())
+                if (f->name() != "Well")
+                {
+                    if (!fields.contains(f->name()))
+                        fields[f->name()] = f;
+                    if (counts != 0 && !datas.contains(f->name()))
+                    { // Assure that we add non existing cols with empty data if in case
+                        std::shared_ptr<arrow::Array> ar;
+
+                        arrow::NumericBuilder<arrow::FloatType> bldr;
+                        bldr.AppendNulls(counts);
+                        bldr.Finish(&ar);
+                        datas[f->name()].append(ar);
+                    }
+                    datas[f->name()].append(rb->GetColumnByName(f->name()));
+
+                    auto array = std::static_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(f->name()));
+                    if (array)
+                        for (int s = 0; s < array->length(); ++s)
+                            agg[f->name()][well->GetString(s)].append(array->Value(s));
+
+                    lists << f->name();
                 }
-                datas[f->name()].append(rb->GetColumnByName(f->name()));
-                lists << f->name();
-            }
         }
 
         for (auto& f: datas.keys())
@@ -705,6 +781,88 @@ void fuseArrow(QString bp, QStringList files, QString out)
 
     writer->WriteTable(*table.get());
     writer->Close();
+
+    // Let's handle agg
+    {
+        std::vector<std::shared_ptr<arrow::Field> > ff;
+        ff.push_back(fields["Well"]);
+        for (auto& item: agg.keys())
+            ff.push_back(fields[item]);
+
+        std::vector<std::shared_ptr<arrow::Array> > dat(1+agg.size());
+
+        arrow::StringBuilder wells;
+        std::vector<arrow::NumericBuilder<arrow::FloatType> > data(agg.size());
+
+        QList<std::string> ws = agg.first().keys(), fie = agg.keys();
+
+        for (auto& w: ws)
+        {
+            wells.Append(w);
+            int f = 0;
+            for (auto& name: fie)
+            {
+                auto method = fields[name]->metadata()->Contains("Aggregation") ? QString::fromStdString(fields[name]->metadata()->Get("Aggregation").ValueOrDie()) : QString();
+                QList<float>& dat = agg[name][w];
+                data[f].Append(Aggregate(dat, method));
+                f++;
+            }
+        }
+
+        wells.Finish(&dat[0]);
+        for (int i = 0; i < agg.size(); ++i)
+            data[i].Finish(&dat[i+1]);
+
+        auto schema =
+                arrow::schema(ff);
+        auto table = arrow::Table::Make(schema, dat);
+
+        QStringList repath = out.split("/");
+        repath.last() = QString("ag%1").arg(repath.last());
+
+        std::string uri = (repath.join("/")).toStdString();
+        std::string root_path;
+
+        auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
+        if (!r0.ok())
+        {
+            qDebug() << "Arrow Error not able to load" << out;
+            return;
+        }
+
+        auto fs = r0.ValueOrDie();
+
+        auto r1 = fs->OpenOutputStream(uri);
+
+        if (!r1.ok())
+        {
+            qDebug() << "Arrow Error to Open Stream" << out;
+            return;
+        }
+        auto output = r1.ValueOrDie();
+        arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
+        //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+
+        auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
+
+        if (!r2.ok())
+        {
+            qDebug() << "Arrow Unable to make file writer";
+            return;
+        }
+
+        auto writer = r2.ValueOrDie();
+
+        writer->WriteTable(*table.get());
+        writer->Close();
+
+    }
+
+
+
+
+
+
 }
 
 
