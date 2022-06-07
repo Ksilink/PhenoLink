@@ -139,6 +139,22 @@ void MainWindow::change_overlay_details(QString values, QString overlay, int id)
 }
 
 
+void MainWindow::on_dockWidget_visibilityChanged(bool visible)
+{
+    if (visible)
+    {
+        QKeySequence splus(Qt::Key_Plus), smoins(Qt::Key_Minus);
+
+        ui->addTag->setShortcut(splus);
+        ui->delTag->setShortcut(smoins);
+    }
+    else
+    {
+        QKeySequence empt;
+        ui->addTag->setShortcut(empt);
+        ui->delTag->setShortcut(empt);
+    }
+}
 
 
 

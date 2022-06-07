@@ -217,6 +217,8 @@ private slots:
 
     void on_actionShare_Intensity_Controls_toggled(bool arg1);
 
+    void on_dockWidget_visibilityChanged(bool visible);
+
 public slots:
 
     void updateCurrentSelection();
