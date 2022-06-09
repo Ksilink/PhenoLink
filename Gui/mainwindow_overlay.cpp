@@ -143,16 +143,21 @@ void MainWindow::on_dockWidget_visibilityChanged(bool visible)
 {
     if (visible)
     {
-        QKeySequence splus(Qt::Key_Plus), smoins(Qt::Key_Minus);
+        QKeySequence splus(Qt::Key_Plus), smoins(Qt::Key_Minus),
+                left(Qt::Key_Left),right(Qt::Key_Right);
 
         ui->addTag->setShortcut(splus);
         ui->delTag->setShortcut(smoins);
+        ui->prevOverlay->setShortcut(left);
+        ui->nextOverlay->setShortcut(right);
     }
     else
     {
         QKeySequence empt;
         ui->addTag->setShortcut(empt);
         ui->delTag->setShortcut(empt);
+        ui->prevOverlay->setShortcut(empt);
+        ui->nextOverlay->setShortcut(empt);
     }
 }
 

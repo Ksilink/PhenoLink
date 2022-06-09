@@ -518,7 +518,13 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
         int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
 
         bool exists = false;
-        info = ImageInfos::getInstance(this, file, exp + QString("%1").arg(ii), ii, exists, key);
+
+
+        QSettings set;
+        exp =  set.value("ShareControls", false).toBool() ? "" : exp + QString("%1").arg(ii);
+
+
+        info = ImageInfos::getInstance(this, file, exp, ii, exists, key);
         lock_infos.lock();
         _infos[file] = info;
         lock_infos.unlock();
@@ -1093,7 +1099,12 @@ void SequenceInteractor::initImageInfos(int field)
         int channel = it->first;
         int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
         bool exists;
-        ImageInfos::getInstance(this, file, getExperimentName() + QString("%1").arg(ii), ii, exists, loadkey);
+
+        QSettings set;
+        QString exp =  set.value("ShareControls", false).toBool() ? "" : getExperimentName() + QString("%1").arg(ii);
+
+
+        ImageInfos::getInstance(this, file, exp, ii, exists, loadkey);
     }
 }
 

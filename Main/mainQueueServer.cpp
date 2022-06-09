@@ -684,7 +684,6 @@ float Aggregate(QList<float>& f, QString& ag)
 
 void fuseArrow(QString bp, QStringList files, QString out)
 {
-
     qDebug() << "Fusing" << files << "to" << out;
 
     QMap<std::string, QList<  std::shared_ptr<arrow::Array> > > datas;
@@ -716,27 +715,27 @@ void fuseArrow(QString bp, QStringList files, QString out)
 
             for (auto f : schema->fields())
 
-                {
-                    if (!fields.contains(f->name()))
-                        fields[f->name()] = f;
-                    if (counts != 0 && !datas.contains(f->name()))
-                    { // Assure that we add non existing cols with empty data if in case
-                        std::shared_ptr<arrow::Array> ar;
+            {
+                if (!fields.contains(f->name()))
+                    fields[f->name()] = f;
+                if (counts != 0 && !datas.contains(f->name()))
+                { // Assure that we add non existing cols with empty data if in case
+                    std::shared_ptr<arrow::Array> ar;
 
-                        arrow::NumericBuilder<arrow::FloatType> bldr;
-                        bldr.AppendNulls(counts);
-                        bldr.Finish(&ar);
-                        datas[f->name()].append(ar);
-                    }
-                    datas[f->name()].append(rb->GetColumnByName(f->name()));
-
-                    auto array = std::static_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(f->name()));
-                    if (array &&   (f->name() != "Well"))
-                        for (int s = 0; s < array->length(); ++s)
-                            agg[f->name()][well->GetString(s)].append(array->Value(s));
-
-                    lists << f->name();
+                    arrow::NumericBuilder<arrow::FloatType> bldr;
+                    bldr.AppendNulls(counts);
+                    bldr.Finish(&ar);
+                    datas[f->name()].append(ar);
                 }
+                datas[f->name()].append(rb->GetColumnByName(f->name()));
+
+                auto array = std::static_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(f->name()));
+                if (array &&   (f->name() != "Well"))
+                    for (int s = 0; s < array->length(); ++s)
+                        agg[f->name()][well->GetString(s)].append(array->Value(s));
+
+                lists << f->name();
+            }
         }
 
         for (auto& f: datas.keys())
@@ -888,7 +887,7 @@ void fuseArrow(QString bp, QStringList files, QString out)
     }
 
 
-// We are lucky enough to get up to here... let's remove the file
+    // We are lucky enough to get up to here... let's remove the file
 
     QDir dir(bp);
 
@@ -899,6 +898,14 @@ void fuseArrow(QString bp, QStringList files, QString out)
 
 }
 
+QString adjust(QString script)
+{
+#ifdef WIN32
+    return script;
+#else
+    return "/mnt/shares/" + script.replace(":", "");
+#endif
+}
 
 void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpResponse* res)
 {
@@ -1095,15 +1102,38 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                     QDir dir(path);
 
                     QStringList files = dir.entryList(QStringList() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
+                    QString concatenated = QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/",""));
+                    if (files.isEmpty())
+                        qDebug() << "Error fusing the data";
+                    else
+                        fuseArrow(path, files, concatenated);
 
-//                    if (files.size() == 1)
-//                    {
-//                        dir.rename(QString("%1/%2").arg(path,files[0]), QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/","")));
-//                    }
-//                    else
-                    { // Heavy Arrow factoring here
-                        fuseArrow(path, files, QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/","")));
+                    if (agg.contains("PostProcess") && agg["PostProcess"].toArray().size() > 0)
+                    {
+                        qDebug() << "We need to run the post processes:" << agg["PostProcess"].toArray();
+                        // Set our python env first
+                        // Setup the call to python
+                        // Also change working directory to the "concatenated" folder
+                        auto arr = agg["PostProcess"].toArray();
+                        for (int i = 0; i < arr.size(); ++i )
+                        { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
+                            QString script = arr[i].toString().replace("\\", "/");
+                            auto args = QStringList() << "python" << adjust(script)  << concatenated;
+                            QProcess* python = new QProcess();
+                            postproc << python;
+
+                            postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
+                            postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", ""));
+                            postproc.last()->setWorkingDirectory(path);
+
+                            postproc.last()->setProgram("python");
+                            postproc.last()->setArguments(args);
+
+                            postproc.last()->start();
+                        }
                     }
+                    else
+                        qDebug() << "No Postprocesses";
                 }
 
                 running.remove(obj["TaskID"].toString());

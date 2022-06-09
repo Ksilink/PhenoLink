@@ -139,6 +139,7 @@ protected:
 
 
     CheckoutHttpClient* client;
+    QList<QProcess*> postproc;
 };
 
 
