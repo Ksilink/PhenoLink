@@ -3099,3 +3099,5 @@ void MainWindow::on_actionShare_Intensity_Controls_toggled(bool checked)
     ui->actionShare_Intensity_Controls->setChecked(!checked);
 }
 
+
+
