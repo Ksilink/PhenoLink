@@ -1102,7 +1102,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 //                    }
 //                    else
                     { // Heavy Arrow factoring here
-                        fuseArrow(path, files, QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/","")));
+
+                        if (files.size() == 0)
+                            qDebug() << "No files found";
+                        else
+                            fuseArrow(path, files, QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/","")));
                     }
                 }
 

@@ -256,7 +256,10 @@ void ReadFeather(QString file, StructuredMetaData& data)
     ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file);
 
     ArrowGet(input, r1, fs->OpenInputFile(uri), "Error openning arrow file" << file);
-    ArrowGet(reader, r2, arrow::ipc::RecordBatchFileReader::Open(input), "Error Reading records");
+    arrow::Result<std::shared_ptr<arrow::ipc::RecordBatchFileReader>  > r2 = arrow::ipc::RecordBatchFileReader::Open(input);
+     if (!r2.ok()) { qDebug() << "Batch open error"; return ; } 
+     std::shared_ptr<arrow::ipc::RecordBatchFileReader> reader = r2.ValueOrDie();
+
 
     auto schema = reader->schema();
 
