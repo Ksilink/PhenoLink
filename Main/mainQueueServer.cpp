@@ -588,11 +588,8 @@ mytrait<arrow::StringArray>::value_type _get(std::shared_ptr<arrow::StringArray>
 
 
 template <class Bldr, class ColType>
-std::shared_ptr<arrow::Array> concat(const QList<std::shared_ptr<arrow::Array> >& list)
+void concat(const QList<std::shared_ptr<arrow::Array> >& list, std::shared_ptr<arrow::Array>& res)
 {
-
-    std::shared_ptr<arrow::Array> res;
-
     Bldr bldr;
 
     for (auto& ar: list)
@@ -610,8 +607,6 @@ std::shared_ptr<arrow::Array> concat(const QList<std::shared_ptr<arrow::Array> >
 
 
     bldr.Finish(&res);
-
-    return res;
 
 }
 
@@ -729,8 +724,8 @@ void fuseArrow(QString bp, QStringList files, QString out)
                 }
                 datas[f->name()].append(rb->GetColumnByName(f->name()));
 
-                auto array = std::static_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(f->name()));
-                if (array &&   (f->name() != "Well"))
+                auto array = std::dynamic_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(f->name()));
+                if (array &&   (f->name() != "Well" && f->metadata()))
                     for (int s = 0; s < array->length(); ++s)
                         agg[f->name()][well->GetString(s)].append(array->Value(s));
 
@@ -759,12 +754,13 @@ void fuseArrow(QString bp, QStringList files, QString out)
     int p = 0;
     for (auto wd: wrapQMap(datas))
     {
-        if (std::static_pointer_cast<arrow::FloatArray>(wd.second.first()))
-            dat[p] = concat<arrow::NumericBuilder<arrow::FloatType> , arrow::FloatArray >(wd.second);
-        if (std::static_pointer_cast<arrow::Int16Array>(wd.second.first()))
-            dat[p] = concat<arrow::NumericBuilder<arrow::Int16Type> , arrow::Int16Array >(wd.second);
-        if (std::static_pointer_cast<arrow::StringArray>(wd.second.first()))
-            dat[p] = concat<arrow::StringBuilder, arrow::StringArray > (wd.second);
+        if (std::dynamic_pointer_cast<arrow::FloatArray>(wd.second.first()))
+            concat<arrow::NumericBuilder<arrow::FloatType>, arrow::FloatArray >(wd.second, dat[p]);
+        else if (std::dynamic_pointer_cast<arrow::Int16Array>(wd.second.first()))
+            concat<arrow::NumericBuilder<arrow::Int16Type> , arrow::Int16Array >(wd.second, dat[p]);
+        else if (std::dynamic_pointer_cast<arrow::StringArray>(wd.second.first()))
+            concat<arrow::StringBuilder, arrow::StringArray > (wd.second, dat[p]);
+        p++;
     }
 
 
@@ -828,7 +824,8 @@ void fuseArrow(QString bp, QStringList files, QString out)
             wells.Append(w);
             int f = 0;
             for (auto& name: fie)
-            {
+                if (fields[name]->metadata())
+                {
                 auto method = fields[name]->metadata()->Contains("Aggregation") ? QString::fromStdString(fields[name]->metadata()->Get("Aggregation").ValueOrDie()) : QString();
                 QList<float>& dat = agg[name][w];
                 data[f].Append(Aggregate(dat, method));
