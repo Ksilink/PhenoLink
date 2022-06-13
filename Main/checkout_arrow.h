@@ -150,6 +150,8 @@ void fuseArrow(QString bp, QStringList files, QString out)
 {
     qDebug() << "Fusing" << files << "to" << out;
 
+    QString plate = out.split("/").last().replace(".fth", "");
+
     QMap<std::string, QList<  std::shared_ptr<arrow::Array> > > datas;
     QMap<std::string, std::shared_ptr<arrow::Field> >     fields;
     QMap<std::string, QMap<std::string, QList<float> > >  agg;
@@ -278,12 +280,15 @@ void fuseArrow(QString bp, QStringList files, QString out)
     {
         std::vector<std::shared_ptr<arrow::Field> > ff;
         ff.push_back(fields["Well"]);
+        ff.push_back(fields["Plate"]);
+
         for (auto& item: agg.keys())
             ff.push_back(fields[item]);
 
-        std::vector<std::shared_ptr<arrow::Array> > dat(1+agg.size());
+        std::vector<std::shared_ptr<arrow::Array> > dat(2+agg.size());
 
-        arrow::StringBuilder wells;
+        arrow::StringBuilder wells, plate;
+
         std::vector<arrow::NumericBuilder<arrow::FloatType> > data(agg.size());
 
         QList<std::string> ws = agg.first().keys(), fie = agg.keys();
@@ -291,20 +296,23 @@ void fuseArrow(QString bp, QStringList files, QString out)
         for (auto& w: ws)
         {
             wells.Append(w);
+            plate.Append(plate.toStdString());
             int f = 0;
             for (auto& name: fie)
                 if (fields[name]->metadata())
                 {
-                auto method = fields[name]->metadata()->Contains("Aggregation") ? QString::fromStdString(fields[name]->metadata()->Get("Aggregation").ValueOrDie()) : QString();
-                QList<float>& dat = agg[name][w];
-                data[f].Append(Aggregate(dat, method));
-                f++;
-            }
+                    auto method = fields[name]->metadata()->Contains("Aggregation") ? QString::fromStdString(fields[name]->metadata()->Get("Aggregation").ValueOrDie()) : QString();
+                    QList<float>& dat = agg[name][w];
+                    data[f].Append(Aggregate(dat, method));
+                    f++;
+                }
         }
 
         wells.Finish(&dat[0]);
+        plate.Finish(&dat[1]);
+
         for (int i = 0; i < agg.size(); ++i)
-            data[i].Finish(&dat[i+1]);
+            data[i].Finish(&dat[i+2]);
 
         auto schema =
                 arrow::schema(ff);
