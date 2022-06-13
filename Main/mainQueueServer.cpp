@@ -1080,7 +1080,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 {
                     qDebug() << "Work ID finished" << ww << "Aggregate & collate data";
                     QSettings set;
-                    QString dbP = set.value("databaseDir", "L:").toString();
+                    QString dbP = set.value("databaseDir", "L:/").toString();
 
 #ifndef  WIN32
                     if (dbP.contains(":"))
@@ -1101,17 +1101,22 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                     QStringList files = dir.entryList(QStringList() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
                     QString concatenated = QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/",""));
                     if (files.isEmpty())
-                        qDebug() << "Error fusing the data" << concatenated;
+                    {
+                        qDebug() << "Error fusing the data to generate" << concatenated;
+                        qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", ""));
+                    }
                     else
                         fuseArrow(path, files, concatenated);
 
-                    if (agg.contains("PostProcess") && agg["PostProcess"].toArray().size() > 0)
+                   // qDebug() << agg.keys() << obj.keys();
+
+                    if (agg.contains("PostProcesses") && agg["PostProcesses"].toArray().size() > 0)
                     {
-                        qDebug() << "We need to run the post processes:" << agg["PostProcess"].toArray();
+                        qDebug() << "We need to run the post processes:" << agg["PostProcesses"].toArray();
                         // Set our python env first
                         // Setup the call to python
                         // Also change working directory to the "concatenated" folder
-                        auto arr = agg["PostProcess"].toArray();
+                        auto arr = agg["PostProcesses"].toArray();
                         for (int i = 0; i < arr.size(); ++i )
                         { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
                             QString script = arr[i].toString().replace("\\", "/");
