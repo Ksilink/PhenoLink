@@ -150,7 +150,7 @@ void fuseArrow(QString bp, QStringList files, QString out)
 {
     qDebug() << "Fusing" << files << "to" << out;
 
-    QString plate = out.split("/").last().replace(".fth", "");
+    QString plateName = out.split("/").last().replace(".fth", "");
 
     QMap<std::string, QList<  std::shared_ptr<arrow::Array> > > datas;
     QMap<std::string, std::shared_ptr<arrow::Field> >     fields;
@@ -296,7 +296,7 @@ void fuseArrow(QString bp, QStringList files, QString out)
         for (auto& w: ws)
         {
             wells.Append(w);
-            plate.Append(plate.toStdString());
+            plate.Append(plateName.toStdString());
             int f = 0;
             for (auto& name: fie)
                 if (fields[name]->metadata())
