@@ -139,6 +139,8 @@ int getKeyFromJSON(QString key, QJsonObject ob)
 void CheckoutProcessPluginInterface::prepareData()
 {
 
+//    qDebug() << "Plugin Prepare data" << _callParams.keys();
+
     QString hash = _callParams["Process_hash"].toString();
     //  qDebug() << "Process hash func: " << hash;
     int p = 0;
@@ -384,6 +386,9 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
 
     ob["Infos"] = QJsonArray::fromStringList(_infos);
     ob["WellTags"]=_callParams["WellTags"];
+
+    ob["PostProcesses"]=_callParams["PostProcesses"];
+
     ob["Project"]=_callParams["Project"];
     ob["LoadingTime"] = _result["LoadingTime"];
     ob["Data"] = arr;
