@@ -276,9 +276,9 @@ void ReadFeather(QString file, StructuredMetaData& data)
     std::string uri = file.toStdString(), root_path;
     ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file);
 
-    ArrowGet(input, r1, fs->OpenInputFile(uri), "Error openning arrow file" << file);
+    ArrowGet(input, r1, fs->OpenInputFile(uri), "Error opening arrow file" << file);
     arrow::Result<std::shared_ptr<arrow::ipc::RecordBatchFileReader>  > r2 = arrow::ipc::RecordBatchFileReader::Open(input);
-     if (!r2.ok()) { qDebug() << "Batch open error"; return ; } 
+     if (!r2.ok()) { qDebug() << "Batch open error"; return ; }
      std::shared_ptr<arrow::ipc::RecordBatchFileReader> reader = r2.ValueOrDie();
 
 

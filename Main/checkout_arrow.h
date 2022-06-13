@@ -162,7 +162,7 @@ void fuseArrow(QString bp, QStringList files, QString out)
         std::string uri = (bp+"/"+file).toStdString(), root_path;
         ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file);
 
-        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error openning arrow file" << bp+file);
+        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error opening arrow file" << bp+file);
         ArrowGet(reader, r2, arrow::ipc::RecordBatchFileReader::Open(input), "Error Reading records");
 
         auto schema = reader->schema();

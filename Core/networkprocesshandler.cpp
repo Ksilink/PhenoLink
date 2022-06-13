@@ -1124,20 +1124,21 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
 
     writer->WriteTable(*table.get());
     writer->Close();
-
+    output->Close();
 
     if (finished)
     {
-
         QStringList l = df.outfile.split("/");
 
         QString file = l.last(); l.pop_back();
+
         QString bp = l.join("/") + "/";
         QDir f(bp);
+
+        qDebug() << bp << file ;
         f.rename(file, file + ".torm");
 
-
-        fuseArrow(bp, QStringList() << file+".torm", file);
+        fuseArrow(bp, QStringList() << file+".torm", bp+file);
     }
 
 }
