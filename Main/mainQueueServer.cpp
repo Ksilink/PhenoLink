@@ -105,6 +105,9 @@ void startup_execute(QString file)
 
 }
 
+QProcessEnvironment python_config;
+
+
 int main(int ac, char** av)
 {
 #ifdef WIN32
@@ -127,6 +130,21 @@ int main(int ac, char** av)
 
     QStringList data;
     for (int i = 1; i < ac; ++i) { data << av[i];  }
+
+    if (data.contains("-h") || data.contains("-help"))
+    {
+        qDebug() << "CheckoutQueue Serveur Help:"
+                 << "\t-p <port>: specify the port to run on"
+                 << "\t-d : Run in debug mode (windows only launches a console)"
+                 << "\t-Crashed: Reports that the process has been restarted after crashing"
+                 << "\t-c <config>: Specify a config file for python env setting json dict"
+                 << "\t\t shall contain env. variable with list of values,"
+                 << "$NAME will be substituted by current env value called 'NAME'"
+                    ;
+
+        exit(0);
+    }
+
     if (data.contains("-p"))
     {
         int idx = data.indexOf("-p")+1;
@@ -140,6 +158,49 @@ int main(int ac, char** av)
     if (data.contains("-Crashed"))
     { // recovering from crashed session, how to tell the user the queue crashed???
 
+    }
+
+
+    if (data.contains("-c"))
+    {
+        QString config;
+        int idx = data.indexOf("-p")+1;
+        if (data.size() > idx) config = data.at(idx);
+        qDebug() << "Using server config:" << config;
+
+        QFile loadFile(config);
+
+        if (!loadFile.open(QIODevice::ReadOnly)) {
+            qWarning("Couldn't open config file, skipping");
+        }
+        else
+        {
+
+            QByteArray saveData = loadFile.readAll();
+
+            QCborMap pc =  QCborMap::fromJsonObject(
+                        QJsonDocument::fromJson(saveData).object());
+
+            python_config = QProcessEnvironment::systemEnvironment();
+
+            for (auto k: pc)
+            {
+                QStringList vals = k.second.toString().split(";"), nxt;
+                for (auto& v : vals)
+                {
+                    if (v[0]=="$")
+                    {
+                        QString s = v.replace("$","");
+                        if (python_config.contains(s) )
+                            nxt << python_config.value(s);
+                    }
+                    else
+                        nxt << v;
+                   }
+                python_config.insert(k.first.toString(), nxt.join(";"));
+            }
+
+        }
     }
 
 
@@ -758,7 +819,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                             QString script = arr[i].toString().replace("\\", "/");
                             auto args = QStringList() << "python" << adjust(script)  << concatenated;
                             QProcess* python = new QProcess();
+
+
                             postproc << python;
+
+                            python->setProcessEnvironment(python_config);
 
                             postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
                             postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", ""));

@@ -1128,10 +1128,14 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
 
     if (finished)
     {
+
         QStringList l = df.outfile.split("/");
+        QDir f;
+        f.rename(df.outfile, df.outfile + ".torm");
+
         QString file = l.last(); l.pop_back();
         QString bp = l.join("/");
-        fuseArrow(bp, QStringList() << file, file);
+        fuseArrow(bp, QStringList() << file+".torm", file);
     }
 
 }
