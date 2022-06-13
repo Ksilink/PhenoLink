@@ -121,7 +121,7 @@ public:
 
 
      void timerEvent(QTimerEvent *event) override;
-     void storeData(QString plate);
+     void storeData(QString plate, bool finished=false);
 
 
 protected:
