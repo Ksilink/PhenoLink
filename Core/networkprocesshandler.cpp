@@ -1134,7 +1134,7 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
         f.rename(df.outfile, df.outfile + ".torm");
 
         QString file = l.last(); l.pop_back();
-        QString bp = l.join("/");
+        QString bp = l.join("/") + "/";
         fuseArrow(bp, QStringList() << file+".torm", file);
     }
 
