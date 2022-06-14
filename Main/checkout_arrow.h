@@ -155,6 +155,7 @@ void fuseArrow(QString bp, QStringList files, QString out)
     QMap<std::string, QList<  std::shared_ptr<arrow::Array> > > datas;
     QMap<std::string, std::shared_ptr<arrow::Field> >     fields;
     QMap<std::string, QMap<std::string, QList<float> > >  agg;
+    QMap<std::string, std::string> tgs;
 
     int counts = 0;
     for (auto file: files)
@@ -178,6 +179,13 @@ void fuseArrow(QString bp, QStringList files, QString out)
 
             auto well = std::static_pointer_cast<arrow::StringArray>(rb->GetColumnByName("Well"));
 
+            {
+                auto array = std::dynamic_pointer_cast<arrow::StringArray>(rb->GetColumnByName("tags"));
+                if (array )
+                    for (int s = 0; s < array->length(); ++s)
+                        if (!tgs.contains(well->GetString(s)))
+                            tgs[well->GetString(s)].append(array->GetString(s));
+            }
 
             for (auto f : schema->fields())
 
@@ -195,10 +203,14 @@ void fuseArrow(QString bp, QStringList files, QString out)
                 }
                 datas[f->name()].append(rb->GetColumnByName(f->name()));
 
-                auto array = std::dynamic_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(f->name()));
-                if (array &&   (f->name() != "Well" && f->metadata()))
-                    for (int s = 0; s < array->length(); ++s)
-                        agg[f->name()][well->GetString(s)].append(array->Value(s));
+                {
+                    auto array = std::dynamic_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(f->name()));
+                    if (array &&   (f->name() != "Well" && f->metadata()))
+                        for (int s = 0; s < array->length(); ++s)
+                            agg[f->name()][well->GetString(s)].append(array->Value(s));
+
+                }
+
 
                 lists << f->name();
             }
@@ -281,13 +293,14 @@ void fuseArrow(QString bp, QStringList files, QString out)
         std::vector<std::shared_ptr<arrow::Field> > ff;
         ff.push_back(fields["Well"]);
         ff.push_back(fields["Plate"]);
+        ff.push_back(fields["tags"]);
 
         for (auto& item: agg.keys())
             ff.push_back(fields[item]);
 
-        std::vector<std::shared_ptr<arrow::Array> > dat(2+agg.size());
+        std::vector<std::shared_ptr<arrow::Array> > dat(3+agg.size());
 
-        arrow::StringBuilder wells, plate;
+        arrow::StringBuilder wells, plate, tags;
 
         std::vector<arrow::NumericBuilder<arrow::FloatType> > data(agg.size());
 
@@ -297,6 +310,8 @@ void fuseArrow(QString bp, QStringList files, QString out)
         {
             wells.Append(w);
             plate.Append(plateName.toStdString());
+            tags.Append(tgs[w]);
+
             int f = 0;
             for (auto& name: fie)
                 if (fields[name]->metadata())
@@ -310,9 +325,10 @@ void fuseArrow(QString bp, QStringList files, QString out)
 
         wells.Finish(&dat[0]);
         plate.Finish(&dat[1]);
+        tags.Finish(&dat[2]);
 
         for (int i = 0; i < agg.size(); ++i)
-            data[i].Finish(&dat[i+2]);
+            data[i].Finish(&dat[i+3]);
 
         auto schema =
                 arrow::schema(ff);
