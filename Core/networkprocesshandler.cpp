@@ -1089,7 +1089,7 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
             arrow::schema(fields);
     auto table = arrow::Table::Make(schema, dat);
 
-    qDebug() << "Storing DataFile to:" << df.outfile;
+    qDebug() << "Storing DataFile to:" << df.outfile << " Rows " << dat.front()->length();
 
     std::string uri = df.outfile.toStdString();
     std::string root_path;
