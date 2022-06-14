@@ -785,7 +785,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                         qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", ""));
                     }
                     else
-                        fuseArrow(path, files, concatenated,agg["Project"].toString().replace("\\", "/").replace("/",""));
+                        fuseArrow(path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
 
                     // qDebug() << agg.keys() << obj.keys();
 
