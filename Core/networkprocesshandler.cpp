@@ -33,6 +33,7 @@ namespace fs = arrow::fs;
 struct DataFrame
 {
     QString outfile;
+    QString plate;
 
     QMap<QString, QString> fuseT;
     QMap<QString, QMap<QString, float   >  > arrFl;
@@ -139,7 +140,7 @@ void CheckoutHttpClient::sendQueue()
 
     //    auto keepalive = req.keepalive;
 
-    qDebug() << "Sending Queued" << url;
+    qDebug() << "Sending Queued" << url.url();
     iclient.request(
                 qhttp::EHTTP_POST,
                 req.url,
@@ -511,8 +512,8 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds)
 
         store.outfile = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5.fth").arg(dbP,
                                                                                    ds["Project"].toString(),
-                commit, plate, srv).replace("\\", "/").replace("//", "/");;
-
+                commit, plate, srv).replace("\\", "/").replace("//", "/");
+        store.plate = plate;
     }
 
 
@@ -1035,7 +1036,7 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
         {
             auto v = k.split(";");
             wells.Append(v[0].toStdString());
-            plate.Append(d.toStdString());
+            plate.Append(df.plate.toStdString());
 
             tp.Append(v[1].toInt());
             fi.Append(v[2].toInt());
@@ -1140,7 +1141,7 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
         qDebug() << bp << file ;
         f.rename(file, file + ".torm");
 
-        fuseArrow(bp, QStringList() << file+".torm", bp+file);
+        fuseArrow(bp, QStringList() << file+".torm", bp+file, df.plate);
 //        plateData.remove(d);
     }
 

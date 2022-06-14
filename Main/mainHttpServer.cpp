@@ -676,7 +676,8 @@ void Server::finished(QString hash, QJsonObject ob)
                      QString("affinity=%1&port=%2&available=%3")
                      .arg(affinity_list.join(","))
                      .arg(dport)
-                     .arg(QThreadPool::globalInstance()->activeThreadCount() <= QThreadPool::globalInstance()->maxThreadCount()),
+                     .arg(QThreadPool::globalInstance()->activeThreadCount() <= QThreadPool::globalInstance()->maxThreadCount() ?
+                              QThreadPool::globalInstance()->maxThreadCount()-QThreadPool::globalInstance()->activeThreadCount() : 1),
                      ar);
     }
 

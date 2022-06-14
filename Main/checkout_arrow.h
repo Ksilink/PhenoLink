@@ -146,7 +146,7 @@ float Aggregate(QList<float>& f, QString& ag)
 }
 
 
-void fuseArrow(QString bp, QStringList files, QString out)
+void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 {
     qDebug() << "Fusing" << files << "to" << out;
 
@@ -309,7 +309,7 @@ void fuseArrow(QString bp, QStringList files, QString out)
         for (auto& w: ws)
         {
             wells.Append(w);
-            plate.Append(plateName.toStdString());
+            plate.Append(plateID.toStdString());
             tags.Append(tgs[w]);
 
             int f = 0;

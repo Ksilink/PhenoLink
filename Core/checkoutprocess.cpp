@@ -765,7 +765,7 @@ void CheckoutProcess::finishedProcess(QString hash, QJsonObject result)
     emit finishedJob(hash, result);
 
 
-    qDebug() << "process finished, remaining" << _status.size();
+//    qDebug() << "process finished, remaining" << _status.size();
     //    qDebug() << "Removing" << hash;
 }
 

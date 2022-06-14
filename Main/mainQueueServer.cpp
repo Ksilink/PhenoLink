@@ -714,7 +714,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 if (cpu.isEmpty())
                     workers.enqueue(qMakePair(serverIP, port));
                 else
-                    for (int i= 0; i< cpu.toInt(); ++i)
+                    for (int i= 0; i<  ob.size(); ++i)
                         workers.enqueue(qMakePair(serverIP, port));
             }
         }
@@ -729,7 +729,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         {
             qDebug() << "Finished " << workid;
             auto t = QDateTime::currentDateTime().toSecsSinceEpoch() - running[workid]["SendTime"].toInt();
-            QString ww = workid.split("!")[0];
+            QStringList wid = workid.split("!");
+            QString ww = QString("%1!%2").arg(wid[0], wid[1].split("#")[0]);
 
             run_time[ww] += t;
             run_count[ww] ++;
@@ -743,16 +744,20 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             if (obj.contains("TaskID"))
             {
                 auto t = QDateTime::currentDateTime().toSecsSinceEpoch() - running[obj["TaskID"].toString()]["SendTime"].toInt();
+                QStringList wid = obj["TaskID"].toString().split("!");
+                QString wwid = QString("%1!%2").arg(wid[0], wid[1].split("#")[0]);
                 QString ww = obj["TaskID"].toString().split("!")[0];
+
 
                 run_time[ww] += t;
                 run_count[ww] ++;
-                work_count[ww] --;
 
-                //                  qDebug() << "Work ID finished" << obj["TaskID"] << ww << work_count.value(ww);
-                if (work_count.value(ww) == 0)
+                work_count[wwid] --;
+
+                qDebug() << "Work ID finished" << obj["TaskID"] << wwid << work_count.value(wwid);
+                if (work_count.value(wwid) == 0)
                 {
-                    qDebug() << "Work ID finished" << ww << "Aggregate & collate data";
+                    qDebug() << "Work ID finished" << wwid << "Aggregate & collate data" << obj["TaskID"].toString();
                     QSettings set;
                     QString dbP = set.value("databaseDir", "L:/").toString();
 
@@ -780,7 +785,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                         qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", ""));
                     }
                     else
-                        fuseArrow(path, files, concatenated);
+                        fuseArrow(path, files, concatenated,agg["Project"].toString().replace("\\", "/").replace("/",""));
 
                     // qDebug() << agg.keys() << obj.keys();
 
@@ -1118,9 +1123,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
             workers_lock.unlock();
 
-            QString workid = QString("%1@%2#%3#%4")
+            QString workid = QString("%1@%2#%3#%4!%5")
                     .arg(obj["Username"].toString(), obj["Computer"].toString(),
-                    obj["Path"].toString(), obj["WorkID"].toString());
+                    obj["Path"].toString(), obj["WorkID"].toString(),
+                    obj["XP"].toString());
 
             work_count[workid]++;
 
