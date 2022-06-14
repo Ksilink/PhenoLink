@@ -742,7 +742,7 @@ QCborArray NetworkProcessHandler::filterBinary(QString hash, QJsonObject ds)
     QCborArray res;
     QString commitName = ds["CommitName"].toString();
 
-    qDebug() << "Filter Binary" << ds.keys() << ds["ProcessStartId"];
+//    qDebug() << "Filter Binary" << ds.keys() << ds["ProcessStartId"];
 
     if (ds.contains("Data"))
     {

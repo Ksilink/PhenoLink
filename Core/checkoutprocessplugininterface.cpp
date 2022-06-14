@@ -398,7 +398,7 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     ob["State"] = QString(_state == Running ? "Running" : (_state == Finished ? "Finished" : "NotStarted"));
     ob["Pos"] = getPosition();
     ob["shallDisplay"] = _shallDisplay;
-    qDebug() << "In plugin processStartId" << processStartId << _callParams["ProcessStartId"];
+//    qDebug() << "In plugin processStartId" << processStartId << _callParams["ProcessStartId"];
 
 
     ob["ProcessStartId"] = processStartId;
