@@ -658,7 +658,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QString workid, cpu;
 
         bool reset = false;
-        bool avail = true;
+        int avail = 0;
         bool crashed = false;
         for (auto q : queries)
         {
@@ -685,7 +685,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 workid = q.replace("workid=","");
             }
             if (q.startsWith("available="))
-                avail = (q == "available=1");
+                avail = (q.replace("available=").toInt());
             if (q.startsWith("crashed="))
             {
                 crashed = (q=="crashed=true");
@@ -707,15 +707,16 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         }
         auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
 
-        if (avail && ob.size() == 0 )
+        if (avail > 0 && ob.size() == 0 )
         {
             if (workers_status[QString("%1:%2").arg(serverIP).arg(port)] >= 0)
             {
                 if (cpu.isEmpty())
                     workers.enqueue(qMakePair(serverIP, port));
                 else
-                    for (int i= 0; i<  ob.size(); ++i)
+                    for (int i= 0; i <  (cpu.isEmpty() ? avail : cpu.toInt()) ; ++i)
                         workers.enqueue(qMakePair(serverIP, port));
+
             }
         }
 
