@@ -140,7 +140,7 @@ void CheckoutHttpClient::sendQueue()
 
     //    auto keepalive = req.keepalive;
 
-    qDebug() << "Sending Queued" << url.url();
+    qDebug() << QDateTime::currentDateTime().toString() << "Sending Queued" << url.url();
     iclient.request(
                 qhttp::EHTTP_POST,
                 req.url,
