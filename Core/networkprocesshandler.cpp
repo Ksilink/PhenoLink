@@ -106,7 +106,7 @@ void CheckoutHttpClient::sendQueue()
     if (collapse)
         for (int i = 0; i < reqs.size(); ++i)
             if (reqs.at(i).url == url &&
-                    (//url.path().startsWith("/addData/") ||
+                    (url.path().startsWith("/addData/") ||
                      url.path().startsWith("/Start")  ||
                      url.path().startsWith("/Ready") ||
                      url.path().startsWith("/ServerDone") ) )
@@ -490,11 +490,13 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds)
     for (auto& k : l) if (ds.contains(k)) ob[k] = ds[k];
 
     QString plate = ds["XP"].toString(), commit = ds["CommitName"].toString();
+    QString plateID = plate + commit;
 
-    if (!plateData.contains(plate))
-        plateData.insert(plate, new DataFrame);
 
-    DataFrame& store =  *plateData[plate];
+    if (!plateData.contains(plateID))
+        plateData.insert(plateID, new DataFrame);
+
+    DataFrame& store =  *plateData[plateID];
 
     if (store.outfile.isEmpty()&&!commit.isEmpty())
     {
@@ -586,13 +588,13 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds)
     res << ob;
 
     //storageTimer.values().indexOf(plate)
-    if (rstorageTimer.contains(plate))
-        killTimer(rstorageTimer[plate]);
+    if (rstorageTimer.contains(plateID))
+        killTimer(rstorageTimer[plateID]);
 
     int timer = startTimer(30000); // reset the current timer to 30s since last modification
 
-    storageTimer[timer] = plate;
-    rstorageTimer[plate] = timer;
+    storageTimer[timer] = plateID;
+    rstorageTimer[plateID] = timer;
 
     if (CheckoutProcess::handler().numberOfRunningProcess() <= 0) // Directly save if no more process running
     {
@@ -1139,9 +1141,12 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
         f.rename(file, file + ".torm");
 
         fuseArrow(bp, QStringList() << file+".torm", bp+file);
+        plateData.remove(d);
     }
 
 }
+
+void NetworkProcessHandler::setPythonEnvironment(QProcessEnvironment env) { python_env = env; }
 
 
 QStringList NetworkProcessHandler::remainingProcess()

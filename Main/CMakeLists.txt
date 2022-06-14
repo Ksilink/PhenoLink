@@ -50,7 +50,7 @@ add_definitions(-DQHTTP_MEMORY_LOG=0)
 add_definitions(-DQHTTP_HAS_CLIENT)
 
 
-add_executable(CheckoutHttpServer mainHttpServer.cpp checkouthttpserver.h ${SrvRCFILE} )
+add_executable(CheckoutHttpServer mainHttpServer.cpp checkouthttpserver.h checkout_python.h ${SrvRCFILE} )
 target_include_directories(CheckoutHttpServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (WIN32)
@@ -61,7 +61,7 @@ endif(WIN32)
 
 install(TARGETS CheckoutHttpServer COMPONENT applications DESTINATION bin)
 
-add_executable(CheckoutQueueServer mainQueueServer.cpp checkouqueuserver.h ${SrvRCFILE} )
+add_executable(CheckoutQueueServer mainQueueServer.cpp checkouqueuserver.h checkout_arrow.h checkout_python.h ${SrvRCFILE} )
 target_include_directories(CheckoutQueueServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (WIN32)
