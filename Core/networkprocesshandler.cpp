@@ -974,7 +974,7 @@ void NetworkProcessHandler::timerEvent(QTimerEvent *event)
 
         killTimer(timer);
 
-        storeData(d);
+        storeData(d, false);
     }
 }
 
@@ -1141,7 +1141,7 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
         f.rename(file, file + ".torm");
 
         fuseArrow(bp, QStringList() << file+".torm", bp+file);
-        plateData.remove(d);
+//        plateData.remove(d);
     }
 
 }
