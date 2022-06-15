@@ -988,6 +988,7 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
     DataFrame& df = *plateData[d];
     //        QStringList headers =  + df.arrInt.keys() + df.arrStr.keys();
 
+
     if (df.outfile.isEmpty())        return;
 
     std::vector<std::shared_ptr<arrow::Field> > fields;
@@ -1138,10 +1139,13 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
         QString bp = l.join("/") + "/";
         QDir f(bp);
 
-        qDebug() << bp << file ;
-        f.rename(file, file + ".torm");
+        if (srv.isEmpty())
+        {
+            qDebug() << bp << file ;
+            f.rename(file, file + ".torm");
 
-        fuseArrow(bp, QStringList() << file+".torm", bp+file, df.plate);
+            fuseArrow(bp, QStringList() << file+".torm", bp+file, df.plate);
+        }
     }
 
 }
