@@ -27,7 +27,7 @@ QMapWrapper<K,V> wrapQMap(const QMap<K,V>& map) {
     return QMapWrapper<K,V>(map);
 }
 #define ArrowGet(var, id, call, msg) \
-    auto id = call; if (!id.ok()) { qDebug() << msg; return ; } auto var = id.ValueOrDie();
+    auto id = call; if (!id.ok()) { qDebug() << msg << QString::fromStdString(id.status().message()); return ; } auto var = id.ValueOrDie();
 
 
 template <class T>
@@ -150,8 +150,6 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 {
     qDebug() << "Fusing" << files << "to" << out;
 
-    QString plateName = out.split("/").last().replace(".fth", "");
-
     QMap<std::string, QList<  std::shared_ptr<arrow::Array> > > datas;
     QMap<std::string, std::shared_ptr<arrow::Field> >     fields;
     QMap<std::string, QMap<std::string, QList<float> > >  agg;
@@ -164,9 +162,9 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         QString ur = QString(bp+"/"+file).replace("\\", "/").replace("//", "/");
 
         std::string uri = ur.toStdString(), root_path;
-        ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file);
+        ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file << ur <<  QString::fromStdString(root_path));
 
-        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error opening arrow file" << bp+file);
+        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error opening arrow file" << bp+file << ur <<  QString::fromStdString(root_path));
         ArrowGet(reader, r2, arrow::ipc::RecordBatchFileReader::Open(input), "Error Reading records");
 
         auto schema = reader->schema();
@@ -288,6 +286,8 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
     writer->WriteTable(*table.get());
     writer->Close();
+    output->Close();
+
 
     // Let's handle agg
     {
@@ -374,6 +374,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
         writer->WriteTable(*table.get());
         writer->Close();
+        output->Close();
 
     }
 
