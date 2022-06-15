@@ -19,15 +19,15 @@ template<class K,class V>
 struct QMapWrapper {
     const QMap<K,V> map;
     QMapWrapper(const QMap<K,V>& map) : map(map) {}
-    auto begin() { return map.keyValueBegin(); }
-    auto end()   { return map.keyValueEnd();   }
+    typename QMap<K,V>::const_key_value_iterator begin() { return map.keyValueBegin(); }
+    typename QMap<K,V>::const_key_value_iterator end()   { return map.keyValueEnd();   }
 };
 template<class K,class V>
 QMapWrapper<K,V> wrapQMap(const QMap<K,V>& map) {
     return QMapWrapper<K,V>(map);
 }
 #define ArrowGet(var, id, call, msg) \
-    auto id = call; if (!id.ok()) { qDebug() << msg; return ; } auto var = id.ValueOrDie();
+    auto id = call; if (!id.ok()) { qDebug() << msg << QString::fromStdString(id.status().message()); return ; } auto var = id.ValueOrDie();
 
 
 template <class T>
@@ -150,8 +150,6 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 {
     qDebug() << "Fusing" << files << "to" << out;
 
-    QString plateName = out.split("/").last().replace(".fth", "");
-
     QMap<std::string, QList<  std::shared_ptr<arrow::Array> > > datas;
     QMap<std::string, std::shared_ptr<arrow::Field> >     fields;
     QMap<std::string, QMap<std::string, QList<float> > >  agg;
@@ -161,11 +159,12 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     for (auto file: files)
     {
         QList<std::string> lists;
+        QString ur = QString(bp+"/"+file).replace("\\", "/").replace("//", "/");
 
-        std::string uri = (bp+"/"+file).toStdString(), root_path;
-        ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file);
+        std::string uri = ur.toStdString(), root_path;
+        ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file << ur <<  QString::fromStdString(root_path));
 
-        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error opening arrow file" << bp+file);
+        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error opening arrow file" << bp+file << ur <<  QString::fromStdString(root_path));
         ArrowGet(reader, r2, arrow::ipc::RecordBatchFileReader::Open(input), "Error Reading records");
 
         auto schema = reader->schema();
@@ -273,7 +272,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     }
     auto output = r1.ValueOrDie();
     arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-    //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+    options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
     auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
 
@@ -287,6 +286,8 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
     writer->WriteTable(*table.get());
     writer->Close();
+    output->Close();
+
 
     // Let's handle agg
     {
@@ -338,7 +339,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         repath.last() = QString("ag%1").arg(repath.last());
 
         qDebug() << "Aggregating to " << (repath.join("/"));
-        std::string uri = (repath.join("/")).toStdString();
+        std::string uri = (repath.join("/").replace("\\", "/").replace("//", "/")).toStdString();
         std::string root_path;
 
         auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
@@ -359,7 +360,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         }
         auto output = r1.ValueOrDie();
         arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-        //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
         auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
 
@@ -373,6 +374,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
         writer->WriteTable(*table.get());
         writer->Close();
+        output->Close();
 
     }
 

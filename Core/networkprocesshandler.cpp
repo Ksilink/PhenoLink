@@ -988,7 +988,12 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
     DataFrame& df = *plateData[d];
     //        QStringList headers =  + df.arrInt.keys() + df.arrStr.keys();
 
+
     if (df.outfile.isEmpty())        return;
+    QString target = df.outfile ;
+
+    {
+
 
     std::vector<std::shared_ptr<arrow::Field> > fields;
 
@@ -1090,9 +1095,10 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
             arrow::schema(fields);
     auto table = arrow::Table::Make(schema, dat);
 
-    qDebug() << "Storing DataFile to:" << df.outfile << " Rows " << dat.front()->length();
+    qDebug() << "Storing DataFile to:" << target << " Rows " << dat.front()->length();
 
-    std::string uri = df.outfile.toStdString();
+
+    std::string uri = target.toStdString();
     std::string root_path;
 
     auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
@@ -1113,7 +1119,7 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
     }
     auto output = r1.ValueOrDie();
     arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-    //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+    //options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
     auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
 
@@ -1128,21 +1134,23 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
     writer->WriteTable(*table.get());
     writer->Close();
     output->Close();
+}
 
     if (finished)
     {
-        QStringList l = df.outfile.split("/");
+        QStringList l = target.split("/");
 
         QString file = l.last(); l.pop_back();
-
         QString bp = l.join("/") + "/";
         QDir f(bp);
 
-        qDebug() << bp << file ;
-        f.rename(file, file + ".torm");
+        if (srv.isEmpty())
+        {
+            qDebug() << bp << file ;
+            f.rename(file, file + ".torm");
 
-        fuseArrow(bp, QStringList() << file+".torm", bp+file, df.plate);
-//        plateData.remove(d);
+            fuseArrow(bp, QStringList() << file+".torm", bp+file, df.plate);
+        }
     }
 
 }
