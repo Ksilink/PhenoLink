@@ -19,8 +19,8 @@ template<class K,class V>
 struct QMapWrapper {
     const QMap<K,V> map;
     QMapWrapper(const QMap<K,V>& map) : map(map) {}
-    auto begin() { return map.keyValueBegin(); }
-    auto end()   { return map.keyValueEnd();   }
+    typename QMap<K,V>::const_key_value_iterator begin() { return map.keyValueBegin(); }
+    typename QMap<K,V>::const_key_value_iterator end()   { return map.keyValueEnd();   }
 };
 template<class K,class V>
 QMapWrapper<K,V> wrapQMap(const QMap<K,V>& map) {
