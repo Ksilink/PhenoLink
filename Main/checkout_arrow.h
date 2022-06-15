@@ -67,13 +67,19 @@ void concat(const QList<std::shared_ptr<arrow::Array> >& list, std::shared_ptr<a
         for (int s = 0; s < c->length(); ++s)
         {
             if (c->IsValid(s))
+            {
                 bldr.Append(_get(c, s));
+             //   qDebug() << s; // << QString("%1").arg(_get(c, s));
+            }
             else
+            {
+             //   qDebug() << s << "-";
                 bldr.AppendNull();
+            }
+
         }
 
     }
-
 
     bldr.Finish(&res);
 
@@ -170,7 +176,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         auto schema = reader->schema();
 
         ArrowGet(rowC, r3, reader->CountRows(), "Error reading row count");
-
+        qDebug() << "file" << file << schema->fields().size()  << rowC ;
 
         for (int record = 0; record < reader->num_record_batches(); ++record)
         {
@@ -198,6 +204,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
                     arrow::NumericBuilder<arrow::FloatType> bldr;
                     bldr.AppendNulls(counts);
                     bldr.Finish(&ar);
+                    
                     datas[f->name()].append(ar);
                 }
                 datas[f->name()].append(rb->GetColumnByName(f->name()));
@@ -236,15 +243,17 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     int p = 0;
     for (auto wd: wrapQMap(datas))
     {
+        qDebug() << QString::fromStdString(wd.first);
         if (std::dynamic_pointer_cast<arrow::FloatArray>(wd.second.first()))
             concat<arrow::NumericBuilder<arrow::FloatType>, arrow::FloatArray >(wd.second, dat[p]);
         else if (std::dynamic_pointer_cast<arrow::Int16Array>(wd.second.first()))
             concat<arrow::NumericBuilder<arrow::Int16Type> , arrow::Int16Array >(wd.second, dat[p]);
         else if (std::dynamic_pointer_cast<arrow::StringArray>(wd.second.first()))
             concat<arrow::StringBuilder, arrow::StringArray > (wd.second, dat[p]);
+        qDebug() << p << QString::fromStdString(wd.first) << dat[p]->length();
         p++;
     }
-
+    qDebug() << "Generated rows" << dat[0]->length();
 
     auto schema =
             arrow::schema(ff);
@@ -272,7 +281,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     }
     auto output = r1.ValueOrDie();
     arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-    options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+//    options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
     auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
 
@@ -360,7 +369,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         }
         auto output = r1.ValueOrDie();
         arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+//        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
         auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
 
@@ -382,12 +391,13 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     // We are lucky enough to get up to here... let's remove the file
 
     QDir dir(bp);
+    /*
     for (auto f: files)
     {
         dir.remove(f);
         if (QFileInfo::exists(bp + "/ag" + f))
             dir.remove("ag" + f);
-    }
+    } */
 
 
 }
