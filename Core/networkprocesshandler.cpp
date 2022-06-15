@@ -1142,7 +1142,6 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
         f.rename(file, file + ".torm");
 
         fuseArrow(bp, QStringList() << file+".torm", bp+file, df.plate);
-//        plateData.remove(d);
     }
 
 }

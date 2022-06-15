@@ -161,8 +161,9 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     for (auto file: files)
     {
         QList<std::string> lists;
+        QString ur = QString(bp+"/"+file).replace("\\", "/").replace("//", "/");
 
-        std::string uri = (bp+"/"+file).toStdString(), root_path;
+        std::string uri = ur.toStdString(), root_path;
         ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file);
 
         ArrowGet(input, r1, fs->OpenInputFile(uri), "Error opening arrow file" << bp+file);
@@ -273,7 +274,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     }
     auto output = r1.ValueOrDie();
     arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-    //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+    options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
     auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
 
@@ -338,7 +339,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         repath.last() = QString("ag%1").arg(repath.last());
 
         qDebug() << "Aggregating to " << (repath.join("/"));
-        std::string uri = (repath.join("/")).toStdString();
+        std::string uri = (repath.join("/").replace("\\", "/").replace("//", "/")).toStdString();
         std::string root_path;
 
         auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
@@ -359,7 +360,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         }
         auto output = r1.ValueOrDie();
         arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-        //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
         auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
 
