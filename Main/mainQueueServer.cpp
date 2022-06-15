@@ -476,11 +476,11 @@ void Server::WorkerMonitor()
                 {
 
                     QJsonObject pr = queue.dequeue();
-                    if (!proc_params[pr["Path"].toString()].contains(next_worker))
+                  /*  if (!proc_params[pr["Path"].toString()].contains(next_worker))
                     {
                         next_worker = pickWorker(pr["Path"].toString());
 
-                    }
+                    }*/
 
                     CheckoutHttpClient* sr = nullptr;
                     if (clients[next_worker])
