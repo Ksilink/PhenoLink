@@ -490,7 +490,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds)
     auto l = QStringList() << "TaskID" << "DataHash" << "WorkID";
     for (auto& k : l) if (ds.contains(k)) ob[k] = ds[k];
 
-    QString plate = ds["XP"].toString(), commit = ds["CommitName"].toString();
+    QString plate = ds["XP"].toString().replace("\\","/").replace("/",""), commit = ds["CommitName"].toString();
     QString plateID = plate + commit;
 
 

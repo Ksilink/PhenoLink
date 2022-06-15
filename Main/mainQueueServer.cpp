@@ -685,7 +685,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 workid = q.replace("workid=","");
             }
             if (q.startsWith("available="))
+            {
                 avail = (q.replace("available=", "").toInt());
+                avail = avail > 0 ? avail : 1;
+            }
             if (q.startsWith("crashed="))
             {
                 crashed = (q=="crashed=true");
