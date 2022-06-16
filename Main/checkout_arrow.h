@@ -204,7 +204,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
                     arrow::NumericBuilder<arrow::FloatType> bldr;
                     bldr.AppendNulls(counts);
                     bldr.Finish(&ar);
-                    
+
                     datas[f->name()].append(ar);
                 }
                 datas[f->name()].append(rb->GetColumnByName(f->name()));
@@ -391,13 +391,13 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     // We are lucky enough to get up to here... let's remove the file
 
     QDir dir(bp);
-    /*
+
     for (auto f: files)
     {
         dir.remove(f);
         if (QFileInfo::exists(bp + "/ag" + f))
             dir.remove("ag" + f);
-    } */
+    }
 
 
 }
