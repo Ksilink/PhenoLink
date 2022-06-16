@@ -24,11 +24,11 @@ void parse_python_conf(QFile& loadFile, QProcessEnvironment& python_config)
         for (auto k: pc)
         {
 
-            QStringList vals = k.second.toString().split(";"), nxt;
-            if (k.second.toString().contains(";"))
+            QStringList vals = k.second.toString().replace("\\","/").split(";"), nxt;
+            //if (k.second.toString().contains(";"))
                 vals = k.second.toString().split(";");
-            else if (k.second.toString().contains(":"))
-                vals = k.second.toString().split(":");
+            //else if (k.second.toString().contains(":"))
+            //    vals = k.second.toString().split(":");
 
             for (auto& v : vals)
             {
@@ -40,8 +40,16 @@ void parse_python_conf(QFile& loadFile, QProcessEnvironment& python_config)
                 }
                 else
                     nxt << v;
+                
                }
-            python_config.insert(k.first.toString(), nxt.join(";"));
+
+            QString concat = nxt.join(";");
+#ifdef WIN32
+            concat = concat.replace("/", "\\");
+#endif
+            qDebug() << k.first << concat;
+
+            python_config.insert(k.first.toString(), concat);
         }
 
     }

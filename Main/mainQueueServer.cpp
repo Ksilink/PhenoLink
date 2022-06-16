@@ -793,19 +793,21 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                         for (int i = 0; i < arr.size(); ++i )
                         { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
                             QString script = arr[i].toString().replace("\\", "/");
-                            auto args = QStringList() << "python" << adjust(script)  << concatenated;
+                            auto args = QStringList() << adjust(script)  << concatenated;
                             QProcess* python = new QProcess();
 
 
                             postproc << python;
 
                             python->setProcessEnvironment(python_config);
+                            qDebug() << python_config.value("PATH");
+                            qDebug() << args;
 
                             postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
                             postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", ""));
                             postproc.last()->setWorkingDirectory(path);
 
-                            postproc.last()->setProgram("python");
+                            postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
                             postproc.last()->setArguments(args);
 
                             postproc.last()->start();

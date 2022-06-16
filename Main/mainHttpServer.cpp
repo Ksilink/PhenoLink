@@ -216,6 +216,8 @@ int main(int ac, char** av)
         qDebug() << "Changing max threads :" << nb_Threads;
     }
 
+    if (nb_Threads < 2) nb_Threads = 2;
+
     qDebug() << "Max number of threads : " << nb_Threads;
     QThreadPool::globalInstance()->setMaxThreadCount(nb_Threads);
 

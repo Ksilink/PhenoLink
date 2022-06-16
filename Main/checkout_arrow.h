@@ -243,7 +243,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     int p = 0;
     for (auto wd: wrapQMap(datas))
     {
-        qDebug() << QString::fromStdString(wd.first);
+   //     qDebug() << QString::fromStdString(wd.first);
         if (std::dynamic_pointer_cast<arrow::FloatArray>(wd.second.first()))
             concat<arrow::NumericBuilder<arrow::FloatType>, arrow::FloatArray >(wd.second, dat[p]);
         else if (std::dynamic_pointer_cast<arrow::Int16Array>(wd.second.first()))
