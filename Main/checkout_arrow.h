@@ -176,7 +176,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         auto schema = reader->schema();
 
         ArrowGet(rowC, r3, reader->CountRows(), "Error reading row count");
-        qDebug() << "file" << file << schema->fields().size()  << rowC ;
+//        qDebug() << "file" << file << schema->fields().size()  << rowC ;
 
         for (int record = 0; record < reader->num_record_batches(); ++record)
         {
@@ -250,7 +250,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
             concat<arrow::NumericBuilder<arrow::Int16Type> , arrow::Int16Array >(wd.second, dat[p]);
         else if (std::dynamic_pointer_cast<arrow::StringArray>(wd.second.first()))
             concat<arrow::StringBuilder, arrow::StringArray > (wd.second, dat[p]);
-        qDebug() << p << QString::fromStdString(wd.first) << dat[p]->length();
+//        qDebug() << p << QString::fromStdString(wd.first) << dat[p]->length();
         p++;
     }
     qDebug() << "Generated rows" << dat[0]->length();
