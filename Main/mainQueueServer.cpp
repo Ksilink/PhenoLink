@@ -817,11 +817,15 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                         qDebug() << "No Postprocesses";
                 }
 
+
+                // Check if we have finished the TaskID subsets to pure task id i.e. Screen processing and launch subsequents multiplate python runners
                 running.remove(obj["TaskID"].toString());
 
                 workers.enqueue(cw);
                 workers_status[cw]++;
             }
+
+
         }
 
     }

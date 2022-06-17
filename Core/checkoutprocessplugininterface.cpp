@@ -39,6 +39,21 @@ CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addDependencies(
     return *this;
 }
 
+CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addPostProcessScreen(QStringList dep)
+{
+    for (auto& d : dep)  _multi_postprocess << d;
+    return *this;
+}
+
+CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addPostProcessScreen(QString d)
+{
+    _multi_postprocess << d;
+    return *this;
+}
+
+
+
+
 CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addPostProcess(QStringList dep)
 {
     for (auto& d : dep)  _postprocess << d;
@@ -78,6 +93,7 @@ void CheckoutProcessPluginInterface::write(QJsonObject &json) const
     json["Dependencies"] =  QJsonArray::fromStringList(QStringList(deps.begin(), deps.end()));
 
     json["PostProcesses"] = QJsonArray::fromStringList(_postprocess);
+    json["PostProcessesScreen"] = QJsonArray::fromStringList(_multi_postprocess);
 
     json["Parameters"] = params;
     json["ReturnData"] = ret;
@@ -388,6 +404,7 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     ob["WellTags"]=_callParams["WellTags"];
 
     ob["PostProcesses"]=_callParams["PostProcesses"];
+    ob["PostProcessesScreen"]=_callParams["PostProcessesScreen"];
 
     ob["Project"]=_callParams["Project"];
     ob["LoadingTime"] = _result["LoadingTime"];

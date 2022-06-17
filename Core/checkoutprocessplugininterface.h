@@ -310,9 +310,17 @@ public:
     }
 
 
-    CheckoutProcessPluginInterface& addPostProcess(QStringList dep);
+    QStringList postProcessScreen()
+    {
+        return _multi_postprocess;
+    }
 
+
+    CheckoutProcessPluginInterface& addPostProcess(QStringList dep);
     CheckoutProcessPluginInterface& addPostProcess(QString d);
+
+    CheckoutProcessPluginInterface& addPostProcessScreen(QStringList dep);
+    CheckoutProcessPluginInterface& addPostProcessScreen(QString d);
 
 
 protected:
@@ -513,7 +521,7 @@ protected:
 
     QList<InputImageMetaData> _meta;
 
-    QStringList _postprocess;
+    QStringList  _postprocess, _multi_postprocess;
 
 };
 

@@ -1680,8 +1680,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                 {
                     QString nm;
 
-                    if (_channelsNames.size() == _channelsIds.size())
-                        nm = QString(_channelsNames[pos]);
+                    if (channels < _channelsNames.size())
+                        nm = QString(_channelsNames[channels]);
                     else
                         nm = QString("Channel %1").arg(channels);
 
@@ -1717,7 +1717,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
                     QString nm;
 
-                    if (_channelsNames.size() == _channelsIds.size())
+                    if (i < _channelsNames.size())
                         nm = QString(_channelsNames[i]);
                     else
                         nm = QString("Channel %1").arg(i);
@@ -1742,8 +1742,10 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                     }
                     par["Type"] = par["InnerType"];
 
-                    if (par["InnerType"].toString() == "unsigned" || par["InnerType"].toString() == "int") par["isIntegral"] = true;
-                    if (par["InnerType"].toString() == "double" || par["InnerType"].toString() == "float") par["isIntegral"] = false;
+                    if (par["InnerType"].toString() == "unsigned" || par["InnerType"].toString() == "int")
+                        par["isIntegral"] = true;
+                    if (par["InnerType"].toString() == "double" || par["InnerType"].toString() == "float")
+                        par["isIntegral"] = false;
 
 
 
@@ -1767,7 +1769,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                         {
                             if (par["Value"].isArray())
                                 par["Default"] = par["Value"].toArray().at(c);
-                            else
+                            else if (!par["Value"].toString().isEmpty())
                                 par["Default"] = par["Value"];
                             reloaded = false;
                         }
