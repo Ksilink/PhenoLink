@@ -457,13 +457,13 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
         // With the _channelsIds we can
 
         QStringList ch = mdl->getChannelNames();
-        if (_channelsNames.size() != ch.size())
-        {
+//        if (_channelsNames.size() != ch.size())
+//        {
             for (int i = 0; i < ch.size(); ++i)
             {
                 _channelsNames[i+1] = ch.at(i);
             }
-        }
+//        }
     }
 
     //    if (!lastOk) return;

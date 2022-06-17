@@ -1680,7 +1680,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                 {
                     QString nm;
 
-                    if (channels < _channelsNames.size())
+                    if (_channelsNames.contains(channels))
                         nm = QString(_channelsNames[channels]);
                     else
                         nm = QString("Channel %1").arg(channels);
@@ -1717,7 +1717,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
                     QString nm;
 
-                    if (i < _channelsNames.size())
+                    if (_channelsNames.contains(i))
                         nm = QString(_channelsNames[i]);
                     else
                         nm = QString("Channel %1").arg(i);
