@@ -162,21 +162,21 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     QMap<std::string, std::string> tgs;
 
     int counts = 0;
-    for (auto file: files)
+    for (auto file : files)
     {
         QList<std::string> lists;
-        QString ur = QString(bp+"/"+file).replace("\\", "/").replace("//", "/");
+        QString ur = QString(bp + "/" + file).replace("\\", "/").replace("//", "/");
 
         std::string uri = ur.toStdString(), root_path;
-        ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file << ur <<  QString::fromStdString(root_path));
+        ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file << ur << QString::fromStdString(root_path));
 
-        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error opening arrow file" << bp+file << ur <<  QString::fromStdString(root_path));
+        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error opening arrow file" << bp + file << ur << QString::fromStdString(root_path));
         ArrowGet(reader, r2, arrow::ipc::RecordBatchFileReader::Open(input), "Error Reading records");
 
         auto schema = reader->schema();
 
         ArrowGet(rowC, r3, reader->CountRows(), "Error reading row count");
-//        qDebug() << "file" << file << schema->fields().size()  << rowC ;
+        //        qDebug() << "file" << file << schema->fields().size()  << rowC ;
 
         for (int record = 0; record < reader->num_record_batches(); ++record)
         {
@@ -186,7 +186,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
             {
                 auto array = std::dynamic_pointer_cast<arrow::StringArray>(rb->GetColumnByName("tags"));
-                if (array )
+                if (array)
                     for (int s = 0; s < array->length(); ++s)
                         if (!tgs.contains(well->GetString(s)))
                             tgs[well->GetString(s)].append(array->GetString(s));
@@ -211,7 +211,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
                 {
                     auto array = std::dynamic_pointer_cast<arrow::FloatArray>(rb->GetColumnByName(f->name()));
-                    if (array &&   (f->name() != "Well" && f->metadata()))
+                    if (array && (f->name() != "Well" && f->metadata()))
                         for (int s = 0; s < array->length(); ++s)
                             agg[f->name()][well->GetString(s)].append(array->Value(s));
 
@@ -222,7 +222,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
             }
         }
 
-        for (auto& f: datas.keys())
+        for (auto& f : datas.keys())
         { // Make sure we add data to empty columns
             if (!lists.contains(f))
                 datas[f].append(std::shared_ptr<arrow::NullArray>(new arrow::NullArray(rowC)));
@@ -234,29 +234,31 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
 
     std::vector<std::shared_ptr<arrow::Field> > ff;
-    for (auto& item: datas.keys())
+    for (auto& item : datas.keys())
         ff.push_back(fields[item]);
 
 
     std::vector<std::shared_ptr<arrow::Array> > dat(ff.size());
 
     int p = 0;
-    for (auto wd: wrapQMap(datas))
+    for (auto wd : wrapQMap(datas))
     {
-   //     qDebug() << QString::fromStdString(wd.first);
+        //     qDebug() << QString::fromStdString(wd.first);
         if (std::dynamic_pointer_cast<arrow::FloatArray>(wd.second.first()))
             concat<arrow::NumericBuilder<arrow::FloatType>, arrow::FloatArray >(wd.second, dat[p]);
         else if (std::dynamic_pointer_cast<arrow::Int16Array>(wd.second.first()))
-            concat<arrow::NumericBuilder<arrow::Int16Type> , arrow::Int16Array >(wd.second, dat[p]);
+            concat<arrow::NumericBuilder<arrow::Int16Type>, arrow::Int16Array >(wd.second, dat[p]);
         else if (std::dynamic_pointer_cast<arrow::StringArray>(wd.second.first()))
-            concat<arrow::StringBuilder, arrow::StringArray > (wd.second, dat[p]);
-//        qDebug() << p << QString::fromStdString(wd.first) << dat[p]->length();
+            concat<arrow::StringBuilder, arrow::StringArray >(wd.second, dat[p]);
+        //        qDebug() << p << QString::fromStdString(wd.first) << dat[p]->length();
         p++;
     }
+    if (dat.size())
+    {
     qDebug() << "Generated rows" << dat[0]->length();
 
     auto schema =
-            arrow::schema(ff);
+        arrow::schema(ff);
     auto table = arrow::Table::Make(schema, dat);
 
 
@@ -281,7 +283,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     }
     auto output = r1.ValueOrDie();
     arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-//    options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+    //    options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
     auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
 
@@ -305,10 +307,10 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         ff.push_back(fields["Plate"]);
         ff.push_back(fields["tags"]);
 
-        for (auto& item: agg.keys())
+        for (auto& item : agg.keys())
             ff.push_back(fields[item]);
 
-        std::vector<std::shared_ptr<arrow::Array> > dat(3+agg.size());
+        std::vector<std::shared_ptr<arrow::Array> > dat(3 + agg.size());
 
         arrow::StringBuilder wells, plate, tags;
 
@@ -316,14 +318,14 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
         QList<std::string> ws = agg.first().keys(), fie = agg.keys();
 
-        for (auto& w: ws)
+        for (auto& w : ws)
         {
             wells.Append(w);
             plate.Append(plateID.toStdString());
             tags.Append(tgs[w]);
 
             int f = 0;
-            for (auto& name: fie)
+            for (auto& name : fie)
                 if (fields[name]->metadata())
                 {
                     auto method = fields[name]->metadata()->Contains("Aggregation") ? QString::fromStdString(fields[name]->metadata()->Get("Aggregation").ValueOrDie()) : QString();
@@ -338,10 +340,10 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         tags.Finish(&dat[2]);
 
         for (int i = 0; i < agg.size(); ++i)
-            data[i].Finish(&dat[i+3]);
+            data[i].Finish(&dat[i + 3]);
 
         auto schema =
-                arrow::schema(ff);
+            arrow::schema(ff);
         auto table = arrow::Table::Make(schema, dat);
 
         QStringList repath = out.split("/");
@@ -369,7 +371,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         }
         auto output = r1.ValueOrDie();
         arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-//        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+        //        options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
 
         auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
 
@@ -387,7 +389,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
     }
 
-
+}
     // We are lucky enough to get up to here... let's remove the file
 
     QDir dir(bp);
