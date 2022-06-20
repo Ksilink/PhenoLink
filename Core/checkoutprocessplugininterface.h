@@ -181,7 +181,7 @@ public:
             r->setValuePointer(&(it.value()));
             r->setTag(QString(it.key()).replace(" ", "_"));
             r->setComment("");
-
+            _results[QString(it.key()).replace(" ", "_")] = r;
             l << r;
         }
 
@@ -201,6 +201,7 @@ public:
             r->setValuePointer(&(it.value()));
             r->setTag(QString(it.key()).replace(" ", "_"));
             r->setComment("");
+            _results[QString(it.key()).replace(" ", "_")] = r;
 
             l << r;
         }
