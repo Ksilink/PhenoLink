@@ -476,7 +476,7 @@ void Server::WorkerMonitor()
                 {
 
                     QJsonObject pr = queue.dequeue();
-                  /*  if (!proc_params[pr["Path"].toString()].contains(next_worker))
+                    /*  if (!proc_params[pr["Path"].toString()].contains(next_worker))
                     {
                         next_worker = pickWorker(pr["Path"].toString());
 
@@ -512,7 +512,7 @@ void Server::WorkerMonitor()
 
             }
             workers_lock.unlock();
-//            QThread::msleep(2);
+            //            QThread::msleep(2);
         }
         else
         {
@@ -741,12 +741,13 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 QStringList wid = obj["TaskID"].toString().split("!");
                 QString wwid = QString("%1!%2").arg(wid[0], wid[1].split("#")[0]);
                 QString ww = obj["TaskID"].toString().split("!")[0];
-
+                QString jobid = wid[0];
 
                 run_time[ww] += t;
                 run_count[ww] ++;
 
                 work_count[wwid] --;
+                perjob_count[jobid]--;
 
                 qDebug() << "Work ID finished" << obj["TaskID"] << wwid << work_count.value(wwid);
                 if (work_count.value(wwid) == 0)
@@ -771,7 +772,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
                     QDir dir(path);
 
-                    QStringList files = dir.entryList(QStringList() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
+                    QStringList files = dir.entryList(QStringList() << QString("%1_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
                     QString concatenated = QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/",""));
                     if (files.isEmpty())
                     {
@@ -804,7 +805,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                             qDebug() << args;
 
                             postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
-                            postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", ""));
+                            postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".log");
                             postproc.last()->setWorkingDirectory(path);
 
                             postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
@@ -815,6 +816,52 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                     }
                     else
                         qDebug() << "No Postprocesses";
+
+
+
+                    if (  perjob_count[jobid] == 0 && agg.contains("PostProcessesScreen")&& agg["PostProcessesScreen"].toArray().size() > 0)
+                    {
+                        qDebug() << "We need to run the post processes:" << agg["PostProcessesScreen"].toArray();
+                        // Set our python env first
+                        // Setup the call to python
+                        // Also change working directory to the "concatenated" folder
+                        auto data = agg["Experiments"].toArray();
+                        QStringList xps;
+                        for (auto d: data) xps << d.toString().replace("\\", "/").replace("/", "")+".fth";
+
+
+                        auto arr = agg["PostProcessesScreen"].toArray();
+                        for (int i = 0; i < arr.size(); ++i )
+                        { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
+                            QString script = arr[i].toString().replace("\\", "/");
+                            QDir dir(path);
+
+                            auto args = QStringList() << adjust(script);
+                            //<< concatenated;
+                            for (auto & d: xps) if (QFile::exists(path+"/"+d))  args << d;
+                            QProcess* python = new QProcess();
+
+                            postproc << python;
+
+                            python->setProcessEnvironment(python_config);
+                            qDebug() << python_config.value("PATH");
+                            qDebug() << args;
+
+                            postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
+                            postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".screen_log");
+                            postproc.last()->setWorkingDirectory(path);
+
+                            postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
+                            postproc.last()->setArguments(args);
+
+                            postproc.last()->start();
+                        }
+
+                    }
+                    else
+                        qDebug() << "No Screen Post-processes";
+
+
                 }
 
 
@@ -1123,8 +1170,12 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                     .arg(obj["Username"].toString(), obj["Computer"].toString(),
                     obj["Path"].toString(), obj["WorkID"].toString(),
                     obj["XP"].toString());
+            QString jobid = QString("%1@%2#%3#%4")
+                    .arg(obj["Username"].toString(), obj["Computer"].toString(),
+                    obj["Path"].toString(), obj["WorkID"].toString());
 
             work_count[workid]++;
+            perjob_count[jobid]++;
 
             ob.replace(i, obj);
         }
@@ -1243,7 +1294,7 @@ void Control::timerEvent(QTimerEvent * event)
         tooltip = QString("CheckoutQueueServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
 
     QStringList missing_users;
-    for (auto user : procs.users())
+    for (auto& user : procs.users())
     {
         tooltip = QString("%1\r\n%2").arg(tooltip).arg(user);
         bool missing = true;
@@ -1256,10 +1307,10 @@ void Control::timerEvent(QTimerEvent * event)
         if (missing) missing_users << user;
     }
 
-    for (auto old: _users)
+    for (auto & old: _users)
     {
         bool rem = true;
-        for (auto ne: procs.users())
+        for (auto &ne: procs.users())
         {
             if (ne == old->text())
                 rem = false;

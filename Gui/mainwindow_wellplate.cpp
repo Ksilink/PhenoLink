@@ -457,13 +457,10 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
         // With the _channelsIds we can
 
         QStringList ch = mdl->getChannelNames();
-//        if (_channelsNames.size() != ch.size())
-//        {
-            for (int i = 0; i < ch.size(); ++i)
-            {
-                _channelsNames[i+1] = ch.at(i);
-            }
-//        }
+        for (int i = 0; i < ch.size(); ++i)
+        {
+            _channelsNames[i+1] = ch.at(i);
+        }
     }
 
     //    if (!lastOk) return;
@@ -476,8 +473,11 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
     view->update();
 
     if (!set.value("AlwaysUnpack", false).toBool() || !set.value("AlwaysUnpack", false).toBool())
+    {
         if (multifield)
+        {
             multifield = (QMessageBox::question(this, "Multi Field Detected", "Do you want to automatically unpack wells on display ?") == QMessageBox::Yes);
+        }
         else
         {
             if (set.value("AlwaysUnpack", false).toBool())
@@ -485,23 +485,24 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
             if (set.value("NeverUnpack", false).toBool())
                 multifield = false;
         }
-
-
-foreach (ExperimentFileModel* mdl, data)
-{
-    if (multifield)
-    {
-        QList<SequenceFileModel *>  l  = mdl->getAllSequenceFiles();
-
-        foreach(SequenceFileModel* mm, l)
-            mm->setProperties("unpack", "yes");
     }
-    mdl->reloadDatabaseData();
-}
-// Load data using factorised function
-on_wellPlateViewTab_tabBarClicked(ui->wellPlateViewTab->currentIndex());
 
-return data;
+
+    foreach (ExperimentFileModel* mdl, data)
+    {
+        if (multifield)
+        {
+            QList<SequenceFileModel *>  l  = mdl->getAllSequenceFiles();
+
+            foreach(SequenceFileModel* mm, l)
+                mm->setProperties("unpack", "yes");
+        }
+        mdl->reloadDatabaseData();
+    }
+    // Load data using factorised function
+    on_wellPlateViewTab_tabBarClicked(ui->wellPlateViewTab->currentIndex());
+
+    return data;
 }
 
 Screens MainWindow::findPlate(QString plate, QStringList project, QString drive)
