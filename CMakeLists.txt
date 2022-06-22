@@ -98,12 +98,12 @@ else() # MacOSX ?
 endif(WIN32)
 
 # now download the file
-if (NOT EXISTS ${ONNX_TARGET})
+if (NOT EXISTS "${PROJECT_BINARY_DIR}/${ONNX_TARGET}" )
     message("Shall download ${ONNX_URL} to ${ONNX_TARGET}")
-    file(DOWNLOAD ${ONNX_URL} ${ONNX_TARGET})
+    file(DOWNLOAD ${ONNX_URL} "${PROJECT_BINARY_DIR}/${ONNX_TARGET}" )
 endif()
 
-file(ARCHIVE_EXTRACT INPUT ${ONNX_TARGET})
+file(ARCHIVE_EXTRACT INPUT "${PROJECT_BINARY_DIR}/${ONNX_TARGET}" )
 
 include_directories("${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/include" "${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/include/onnxruntime/core/session")
 link_directories("${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/lib")
