@@ -237,6 +237,7 @@ endif(BUILD_PYTHON_SCRIPTING)
 #add_subdirectory(Server)
 add_subdirectory(Main)
 
+
 if(BUILD_PLUGINS)
     add_subdirectory(Plugins)
 endif(BUILD_PLUGINS)
