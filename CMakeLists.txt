@@ -9,7 +9,7 @@
 
 
 
-cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 set(VCPKG_FEATURE_FLAGS versions)
 project(Checkout)
 
@@ -65,6 +65,51 @@ option(BUILD_PYTHON_SCRIPTING "Build with Core side Python Scripting" OFF)
 option(BUILD_WITH_VTK "Build the VTK optional stuff" OFF)
 option(BUILD_RAW_PROCESSOR "Build the Raw data processor (very advanced users - developper feature)" OFF)
 option(PLUGIN_IN_CORE "Shall Core call plugins" OFF)
+option(ONNX_GPU "Use ONNX GPU Version" OFF)
+
+if(UNIX AND NOT APPLE)
+        set(LINUX TRUE)
+endif()
+
+if (WIN32) # do the win32 download
+    if (ONNX_GPU)
+        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-win-x64-gpu-1.11.1.zip")
+        set(ONNX_ROOTDIR "onnxruntime-win-x64-gpu-1.11.1")
+        add_definitions(-DUSE_CUDA)
+    else()
+        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-win-x64-1.11.1.zip")
+        set(ONNX_ROOTDIR "onnxruntime-win-x64-1.11.1")
+    endif(ONNX_GPU)
+    set(ONNX_TARGET "onnxruntime-win.zip")
+
+elseif(LINUX) # do the linux download
+    if (ONNX_GPU)
+        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-linux-x64-gpu-1.11.1.tgz")
+         set(ONNX_ROOTDIR "onnxruntime-linux-x64-gpu-1.11.1")
+         add_definitions(-DUSE_CUDA)
+    else()
+        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-linux-x64-1.11.1.tgz")
+        set(ONNX_ROOTDIR "onnxruntime-linux-x64-1.11.1")
+    endif(ONNX_GPU)
+    set(ONNX_TARGET "onnxruntime-linux.tgz")
+
+else() # MacOSX ?
+
+endif(WIN32)
+
+# now download the file
+if (NOT EXISTS ${ONNX_TARGET})
+    message("Shall download ${ONNX_URL} to ${ONNX_TARGET}")
+    file(DOWNLOAD ${ONNX_URL} ${ONNX_TARGET})
+endif()
+
+file(ARCHIVE_EXTRACT INPUT ${ONNX_TARGET})
+
+include_directories("${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/include" "${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/include/onnxruntime/core/session")
+link_directories("${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/lib")
+
+message("Setting ONNX include & Lib to : ${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}")
+
 
 #option(PLUGIN_NWD_ONLY "Build only WD plugins" OFF)
 
