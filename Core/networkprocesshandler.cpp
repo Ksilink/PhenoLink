@@ -104,15 +104,15 @@ void CheckoutHttpClient::sendQueue()
 
     // Collapse request url
     QList<int> collapsed;
-//    if (collapse)
-//        for (int i = 0; i < reqs.size(); ++i)
-//            if (reqs.at(i).url == url && (
-////                     url.path().startsWith("/addData/") ||
-////                     url.path().startsWith("/Start")  ||
-//                     url.path().startsWith("/Ready") ||
-//                     url.path().startsWith("/ServerDone")
-//                        ) )
-//                collapsed << i;
+    //    if (collapse)
+    //        for (int i = 0; i < reqs.size(); ++i)
+    //            if (reqs.at(i).url == url && (
+    ////                     url.path().startsWith("/addData/") ||
+    ////                     url.path().startsWith("/Start")  ||
+    //                     url.path().startsWith("/Ready") ||
+    //                     url.path().startsWith("/ServerDone")
+    //                        ) )
+    //                collapsed << i;
 
     if (collapsed.size() > 0)
     {
@@ -744,7 +744,7 @@ QCborArray NetworkProcessHandler::filterBinary(QString hash, QJsonObject ds)
     QCborArray res;
     QString commitName = ds["CommitName"].toString();
 
-//    qDebug() << "Filter Binary" << ds.keys() << ds["ProcessStartId"];
+    //    qDebug() << "Filter Binary" << ds.keys() << ds["ProcessStartId"];
 
     if (ds.contains("Data"))
     {
@@ -996,146 +996,146 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
     {
 
 
-    std::vector<std::shared_ptr<arrow::Field> > fields;
+        std::vector<std::shared_ptr<arrow::Field> > fields;
 
-    auto txt = QStringList()  << "timepoint" << "fieldId" << "sliceId" << "channel"  ;
-    fields.push_back(arrow::field("Well", arrow::utf8()) );
-    fields.push_back(arrow::field("Plate", arrow::utf8()) );
+        auto txt = QStringList()  << "timepoint" << "fieldId" << "sliceId" << "channel"  ;
+        fields.push_back(arrow::field("Well", arrow::utf8()) );
+        fields.push_back(arrow::field("Plate", arrow::utf8()) );
 
-    for (auto& k: txt)
-        fields.push_back(arrow::field(k.toStdString(), arrow::int16()) );
-    for (auto& h: df.arrStr.keys())
-    {
-        std::shared_ptr<arrow::KeyValueMetadata>  meta = NULLPTR;
-        if (df.fuseT.contains(h))
-            meta = arrow::KeyValueMetadata::Make({ "Aggregation" }, { df.fuseT[h].toStdString() });
-        fields.push_back(arrow::field(h.toStdString(), arrow::utf8(), meta) );
-    }
-    for (auto& h: df.arrFl.keys())
-    {
-        std::shared_ptr<arrow::KeyValueMetadata>  meta = NULLPTR;
-        if (df.fuseT.contains(h))
-            meta = arrow::KeyValueMetadata::Make({ "Aggregation" }, { df.fuseT[h].toStdString() });
-
-        fields.push_back(arrow::field(h.toStdString(), arrow::float32(), meta) );
-    }
-
-
-    QSet<QString> items;
-    for (auto& i: df.arrStr.keys())
-    {
-        auto l = df.arrStr.value(i).keys();
-        QSet<QString> k(l.begin(), l.end());
-        items.unite(k);
-    }
-
-    // items contains now the unique set of keys for each data produced !
-    // now we need to iterate through them to generate the data frames
-
-    std::vector<std::shared_ptr<arrow::Array> > dat(fields.size());
-    // We need to go columns wise
-    {
-        arrow::StringBuilder wells,plate;
-        arrow::NumericBuilder<arrow::Int16Type> tp,fi,zp,ch;
-
-        for (auto& k: items)
+        for (auto& k: txt)
+            fields.push_back(arrow::field(k.toStdString(), arrow::int16()) );
+        for (auto& h: df.arrStr.keys())
         {
-            auto v = k.split(";");
-            wells.Append(v[0].toStdString());
-            plate.Append(df.plate.toStdString());
+            std::shared_ptr<arrow::KeyValueMetadata>  meta = NULLPTR;
+            if (df.fuseT.contains(h))
+                meta = arrow::KeyValueMetadata::Make({ "Aggregation" }, { df.fuseT[h].toStdString() });
+            fields.push_back(arrow::field(h.toStdString(), arrow::utf8(), meta) );
+        }
+        for (auto& h: df.arrFl.keys())
+        {
+            std::shared_ptr<arrow::KeyValueMetadata>  meta = NULLPTR;
+            if (df.fuseT.contains(h))
+                meta = arrow::KeyValueMetadata::Make({ "Aggregation" }, { df.fuseT[h].toStdString() });
 
-            tp.Append(v[1].toInt());
-            fi.Append(v[2].toInt());
-            zp.Append(v[3].toInt());
-            ch.Append(v[4].toInt());
+            fields.push_back(arrow::field(h.toStdString(), arrow::float32(), meta) );
         }
 
-        wells.Finish(&dat[0]);
-        plate.Finish(&dat[1]);
-        tp.Finish(&dat[2]);
-        fi.Finish(&dat[3]);
-        zp.Finish(&dat[4]);
-        ch.Finish(&dat[5]);
 
-        int dp = 6;
-        for (auto& sk : df.arrStr.keys())
+        QSet<QString> items;
+        for (auto& i: df.arrStr.keys())
         {
-            QMap<QString, QString >& mp = df.arrStr[sk];
+            auto l = df.arrStr.value(i).keys();
+            QSet<QString> k(l.begin(), l.end());
+            items.unite(k);
+        }
 
-            arrow::StringBuilder bldr;
-            for (auto&  k: items)
+        // items contains now the unique set of keys for each data produced !
+        // now we need to iterate through them to generate the data frames
+
+        std::vector<std::shared_ptr<arrow::Array> > dat(fields.size());
+        // We need to go columns wise
+        {
+            arrow::StringBuilder wells,plate;
+            arrow::NumericBuilder<arrow::Int16Type> tp,fi,zp,ch;
+
+            for (auto& k: items)
             {
-                if (mp.contains(k))
-                    bldr.Append(mp.value(k).toStdString());
-                else
-                    bldr.AppendNull();
+                auto v = k.split(";");
+                wells.Append(v[0].toStdString());
+                plate.Append(df.plate.toStdString());
+
+                tp.Append(v[1].toInt());
+                fi.Append(v[2].toInt());
+                zp.Append(v[3].toInt());
+                ch.Append(v[4].toInt());
             }
-            bldr.Finish(&dat[dp]);
-            dp++;
-        }
 
-        for (auto& sk : df.arrFl.keys())
-        {
-            QMap<QString, float >& mp = df.arrFl[sk];
+            wells.Finish(&dat[0]);
+            plate.Finish(&dat[1]);
+            tp.Finish(&dat[2]);
+            fi.Finish(&dat[3]);
+            zp.Finish(&dat[4]);
+            ch.Finish(&dat[5]);
 
-            arrow::NumericBuilder<arrow::FloatType> bldr;
-            for (auto&  k: items)
+            int dp = 6;
+            for (auto& sk : df.arrStr.keys())
             {
-                if (mp.contains(k))
-                    bldr.Append(mp.value(k));
-                else
-                    bldr.AppendNull();
+                QMap<QString, QString >& mp = df.arrStr[sk];
+
+                arrow::StringBuilder bldr;
+                for (auto&  k: items)
+                {
+                    if (mp.contains(k))
+                        bldr.Append(mp.value(k).toStdString());
+                    else
+                        bldr.AppendNull();
+                }
+                bldr.Finish(&dat[dp]);
+                dp++;
             }
-            bldr.Finish(&dat[dp]);
-            dp++;
+
+            for (auto& sk : df.arrFl.keys())
+            {
+                QMap<QString, float >& mp = df.arrFl[sk];
+
+                arrow::NumericBuilder<arrow::FloatType> bldr;
+                for (auto&  k: items)
+                {
+                    if (mp.contains(k))
+                        bldr.Append(mp.value(k));
+                    else
+                        bldr.AppendNull();
+                }
+                bldr.Finish(&dat[dp]);
+                dp++;
+            }
+
         }
 
+        auto schema =
+                arrow::schema(fields);
+        auto table = arrow::Table::Make(schema, dat);
+
+        qDebug() << "Storing DataFile to:" << target << " Rows " << dat.front()->length();
+
+
+        std::string uri = target.toStdString();
+        std::string root_path;
+
+        auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
+        if (!r0.ok())
+        {
+            qDebug() << "Arrow Error not able to load" << df.outfile;
+            return;
+        }
+
+        auto fs = r0.ValueOrDie();
+
+        auto r1 = fs->OpenOutputStream(uri);
+
+        if (!r1.ok())
+        {
+            qDebug() << "Arrow Error to Open Stream" << df.outfile;
+            return;
+        }
+        auto output = r1.ValueOrDie();
+        arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
+        //options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+
+        auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
+
+        if (!r2.ok())
+        {
+            qDebug() << "Arrow Unable to make file writer";
+            return;
+        }
+
+        auto writer = r2.ValueOrDie();
+
+        writer->WriteTable(*table.get());
+        writer->Close();
+        output->Close();
     }
-
-    auto schema =
-            arrow::schema(fields);
-    auto table = arrow::Table::Make(schema, dat);
-
-    qDebug() << "Storing DataFile to:" << target << " Rows " << dat.front()->length();
-
-
-    std::string uri = target.toStdString();
-    std::string root_path;
-
-    auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
-    if (!r0.ok())
-    {
-        qDebug() << "Arrow Error not able to load" << df.outfile;
-        return;
-    }
-
-    auto fs = r0.ValueOrDie();
-
-    auto r1 = fs->OpenOutputStream(uri);
-
-    if (!r1.ok())
-    {
-        qDebug() << "Arrow Error to Open Stream" << df.outfile;
-        return;
-    }
-    auto output = r1.ValueOrDie();
-    arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
-    //options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
-
-    auto r2 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
-
-    if (!r2.ok())
-    {
-        qDebug() << "Arrow Unable to make file writer";
-        return;
-    }
-
-    auto writer = r2.ValueOrDie();
-
-    writer->WriteTable(*table.get());
-    writer->Close();
-    output->Close();
-}
 
     if (finished)
     {

@@ -5,6 +5,8 @@
 #include <wellplatemodel.h>
 
 
+#include <QtConcurrent>
+
 #include <QSharedMemory>
 #include <config.h>
 
@@ -77,10 +79,10 @@ QStringList CheckoutProcess::pluginPaths(bool withVersion)
         if (plugin)
         {
             l << (withVersion ?
-                     QString("%1 - %2 (%3 - last git %4)").arg(plugin->getPath(), plugin->plugin_version(),
-                                                               plugin->buildTime(), plugin->gitTime())
-                     :
-                     plugin->getPath() );
+                      QString("%1 - %2 (%3 - last git %4)").arg(plugin->getPath(), plugin->plugin_version(),
+                                                                plugin->buildTime(), plugin->gitTime())
+                    :
+                      plugin->getPath() );
         }
     return l;
 }
@@ -177,7 +179,7 @@ class PluginRunner : public QRunnable
 {
 
 public:
-    PluginRunner(CheckoutProcessPluginInterface* plu, QString hash): plugin(plu), _hash(hash)
+    PluginRunner(CheckoutProcessPluginInterface* plu, QString hash): plugin(plu), _hash(hash), exec_through_run(false)
     {
     }
 
@@ -190,7 +192,15 @@ public:
 
     virtual void	run()
     {
+        exec_through_run = true;
+        (*this)();
+    }
+
+
+    QJsonObject effector()
+    {
         int p = 0;
+        QJsonObject result ;
         try {
 
             QElapsedTimer dtimer;       // Do the process timing
@@ -211,11 +221,11 @@ public:
             p=7;
             // - 4) Do the gathering of processes data
             //        qDebug() << "Gathering data";
-            QJsonObject result = plugin->gatherData(timer.elapsed());
-
+            result = plugin->gatherData(timer.elapsed());
             p=8;
             qDebug() << timer.elapsed() << "(ms) done";
-            CheckoutProcess::handler().finishedProcess(_hash, result);
+            if (exec_through_run)
+                CheckoutProcess::handler().finishedProcess(_hash, result);
             p=9;
         }
         catch (...)
@@ -226,7 +236,18 @@ public:
         // Plugin should be deletable now, should not be saved anywhere
         delete plugin;
         plugin=0;
+        return result;
+
     }
+
+
+    QJsonObject operator()()
+    {
+        return effector();
+    }
+
+
+
 
     ~PluginRunner()
     {
@@ -237,7 +258,7 @@ public:
 protected:
     CheckoutProcessPluginInterface* plugin;
     QString _hash;
-
+    bool exec_through_run;
 };
 
 
@@ -446,6 +467,10 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
             plugin->read(params);
 
             //           qDebug() << "Starting process";
+
+
+#ifdef OLD_RUNNER
+
             PluginRunner* runner = new PluginRunner(plugin, hash);
             if (runner)
             {
@@ -463,6 +488,20 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
             {
                 qDebug() << "Unable to start runner";
             }
+#else
+
+            QFutureWatcher<QJsonObject>* wa = new QFutureWatcher<QJsonObject>();
+            // Connect the finished
+            connect(wa, SIGNAL(finished()), this, SLOT(watcher_finished()));
+            QString key = params["Username"].toString() + "@" + params["Computer"].toString();
+
+            status_protect.lock();
+            _peruser_futures[key].push_back(wa);
+            status_protect.unlock();
+
+            QFuture<QJsonObject> fut = QtConcurrent::run(PluginRunner(plugin, hash), &PluginRunner::effector);
+            wa->setFuture(fut);
+#endif
         }
     }
     else
@@ -542,7 +581,7 @@ void CheckoutProcess::networkProcessStarted(QString core, QString hash)
     _hash_to_save[hash]=_counter;
     if (_counter)    (*_counter)++;
     hash_to_save_mtx.unlock();
-//    emit processStarted(hash);
+    //    emit processStarted(hash);
 
 }
 
@@ -700,6 +739,20 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
     emit updateProcessStatus(unfinished);
 }
 
+void CheckoutProcess::watcher_finished()
+{
+
+    QFutureWatcher<QJsonObject>* wa = dynamic_cast<QFutureWatcher<QJsonObject>* >(sender());
+    if (wa)
+    {
+        QJsonObject ob = wa->result();
+        QString hash = ob["Process_hash"].toString();
+        CheckoutProcess::handler().finishedProcess(hash, ob);
+    }
+    else
+        qDebug() << "Error Retrieving watcher for QFuture of processes";
+}
+
 void CheckoutProcess::refreshProcessStatus()
 {
     QMutexLocker locker(&process_mutex);
@@ -765,7 +818,7 @@ void CheckoutProcess::finishedProcess(QString hash, QJsonObject result)
     emit finishedJob(hash, result);
 
 
-//    qDebug() << "process finished, remaining" << _status.size();
+    //    qDebug() << "process finished, remaining" << _status.size();
     //    qDebug() << "Removing" << hash;
 }
 
@@ -920,7 +973,7 @@ void CheckoutProcess::cancelUser(QString user)
 
 void CheckoutProcess::finishedProcess(QStringList /*dhash*/)
 {
-//    NetworkProcessHandler::handler().processFinished(dhash);
+    //    NetworkProcessHandler::handler().processFinished(dhash);
 }
 
 std::vector<unsigned char> CheckoutProcess::detachPayload(QString hash)
