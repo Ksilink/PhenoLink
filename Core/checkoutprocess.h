@@ -91,7 +91,7 @@ public:
     QString serverName();
 
     QStringList users();
-    void removeRunner(QString user, void* run);
+    void removeRunner(QString user, QFutureWatcher<QJsonObject> *run);
 
     void cancelUser(QString user);
     void finishedProcess(QStringList dhash);
@@ -107,6 +107,7 @@ public slots:
     void receivedParameters(QJsonObject obj);
     void networkProcessStarted(QString core, QString hash);
     void networkupdateProcessStatus(QJsonArray obj);
+    void watcher_finished();
 
 protected:
     void addToComputedDataModel(QJsonObject ob);
@@ -146,7 +147,9 @@ protected:
     QMap<QString, QSharedMemory*> _inmems;
     QMap<QString, CheckoutProcessPluginInterface*> _stored;
 
-    QMap<QString, QList<void*> > _peruser_runners;
+//    QMap<QString, QList<void*> > _peruser_runners;
+
+    QMap<QString, QList<QFutureWatcher<QJsonObject>* > > _peruser_futures;
 
     int* _counter;
     QMutex mutex_dataupdate;
