@@ -405,7 +405,7 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
 
     ob["PostProcesses"]=_callParams["PostProcesses"];
     ob["PostProcessesScreen"]=_callParams["PostProcessesScreen"];
-
+    ob["Process_hash"] = _callParams["Process_hash"];
     ob["Project"]=_callParams["Project"];
     ob["LoadingTime"] = _result["LoadingTime"];
     ob["Data"] = arr;

@@ -549,8 +549,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         procs.setServerName(srvIp);
 
         setHttpResponse(obj, res, !query.contains("json"));
-        QtConcurrent::run(&procs, &CheckoutProcess::startProcessServer,
-                          proc, ob);
+        procs.startProcessServer(proc, ob);
 
         if (!proxy.isEmpty() && !proxy.startsWith(refIP)) {
             // Shall tell the proxy we have process ongoing that where not sent from his side
@@ -683,7 +682,7 @@ void Server::finished(QString hash, QJsonObject ob)
                      ar);
     }
 
-    NetworkProcessHandler::handler().finishedProcess(hash, ob);
+//    NetworkProcessHandler::handler().finishedProcess(hash, ob);
 
     if (client && CheckoutProcess::handler().numberOfRunningProcess() <= 1)
         client->send(QString("/ServerDone"),
