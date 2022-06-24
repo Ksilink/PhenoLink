@@ -780,7 +780,16 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                         qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", ""));
                     }
                     else
+                    {
+
+                        if (QFile::exists(concatenated)) // In case the feather exists already add this for fusion at the end of the process since arrow fuse handles duplicates if will skip value if recomputed and keep non computed ones (for instance when redoing a well computation)
+                        {
+                            dir.rename(concatenated, concatenated + ".torm");
+                            files << concatenated.split("/").last()+".torm";
+                        }
+
                         fuseArrow(path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+                    }
 
                     // qDebug() << agg.keys() << obj.keys();
 
