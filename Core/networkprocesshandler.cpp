@@ -1152,7 +1152,7 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
 
             fuseArrow(bp, QStringList() << file+".torm", bp+file, df.plate);
         }
-        plateData.remove(d);
+        // plateData.remove(d);
     }
 
 }
