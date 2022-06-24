@@ -802,6 +802,8 @@ void CheckoutProcess::watcher_finished()
         QString key = ob["Username"].toString() + "@" + ob["Computer"].toString();
         _peruser_futures[key].removeAll(wa) ;
 
+        emit finishedJob(hash, ob);
+
 
 
     }
