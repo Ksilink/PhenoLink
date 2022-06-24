@@ -480,7 +480,7 @@ void NetworkProcessHandler::getProcessMessageStatus(QString process, QList<QStri
 }
 
 
-QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds)
+QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, bool last_one)
 {
     QJsonArray res;
     QJsonObject ob;
@@ -598,7 +598,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds)
     storageTimer[timer] = plateID;
     rstorageTimer[plateID] = timer;
 
-    if (CheckoutProcess::handler().numberOfRunningProcess() <= 0) // Directly save if no more process running
+    if (CheckoutProcess::handler().numberOfRunningProcess() <= 0 || last_one) // Directly save if no more process running
     {
         for (auto & k: rstorageTimer) killTimer(k); // End timers
         for (auto &k: storageTimer)   storeData(k, true); // perfom storage
@@ -870,7 +870,7 @@ QCborArray NetworkProcessHandler::filterBinary(QString hash, QJsonObject ds)
 
 
 
-void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
+void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res, bool last_one)
 {
     QString address=res["ReplyTo"].toString();
     ///    qDebug() << hash << res << address;
@@ -886,7 +886,7 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res)
 
     qDebug() << "Server side Process Finished" << hash;
 
-    QJsonArray data = filterObject(hash, res);
+    QJsonArray data = filterObject(hash, res, last_one);
     QCborArray bin = filterBinary(hash, res);
 
     for (auto b: bin)

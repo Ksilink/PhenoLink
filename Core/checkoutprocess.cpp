@@ -533,7 +533,13 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
             QFutureWatcher<QJsonObject>* wa = new QFutureWatcher<QJsonObject>();
             // Connect the finished
             connect(wa, &QFutureWatcher<QJsonObject>::finished, this,  &CheckoutProcess::watcher_finished);
-            QString key = params["Username"].toString() + "@" + params["Computer"].toString();
+//            QString key = params["Username"].toString() + "@" + params["Computer"].toString();
+
+
+            QString key = QString("%1@%2#%3#%4!%5")
+                    .arg(params["Username"].toString(), params["Computer"].toString(),
+                    params["Path"].toString(), params["WorkID"].toString(),
+                    params["XP"].toString());
 
             status_protect.lock();
             _peruser_futures[key].push_back(wa);
@@ -796,11 +802,15 @@ void CheckoutProcess::watcher_finished()
         _status.remove(hash);
         _finished[hash] = ob;
 
-        NetworkProcessHandler::handler().finishedProcess(hash, ob);
+        QString key = QString("%1@%2#%3#%4!%5")
+                .arg(ob["Username"].toString(), ob["Computer"].toString(),
+                ob["Path"].toString(), ob["WorkID"].toString(),
+                ob["XP"].toString());
 
-
-        QString key = ob["Username"].toString() + "@" + ob["Computer"].toString();
         _peruser_futures[key].removeAll(wa) ;
+
+        NetworkProcessHandler::handler().finishedProcess(hash, ob, _peruser_futures[key].size());
+
 
         emit finishedJob(hash, ob);
     }

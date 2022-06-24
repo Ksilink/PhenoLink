@@ -103,7 +103,7 @@ public:
 
     void getProcessMessageStatus(QString process, QList<QString> hash);
 
-    void finishedProcess(QString hash, QJsonObject res);
+    void finishedProcess(QString hash, QJsonObject res, bool last_one = false);
 
     void removeHash(QString hash);
     void removeHash(QStringList hashes);
@@ -127,7 +127,7 @@ public:
 
 protected:
     QCborArray filterBinary(QString hash, QJsonObject ds);
-    QJsonArray filterObject(QString hash, QJsonObject ds);
+    QJsonArray filterObject(QString hash, QJsonObject ds, bool last_one=false);
 
 private slots:
     void displayError(QAbstractSocket::SocketError socketError);
