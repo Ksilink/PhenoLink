@@ -401,26 +401,23 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     }
 
     ob["Infos"] = QJsonArray::fromStringList(_infos);
-    ob["WellTags"]=_callParams["WellTags"];
-
-    ob["PostProcesses"]=_callParams["PostProcesses"];
-    ob["PostProcessesScreen"]=_callParams["PostProcessesScreen"];
-    ob["Process_hash"] = _callParams["Process_hash"];
-    ob["Project"]=_callParams["Project"];
     ob["LoadingTime"] = _result["LoadingTime"];
     ob["Data"] = arr;
     ob["Path"] = getPath();
-    ob["Pos"] = getPosition();
     ob["ElapsedTime"] = QString("%1").arg(time);
     ob["State"] = QString(_state == Running ? "Running" : (_state == Finished ? "Finished" : "NotStarted"));
     ob["Pos"] = getPosition();
+
     ob["shallDisplay"] = _shallDisplay;
 //    qDebug() << "In plugin processStartId" << processStartId << _callParams["ProcessStartId"];
 
 
     ob["ProcessStartId"] = processStartId;
-    auto d = QStringList() << "XP" << "DataHash" << "CommitName" << "ReplyTo" << "Parameters" << "StartTime" << "TaskID" << "WorkID" ;
-    for (auto s: d)
+    auto d = QStringList() << "XP" << "DataHash" << "CommitName" << "ReplyTo"
+                           << "Parameters" << "StartTime" << "TaskID" << "WorkID"
+                           <<"WellTags" << "PostProcesses" << "PostProcessesScreen"
+                          << "Process_hash" << "Project" << "Computer" << "Username";
+    for (auto & s: d)
         ob[s] = _callParams[s];
 
 

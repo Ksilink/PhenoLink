@@ -541,6 +541,7 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
                     params["Path"].toString(), params["WorkID"].toString(),
                     params["XP"].toString());
 
+            qDebug() << "Adding Process" << key << _peruser_futures[key].size();
             status_protect.lock();
             _peruser_futures[key].push_back(wa);
             status_protect.unlock();
@@ -809,7 +810,9 @@ void CheckoutProcess::watcher_finished()
 
         _peruser_futures[key].removeAll(wa) ;
 
-        NetworkProcessHandler::handler().finishedProcess(hash, ob, _peruser_futures[key].size());
+        qDebug() << "Process" << key << "Remaining jobs" << _peruser_futures[key].size();
+
+        NetworkProcessHandler::handler().finishedProcess(hash, ob, _peruser_futures[key].size()==0);
 
 
         emit finishedJob(hash, ob);
