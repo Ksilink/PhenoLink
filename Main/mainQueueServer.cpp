@@ -572,6 +572,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     QString urlpath = req->url().path(), query = req->url().query();
 
 
+    qDebug()  << QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz")
+              << qhttp::Stringify::toString(req->method())
+             << qPrintable(urlpath)
+             << qPrintable(query)
+             << data.size();
 
     CheckoutProcess& procs = CheckoutProcess::handler();
 
@@ -628,10 +633,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         return;
     }
 
-    qDebug() << qhttp::Stringify::toString(req->method())
-             << qPrintable(urlpath)
-             << qPrintable(query)
-             << data.size();
+
 
 
     if (urlpath.startsWith("/Ready")) // Server is ready /Ready/{port}
@@ -884,6 +886,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         }
 
+        return;
     }
 
     if (urlpath.startsWith("/Affinity"))
@@ -908,6 +911,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         for (auto& project: projects)
             project_affinity[project]=QString("%1:%2").arg(srv, port);
 
+        return;
     }
 
 
@@ -927,7 +931,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         }
 
         //        qDebug() << proc_params;
-
+        return;
     }
 
     if (urlpath.startsWith("/Proxy"))
@@ -958,6 +962,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         client = new CheckoutHttpClient(srv, port.toUInt());
         client->send("/Proxy", QString("port=%1").arg(dport), QJsonArray());
+
+        return;
     }
 
     if (urlpath.startsWith("/rm"))
@@ -1175,7 +1181,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QString cw = QString("%1:%2").arg(serverIP).arg(port);
         for (int i = 0; i < cpus; ++i) workers.removeOne(cw);
         workers_status[cw] -= cpus;;
-
+        return;
     }
 
     if (urlpath.startsWith("/Start/"))
@@ -1238,6 +1244,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         setHttpResponse(obj, res, !query.contains("json"));
         //        QtConcurrent::run(&procs, &CheckoutProcess::startProcessServer,
         //                          proc, ob);
+        return;
 
     }
 
@@ -1245,14 +1252,14 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
         auto root = QJsonDocument::fromJson(data).object();
 
-        if ( root.isEmpty()  ||  root.value("name").toString() != QLatin1String("add") ) {
-            const static char KMessage[] = "Invalid json format!";
-            res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
-            res->addHeader("connection", "close");
-            res->addHeaderValue("content-length", strlen(KMessage));
-            res->end(KMessage);
-            return;
-        }
+//        if ( root.isEmpty()  ||  root.value("name").toString() != QLatin1String("add") ) {
+//            const static char KMessage[] = "Invalid json format!";
+//            res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
+//            res->addHeader("connection", "close");
+//            res->addHeaderValue("content-length", strlen(KMessage));
+//            res->end(KMessage);
+//            return;
+//        }
 
         int total = 0;
         auto args = root.value("args").toArray();

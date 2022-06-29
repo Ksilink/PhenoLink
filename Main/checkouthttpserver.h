@@ -103,6 +103,7 @@ protected:
    QStringList affinity_list;
    unsigned dport;
 
+   QList<CheckoutHttpClient* > clients;
    CheckoutHttpClient* client;
 
 };

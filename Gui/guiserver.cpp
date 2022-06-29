@@ -136,6 +136,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         }
 
         mutex.unlock();
+        return;
     }
 
 

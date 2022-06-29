@@ -487,7 +487,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
     handler.setProcessCounter(new int());
     QSettings set;
-    int minProcs = set.value("MinProcs", 2000).toInt();
+    int minProcs = std::numeric_limits<int>::max(); // set.value("MinProcs", 2000).toInt();
 
 
     QJsonArray procArray;

@@ -69,7 +69,15 @@ void CheckoutHttpClient::send(QString path, QString query)
 void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool keepalive)
 {
     //auto body = QCborValue::fromJsonValue(ob).toCbor();
+    qDebug() << "Generating cbor array" << ob.size() << QCborArray::fromJsonArray(ob).size();
+
     auto body = QCborArray::fromJsonArray(ob).toCborValue().toCbor();
+
+    qDebug() << QCborValue::fromCbor(body).toArray().size();
+
+
+    qDebug() << "CBOR array size" << body.size();
+
     QUrl url=iurl;
     url.setPath(path);
     url.setQuery(query);
@@ -142,7 +150,7 @@ void CheckoutHttpClient::sendQueue()
 
     //    auto keepalive = req.keepalive;
 
-    qDebug() << QDateTime::currentDateTime().toString() << "Sending Queued" << url.url();
+    qDebug() << QDateTime::currentDateTime().toString() << "Sending Queued" << url.url() << ob.size();
     iclient.request(
                 qhttp::EHTTP_POST,
                 req.url,
@@ -150,10 +158,11 @@ void CheckoutHttpClient::sendQueue()
         auto body = ob;
         if (req)
         {
-            req->addHeader("Content-Type", "application/cbor");
 
-            req->addHeaderValue("content-length", body.length());
+            req->addHeader("Content-Type", "application/cbor");
+            req->addHeaderValue("content-length", body.size());
             req->end(body);
+            qDebug() << "Generated request" << body.size();
         }
         else
             qDebug() << "Queue Request Error...";
@@ -878,7 +887,15 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res, bool 
     ///    qDebug() << hash << res << address;
     CheckoutHttpClient* client = NULL;
 
-    for (CheckoutHttpClient* cl : alive_replies)  if (address == cl->iurl.host())  client = cl;
+    for (CheckoutHttpClient* cl : alive_replies)
+        if (address == cl->iurl.host())
+        {
+            if (cl->iclient.isOpen())
+                client = cl ;
+            else
+                alive_replies.removeAll(cl);
+        }
+
     if (!client) { client = new CheckoutHttpClient(address, 8020); alive_replies << client; }
 
     // else { qDebug() << "Reusing Client"; }
