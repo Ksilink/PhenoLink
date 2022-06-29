@@ -53,7 +53,7 @@ CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(fa
     iurl.setPort(port);
 
 
-    startTimer(500);
+//    startTimer(500);
 }
 
 CheckoutHttpClient::~CheckoutHttpClient()
@@ -78,22 +78,23 @@ void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool k
     send(path, query, body, keepalive);
 }
 
-QMutex mutex_send_lock;
+//QMutex mutex_send_lock;
 
 void CheckoutHttpClient::send(QString path, QString query, QByteArray ob, bool keepalive)
 {
-    QMutexLocker lock(&mutex_send_lock);
+//    QMutexLocker lock(&mutex_send_lock);
 
     QUrl url=iurl;
     url.setPath(path);
     url.setQuery(query);
 
     reqs.append(Req(url, ob, keepalive));
+    sendQueue();
 }
 
 void CheckoutHttpClient::sendQueue()
 {
-    QMutexLocker lock(&mutex_send_lock);
+//    QMutexLocker lock(&mutex_send_lock);
 
     if (reqs.isEmpty())
         return;
@@ -164,6 +165,7 @@ void CheckoutHttpClient::sendQueue()
             res->collectData();
             res->onEnd([this, res]() {
                 onIncomingData(res->collectedData());
+
             });
         }
     });
