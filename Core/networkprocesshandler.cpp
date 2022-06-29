@@ -892,10 +892,10 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res, bool 
     for (auto b: bin)
     {
         client->send(QString("/addImage/"), QString(), b.toCbor());
+        qApp->processEvents();
     }
-
     client->send(QString("/addData/%1").arg(commitname), QString(), data);
-
+    qApp->processEvents();
 }
 
 void NetworkProcessHandler::removeHash(QString hash)

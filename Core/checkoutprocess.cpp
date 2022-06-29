@@ -529,7 +529,7 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
                 qDebug() << "Unable to start runner";
             }
 #else
-
+            qApp->processEvents();
             QFutureWatcher<QJsonObject>* wa = new QFutureWatcher<QJsonObject>();
             // Connect the finished
             connect(wa, &QFutureWatcher<QJsonObject>::finished, this,  &CheckoutProcess::watcher_finished);
@@ -548,6 +548,7 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray &array)
 
             QFuture<QJsonObject> fut = QtConcurrent::run(run_plugin, plugin);
             wa->setFuture(fut);
+            qApp->processEvents();
 #endif
         }
     }
@@ -819,6 +820,8 @@ void CheckoutProcess::watcher_finished()
     }
     else
         qDebug() << "Error Retrieving watcher for QFuture of processes";
+
+     qApp->processEvents();
 }
 
 void CheckoutProcess::refreshProcessStatus()
