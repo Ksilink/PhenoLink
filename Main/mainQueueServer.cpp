@@ -317,7 +317,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
         runs[task.key().split("!").first()]++;
 
     for (auto it = runs.begin(), e = runs.end(); it != e; ++it)
-        body += QString("%1 => %2 <a href='/Cancel/?proc=%1'>Cancel</a>&nbsp;<a href='/Restart'>Force Restart</a><br>").arg(it.key()).arg(it.value());
+        body += QString("%1 => %2  <a href='/Details/?proc=%1'>Details</a>&nbsp;<a href='/Cancel/?proc=%1'>Cancel</a>&nbsp;<a href='/Restart'>Force Restart</a><br>").arg(it.key()).arg(it.value());
 
     message = QString("<html><title>Checkout Queue Status %2</title><body>%1</body></html>").arg(body).arg(CHECKOUT_VERSION);
 
@@ -499,7 +499,7 @@ void Server::WorkerMonitor()
 
                     pr["TaskID"] = taskid;
 
-                    qDebug()  << "Sending Work ID" << taskid;
+                    qDebug()  << "Sending Work ID"  << taskid << "to" << next_worker;
                     QJsonArray ar; ar.append(pr);
 
                     sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
@@ -1054,6 +1054,46 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         return;
     }
 
+    if (urlpath.startsWith("/Details/"))
+    {
+
+        QStringList queries = query.split("&");
+        QString proc, body;
+        for (auto& q : queries)
+        {
+            if (q.startsWith("proc="))
+            {
+                proc = q.replace("proc=","");
+
+                for (auto& srv: jobs)
+                {
+                    for (auto& q: srv)
+                    {
+                        QList<QJsonObject> torm;
+
+                        for (auto& obj: q)
+                        {
+                            QString workid = QString("%1@%2#%3#%4!%5#%6:%7")
+                                    .arg(obj["Username"].toString(), obj["Computer"].toString(),
+                                    obj["Path"].toString(), obj["WorkID"].toString(),
+                                    obj["XP"].toString(),  obj["Pos"].toString(), obj["Process_hash"].toString());
+
+                            body += QString("<li>%1</li>").arg(workid);
+                        }
+                    }
+                }
+            }
+        }
+
+        auto message = QString("<html><title>Checkout Processes Listing</title><body><ul>%1</ul></body></html>").arg(body);
+
+
+        res->setStatusCode(qhttp::ESTATUS_OK);
+        res->addHeaderValue("content-length", message.size());
+        res->end(message.toUtf8());
+
+        return;
+    }
 
     if (urlpath.startsWith("/Cancel/"))
     {
