@@ -984,6 +984,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         procs.getStatus(ob);
         //            qDebug() << path << ob;
         setHttpResponse(ob, res, !query.contains("json"));
+        return;
     }
 
     if (urlpath.startsWith("/ServerDone"))
@@ -1029,6 +1030,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             running.clear();
             workers_lock.unlock();
         }
+        return;
     }
 
     if (urlpath.startsWith("/Restart"))
