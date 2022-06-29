@@ -499,7 +499,7 @@ void Server::WorkerMonitor()
 
                     pr["TaskID"] = taskid;
 
-                    //  qDebug()  << "Taskid" << taskid << pr;
+                    qDebug()  << "Sending Work ID" << taskid;
                     QJsonArray ar; ar.append(pr);
 
                     sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
