@@ -74,6 +74,7 @@ public:
     int          icpus;
     int          procs_counter;
     bool        collapse;
+            bool    run;
 };
 
 
