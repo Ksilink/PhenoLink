@@ -72,7 +72,7 @@ void loadPlugins(bool isServer)
 
         void operator()(QString fileName)
         {
-            qDebug() << "Checking file" << fileName << pluginsDir.absoluteFilePath(fileName);
+//            qDebug() << "Checking file" << fileName << pluginsDir.absoluteFilePath(fileName);
             QPluginLoader pluginLoader(pluginsDir.absoluteFilePath(fileName));
 
 

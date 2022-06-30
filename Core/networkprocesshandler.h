@@ -69,7 +69,7 @@ protected:
 public:
     QQueue<Req> reqs;
     QUrl         iurl;
-    QHttpClient  iclient;
+    QList<QHttpClient *> iclient;
     bool         awaiting;
     int          icpus;
     int          procs_counter;

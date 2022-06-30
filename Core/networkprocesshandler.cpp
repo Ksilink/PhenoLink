@@ -26,6 +26,7 @@ using namespace qhttp::client;
 
 #include <QMutex>
 #include <QMutexLocker>
+#include <QtConcurrent>
 
 
 namespace fs = arrow::fs;
@@ -43,22 +44,18 @@ struct DataFrame
 
 CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(false), icpus(0), collapse(true)
 {
-    //    iclient.setTimeOut(5000);
-    QObject::connect(&iclient, &QHttpClient::disconnected, [this]() {
-        finalize();
-    });
-
     iurl.setScheme("http");
     iurl.setHost(host);
     iurl.setPort(port);
 
+    QtConcurrent::run(this, &CheckoutHttpClient::sendQueue);
 
-//    startTimer(500);
+    //    startTimer(500);
 }
 
 CheckoutHttpClient::~CheckoutHttpClient()
 {
-    qDebug() << "CheckoutHttpClient : I've been killed";
+    //    qDebug() << "CheckoutHttpClient : I've been killed";
 }
 
 void CheckoutHttpClient::send(QString path, QString query)
@@ -69,14 +66,14 @@ void CheckoutHttpClient::send(QString path, QString query)
 void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool keepalive)
 {
     //auto body = QCborValue::fromJsonValue(ob).toCbor();
-    qDebug() << "Generating cbor array" << ob.size() << QCborArray::fromJsonArray(ob).size();
+    //    qDebug() << "Generating cbor array" << ob.size() << QCborArray::fromJsonArray(ob).size();
 
     auto body = QCborArray::fromJsonArray(ob).toCborValue().toCbor();
 
     qDebug() << QCborValue::fromCbor(body).toArray().size();
 
 
-    qDebug() << "CBOR array size" << body.size();
+    //    qDebug() << "CBOR array size" << body.size();
 
     QUrl url=iurl;
     url.setPath(path);
@@ -86,101 +83,123 @@ void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool k
     send(path, query, body, keepalive);
 }
 
-//QMutex mutex_send_lock;
+QMutex mutex_send_lock;
 
 void CheckoutHttpClient::send(QString path, QString query, QByteArray ob, bool keepalive)
 {
-//    QMutexLocker lock(&mutex_send_lock);
+    QMutexLocker lock(&mutex_send_lock);
 
     QUrl url=iurl;
     url.setPath(path);
     url.setQuery(query);
 
     reqs.append(Req(url, ob, keepalive));
-    sendQueue();
+    //    sendQueue();
 }
 
 void CheckoutHttpClient::sendQueue()
 {
-//    QMutexLocker lock(&mutex_send_lock);
+    //
 
-    if (reqs.isEmpty())
-        return;
+    //    iclient.setTimeOut(5000);
 
-    auto req = reqs.takeFirst();
-    QUrl url = req.url;
-    auto& ob = req.data;
-
-    // Collapse request url
-    QList<int> collapsed;
-    //    if (collapse)
-    //        for (int i = 0; i < reqs.size(); ++i)
-    //            if (reqs.at(i).url == url && (
-    ////                     url.path().startsWith("/addData/") ||
-    ////                     url.path().startsWith("/Start")  ||
-    //                     url.path().startsWith("/Ready") ||
-    //                     url.path().startsWith("/ServerDone")
-    //                        ) )
-    //                collapsed << i;
-
-    if (collapsed.size() > 0)
+    while (true)
     {
-        qDebug() << "Collapsing responses (0 + " << collapsed << ")";
-        QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
+        //        QMutexLocker lock(&mutex_send_lock);
 
-        for (auto& i: collapsed)
+        if (reqs.isEmpty())
         {
-            auto r = reqs.at(i);
-            QJsonArray a2 = QCborValue::fromCbor(r.data).toJsonValue().toArray();
-            for (int i = 0; i < a2.size(); ++i)
+
+            QThread::msleep(100);
+            qApp->processEvents();
+            continue;
+        }
+
+        mutex_send_lock.lock();
+
+        auto req = reqs.takeFirst();
+        QUrl url = req.url;
+        auto& ob = req.data;
+
+        mutex_send_lock.unlock();
+
+        // Collapse request url
+        QList<int> collapsed;
+        if (collapse)
+            for (int i = 0; i < reqs.size(); ++i)
+                if (reqs.at(i).url == url && (
+                            url.path().startsWith("/addData/") ||
+                            url.path().startsWith("/Start")  ||
+                            url.path().startsWith("/Ready") ||
+                            url.path().startsWith("/ServerDone")
+                            ) )
+                    collapsed << i;
+
+        if (collapsed.size() > 0)
+        {
+            qDebug() << "Collapsing responses (0 + " << collapsed << ")";
+            QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
+
+            for (auto& i: collapsed)
             {
-                ar.append(a2.at(i));
+                auto r = reqs.at(i);
+                QJsonArray a2 = QCborValue::fromCbor(r.data).toJsonValue().toArray();
+                for (int i = 0; i < a2.size(); ++i)
+                {
+                    ar.append(a2.at(i));
+                }
             }
+
+            for (QList<int>::reverse_iterator it = collapsed.rbegin(), e = collapsed.rend();
+                 it != e; ++it)
+                reqs.removeAt(*it);
+
+            ob = QCborValue::fromJsonValue(ar).toCbor();
         }
 
-        for (QList<int>::reverse_iterator it = collapsed.rbegin(), e = collapsed.rend();
-             it != e; ++it)
-            reqs.removeAt(*it);
+        qDebug() << QDateTime::currentDateTime().toString() << "Sending Queued" << url.url() << ob.size();
 
-        ob = QCborValue::fromJsonValue(ar).toCbor();
+
+        iclient.push_back(new QHttpClient());
+
+
+        QObject::connect(iclient.back(), &QHttpClient::disconnected, [this]() {
+            finalize();
+        });
+
+        iclient.back()->request(
+                    qhttp::EHTTP_POST,
+                    req.url,
+                    [this, ob](QHttpRequest* req){
+            Q_UNUSED(this);
+            auto body = ob;
+            if (req)
+            {
+
+                req->addHeader("Content-Type", "application/cbor");
+                req->addHeaderValue("content-length", body.size());
+                req->end(body);
+                //                qDebug() << "Generated request" << body.size();
+            }
+            else
+                qDebug() << "Queue Request Error...";
+        },
+
+        [this](QHttpResponse* res) {
+            if (res)
+            {
+                res->collectData();
+                res->onEnd([this, res]() {
+                    onIncomingData(res->collectedData());
+
+                });
+            }
+        });
+
+        if (iclient.back()->tcpSocket()->error() >= 0)
+            qDebug() << "Error Send" << iclient.back()->tcpSocket()->errorString();
+
     }
-
-
-
-
-    //    auto keepalive = req.keepalive;
-
-    qDebug() << QDateTime::currentDateTime().toString() << "Sending Queued" << url.url() << ob.size();
-    iclient.request(
-                qhttp::EHTTP_POST,
-                req.url,
-                [ob](QHttpRequest* req){
-        auto body = ob;
-        if (req)
-        {
-
-            req->addHeader("Content-Type", "application/cbor");
-            req->addHeaderValue("content-length", body.size());
-            req->end(body);
-            qDebug() << "Generated request" << body.size();
-        }
-        else
-            qDebug() << "Queue Request Error...";
-    },
-
-    [this](QHttpResponse* res) {
-        if (res)
-        {
-            res->collectData();
-            res->onEnd([this, res]() {
-                onIncomingData(res->collectedData());
-
-            });
-        }
-    });
-
-    if (iclient.tcpSocket()->error() >= 0)
-        qDebug() << "Error Send" << iclient.tcpSocket()->errorString();
 
 }
 
@@ -221,10 +240,11 @@ void CheckoutHttpClient::onIncomingData(const QByteArray& data)
     qDebug()  << "HTTP Response" << val;
 }
 
-void CheckoutHttpClient::finalize() {
-    //  qDebug() << "Disconnected";    //        qDebug("totally %d request/response pairs have been transmitted in %lld [mSec].\n",
-    ////               istan, itick.tock()
-    //               );
+void CheckoutHttpClient::finalize()
+{
+    QMutexLocker lock(&mutex_send_lock);
+    auto ic = static_cast<QHttpClient*>(sender());
+    iclient.removeAll(ic);
 }
 
 
@@ -890,10 +910,7 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res, bool 
     for (CheckoutHttpClient* cl : alive_replies)
         if (address == cl->iurl.host())
         {
-            if (cl->iclient.isOpen())
-                client = cl ;
-            else
-                alive_replies.removeAll(cl);
+            client = cl ;
         }
 
     if (!client) { client = new CheckoutHttpClient(address, 8020); alive_replies << client; }

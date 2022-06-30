@@ -1252,14 +1252,14 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
         auto root = QJsonDocument::fromJson(data).object();
 
-//        if ( root.isEmpty()  ||  root.value("name").toString() != QLatin1String("add") ) {
-//            const static char KMessage[] = "Invalid json format!";
-//            res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
-//            res->addHeader("connection", "close");
-//            res->addHeaderValue("content-length", strlen(KMessage));
-//            res->end(KMessage);
-//            return;
-//        }
+        if ( root.isEmpty()  ||  root.value("name").toString() != QLatin1String("add") ) {
+            const static char KMessage[] = "Invalid json format!";
+            res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
+            res->addHeader("connection", "close");
+            res->addHeaderValue("content-length", strlen(KMessage));
+            res->end(KMessage);
+            return;
+        }
 
         int total = 0;
         auto args = root.value("args").toArray();
@@ -1277,7 +1277,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     else
     {
         QString body = QString("Server Query received, with empty content (%1)").arg(urlpath);
-        //        res->addHeader("connection", "close");
+        res->addHeader("connection", "close");
         res->addHeaderValue("content-length", body.length());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body.toLatin1());
