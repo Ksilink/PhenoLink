@@ -42,7 +42,7 @@ struct DataFrame
 };
 
 
-CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(false), icpus(0), collapse(true)
+CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(false), icpus(0), collapse(true), run(true)
 {
     iurl.setScheme("http");
     iurl.setHost(host);
@@ -53,9 +53,13 @@ CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port):  awaiting(fa
     //    startTimer(500);
 }
 
+QMutex mutex_send_lock;
 CheckoutHttpClient::~CheckoutHttpClient()
 {
     //    qDebug() << "CheckoutHttpClient : I've been killed";
+    mutex_send_lock.lock();
+    run = false;
+    mutex_send_lock.unlock();
 }
 
 void CheckoutHttpClient::send(QString path, QString query)
@@ -83,7 +87,6 @@ void CheckoutHttpClient::send(QString path, QString query, QJsonArray ob, bool k
     send(path, query, body, keepalive);
 }
 
-QMutex mutex_send_lock;
 
 void CheckoutHttpClient::send(QString path, QString query, QByteArray ob, bool keepalive)
 {
@@ -103,7 +106,7 @@ void CheckoutHttpClient::sendQueue()
 
     //    iclient.setTimeOut(5000);
 
-    while (true)
+    while (run)
     {
         //        QMutexLocker lock(&mutex_send_lock);
         mutex_send_lock.lock();
@@ -116,8 +119,6 @@ void CheckoutHttpClient::sendQueue()
             qApp->processEvents();
             continue;
         }
-
-      
 
         auto req = reqs.takeFirst();
         QUrl url = req.url;
