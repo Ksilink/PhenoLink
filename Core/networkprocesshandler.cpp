@@ -106,16 +106,18 @@ void CheckoutHttpClient::sendQueue()
     while (true)
     {
         //        QMutexLocker lock(&mutex_send_lock);
+        mutex_send_lock.lock();
 
         if (reqs.isEmpty())
         {
+            mutex_send_lock.unlock();
 
             QThread::msleep(100);
             qApp->processEvents();
             continue;
         }
 
-        mutex_send_lock.lock();
+      
 
         auto req = reqs.takeFirst();
         QUrl url = req.url;

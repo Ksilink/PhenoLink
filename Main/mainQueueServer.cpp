@@ -955,7 +955,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         if (client)
         {
             qDebug() << "Reseting proxy";
-            delete client;
+            //delete client;
         }
 
         rmWorkers.remove(QString("%1:%2").arg(srv, port));

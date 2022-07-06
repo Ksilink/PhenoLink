@@ -67,7 +67,8 @@ void concat(const QList<std::shared_ptr<arrow::Array> >& list, std::shared_ptr<a
         auto c = std::static_pointer_cast<ColType>(ar);
         for (int s = 0; s < c->length(); ++s)
         {
-            if (de_doubler[d][s])
+            if ( s < de_doubler[d].size() &&  de_doubler[d][s])
+            {
                 if (c->IsValid(s))
                 {
                     bldr.Append(_get(c, s));
@@ -78,9 +79,10 @@ void concat(const QList<std::shared_ptr<arrow::Array> >& list, std::shared_ptr<a
                     //   qDebug() << s << "-";
                     bldr.AppendNull();
                 }
+            }
         }
 
-    d++;
+        d++;
     }
 
     bldr.Finish(&res);
@@ -191,8 +193,6 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
     int counts = 0;
 
-
-
     for (auto file : files)
     {
         QList<std::string> lists;
@@ -209,7 +209,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         ArrowGet(rowC, r3, reader->CountRows(), "Error reading row count");
         //        qDebug() << "file" << file << schema->fields().size()  << rowC ;
 
-        for (int record = 0; record < reader->num_record_batches(); ++record)
+        for (int record = 0; rowC > 0 && record < reader->num_record_batches(); ++record)
         {
             ArrowGet(rb, r4, reader->ReadRecordBatch(record), "Error Get Record");
 
@@ -256,7 +256,13 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         for (auto& f : datas.keys())
         { // Make sure we add data to empty columns
             if (!lists.contains(f))
-                datas[f].append(std::shared_ptr<arrow::NullArray>(new arrow::NullArray(rowC)));
+            {
+                if (datas.contains("Well"))
+                {
+                  for (auto& wc :   datas["Well"])
+                        datas[f].append(std::shared_ptr<arrow::NullArray>(new arrow::NullArray(wc->length())));
+                }
+            }
         }
 
         counts += rowC;
