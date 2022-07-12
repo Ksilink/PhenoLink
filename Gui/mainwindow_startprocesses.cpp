@@ -23,7 +23,6 @@
 #include <ScreensDisplay/graphicsscreensitem.h>
 
 #include <QGraphicsRectItem>
-//#include <QPushButton>
 
 #include <QScrollArea>
 #include <QSlider>
@@ -468,7 +467,7 @@ QJsonArray& MainWindow::adjustParameterFromWidget(SequenceFileModel* sfm, QJsonO
 
 
 void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                         bool started, QRegExp siteMatcher)//, QMap<QString, QSet<QString> > tags_map)
+                                         bool started, QRegExp siteMatcher, QString exports)//, QMap<QString, QSet<QString> > tags_map)
 {
     static int WorkID = 1;
 
@@ -698,15 +697,30 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
             for (int i = 0; i < tmp.size(); ++i)
                 procArray.append(tmp[i]);
-            if (this->networking && procArray.size() > minProcs)
+            if (exports.isEmpty() && this->networking && procArray.size() > minProcs)
             {
                 handler.startProcess(_preparedProcess, procArray);
                 procArray = QJsonArray();
             }
         }
 
-    if (this->networking &&  procArray.size())
+    if (exports.isEmpty() && this->networking &&  procArray.size())
         handler.startProcess(_preparedProcess, procArray);
+
+
+    if (!exports.isEmpty())
+    {
+        QJsonDocument doc(procArray);
+        QFile saveFile(exports);
+
+        if (!saveFile.open(QIODevice::WriteOnly)) {
+            qWarning("Couldn't open save file.");
+        }
+        else
+            saveFile.write(doc.toJson());
+        saveFile.close();
+        return;
+    }
 
     stored["Experiments"] = QJsonArray::fromStringList(QStringList(xps.begin(), xps.end()));
 
@@ -771,7 +785,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
 }
 
-void MainWindow::startProcessRun()
+void MainWindow::startProcessRun(QString exp)
 {
     StartId++;
 
@@ -1049,7 +1063,7 @@ void MainWindow::startProcessRun()
     _StatusProgress->setRange(0,0);
 
     run_time.start();
-    startProcessOtherStates(selectedChanns, lsfm, started, siteMatcher);
+    startProcessOtherStates(selectedChanns, lsfm, started, siteMatcher, exp);
 
 
     QPushButton* s = ui->processingArea->findChild<QPushButton*>("ProcessStartButton");

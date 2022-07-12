@@ -54,7 +54,7 @@ public:
     void adaptSelection(QTableView* tw, QItemSelectionModel* sm, QSet<QString> &rs);
 
     void startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                 bool started, QRegExp siteMatcher);
+                                 bool started, QRegExp siteMatcher, QString exports);
 
     void on_actionRe_load_servers_triggered();
 
@@ -190,7 +190,7 @@ private slots:
 
     QJsonArray sortParameters(QJsonArray& arr);
 
-    void startProcessRun();
+    void startProcessRun(QString exp=QString());
     void channelCheckboxMenu(const QPoint&);
 
     void on_sync_fields_toggled(bool arg1);

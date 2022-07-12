@@ -78,8 +78,8 @@ void loadPlugins(bool isServer)
 
             QObject *plugin = pluginLoader.instance();
 
-            if (!pluginLoader.isLoaded())
-                qDebug() << pluginLoader.errorString();
+//            if (!pluginLoader.isLoaded())
+//                qDebug() << pluginLoader.errorString();
 
 
             if (plugin)
