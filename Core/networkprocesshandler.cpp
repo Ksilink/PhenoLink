@@ -97,14 +97,10 @@ void CheckoutHttpClient::send(QString path, QString query, QByteArray ob, bool k
     url.setQuery(query);
 
     reqs.append(Req(url, ob, keepalive));
-    //    sendQueue();
 }
 
 void CheckoutHttpClient::sendQueue()
 {
-    //
-
-    //    iclient.setTimeOut(5000);
 
     while (run)
     {
@@ -115,7 +111,7 @@ void CheckoutHttpClient::sendQueue()
         {
             mutex_send_lock.unlock();
 
-            QThread::msleep(100);
+            QThread::msleep(300);
             qApp->processEvents();
             continue;
         }
@@ -129,7 +125,7 @@ void CheckoutHttpClient::sendQueue()
         // Collapse request url
         QList<int> collapsed;
         if (collapse)
-            for (int i = 0; i < reqs.size(); ++i)
+            for (int i = 0; i < reqs.size() && collapsed.size() < 500; ++i) // do not merge more than 500 reqs
                 if (reqs.at(i).url == url && (
                             url.path().startsWith("/addData/") ||
                             url.path().startsWith("/Start")  ||
@@ -164,13 +160,15 @@ void CheckoutHttpClient::sendQueue()
 
 
         iclient.push_back(new QHttpClient());
+        auto icli = iclient.back();
 
 
-        QObject::connect(iclient.back(), &QHttpClient::disconnected, [this]() {
+        QObject::connect(icli, &QHttpClient::disconnected, [this]() {
             this->finalize();
         });
 
-        iclient.back()->request(
+
+        icli->request(
                     qhttp::EHTTP_POST,
                     req.url,
                     [this, ob](QHttpRequest* req){
@@ -188,27 +186,25 @@ void CheckoutHttpClient::sendQueue()
                 qDebug() << "Queue Request Error...";
         },
 
-        [this](QHttpResponse* res) {
+
+        [this, icli](QHttpResponse* res) {
             if (res)
             {
                 res->collectData();
-                res->onEnd([this, res]() {
+                res->onEnd([this, icli, res]() {
                     onIncomingData(res->collectedData());
-                    this->iclient.back()->killConnection();
+                    icli->killConnection();
+                    this->iclient.removeAll(icli);
+//                    delete icli;
                 });
             }
         });
 
-        if (iclient.back()->tcpSocket()->error() >= 0)
+        if (icli->tcpSocket()->error() >= 0)
             qDebug() << "Error Send" << iclient.back()->tcpSocket()->errorString();
 
     }
 
-}
-
-void CheckoutHttpClient::timerEvent(QTimerEvent * )
-{
-    sendQueue();
 }
 
 void CheckoutHttpClient::onIncomingData(const QByteArray& data)
@@ -623,7 +619,6 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
 
     res << ob;
 
-    //storageTimer.values().indexOf(plate)
     if (rstorageTimer.contains(plateID))
         killTimer(rstorageTimer[plateID]);
 

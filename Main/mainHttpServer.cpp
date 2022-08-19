@@ -580,13 +580,14 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         int total = 0;
         auto args = root.value("args").toArray();
-        for ( const auto jv : args ) {
+        for ( const auto& jv : args ) {
             total += jv.toInt();
         }
         root["args"] = total;
 
         QByteArray body = QJsonDocument(root).toJson();
         //        res->addHeader("connection", "keep-alive");
+        res->addHeader("connection", "close");
         res->addHeaderValue("content-length", body.length());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body);

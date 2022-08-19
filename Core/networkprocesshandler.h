@@ -64,8 +64,8 @@ public:
 
     void setCollapseMode(bool mode) { collapse = mode; }
 
-protected:
-    void timerEvent(QTimerEvent *event) override;
+//protected:
+//    void timerEvent(QTimerEvent *event) override;
 public:
     QQueue<Req> reqs;
     QUrl         iurl;
