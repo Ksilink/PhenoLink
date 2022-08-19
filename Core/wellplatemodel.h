@@ -455,7 +455,7 @@ public:
     void setPattern(QPoint pos, QString col);
 
 
-
+void addMetadataFile(QString f);
 
 
     QList<SequenceFileModel*> getSelection();
@@ -543,6 +543,7 @@ protected:
     QMap<int, QMap<int, int> > toField;
     QPair<QList<double>, QList<double> > fields_pos;
     QStringList _channelNames;
+    QStringList _otherfiles;
 };
 
 typedef QList<ExperimentFileModel*> Screens;

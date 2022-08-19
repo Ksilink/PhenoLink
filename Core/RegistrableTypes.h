@@ -37,7 +37,7 @@ public:
 
     RegistrableParent() : _position(-1), _wasSet(false), _level(Basic), _isProduct(false),
                           _isOptional(false), _isFinished(false), _isPerChannel(false), _isSync(false),
-                          _keepInMem(false), _optionalDefault(false), _duped(false), _hidden(false)
+                          _keepInMem(false), _optionalDefault(false), _duped(false), _hidden(false), _isbool(false)
     {
     }
 
@@ -75,6 +75,13 @@ public:
         return *this;
     }
 
+
+    RegistrableParent & setAsBool(bool state=true)
+    {
+        _isbool = state;
+        return *this;
+    }
+
     bool isSet() const
     {
         return _wasSet;
@@ -91,6 +98,9 @@ public:
         }
         else
             _isOptional = false;
+
+        if (json.contains("isBool"))
+            _isbool = json["isBool"].toBool();
 
         if (json.contains("DataHash"))
             _hash = json["DataHash"].toString();
@@ -131,6 +141,9 @@ public:
                                                                                  : "Debug");
 
         json["isSlider"] = false;
+        if (_isbool)
+            json["isBool"] = true;
+
         if (!_enableIf.isEmpty())
         {
             QJsonArray en;
@@ -254,6 +267,7 @@ protected:
     bool _keepInMem;
     bool _duped;
     bool _hidden;
+    bool _isbool;
     QString _path;
 };
 
@@ -967,6 +981,11 @@ protected:
     bool _hasDefault;
     DataType _default;
 };
+
+#define THE_TYPE bool
+#include "RegistrableIntegralType.h"
+#undef THE_TYPE
+
 
 #define THE_TYPE int
 #include "RegistrableIntegralType.h"

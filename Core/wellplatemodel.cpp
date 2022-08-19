@@ -147,6 +147,11 @@ void ExperimentFileModel::setPattern(QPoint Pos, QString col)
     }
 }
 
+void ExperimentFileModel::addMetadataFile(QString f)
+{
+    _otherfiles << f;
+}
+
 
 void ExperimentFileModel::setCurrent(QPoint pos, bool active)
 {
@@ -2063,7 +2068,7 @@ ExperimentFileModel* loadJson(QString fileName, ExperimentFileModel* mdl)
 
         if (fold)
         {
-            QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).replace("µ","u").toUtf8();
+            QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).replace("ï¿½","u").toUtf8();
             //qDebug() << arr;
             QJsonParseError err;
             auto doc = QJsonDocument::fromJson(arr, &err);

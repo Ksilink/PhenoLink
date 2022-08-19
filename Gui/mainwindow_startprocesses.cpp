@@ -155,6 +155,27 @@ void setData(QJsonObject& obj, QString tag, bool list, ctkPathLineEdit* s)
     }
 }
 
+template <>
+void setData(QJsonObject& obj, QString tag, bool list, QCheckBox* s)
+{
+    if (s)
+    {
+        if (list)
+        {
+            QJsonArray ar = obj[tag].toArray();
+            ar.push_back(s->checkState()==Qt::Unchecked?0:1);
+            obj[tag] = ar;
+        }
+        else
+        {
+            //  qDebug() << s->currentPath();
+            obj[tag] = s->checkState()==Qt::Unchecked?0:1;
+        }
+    }
+}
+
+
+
 void MainWindow::getValue(QWidget* wid, QJsonObject& obj, QString tag, bool list)
 {
     // to handle the case where a single input is dependent on the context :)
@@ -171,6 +192,8 @@ void MainWindow::getValue(QWidget* wid, QJsonObject& obj, QString tag, bool list
     setData(obj, tag, list, dynamic_cast<QComboBox*>(wid));
     setData(obj, tag, list, dynamic_cast<QLineEdit*>(wid));
     setData(obj, tag, list, dynamic_cast<ctkPathLineEdit*>(wid));
+    setData(obj, tag, list, dynamic_cast<QCheckBox*>(wid));
+
 }
 
 
@@ -719,6 +742,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
         else
             saveFile.write(doc.toJson());
         saveFile.close();
+        _StatusProgress->setValue(_StatusProgress->maximum());
         return;
     }
 
@@ -1067,7 +1091,7 @@ void MainWindow::startProcessRun(QString exp)
 
 
     QPushButton* s = ui->processingArea->findChild<QPushButton*>("ProcessStartButton");
-    if (s) s->setDisabled(true);
+    if (s && !exp.isEmpty()) s->setDisabled(true);
 
 }
 

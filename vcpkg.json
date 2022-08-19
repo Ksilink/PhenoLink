@@ -37,6 +37,10 @@
             "name": "fftw3",
             "features": ["avx2", "threads"],
             "version>=": "3.3.10#2"
+        },
+        {
+            "name" : "aws-sdk-cpp",
+            "features": [ "s3" ]
         }
     ]
 }

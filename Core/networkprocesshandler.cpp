@@ -167,7 +167,7 @@ void CheckoutHttpClient::sendQueue()
 
 
         QObject::connect(iclient.back(), &QHttpClient::disconnected, [this]() {
-            finalize();
+            this->finalize();
         });
 
         iclient.back()->request(
@@ -194,7 +194,7 @@ void CheckoutHttpClient::sendQueue()
                 res->collectData();
                 res->onEnd([this, res]() {
                     onIncomingData(res->collectedData());
-
+                    this->iclient.back()->killConnection();
                 });
             }
         });

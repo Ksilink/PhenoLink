@@ -165,6 +165,7 @@ private slots:
     void loadPlateDisplay3();
     void loadPlateDisplaySample();
     void exportToCellProfiler();
+    void exportForAWS();
 
     void databaseModified();
     void on_actionStandard_toggled(bool arg1);

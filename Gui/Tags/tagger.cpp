@@ -269,10 +269,20 @@ tagger::tagger(QStringList datas, QWidget *parent) :
     }
     catch(...) {}
 
+    QWidget *twobut = new QWidget();
+    auto hl = new QHBoxLayout(twobut);
+
     auto button = new QPushButton("Map CSV");
-    ui->Plates->setCornerWidget(button);
+    auto button2 = new QPushButton("Map Template");
+
+
+    hl->addWidget(button);
+    hl->addWidget(button2);
+
+    ui->Plates->setCornerWidget(twobut);
 
     connect(button, SIGNAL(clicked()), this, SLOT(on_mapcsv()));
+    connect(button, SIGNAL(clicked()), this, SLOT(on_maptemplate()));
 
 
     QSettings set;
@@ -525,6 +535,17 @@ void tagger::on_mapcsv()
 
     qDebug() << "Query for CSV & Map CSV file to the plate names";
 }
+
+
+void tagger::on_maptemplate()
+{
+    qDebug() << "Query for Template and map them to all the plate names";
+
+
+
+}
+
+
 
 void tagger::on_populate()
 {

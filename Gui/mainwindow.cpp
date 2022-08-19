@@ -808,9 +808,6 @@ void MainWindow::updateCurrentSelection()
                 int trueChan = this->sender()->objectName().toInt();
                 this->_sinteractor.current()->getChannelImageInfos(trueChan)->toggleBinarized();
             });
-
-
-
         }
 
 
@@ -991,7 +988,7 @@ void MainWindow::refreshProcessMenu()
 
 void MainWindow::conditionChanged(QWidget* sen, int val)
 {
-    //    qDebug() << "Changed conditionnal display" << sen->objectName();
+//    qDebug() << "Changed conditionnal display" << sen->objectName() << val;
     if (!_typeOfprocessing) return;
 
     if (_enableIf.contains(sen))
@@ -1224,6 +1221,16 @@ double getValDouble(QJsonObject& par, QString v)
 }
 
 template <class Widget>
+Widget* setupProcessParameterBool(Widget* s, QJsonObject& par, QString def)
+{
+    if (par.contains(def))
+    {
+        s->setCheckState(getValInt(par, def)==1 ? Qt::Checked : Qt::Unchecked);
+    }
+    return s;
+}
+
+template <class Widget>
 Widget* setupProcessParameterInt(Widget* s, QJsonObject& par, QString def)
 {
     double low = getValInt(par,"Range/Low"), high =  getValInt(par,"Range/High");
@@ -1315,17 +1322,28 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
         {
             if (par["isIntegral"].toBool())
             {
-                wid = par["isSlider"].toBool() ?
-                            (QWidget*)setupProcessParameterInt(new QSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
-                          :
-                            (QWidget*)setupProcessParameterInt(new QSpinBox(), par,  reloaded ? "Value" : "Default");
+                if (par.contains("isBool") && par["isBool"].toBool())
+                {
+                    wid = setupProcessParameterBool(new QCheckBox(), par,  reloaded ? "Value" : "Default");
+                }
+                else
+                {
+                    wid = par["isSlider"].toBool() ?
+                                (QWidget*)setupProcessParameterInt(new QSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
+                              :
+                                (QWidget*)setupProcessParameterInt(new QSpinBox(), par,  reloaded ? "Value" : "Default");
+                }
             }
             else
             {
+
+
+
                 wid = par["isSlider"].toBool() ?
                             (QWidget*)setupProcessParameterDouble(new ctkDoubleSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
                           :
                             (QWidget*)setupProcessParameterDouble(new QDoubleSpinBox(), par,  reloaded ? "Value" : "Default");
+
             }
 
 
@@ -1906,18 +1924,20 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                                 _enableIf[ll][val] << ww;
                                 _disable[ll] << ww;
 
-#define SetCondition(Type, setter, accessor, change) \
+#define SetCondition(Type, setter, accessor, change, slt) \
                                 { Type b = dynamic_cast<Type>(ll); \
     if (b) { \
-    connect(b, SIGNAL(change(int)), this, SLOT(conditionChanged(int))); \
+    connect(b, SIGNAL(change(int)), this, SLOT(slt(int))); \
     b->setter(b->accessor()); } }
 
 
-                                SetCondition(QComboBox*, setCurrentIndex, currentIndex, currentIndexChanged);
-                                SetCondition(QSpinBox*, setValue, value, valueChanged);
-                                SetCondition(QDoubleSpinBox*, setValue, value, valueChanged);
-                                SetCondition(QSlider*, setValue, value, valueChanged);
-                                SetCondition(ctkDoubleSlider*, setValue, value, valueChanged);
+                                SetCondition(QComboBox*, setCurrentIndex, currentIndex, currentIndexChanged,conditionChanged);
+                                SetCondition(QSpinBox*, setValue, value, valueChanged,conditionChanged);
+                                SetCondition(QDoubleSpinBox*, setValue, value, valueChanged,conditionChanged);
+                                SetCondition(QSlider*, setValue, value, valueChanged,conditionChanged);
+                                SetCondition(ctkDoubleSlider*, setValue, value, valueChanged,conditionChanged);
+                                SetCondition(QCheckBox*, setCheckState, checkState, stateChanged, conditionChanged);
+
                             }
 
                     }
@@ -2020,6 +2040,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
         changed(QDoubleSpinBox*,  value );
         changed(QSlider*,  value );
         changed(ctkDoubleSlider*,  value );
+        changed(QCheckBox*,  checkState);
+
     }
     //}
 
@@ -2043,7 +2065,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
             QString dir = QFileDialog::getSaveFileName(this, tr("Save File"),
                                                        QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/process_run.json", tr("JSON file (*.json)"),
                                                        0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | */QFileDialog::DontUseCustomDirectoryIcons
                                                        );
             if (dir.isEmpty()) return;
             startProcessRun(dir);
@@ -2127,7 +2149,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -2648,7 +2670,7 @@ void MainWindow::exportToCellProfiler()
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -2989,7 +3011,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
                                                       set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;
@@ -3173,5 +3195,19 @@ void MainWindow::on_actionShare_Intensity_Controls_toggled(bool checked)
     ui->actionShare_Intensity_Controls->setChecked(!checked);
 }
 
+
+
+void MainWindow::exportForAWS()
+{
+    //
+    // Store a arrow feather file  ( CheckoutAWSUpload.fth ) in the APPDATA writable path
+    // Metadata will contain the credentials to AWS
+    // First column will be the initial file name
+    // Second column will be the upload state
+
+    // We'll provide an empty file with credentials for clients that need to upload their data
+
+
+}
 
 

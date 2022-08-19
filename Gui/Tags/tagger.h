@@ -64,6 +64,7 @@ private slots:
     void on_pushButton_clicked();
 
     void on_mapcsv();
+    void on_maptemplate();
     void on_populate();
 
 private:
