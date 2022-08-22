@@ -198,6 +198,11 @@ void CheckoutHttpClient::sendQueue()
 //                    delete icli;
                 });
             }
+            else
+            {
+                icli->killConnection();
+                this->iclient.removeAll(icli);
+            }
         });
 
         if (icli->tcpSocket()->error() >= 0)
