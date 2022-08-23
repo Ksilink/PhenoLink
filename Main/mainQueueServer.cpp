@@ -885,7 +885,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
 
         }
-
+        {
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
+        }
         return;
     }
 
@@ -910,7 +913,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         for (auto& project: projects)
             project_affinity[project]=QString("%1:%2").arg(srv, port);
-
+        {
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
+        }
         return;
     }
 
@@ -929,7 +935,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             proc_list.insert(pr);
             proc_params[pr][QString("%1:%2").arg(serverIP).arg(port)] = obj;
         }
-
+        {
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
+        }
         //        qDebug() << proc_params;
         return;
     }
@@ -963,6 +972,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         client = new CheckoutHttpClient(srv, port.toUInt());
         client->send("/Proxy", QString("port=%1").arg(dport), QJsonArray());
 
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
         return;
     }
 
@@ -1035,6 +1046,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             }
             running.clear();
             workers_lock.unlock();
+        }
+        {
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
         }
         return;
     }
@@ -1181,6 +1196,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QString cw = QString("%1:%2").arg(serverIP).arg(port);
         for (int i = 0; i < cpus; ++i) workers.removeOne(cw);
         workers_status[cw] -= cpus;;
+
+        {
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
+        }
         return;
     }
 

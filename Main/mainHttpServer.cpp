@@ -670,6 +670,7 @@ void Server::proxyAdvert(QString host, int port, bool crashed)
 
 void Server::finished(QString hash, QJsonObject ob)
 {
+    Q_UNUSED(hash);
     //    qDebug() << "Finishing on server side";
 
     if (client && ob.contains("TaskID") && !ob["TaskID"].isNull())
@@ -687,7 +688,7 @@ void Server::finished(QString hash, QJsonObject ob)
                      ar);
     }
 
-//    NetworkProcessHandler::handler().finishedProcess(hash, ob);
+    //    NetworkProcessHandler::handler().finishedProcess(hash, ob);
 
     if (client && CheckoutProcess::handler().numberOfRunningProcess() <= 1)
         client->send(QString("/ServerDone"),
