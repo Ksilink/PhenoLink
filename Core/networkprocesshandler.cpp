@@ -129,17 +129,21 @@ void CheckoutHttpClient::sendQueue()
         // Collapse request url
         QList<int> collapsed;
         if (collapse)
+        {
+            QMutexLocker lock(&mutex_send_lock);
+
             for (int i = 0; i < reqs.size() && collapsed.size() < 500; ++i) // do not merge more than 500 reqs
                 if (reqs.at(i).url == url && (
-                            url.path().startsWith("/addData/") ||
-                            url.path().startsWith("/Start")  ||
-                            url.path().startsWith("/Ready") ||
-                            url.path().startsWith("/ServerDone")
-                            ) )
+                    url.path().startsWith("/addData/") ||
+                    url.path().startsWith("/Start") ||
+                    url.path().startsWith("/Ready") ||
+                    url.path().startsWith("/ServerDone")
+                    ))
                     collapsed << i;
-
+        }
         if (collapsed.size() > 0)
         {
+            QMutexLocker lock(&mutex_send_lock);
             qDebug() << "Collapsing responses (0 + " << collapsed << ")";
             QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
 
