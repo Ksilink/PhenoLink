@@ -33,6 +33,10 @@ namespace fs = arrow::fs;
 
 struct DataFrame
 {
+    DataFrame(): fresh(true)
+    {}
+
+    bool fresh;
     QString outfile;
     QString plate;
 
@@ -554,7 +558,32 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
                                                                                    ds["Project"].toString(),
                 commit, plate, srv).replace("\\", "/").replace("//", "/");
         store.plate = plate;
+
+        if (store.fresh)
+        {
+            if (QFile::exists(store.outfile))
+            {
+                int tgt = 0;
+                QString path = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5%6.fth").arg(dbP,
+                                                                                          ds["Project"].toString(),
+                                commit, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
+
+                while (QFile::exists(path))
+                {
+                    tgt ++;
+                    path = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5%6.fth").arg(dbP,
+                                                                                                             ds["Project"].toString(),
+                                                   commit, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
+                }
+                QFile::copy(store.outfile, path);
+            }
+
+        }
+        store.fresh = false;
     }
+
+
+
 
 
     std::map<QString, QString> tr={ {"FieldId", "fieldId"}, {"zPos", "sliceId"},
