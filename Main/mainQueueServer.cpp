@@ -574,9 +574,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     qDebug()  << QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz")
               << qhttp::Stringify::toString(req->method())
-              << qPrintable(urlpath)
-              << qPrintable(query)
-              << data.size();
+             << qPrintable(urlpath)
+             << qPrintable(query)
+             << data.size();
 
     CheckoutProcess& procs = CheckoutProcess::handler();
 
@@ -649,90 +649,48 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         bool reset = false;
         int avail = 0;
         bool crashed = false;
-
-        auto ob = QCborValue::fromCbor(data).toArray();
-        if (ob.size() > 0 && ob[0].toMap().size() >  0)
+        for (auto q : queries)
         {
-            for (int i = 0; i < ob.size(); ++i)
+            if (q.startsWith("affinity"))
             {
-                auto obj = ob.at(i).toMap().toJsonObject();
-                if (obj.contains("affinity"))
+                QStringList projects = q.replace("affinity=", "").split(",");
+                for (auto p: projects) // Adjust project affinity on first run of servers
                 {
-                    auto ar2 = obj["affinity"].toArray();
-                    for (auto item : ar2)
-                    {
-                       auto p = item.toString();
-                       project_affinity[p] = serverIP;
-                    }
+                    project_affinity[p] = serverIP;
                 }
-                if (obj.contains("cpu"))
-               {
-                    if (cpu.isEmpty())
-                        cpu = obj["cpu"].toString();
-                    else
-                        cpu = QString("%1").arg(std::max(cpu.toInt(), obj["cpu"].toString().toInt()));
-                }
-                if (obj.contains("port"))
-                    port = obj["port"].toInt();
-                if (obj.contains("workid"))
-                    workid = obj["workid"].toString();
-                if (obj.contains("available"))
-                    avail = std::max(avail, obj["available"].toInt());
-                if (obj.contains("crashed"))
-                    crashed = true;
-                if (obj.contains("reset"))
-                    reset = true;
-            }
-        }
-        else
-        {
-            for (auto q : queries)
-            {
-                if (q.startsWith("affinity"))
-                {
-                    QStringList projects = q.replace("affinity=", "").split(",");
-                    for (auto p: projects) // Adjust project affinity on first run of servers
-                    {
-                        project_affinity[p] = serverIP;
-                    }
-
-                }
-                if (q.startsWith("cpu="))
-                {
-                    cpu = q.replace("cpu=","");
-                }
-
-                if (q.startsWith("port"))
-                {
-                    port = q.replace("port=","").toUInt();
-                }
-                if (q.startsWith("workid"))
-                {
-                    workid = q.replace("workid=","");
-                }
-                if (q.startsWith("available="))
-                {
-                    avail = (q.replace("available=", "").toInt());
-                    avail = avail > 0 ? avail : 1;
-                }
-                if (q.startsWith("crashed="))
-                {
-                    crashed = (q=="crashed=true");
-                    // We need to tell all the users with processes that went to the originating server that it crashed,
-                    // We need either to cancel the process in that case
-                }
-
-                if (q=="reset")
-                    reset = true;
 
             }
+            if (q.startsWith("cpu="))
+            {
+                cpu = q.replace("cpu=","");
+            }
+
+            if (q.startsWith("port"))
+            {
+                port = q.replace("port=","").toUInt();
+            }
+            if (q.startsWith("workid"))
+            {
+                workid = q.replace("workid=","");
+            }
+            if (q.startsWith("available="))
+            {
+                avail = (q.replace("available=", "").toInt());
+                avail = avail > 0 ? avail : 1;
+            }
+            if (q.startsWith("crashed="))
+            {
+                crashed = (q=="crashed=true");
+                // We need to tell all the users with processes that went to the originating server that it crashed,
+                // We need either to cancel the process in that case
+            }
+
+            if (q=="reset")
+                reset = true;
+
         }
+
         qDebug() << reset << avail << cpu << workid;
-        if (crashed)
-        {
-            //
-        }
-
         QMutexLocker lock(&workers_lock);
 
         QString cw = QString("%1:%2").arg(serverIP).arg(port);
@@ -742,7 +700,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             workers.removeAll(cw);
             workers_status[cw]=0;
         }
-//        auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
+        auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
 
         if (avail > 0 && ob.size() == 0 )
         {
@@ -778,7 +736,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         for (int i = 0; i < ob.size(); ++i)
         {
-            auto obj = ob[i].toMap().toJsonObject();
+            auto obj = ob[i].toObject();
             if (obj.contains("TaskID"))
             {
                 auto t = QDateTime::currentDateTime().toSecsSinceEpoch() - running[obj["TaskID"].toString()]["SendTime"].toInt();
@@ -928,8 +886,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         }
         {
-            QJsonObject ob;
-            setHttpResponse(ob, res, false);
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
         }
         return;
     }
@@ -956,8 +914,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         for (auto& project: projects)
             project_affinity[project]=QString("%1:%2").arg(srv, port);
         {
-            QJsonObject ob;
-            setHttpResponse(ob, res, false);
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
         }
         return;
     }
@@ -978,8 +936,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             proc_params[pr][QString("%1:%2").arg(serverIP).arg(port)] = obj;
         }
         {
-            QJsonObject ob;
-            setHttpResponse(ob, res, false);
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
         }
         //        qDebug() << proc_params;
         return;
@@ -1090,8 +1048,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             workers_lock.unlock();
         }
         {
-            QJsonObject ob;
-            setHttpResponse(ob, res, false);
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
         }
         return;
     }
@@ -1240,8 +1198,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         workers_status[cw] -= cpus;;
 
         {
-            QJsonObject ob;
-            setHttpResponse(ob, res, false);
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
         }
         return;
     }
