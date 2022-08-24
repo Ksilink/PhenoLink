@@ -33,6 +33,10 @@ namespace fs = arrow::fs;
 
 struct DataFrame
 {
+    DataFrame(): fresh(true)
+    {}
+
+    bool fresh;
     QString outfile;
     QString plate;
 
@@ -125,17 +129,21 @@ void CheckoutHttpClient::sendQueue()
         // Collapse request url
         QList<int> collapsed;
         if (collapse)
+        {
+            QMutexLocker lock(&mutex_send_lock);
+
             for (int i = 0; i < reqs.size() && collapsed.size() < 500; ++i) // do not merge more than 500 reqs
                 if (reqs.at(i).url == url && (
-                            url.path().startsWith("/addData/") ||
-                            url.path().startsWith("/Start")  ||
-                            url.path().startsWith("/Ready") ||
-                            url.path().startsWith("/ServerDone")
-                            ) )
+                    url.path().startsWith("/addData/") ||
+                    url.path().startsWith("/Start") ||
+                    url.path().startsWith("/Ready") ||
+                    url.path().startsWith("/ServerDone")
+                    ))
                     collapsed << i;
-
+        }
         if (collapsed.size() > 0)
         {
+            QMutexLocker lock(&mutex_send_lock);
             qDebug() << "Collapsing responses (0 + " << collapsed << ")";
             QJsonArray ar = QCborValue::fromCbor(ob).toJsonValue().toArray();
 
@@ -197,6 +205,11 @@ void CheckoutHttpClient::sendQueue()
                     this->iclient.removeAll(icli);
 //                    delete icli;
                 });
+            }
+            else
+            {
+                icli->killConnection();
+                this->iclient.removeAll(icli);
             }
         });
 
@@ -545,7 +558,32 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
                                                                                    ds["Project"].toString(),
                 commit, plate, srv).replace("\\", "/").replace("//", "/");
         store.plate = plate;
+
+        if (store.fresh)
+        {
+            if (QFile::exists(store.outfile))
+            {
+                int tgt = 0;
+                QString path = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5%6.fth").arg(dbP,
+                                                                                          ds["Project"].toString(),
+                                commit, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
+
+                while (QFile::exists(path))
+                {
+                    tgt ++;
+                    path = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5%6.fth").arg(dbP,
+                                                                                                             ds["Project"].toString(),
+                                                   commit, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
+                }
+                QFile::copy(store.outfile, path);
+            }
+
+        }
+        store.fresh = false;
     }
+
+
+
 
 
     std::map<QString, QString> tr={ {"FieldId", "fieldId"}, {"zPos", "sliceId"},
