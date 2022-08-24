@@ -660,11 +660,17 @@ void Server::proxyAdvert(QString host, int port, bool crashed)
 
 
     int processor_count = QThreadPool::globalInstance()->maxThreadCount();
-    client->send(QString("/Ready/%1").arg(processor_count),
-                 QString("affinity=%1&port=%2&cpu=%3&reset&available=1&crashed=%4")
-                 .arg(affinity_list.join(",")).arg(dport).arg(processor_count).arg(crashed),
-                 QJsonArray());
 
+    QJsonObject ob;
+
+    ob["affinity"]=QJsonArray::fromStringList(affinity_list);
+    ob["port"]=int(dport);
+    ob["cpu"]=processor_count;
+    ob["reset"]=true;
+    if (crashed)  ob["crashed"]=crashed;
+    QJsonArray ar; ar.append(ob);
+
+    client->send(QString("/Ready"), QString(), ar);
 
 }
 
@@ -677,14 +683,15 @@ void Server::finished(QString hash, QJsonObject ob)
     {
         QJsonObject pr;
         pr["TaskID"] = ob["TaskID"].toString();
+        pr["affinity"]=QJsonArray::fromStringList(affinity_list);
+        pr["port"]=int(dport);
+        pr["available"]=QThreadPool::globalInstance()->activeThreadCount() <= QThreadPool::globalInstance()->maxThreadCount() ?
+                    QThreadPool::globalInstance()->maxThreadCount()-QThreadPool::globalInstance()->activeThreadCount() : 1;
+
         QJsonArray ar; ar << pr;
 
-        client->send(QString("/Ready/0"),
-                     QString("affinity=%1&port=%2&available=%3")
-                     .arg(affinity_list.join(","))
-                     .arg(dport)
-                     .arg(QThreadPool::globalInstance()->activeThreadCount() <= QThreadPool::globalInstance()->maxThreadCount() ?
-                              QThreadPool::globalInstance()->maxThreadCount()-QThreadPool::globalInstance()->activeThreadCount() : 1),
+        client->send(QString("/Ready/"),
+                     QString(),
                      ar);
     }
 

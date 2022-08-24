@@ -130,6 +130,9 @@ protected:
     QMap<QString, QJsonObject > running;
 
     QMap<QString, unsigned int> run_time, run_count, work_count, perjob_count;
+
+    QMap<QString, QDateTime> start_times;
+
     // Project Affinity map
     QMap<QString, QString> project_affinity; // projection of project name to server name
 
