@@ -1685,8 +1685,9 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
             {
 
                 par["guiChan"] = channels;
+                qDebug() << ar.size();
 
-                if (ar.size())
+                if (ar.size() && pos < ar.size())
                 {
                     par["Value"]=ar[pos];
                     par["Value2"]=ar2[pos];
