@@ -3562,7 +3562,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
 
     bool csv = false, feather = false;
 
-    if (_dataset.first().data.first().size() == 0)
+    if (_dataset.size()==0 || _dataset.first().data.first().size() == 0)
         return 0;
     if (feather)
     { // Feather writing of the Non Aggregated
