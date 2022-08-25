@@ -2829,7 +2829,7 @@ void MainWindow::exportToCellProfiler()
                 path << QString("batch_%1").arg(batchid);
                 batchid++;
                 QDir d; d.mkpath(path.join("/"));
-                file.setFileName(path.join("/")+f);
+                file.setFileName(path.join("/")+"/"+f);
                 resFile.flush();
                 resFile.setDevice(&file);
                 for (auto c: values )      resFile << c.first << (c.first == l->first ? "" : ",");
