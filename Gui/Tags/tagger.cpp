@@ -25,6 +25,9 @@
 
 #include <QSettings>
 
+#include <QFileDialog>
+#include <QDir>
+
 #include <Core/ck_mongo.h>
 
 using namespace qhttp::client;
@@ -539,10 +542,22 @@ void tagger::on_mapcsv()
 
 void tagger::on_maptemplate()
 {
-    qDebug() << "Query for Template and map them to all the plate names";
+    QString script = QFileDialog::getOpenFileName(this, "Choose Template storage path",
+                                                  QDir::home().path(), "Tags json file (*.json)",
+                                                  0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
+                                                  );
 
-
-
+    if (!script.isEmpty())
+    {
+        for (auto w: this->findChildren<TaggerPlate*>())
+        {
+            if (qobject_cast<TaggerPlate*>(w))
+            {
+                auto platet = qobject_cast<TaggerPlate*>(w);
+                platet->apply_template(script);
+            }
+        }
+    }
 }
 
 
@@ -558,5 +573,12 @@ void tagger::on_populate()
                 platet->setTags(_grouped_tags, _well_tags, proj);
             }
         }
+}
+
+
+void tagger::on_Plates_currentChanged(int index)
+{
+    // When changing plate fuse the inputs with next one
+
 }
 

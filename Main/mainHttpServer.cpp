@@ -188,6 +188,7 @@ int main(int ac, char** av)
         qDebug()        << "\t-rs <value> :  Maximum concurrent disk access by this instance";
         qDebug()        << "\t-proxy <host> :  Set the queue proxy process computer:port";
 
+        qDebug()        << "\t-t <path> :  Set the storage path for plugins infos";
         qDebug()        << "\t-d : Run in debug mode (windows only launches a console)";
         qDebug()       << "\t-Crashed: Reports that the process has been restarted after crashing" ;
         qDebug()       << "\t-conf <config>: Specify a config file for python env setting json dict";
@@ -244,6 +245,27 @@ int main(int ac, char** av)
         if (data.size() > idx) file = data.at(idx);
         qDebug() << "Loading startup script :" << file;
         startup_execute(file);
+    }
+
+
+    if (data.contains("-t"))
+    {
+        int idx = data.indexOf("-t")+1;
+        QString file;
+        if (data.size() > idx) file = data.at(idx);
+        qDebug() << "Setting Storage path :" << file;
+        CheckoutProcess::handler().setStoragePath(file);
+    }
+    else
+    {
+        QString file;
+#if WIN32
+        file = "L:/";
+#else
+        file = "/mnt/shares/L/"
+#endif
+        qDebug() << "Setting Storage path :" << file;
+        CheckoutProcess::handler().setStoragePath(file);
     }
 
     PluginManager::loadPlugins(true);

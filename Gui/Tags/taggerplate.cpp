@@ -143,6 +143,42 @@ void TaggerPlate::on_plates_design_currentIndexChanged(const QString &)
 
 
 // Find Template
+void TaggerPlate::apply_template(QString script)
+{
+    if (script.isEmpty()) return;
+
+    QFile of(script);
+    if (of.open(QIODevice::ReadOnly))
+    {
+        QByteArray ar = of.readAll();
+        auto tags = QJsonDocument::fromJson(ar);
+
+        auto tg = tags.object();
+        tg.remove("_id");
+        //            auto ftag = tagger.object();
+        for (auto k : tags.object().keys())
+            if (k != "map")
+            {
+                tagger[k] = tg[k];
+
+            }
+            else
+            {
+                QJsonObject maps = tg[k].toObject(), res;
+                for (auto& v : maps.keys())
+                {
+                    //                        qDebug() << v;
+                    auto k = v;
+                    res[v.replace(".", "::")] = maps[k];
+                }
+                tagger[k] = res;
+            }
+
+        QByteArray bar = QJsonDocument(tagger).toJson();
+        updatePlate();
+    }
+}
+
 void TaggerPlate::on_pushButton_clicked()
 {
 
@@ -153,36 +189,7 @@ void TaggerPlate::on_pushButton_clicked()
 
     if (!script.isEmpty())
     {
-        QFile of(script);
-        if (of.open(QIODevice::ReadOnly))
-        {
-            QByteArray ar = of.readAll();
-            auto tags = QJsonDocument::fromJson(ar);
-
-            auto tg = tags.object();
-            tg.remove("_id");
-            //            auto ftag = tagger.object();
-            for (auto k : tags.object().keys())
-                if (k != "map")
-                {
-                    tagger[k] = tg[k];
-
-                }
-                else
-                {
-                    QJsonObject maps = tg[k].toObject(), res;
-                    for (auto& v : maps.keys())
-                    {
-                        //                        qDebug() << v;
-                        auto k = v;
-                        res[v.replace(".", "::")] = maps[k];
-                    }
-                    tagger[k] = res;
-                }
-
-            QByteArray bar = QJsonDocument(tagger).toJson();
-            updatePlate();
-        }
+        apply_template(script);
     }
 
 }

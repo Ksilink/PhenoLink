@@ -136,11 +136,10 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
         }
 
         mutex.unlock();
-        return;
     }
 
 
-    if (urlpath.startsWith("/addImage/"))
+    else if (urlpath.startsWith("/addImage/"))
     { // Now let's do the fun part :)
         auto ob = QCborValue::fromCbor(data);
 
@@ -152,16 +151,15 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
         win->networkRetrievedImage(lsfm);
         mutex.unlock();
-        return;
     }
 
-    if (urlpath.startsWith("/Message"))
+    else if (urlpath.startsWith("/Message"))
     {
         QString message(data);
         QMessageBox::information(win, "Remote Message", message);
     }
 
-    if (urlpath.startsWith("/Load"))
+    else if (urlpath.startsWith("/Load"))
     {
         //        "/Load/?plate=&wells=&field=&tile=&unpacked"
         QStringList queries = query.split("&"), wells, plates;
@@ -286,10 +284,6 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
         }
 
-        QJsonObject ob;
-        setHttpResponse(ob, res, !query.contains("json"));
-
-        return;
     }
 
 

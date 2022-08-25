@@ -44,6 +44,8 @@ public:
     QJsonObject refreshJson();
 
 
+    void apply_template(QString script);
+
 private slots:
     void on_setTags_clicked();
     void on_unsetTags_clicked();

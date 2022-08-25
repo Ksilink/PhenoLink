@@ -37,6 +37,8 @@ using namespace qhttp::server;
 #include <Core/networkprocesshandler.h>
 
 
+QString storage_path;
+
 std::ofstream outfile("c:/temp/CheckoutServer_log.txt");
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &, const QString &msg)
@@ -139,6 +141,7 @@ int main(int ac, char** av)
         qDebug() << "\t-d : Run in debug mode (windows only launches a console)";
         qDebug() << "\t-Crashed: Reports that the process has been restarted after crashing";
         qDebug() << "\t-c <config>: Specify a config file for python env setting json dict";
+        qDebug() << "\t-t <path> :  Set the storage path for plugins postprocesses";
         qDebug() << "\t\t shall contain env. variable with list of values,";
         qDebug()<< "$NAME will be substituted by current env value called 'NAME'";
         ;
@@ -173,6 +176,22 @@ int main(int ac, char** av)
 
         parse_python_conf(loadFile, python_config);
 
+    }
+
+    if (data.contains("-t"))
+    {
+        int idx = data.indexOf("-t")+1;
+        QString file;
+        if (data.size() > idx) storage_path = data.at(idx);
+        qDebug() << "Setting Storage path :" << storage_path;
+    }
+    else
+    {
+#if WIN32
+        storage_path = "L:/";
+#else
+        storage_path = "/mnt/shares/L/";
+#endif
     }
 
 
@@ -559,9 +578,9 @@ QString Server::pickWorker(QString )
 QString adjust(QString script)
 {
 #ifdef WIN32
-    return script;
+    return storage_path + script;
 #else
-    return "/mnt/shares/" + script.replace(":", "");
+    return storage_path + script.replace(":", "");
 #endif
 }
 
