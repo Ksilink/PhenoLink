@@ -995,7 +995,7 @@ void MainWindow::conditionChanged(QWidget* sen, int val)
     {
         foreach(QWidget* w, _disable[sen])
         {
-            qDebug() << _disable[sen];
+        //    qDebug() << _disable[sen];
             //QWidget* w = _disable[sen];//->hide();
             if (!w) continue;
             if (!w->parentWidget()) continue;
@@ -1509,7 +1509,7 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
 
     for (auto it = jsons.rbegin(), e= jsons.rend(); it != e; ++it)
     {
-        qDebug() << *it;
+     //   qDebug() << *it;
         for (auto & r: commits)
             if (r.contains(*it))
             {
@@ -1611,7 +1611,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
     QStringList h;
     for (int i = 0; i < _history->count(); ++i) h <<  _history->itemText(i);
-    qDebug() << h;
+ //   qDebug() << h;
 
     if (idx > 0) _history->setCurrentIndex(idx);
     else if (idx < 0 && _history->count() > 1)
@@ -1685,8 +1685,9 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
             {
 
                 par["guiChan"] = channels;
+                qDebug() << ar.size();
 
-                if (ar.size())
+                if (ar.size() && pos < ar.size())
                 {
                     par["Value"]=ar[pos];
                     par["Value2"]=ar2[pos];

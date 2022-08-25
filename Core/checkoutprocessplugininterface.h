@@ -490,12 +490,16 @@ public:
     void setColormap(void* data, Colormap color);
     QString user();
 
+    QString getDataStorePath() { return datastore; }
+    void setDataStorePath(QString path) { datastore = path;}
+
 protected:
     QString path;
     QStringList authors;
     QString comments;
     QStringList _dependencies;
     QJsonObject _callParams;
+    static QString datastore;
 
     QString position;
 

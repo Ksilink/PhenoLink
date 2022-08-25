@@ -53,6 +53,12 @@ public:
     QStringList networkPaths();
 
     QString setDriveMap(QString map);
+    QString getDriveMap();
+
+
+    QString getStoragePath();
+    void setStoragePath(QString map);
+
 
     void setProcessCounter(int* count);
     int getProcessCounter(QString hash);
@@ -100,7 +106,6 @@ public:
     void getStatus(QJsonObject &ob);
     QString dumpProcesses();
 
-    QString getDriveMap();
 public slots:
 
     void updatePath();
@@ -154,6 +159,7 @@ protected:
     int* _counter;
     QMutex mutex_dataupdate;
     QString drive_map;
+    QString storage_path;
     QString server_name;
 
 };

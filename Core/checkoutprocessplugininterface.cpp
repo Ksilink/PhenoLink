@@ -11,6 +11,8 @@ QMutex CheckoutProcessPluginInterface::mutex(QMutex::NonRecursive);
 QMap<QString, QVector<cv::Mat*> > CheckoutProcessPluginInterface::_hashtoBias;
 QMap<QString, int > CheckoutProcessPluginInterface::_hashtoBiasCount;
 
+QString CheckoutProcessPluginInterface::datastore;
+
 CheckoutProcessPluginInterface::CheckoutProcessPluginInterface(): _state(NotStarted)
 {
     _infos << QString("[%1]").arg((quint64)QThread::currentThreadId());

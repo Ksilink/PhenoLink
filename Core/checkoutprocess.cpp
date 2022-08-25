@@ -49,6 +49,7 @@ CheckoutProcess& CheckoutProcess::handler()
 void CheckoutProcess::addProcess(CheckoutProcessPluginInterface *proc)
 {
     _plugins[proc->getPath()] = proc;
+    proc->setDataStorePath(storage_path);
     //  QJsonObject obj;  proc->write(obj);  qDebug() << obj;
 }
 
@@ -113,6 +114,16 @@ QString CheckoutProcess::setDriveMap(QString map)
 QString CheckoutProcess::getDriveMap()
 {
     return drive_map;
+}
+
+QString CheckoutProcess::getStoragePath()
+{
+    return storage_path;
+}
+
+void CheckoutProcess::setStoragePath(QString map)
+{
+    storage_path = map;
 }
 
 
