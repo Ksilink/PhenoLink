@@ -923,7 +923,7 @@ void CheckoutProcess::attachPayload(QString hash, std::vector<unsigned char> dat
     if (pos != 0)
         hash += QString("%1").arg(pos);
 
-    _payloads_vectors[hash] = data;
+    _payloads_vectors[hash] = std::move(data);
 
     emit payloadAvailable(hash);
 }

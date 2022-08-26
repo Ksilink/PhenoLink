@@ -906,12 +906,10 @@ QCborArray NetworkProcessHandler::filterBinary(QString hash, QJsonObject ds)
                         }
 
 
-
                         qDebug() << "Got binary data: " << dhash << buf.size() << ar.size() << pos;
                         mm.insert(QCborValue("BinaryData"), ar);//QCborValue(data));
 
                         exportBinary(ds,obj, mm);
-
                     }
                     else
                     {
@@ -1224,7 +1222,7 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
 
             fuseArrow(bp, QStringList() << file+".torm", bp+file, df.plate);
         }
-        // plateData.remove(d);
+        //plateData.remove(d);
     }
 
 }

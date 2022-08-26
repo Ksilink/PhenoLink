@@ -319,6 +319,8 @@ public:
             if (_value->channels() == 1) split.push_back(*_value);
             else       cv::split(*_value, split);
 
+            (*_value).release();
+
             if (split.size() == 0)
             {
                 qDebug() << "OpenCV Split returned empty image... leaving..";
