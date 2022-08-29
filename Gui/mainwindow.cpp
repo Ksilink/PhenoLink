@@ -3193,7 +3193,7 @@ void MainWindow::on_actionShare_Intensity_Controls_toggled(bool checked)
 {
     QSettings set;
     set.setValue("ShareControls", checked);
-    ui->actionShare_Intensity_Controls->setChecked(!checked);
+    //ui->actionShare_Intensity_Controls->setChecked(!checked);
 }
 
 
