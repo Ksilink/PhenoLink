@@ -249,7 +249,7 @@ void CheckoutHttpClient::onIncomingData(const QByteArray& data)
         return;
     }
 
-    qDebug()  << "HTTP Response" << val;
+//    qDebug()  << "HTTP Response" << val;
 }
 
 void CheckoutHttpClient::finalize()

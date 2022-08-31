@@ -70,6 +70,8 @@ public:
 
     Screens findPlate(QString plate, QStringList project, QString drive);
 
+    void clearScreenSelection();
+
     void resetSelection();
     void graySelection();
     void ungraySelection();

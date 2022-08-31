@@ -228,8 +228,13 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 }
             }
 
+            for (auto& lmdl: ScreensHandler::getHandler().getScreens())
+                lmdl->clearState(ExperimentFileModel::IsSelected);
+
             for (auto &mdl: (sc))
             {
+                win->resetSelection();
+                win->clearScreenSelection();
                 mdl->clearState(ExperimentFileModel::IsSelected);
                 ExperimentDataTableModel* xpmdl = mdl->computedDataModel();
 
@@ -244,7 +249,8 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                     }
                 }
 
-                win->displayWellSelection();
+
+               // win->displayWellSelection();
                 if (wells.isEmpty() && lpl.size() >= 1)
                 {
                     wells = lpl[1].split("/");  // so we can do a query plate:well1/well2/well3,plate:well1/well2 etc...
@@ -257,7 +263,6 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                         mdl->select(pos, true);
                 }
 
-                win->displayWellSelection();
                 for (auto &sfm : mdl->getSelection())
                     if (sfm->isValid())
                     {
@@ -280,6 +285,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                             }
                         }
                     }
+                win->displayWellSelection();
             }
 
         }

@@ -514,6 +514,11 @@ Screens MainWindow::findPlate(QString plate, QStringList project, QString drive)
     return loadSelection(QStringList() << file, false);
 }
 
+void MainWindow::clearScreenSelection()
+{
+    mdl->clearCheckedDirectories();
+}
+
 
 
 
