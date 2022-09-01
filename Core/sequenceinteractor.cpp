@@ -521,7 +521,7 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
 
 
         QSettings set;
-        exp =  set.value("ShareControls", false).toBool() ? "" : exp + QString("%1").arg(ii);
+        exp =  set.value("ShareControls", false).toBool() ? QString("%1").arg(ii) : exp + QString("%1").arg(ii);
 
 
         info = ImageInfos::getInstance(this, file, exp, ii, exists, key);
@@ -1101,7 +1101,7 @@ void SequenceInteractor::initImageInfos(int field)
         bool exists;
 
         QSettings set;
-        QString exp =  set.value("ShareControls", false).toBool() ? "" : getExperimentName() + QString("%1").arg(ii);
+        QString exp =  set.value("ShareControls", false).toBool() ? QString("%1").arg(ii) : getExperimentName() + QString("%1").arg(ii);
 
 
         ImageInfos::getInstance(this, file, exp, ii, exists, loadkey);
