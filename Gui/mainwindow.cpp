@@ -3151,8 +3151,6 @@ void MainWindow::on_actionDisplay_Remaining_Processes_triggered()
 
 void MainWindow::plateMap()
 {
-    //
-    //    mdl->clearCheckedDirectories();
     mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
     QStringList checked = mdl->getCheckedDirectories(false);
     if (checked.size())
