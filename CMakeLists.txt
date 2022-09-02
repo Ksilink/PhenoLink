@@ -32,7 +32,7 @@ endif(WIN32)
 set(Checkout_VERSION_MAJOR 2)
 set(Checkout_VERSION_MINOR 0)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 21)
+set(Checkout_VERSION_RELEASE 22)
 
 message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
 
@@ -157,9 +157,24 @@ find_package(Eigen3 CONFIG REQUIRED )
 find_package(GSL REQUIRED )
 find_package(FFTW3 CONFIG REQUIRED)
 
-find_package(AWSSDK CONFIG COMPONENTS core dynamodb kinesis s3 REQUIRED)
+
+# CLOUD Supports
+
+# AWS
+#find_package(AWSSDK CONFIG COMPONENTS core dynamodb kinesis s3 REQUIRED)
+find_package(AWSSDK CONFIG COMPONENTS core s3 REQUIRED)
 #target_include_directories(main PRIVATE ${AWSSDK_INCLUDE_DIRS})
 #target_link_libraries(main PRIVATE ${AWSSDK_LIBRARIES})
+
+# Google Cloud (Google Cloud Storage)
+# find_package(google_cloud_cpp_storage CONFIG REQUIRED)
+# target_link_libraries(main PRIVATE CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc)
+
+# find_package(google_cloud_cpp_storagetransfer CONFIG REQUIRED)
+# target_link_libraries(main PRIVATE google-cloud-cpp::storagetransfer google-cloud-cpp::storagetransfer_protos google-cloud-cpp::experimental-storagetransfer)
+
+
+
 
 if(BUILD_WITH_VTK)
     find_package(VTK)

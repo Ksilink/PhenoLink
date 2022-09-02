@@ -77,6 +77,22 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
     return mat;
 }
 
+
+QStringList _getImageFile(QJsonArray data, int im, QString base_path = QString())
+{
+    QStringList res;
+
+    if (data.size() > 1)
+    {
+        for (size_t i = 0; i < (size_t)data.size(); ++i)
+        {
+            if (im >= 0 && im != (int)i) continue;
+            res << base_path + data.at((int)i).toString();
+        }
+    }
+    return res;
+}
+
 namespace cocvMat
 {
 void loadFromJSON(QJsonObject data, cv::Mat& mat, int im, QString base_path)
@@ -419,6 +435,19 @@ cv::Mat ImageXP::getImage(int i, int c, QString bp)
 
     return loadImage(chans,c, bp);
 
+}
+
+QStringList ImageXP::getImageFile(int i, int c, QString bp)
+{
+    QJsonArray field =    _data["Data"].toArray();
+    bp = _data.contains("BasePath") ? _data["BasePath"].toString() : bp;
+
+    QJsonObject ob = field.at(i).toObject();
+    if (bp.isEmpty() && ob.contains("BasePath"))
+        bp = ob["BasePath"].toString();
+    QJsonArray chans = ob["Data"].toArray();
+
+    return _getImageFile(chans,c, bp);
 }
 
 

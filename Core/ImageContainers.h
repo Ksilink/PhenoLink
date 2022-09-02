@@ -109,7 +109,7 @@ public:
     virtual QString basePath(QJsonObject json);
     virtual size_t getChannelCount();
     virtual cv::Mat getImage(int i, int c=-1, QString base_path = QString());
-
+    QStringList getImageFile(int i, int c=-1, QString base_path=QString());
 };
 
 // 2D + t + fields
