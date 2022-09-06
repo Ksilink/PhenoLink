@@ -637,13 +637,29 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
                 if (!commit.isEmpty())
                 {
                     // qDebug() << "Appending" << name << dfKey << obj["Data"];
+                    int items = 0;
                     if (obj["Data"].isDouble())
                         store.arrFl[name][dfKey] = obj["Data"].toDouble();
                     else
-                        store.arrFl[name][dfKey] = obj["Data"].toString().toDouble();
+                    {
+                        QString t = obj["Data"].toString();
+                        if (t.contains(';'))
+                        {
+                            QStringList t2 = t.split(";");
+                            items = t2.size();
+                            for (int i = 0; i < items; ++i)
+                                store.arrFl[QString("%1#%2").arg(name).arg(i, 4, 10, QLatin1Char('0'))][dfKey] = t2[i].toDouble();
+                        }
+                        else
+                            store.arrFl[name][dfKey] = t.toDouble();
+                    }
 
+                    if (items == 0)
+                        store.fuseT[name]=obj["Aggregation"].toString();
+                    else
+                        for (int i = 0; i < items; ++i)
+                            store.fuseT[QString("%1#%2").arg(name).arg(i, 4, 10, QLatin1Char('0'))]=obj["Aggregation"].toString();
 
-                    store.fuseT[name]=obj["Aggregation"].toString();
                     store.arrStr["tags"][dfKey]=ds["WellTags"].toString();
                 }
                 else
