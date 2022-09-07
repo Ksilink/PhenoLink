@@ -319,7 +319,6 @@ public:
             if (_value->channels() == 1) split.push_back(*_value);
             else       cv::split(*_value, split);
 
-            (*_value).release();
 
             if (split.size() == 0)
             {
@@ -365,6 +364,9 @@ public:
                 ar.push_back(ob);
                 json["Payload"] = ar;
             }
+
+            (*_value).release();
+
         }
 
     }
