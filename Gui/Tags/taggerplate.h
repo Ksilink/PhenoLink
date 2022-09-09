@@ -42,6 +42,7 @@ public:
     void setColorFG(int r, int c, QString color);
     void updatePlate();
     QJsonObject refreshJson();
+    QString getPlate()  { return plate; }
 
 
     void apply_template(QString script);

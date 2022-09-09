@@ -27,6 +27,9 @@
 
 #include <QFileDialog>
 #include <QDir>
+#include <QFormLayout>
+#include <QDialogButtonBox>
+
 
 #include <Core/ck_mongo.h>
 
@@ -273,19 +276,22 @@ tagger::tagger(QStringList datas, QWidget *parent) :
     catch(...) {}
 
     QWidget *twobut = new QWidget();
-    auto hl = new QHBoxLayout(twobut);
+    twobut->setLayout(new QHBoxLayout());
+
+    twobut->layout()->setContentsMargins(0,0,0,0);
+    twobut->layout()->setSpacing(1);
 
     auto button = new QPushButton("Map CSV");
     auto button2 = new QPushButton("Map Template");
 
 
-    hl->addWidget(button);
-    hl->addWidget(button2);
+    twobut->layout()->addWidget(button);
+    twobut->layout()->addWidget(button2);
 
     ui->Plates->setCornerWidget(twobut);
 
     connect(button, SIGNAL(clicked()), this, SLOT(on_mapcsv()));
-    connect(button, SIGNAL(clicked()), this, SLOT(on_maptemplate()));
+    connect(button2, SIGNAL(clicked()), this, SLOT(on_maptemplate()));
 
 
     QSettings set;
@@ -481,8 +487,8 @@ void tagger::on_pushButton_clicked()
     {
         bool ok;
         proj = QInputDialog::getText(this, tr("Please set Project name"),
-                                                 "", QLineEdit::Normal,
-                                                 proj, &ok);
+                                     "", QLineEdit::Normal,
+                                     proj, &ok);
         if (!ok) return;
     }
 
@@ -533,10 +539,112 @@ void tagger::on_pushButton_clicked()
     this->close();
 }
 
+
 void tagger::on_mapcsv()
 {
-
     qDebug() << "Query for CSV & Map CSV file to the plate names";
+    QString script = QFileDialog::getOpenFileName(this, "Choose Template storage path",
+                                                  QDir::home().path(), "CSV file (*.csv)",
+                                                  0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
+
+                                                  );
+
+    if (!script.isEmpty())
+    {
+        QFile io(script);
+        if (io.open(QFile::ReadOnly))
+        {
+            QString hea= io.readLine();
+            QStringList header = hea.contains(',') ? hea.split(',') : (hea.contains(";") ? hea.split(';') : (hea.contains('\t') ? hea.split('\t') : hea.split(",")));
+            QStringList h2 = header; h2.prepend("None/Skip");
+            int wc = 0, pc = 0, c=0;
+
+            for (auto& str: header)
+            {
+                if (str.contains("well", Qt::CaseInsensitive))
+                    wc = c;
+                if (str.contains("plate", Qt::CaseInsensitive))
+                    pc = c;
+                c++;
+            }
+
+            QDialog box(this);
+
+            auto layout = new QFormLayout();
+            box.setLayout(layout);
+            auto wells = new QComboBox(&box); wells->addItems(header);
+            wells->setCurrentIndex(wc);
+
+
+            auto plates = new QComboBox(&box); plates->addItems(h2);
+            plates->setCurrentIndex(pc+1);
+
+            layout->addRow("Pick Well Columns", wells);
+            layout->addRow("Pick Plate Columns", plates);
+
+            QList<QComboBox*> features;
+            for (int i = 2; i < header.size(); ++i)
+            {
+                features.push_back(new QComboBox(&box));
+                features.back()->addItems(h2);
+                layout->addRow(QString("Pick Feature %1").arg(i), features.back());
+            }
+            auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+                                                  | QDialogButtonBox::Cancel);
+
+            connect(buttonBox, &QDialogButtonBox::accepted, &box, &QDialog::accept);
+            connect(buttonBox, &QDialogButtonBox::rejected, &box, &QDialog::reject);
+            layout->addRow(buttonBox);
+
+            if (box.exec()==QDialog::Accepted)
+            {
+                do
+                {
+                    hea= io.readLine();
+                    header = hea.contains(',') ? hea.split(',') : (hea.contains(";") ? hea.split(';') : (hea.contains('\t') ? hea.split('\t') : hea.split(",")));
+
+                    QString well = header.at(wells->currentIndex()).toUpper();
+                    int r = (char)(well[0].toLatin1())-'A', c = well.mid(1).toInt()-1;
+
+                    for (auto w: this->findChildren<TaggerPlate*>())
+                    {
+                        if (qobject_cast<TaggerPlate*>(w))
+                        {
+                            auto platet = qobject_cast<TaggerPlate*>(w);
+                            if (plates->currentIndex() != 0)
+                            {
+                                if (platet->getPlate() == header.at(plates->currentIndex()-1))
+                                {
+                                    for (auto& col : features)
+                                        if (col->currentIndex()!=0)
+                                            platet->setTag(r,c,header.at(col->currentIndex()-1));
+                                }
+                            }
+                            else
+                            {
+                                for (auto& col : features)
+                                    if (col->currentIndex()!=0)
+                                        platet->setTag(r,c,header.at(col->currentIndex()-1));
+                            }
+                        }
+                    }
+                }
+                while (!hea.isEmpty());
+            }
+
+
+            delete layout;
+            delete plates;
+            delete wells;
+            for (auto& c: features)
+                delete c;
+            features.clear();
+
+        }
+
+    }
+
+
 }
 
 

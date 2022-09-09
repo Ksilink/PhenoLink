@@ -41,6 +41,11 @@
         {
             "name" : "aws-sdk-cpp",
             "features": [ "s3" ]
+        },
+        {
+            "name":"google-cloud-cpp",
+            "features": ["storage"]
         }
+
     ]
 }

@@ -17,7 +17,7 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     bias_correction(false),
     _saturate(true), _uninverted(true),
 
-    _channel(channel), _binarized(false),
+    _channel(channel), _binarized(false), _gradients(false),
     range_timer(NULL), range_timerId(-1)
 {
     QMutexLocker lock(&_lockImage);
@@ -335,6 +335,18 @@ void ImageInfos::toggleBinarized()
 
 bool ImageInfos::isBinarized() { return _binarized; }
 
+void ImageInfos::toggleGradients()
+{
+    _gradients = !_gradients;
+    propagate();
+}
+
+bool ImageInfos::isGradient() { return _gradients; }
+
+
+
+
+
 void ImageInfos::setColorMap(QString name){
     _colormap = name;
     propagate();
@@ -354,9 +366,10 @@ void ImageInfos::propagate()
                 _channel == ifo->_channel) // Only propagate status to same channel & plates
         {
             ifo->_uninverted = this->_uninverted;
-            ifo->_saturate = this->_saturate;
-            ifo->_colormap = this->_colormap;
-            ifo->_binarized = this->_binarized;
+            ifo->_saturate   = this->_saturate;
+            ifo->_colormap   = this->_colormap;
+            ifo->_binarized  = this->_binarized;
+            ifo->_gradients  = this->_gradients;
             ifo->_parent->modifiedImage();
         }
 
