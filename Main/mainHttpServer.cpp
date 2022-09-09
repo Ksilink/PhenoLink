@@ -262,7 +262,7 @@ int main(int ac, char** av)
 #if WIN32
         file = "L:/";
 #else
-        file = "/mnt/shares/L/"
+        file = "/mnt/shares/L/";
 #endif
         qDebug() << "Setting Storage path :" << file;
         CheckoutProcess::handler().setStoragePath(file);
