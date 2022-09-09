@@ -1813,8 +1813,48 @@ QStringList SequenceInteractor::getTag(QString overlay, int id)
         if (data.contains(overlay))
         {
             StructuredMetaData& k = data[overlay];
+            auto im = k.content();
+            QStringList header = k.property("ChannelNames").split(';');
 
-            return k.getTag(id);
+
+            return  k.getTag(id);
+
+        }
+    }
+
+    return QStringList();
+}
+
+QStringList SequenceInteractor::getOverlayValues(QString overlay, int id)
+{
+    int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
+
+    for (int c = 1; c <= cns; ++c)
+    {
+        QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
+        if (data.contains(overlay))
+        {
+            StructuredMetaData& k = data[overlay];
+            auto im = k.content();
+            QStringList header = k.property("ChannelNames").split(';');
+
+
+            QStringList tags;
+            tags << QString("Id: %1").arg(id);
+            for (int i = 0; i < header.size(); i++)
+                if (!(header.at(i).endsWith("_X") ||
+                        header.at(i).endsWith("_Y") ||
+                        header.at(i).endsWith("_Top") ||
+                        header.at(i).endsWith("_Left") ||
+                        header.at(i).endsWith("_Height") ||
+                        header.at(i).endsWith("_Width")
+                        ) )
+                {
+                    tags << QString("%1: %2").arg(header.at(i)).arg(im.at<float>(id, i));
+                }
+
+
+            return tags;
         }
     }
 

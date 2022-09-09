@@ -106,6 +106,8 @@ namespace fs = arrow::fs;
 void MainWindow::overlayClearTags()
 {
     ui->tagList->clear();
+    ui->valuesOverlay->clear();
+
 }
 
 
@@ -179,8 +181,11 @@ void MainWindow::on_prevOverlay_clicked()
             ui->showOverlay->setPixmap(inter->getSubPixmap(ui->pickOverlay->currentText(), val));
 
             QStringList tags = inter->getTag(ui->pickOverlay->currentText(), val);
+
             ui->tagList->clear();
             ui->tagList->addItems(tags);
+            tags = inter->getOverlayValues(ui->pickOverlay->currentText(), val);
+           ui->valuesOverlay->insertItems(0, tags);
 
 
         }
@@ -204,6 +209,8 @@ void MainWindow::on_nextOverlay_clicked()
             QStringList tags = inter->getTag(ui->pickOverlay->currentText(), val);
             ui->tagList->clear();
             ui->tagList->addItems(tags);
+            tags = inter->getOverlayValues(ui->pickOverlay->currentText(), val);
+           ui->valuesOverlay->insertItems(0, tags);
         }
     ui->overlayId->setText(QString("%1").arg(val));
 
