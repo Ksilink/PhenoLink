@@ -29,6 +29,9 @@ public:
         path = p;
     }
 
+    void setCategories(QMap<QString, QStringList> map);
+
+
     void setTags(
             QMap<QString, QMap<QString, QSet<QString > > > &data,
             QMap<QString, QSet<QString> >  &othertags,

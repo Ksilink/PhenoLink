@@ -69,6 +69,37 @@ QJsonObject &TaggerPlate::getTags() {
     return tagger;
 }
 
+void TaggerPlate::setCategories(QMap<QString, QStringList> map)
+{
+    QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    if (!ml) return;
+
+    QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
+    if (!model) return;
+
+    QStandardItem* root = model->invisibleRootItem();
+
+    for (auto& name: map.keys())
+    {
+        QStandardItem* parent = nullptr;
+        for (int i = 0; i < root->rowCount(); ++i)
+            if (root->child(i)->text() == name)
+            {
+                parent = root->child(i);
+                break;
+            }
+
+        if (!parent)
+        {
+            parent = new QStandardItem(name);
+            root->appendRow(parent);
+        }
+
+        for (auto& subname: map[name]) parent->appendRow(new QStandardItem(subname));
+    }
+
+}
+
 void TaggerPlate::on_setTags_clicked()
 {
     QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
