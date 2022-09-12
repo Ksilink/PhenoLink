@@ -201,8 +201,16 @@ int main(int ac, char** av)
         show_console();
 #endif
 
+
+
+
     Server server;
     server.setPort(port);
+    if (QFile::exists(QString("%1/Temp/checkout_queue_pendingjobs.json").arg(storage_path)))
+    {
+        server.recover(QString("%1/Temp/checkout_queue_pendingjobs.json").arg(storage_path));
+    }
+
 
     return server.start(port);
 }
@@ -593,9 +601,9 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     qDebug()  << QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz")
               << qhttp::Stringify::toString(req->method())
-             << qPrintable(urlpath)
-             << qPrintable(query)
-             << data.size();
+              << qPrintable(urlpath)
+              << qPrintable(query)
+              << data.size();
 
     CheckoutProcess& procs = CheckoutProcess::handler();
 
@@ -905,8 +913,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         }
         {
-        QJsonObject ob;
-        setHttpResponse(ob, res, false);
+            QJsonObject ob;
+            setHttpResponse(ob, res, false);
         }
         return;
     }
@@ -933,8 +941,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         for (auto& project: projects)
             project_affinity[project]=QString("%1:%2").arg(srv, port);
         {
-        QJsonObject ob;
-        setHttpResponse(ob, res, false);
+            QJsonObject ob;
+            setHttpResponse(ob, res, false);
         }
         return;
     }
@@ -955,8 +963,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             proc_params[pr][QString("%1:%2").arg(serverIP).arg(port)] = obj;
         }
         {
-        QJsonObject ob;
-        setHttpResponse(ob, res, false);
+            QJsonObject ob;
+            setHttpResponse(ob, res, false);
         }
         //        qDebug() << proc_params;
         return;
@@ -1067,8 +1075,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             workers_lock.unlock();
         }
         {
-        QJsonObject ob;
-        setHttpResponse(ob, res, false);
+            QJsonObject ob;
+            setHttpResponse(ob, res, false);
         }
         return;
     }
@@ -1217,11 +1225,40 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         workers_status[cw] -= cpus;;
 
         {
-        QJsonObject ob;
-        setHttpResponse(ob, res, false);
+            QJsonObject ob;
+            setHttpResponse(ob, res, false);
         }
         return;
     }
+
+    if (urlpath.startsWith("/Quit"))
+    {
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
+
+        workers_lock.lock();
+        QJsonArray ar;
+
+        // Look for jobs
+        for (auto& srv: jobs.keys())
+            for (auto& prio: jobs[srv].values())
+                for (auto& obj: prio)
+                    ar.append(obj);
+
+        // Look for ongoing (unwatched) tasks
+        for (auto& tasks: running.values())
+            ar.append(tasks);
+        if (ar.size())
+        {
+            QFile store(QString("%1/Temp/checkout_queue_pendingjobs.json").arg(storage_path));
+
+            if (store.open(QFile::WriteOnly))
+                store.write(QCborValue::fromJsonValue(ar).toCbor());
+        }
+        qApp->exit(0);
+        workers_lock.unlock();
+    }
+
 
     if (urlpath.startsWith("/Start/"))
     {
@@ -1426,7 +1463,20 @@ void Control::timerEvent(QTimerEvent * event)
         _users.append(_cancelMenu->addAction(user));
 }
 
-
+void Server::recover(QString f)
+{
+    QFile io(f);
+    if (io.open(QFile::ReadOnly))
+    {
+       auto ar = QCborValue::fromCbor(io.readAll()).toArray();
+       int prio = ar.size();
+       for (int i = 0; i < prio; i++)
+       {
+           auto obj = ar[i].toJsonValue().toObject();
+           jobs[""][prio].enqueue(obj);
+       }
+    }
+}
 
 #endif
 

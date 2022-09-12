@@ -82,6 +82,7 @@ public:
 
     void process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res);
     uint serverPort();
+    void recover(QString file);
     void setPort(uint port) {dport = port;};
 
 public slots:
