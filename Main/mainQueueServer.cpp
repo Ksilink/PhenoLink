@@ -1463,6 +1463,8 @@ void Control::timerEvent(QTimerEvent * event)
         _users.append(_cancelMenu->addAction(user));
 }
 
+#endif
+
 void Server::recover(QString f)
 {
     QFile io(f);
@@ -1477,7 +1479,5 @@ void Server::recover(QString f)
        }
     }
 }
-
-#endif
 
 
