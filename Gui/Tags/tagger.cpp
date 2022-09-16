@@ -600,9 +600,11 @@ void tagger::on_mapcsv()
 
             if (box.exec()==QDialog::Accepted)
             {
-                do
+                while(true)
                 {
                     hea= io.readLine();
+                    if (hea.isEmpty())
+                        break;
                     header = hea.contains(',') ? hea.split(',') : (hea.contains(";") ? hea.split(';') : (hea.contains('\t') ? hea.split('\t') : hea.split(",")));
 
                     QString well = header.at(wells->currentIndex()).toUpper();
@@ -640,8 +642,7 @@ void tagger::on_mapcsv()
                             }
                         }
                     }
-                }
-                while (!hea.isEmpty());
+                }                
             }
 
 
