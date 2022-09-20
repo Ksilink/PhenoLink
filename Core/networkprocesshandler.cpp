@@ -1243,7 +1243,10 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
 
 }
 
-void NetworkProcessHandler::setPythonEnvironment(QProcessEnvironment env) { python_env = env; }
+//void NetworkProcessHandler::setPythonEnvironment(QProcessEnvironment env) {
+
+//    python_env = env;
+//}
 
 
 QStringList NetworkProcessHandler::remainingProcess()

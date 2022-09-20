@@ -10,13 +10,12 @@
 ${plugin_name}::${plugin_name}()
 {
     description("${plugin_path}",
-                QStringList() << "wiest.daessle@gmail.com",
-                "Executes a Cell Profiler pipeline");
+                QStringList() << "who@youremail" << "and_someoneelse@where",
+                "Your Comment here");
 
     use(&images, "input-image", "Input Time Image")
             .channelsAsVector() // This process does handle all the channels together,
             ;
-
 
 }
 

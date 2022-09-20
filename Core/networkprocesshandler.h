@@ -123,7 +123,7 @@ public:
 
      void timerEvent(QTimerEvent *event) override;
      void storeData(QString plate, bool finished=false);
-     void setPythonEnvironment(QProcessEnvironment env);
+//     void setPythonEnvironment(QProcessEnvironment env);
 
 
 protected:
@@ -162,7 +162,7 @@ protected:
     // For datastorage
 
     QString srv;
-    QProcessEnvironment python_env;
+//    QProcessEnvironment python_env;
 
     QMap<QString, DataFrame*> plateData;
     QMap<int, QString> storageTimer;

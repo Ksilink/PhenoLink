@@ -734,6 +734,13 @@ void CheckoutProcess::addToComputedDataModel(QJsonObject ob)
 
 }
 
+void CheckoutProcess::setEnvironment(QProcessEnvironment env) { _env = env; }
+
+QString CheckoutProcess::getEnv(QString key, QString def)
+{
+    return _env.value(key, def);
+}
+
 
 void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
 {

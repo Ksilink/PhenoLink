@@ -284,7 +284,7 @@ int main(int ac, char** av)
 
         QProcessEnvironment python_config;
         parse_python_conf(loadFile, python_config);
-        NetworkProcessHandler::handler().setPythonEnvironment(python_config);
+        CheckoutProcess::handler().setEnvironment(python_config);
     }
 
 #ifndef WIN32

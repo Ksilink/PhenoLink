@@ -109,7 +109,7 @@ protected:
    QQueue<QJsonObject> &getHighestPriorityJob(QString server);
 
 
-   QStringList pendingTasks();
+   QStringList pendingTasks(bool html=false);
 
    unsigned int njobs();
    unsigned int nbUsers();

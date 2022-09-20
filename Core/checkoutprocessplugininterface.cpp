@@ -3,7 +3,7 @@
 
 #include <networkprocesshandler.h>
 
-
+#include <checkoutprocess.h>
 
 
 
@@ -16,6 +16,11 @@ QString CheckoutProcessPluginInterface::datastore;
 CheckoutProcessPluginInterface::CheckoutProcessPluginInterface(): _state(NotStarted)
 {
     _infos << QString("[%1]").arg((quint64)QThread::currentThreadId());
+}
+
+QString CheckoutProcessPluginInterface::getEnv(QString key, QString def)
+{
+    return CheckoutProcess::handler().getEnv(key, def);
 }
 
 

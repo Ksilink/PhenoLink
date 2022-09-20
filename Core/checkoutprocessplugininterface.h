@@ -92,6 +92,8 @@ public:
     virtual QString plugin_version() const { return "" ; }
     virtual QString buildTime() const { return QString(); };
     virtual QString gitTime() const { return GitPluginDate; };
+    QString getEnv(QString key, QString def);
+
 
     // This function is to be called in plugins constructors to declare to the handler what data is required as input
     // value is the plugin registered parameter

@@ -335,7 +335,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
 
     body += "<h3>Awaiting Jobs</h3>";
 
-    body += pendingTasks().join("<br>") + "<br>";
+    body += pendingTasks(true).join("<br>") + "<br>";
 
     body += "<h3>Running Jobs</h3>";
 
@@ -344,7 +344,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
         runs[task.key().split("!").first()]++;
 
     for (auto it = runs.begin(), e = runs.end(); it != e; ++it)
-        body += QString("%1 => %2  <a href='/Details/?proc=%1'>Details</a>&nbsp;<a href='/Cancel/?proc=%1'>Cancel</a>&nbsp;<a href='/Restart'>Force Restart</a><br>").arg(it.key()).arg(it.value());
+        body += QString("%1 => %2  <a href='/Details/?proc=%1'>Details</a>&nbsp;<a href='/Restart'>Force Restart</a><br>").arg(it.key()).arg(it.value());
 
     message = QString("<html><title>Checkout Queue Status %2</title><body>%1</body></html>").arg(body).arg(CHECKOUT_VERSION);
 
@@ -395,7 +395,7 @@ unsigned int Server::nbUsers()
 }
 
 
-QStringList Server::pendingTasks()
+QStringList Server::pendingTasks(bool html)
 {
     QMutexLocker lock(&workers_lock);
 
@@ -418,7 +418,9 @@ QStringList Server::pendingTasks()
     QStringList res;
     for (auto it = names.begin(), e = names.end(); it != e; ++it)
     {
-        res << QString("%1 => %2").arg(it.key()).arg(it.value());
+        QString key = it.key();
+        res << QString("%1 => %2").arg((html ? key + "<a href='/Cancel/?proc=" + key.replace(" ", "")
+                                               +"'>Cancel</a>&nbsp;" : key)).arg(it.value());
     }
 
     return res;
@@ -496,6 +498,7 @@ void Server::WorkerMonitor()
             if (!next_worker.isEmpty())
             {
                 QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker);
+
 
                 // Hey hey look what we have here: the job to be run by next_worker let's call the start func then :
                 // start it :)
@@ -1159,12 +1162,13 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
                 QMutexLocker lock(&workers_lock);
                 // Clear up the jobs
-                QStringList job = proc.split("#");
+                QStringList job = proc.split(":");
                 if (job.size() < 2)
                     break;
                 QStringList name = job[0].split("@");
-                QString jobname  = job[1];
-                QString workid = job.back();
+                int idx = job[1].indexOf('(');
+                QString jobname  = job[1].mid(0, idx);
+                QString workid = job[1].mid(idx).replace(")", "");
 
                 qDebug() << "rm job command:" << name << jobname << workid;
                 for (auto& srv: jobs)

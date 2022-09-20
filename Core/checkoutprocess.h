@@ -106,6 +106,9 @@ public:
     void getStatus(QJsonObject &ob);
     QString dumpProcesses();
 
+    void setEnvironment(QProcessEnvironment env);
+    QString getEnv(QString key, QString def);
+
 public slots:
 
     void updatePath();
@@ -133,6 +136,9 @@ signals:
 
 
 protected:
+
+    QProcessEnvironment _env;
+
     QMap<QString, CheckoutProcessPluginInterface*> _plugins;
     QMap<QString, QJsonObject> _params;
 
