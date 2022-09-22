@@ -1167,10 +1167,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                     break;
                 QStringList name = job[0].split("@");
                 int idx = job[1].indexOf('(');
-                QString jobname  = job[1].mid(0, idx);
-                QString workid = job[1].mid(idx).replace(")", "");
+                QString jobname  = job[1].mid(0, idx).replace(" ", "");
+                QString workid = job[1].mid(idx+1).replace(")", "");
 
-                qDebug() << "rm job command:" << name << jobname << workid;
+
+                qDebug() << "rm job command:" << name[0] << name[1] << jobname << workid;
                 for (auto& srv: jobs)
                 {
                     for (auto& q: srv)
@@ -1179,19 +1180,19 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
                         for (auto& item: q)
                         {
+                 /*           qDebug() << item["Username"].toString() << item["Computer"].toString() 
+                                << item["Path"].toString() << item["WorkID"].toString();*/
                             if (item["Username"].toString() == name[0] &&
                                     item["Computer"].toString() == name[1] &&
-                                    item["Path"].toString() == jobname &&
+                                    item["Path"].toString().replace(" ", "") == jobname &&
                                     item["WorkID"].toString() == workid)
                                 torm << item;
                         }
-                        cancelProcs = (int)torm.size();
+                        cancelProcs += (int)torm.size();
 
                         qDebug() << "Trying to remove" << cancelProcs;
                         for (auto& it : torm)
                             q.removeAll(it);
-
-
                     }
                 }
 
