@@ -99,6 +99,8 @@ public:
     void getParameters(QString process);
     void setParameters(QJsonObject ob);
 
+    void sendCommand(QString par);
+
     void startProcess(QString process, QJsonArray ob);
     void startProcess(CheckoutHttpClient *h, QString process, QJsonArray ob);
 

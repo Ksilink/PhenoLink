@@ -429,6 +429,12 @@ void NetworkProcessHandler::setParameters(QJsonObject ob)
     emit parametersReady(ob);
 }
 
+void NetworkProcessHandler::sendCommand(QString par)
+{
+    for (auto h : activeHosts)
+        h->send(par);
+}
+
 void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
 {
     QList<CheckoutHttpClient*> procsList = procMapper[process];

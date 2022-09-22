@@ -359,6 +359,8 @@ private:
 
 //    QWinTaskbarProgress *_progress;
     QProgressBar* _StatusProgress;
+    QPushButton* _cancelation;
+
     int StartId;
 
     QSet<QFutureWatcher<void>*> _watchers;

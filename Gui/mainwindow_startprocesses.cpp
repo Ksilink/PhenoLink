@@ -72,6 +72,7 @@
 #include "ScreensDisplay/screensgraphicsview.h"
 #include <QInputDialog>
 
+#include <networkprocesshandler.h>
 
 
 
@@ -792,8 +793,13 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
 
     qDebug() <<"Processes: "<< adapt << count;
+    // Nico@DESKTOP-KH3G5D0:Tools/Speed/SpeedTesting(5)
 
+    QString username = set.value("UserName", "").toString(),
+        hostname = QHostInfo::localHostName();
 
+    // Set the cancel name of the object
+    _cancelation->setObjectName(QString("%1@%2:%3(%4)").arg(username,hostname, proc.replace("/", "") ).arg(WorkID));
 
     if (this->networking && handler.errors() > 0)
     {
@@ -1049,7 +1055,6 @@ void MainWindow::startProcessRun(QString exp)
         QSettings set;
         QDir dir(set.value("databaseDir").toString());
 
-
         for (auto& pl: pls)
         {
             QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4.fth")
@@ -1059,13 +1064,6 @@ void MainWindow::startProcessRun(QString exp)
                     pl);
             qDebug() << writePath;
         }
-
-
-
-
-        ;
-
-//        qDebug() << writePath;
     }
 
 
@@ -1079,9 +1077,26 @@ void MainWindow::startProcessRun(QString exp)
     // Start the computation.
     if (!_StatusProgress)
     {
+        auto w = new QWidget();
+        w->setLayout(new QHBoxLayout());
+        w->layout()->setContentsMargins(0,0,0,0);
+        w->layout()->setSpacing(1);
+
         _StatusProgress = new QProgressBar(this);
-        this->statusBar()->addPermanentWidget(_StatusProgress);
         _StatusProgress->setFormat("%v / %m");
+        _cancelation = new QPushButton(QIcon(":/cancel.png"), "", this);
+
+      _cancelation->connect(_cancelation, &QPushButton::clicked,
+                              [this](bool){ auto cancel = sender()->objectName();
+            NetworkProcessHandler::handler().sendCommand(QString("/Cancel/?proc=%1").arg(cancel));
+        });
+
+
+        w->layout()->addWidget(_StatusProgress);
+        w->layout()->addWidget(_cancelation);
+
+        this->statusBar()->addPermanentWidget(w);
+
     }
 
     _StatusProgress->setRange(0,0);
