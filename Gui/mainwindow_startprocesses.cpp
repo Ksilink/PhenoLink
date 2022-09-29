@@ -1087,7 +1087,7 @@ void MainWindow::startProcessRun(QString exp)
         _cancelation = new QPushButton(QIcon(":/cancel.png"), "", this);
 
       _cancelation->connect(_cancelation, &QPushButton::clicked,
-                              [this](bool){ auto cancel = sender()->objectName();
+                              [this](bool){ auto cancel = this->_cancelation->objectName();
             NetworkProcessHandler::handler().sendCommand(QString("/Cancel/?proc=%1").arg(cancel));
         });
 

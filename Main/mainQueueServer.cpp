@@ -901,10 +901,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                     }
                     else
                         qDebug() << "No Screen Post-processes";
-
-
                 }
-
 
                 // Check if we have finished the TaskID subsets to pure task id i.e. Screen processing and launch subsequents multiplate python runners
                 running.remove(obj["TaskID"].toString());
@@ -1180,7 +1177,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
                         for (auto& item: q)
                         {
-                 /*           qDebug() << item["Username"].toString() << item["Computer"].toString() 
+                 /*           qDebug() << item["Username"].toString() << item["Computer"].toString()
                                 << item["Path"].toString() << item["WorkID"].toString();*/
                             if (item["Username"].toString() == name[0] &&
                                     item["Computer"].toString() == name[1] &&
