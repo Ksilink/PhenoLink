@@ -377,7 +377,7 @@ void NetworkProcessHandler::addProxyPort(uint16_t port) {
 void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient* cl)
 {
     //    qDebug() << "Settings Processes";
-
+    QMutexLocker lock(&mutex_send_lock);
     for (int p = 0; p < ar.size(); ++p)
     {
         QString pr=    ar[p].toString();
@@ -395,6 +395,7 @@ void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient* cl)
 
 QStringList NetworkProcessHandler::getProcesses()
 {
+    QMutexLocker lock(&mutex_send_lock);
     QStringList l;
 
     l =  procMapper.keys();

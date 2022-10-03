@@ -2420,10 +2420,13 @@ QString ScreensHandler::findPlate(QString plate, QStringList projects, QString d
 
     if (!projects.isEmpty())
     {
-        for (auto& file : searchpaths)
+        QStringList temp;
+        for (auto& file : searchPaths)
             for (auto &project: projects)
                 if (dir.exists(file) && dir.exists(file + project))
-                    searchPaths.push_front(file + project);
+                    temp.push_back(file + project);
+
+        searchPaths = temp + searchPaths;
     }
     else
     {

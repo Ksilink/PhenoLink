@@ -38,14 +38,16 @@ using namespace qhttp::server;
 void help()
 {
     qDebug() << "Checkout Command Line interface";
-    qDebug() << "ckcli:";
+    qDebug() << "ckcli [options] [commands] [parameters]";
+    qDebug() << "ckcli commands:";
     qDebug() << "\tls/list:  List available plugins";
     qDebug() << "\tls/list {plugin/name} Describe the plugin info";
     qDebug() << "\tds/describe platename: Load the plate for an overview";
     qDebug() << "\trun plugin/name [key=value] {list of plate names}: Run the plugin on the plates";
     qDebug() << "\tdump {output.json} plugin/name [key=value] [plate names]: Dumps the description of the run";
     qDebug() << "\tload {output.json} [start=0] [end=-1]: Load and run a description of a run, can be used to skip parts (start/end option)";
-
+    qDebug() << "ckcli options:";
+    qDebug() << "\tServer=IP:port : set server ip/port option";
     qApp->exit();
 }
 
@@ -340,6 +342,7 @@ void dumpProcess(QString proc = QString())
         {
             qDebug() << path;
         }
+        exit(0);
     }
     else
     {
@@ -491,6 +494,17 @@ int main(int ac, char** av)
     for (int i = 1; i < ac; ++i)
     {
         QString item(av[i]);
+        if (item.startsWith("Server=")) // Overload the configuraiton servers
+        {
+            var.clear();
+            var << item.split("=").at(1);
+        }
+    }
+
+
+    for (int i = 1; i < ac; ++i)
+    {
+        QString item(av[i]);
 
         if (item == "ls" || item == "list")
         {
@@ -502,6 +516,7 @@ int main(int ac, char** av)
             else
                 dumpProcess(QString(av[i+1]));
         }
+
         if (item == "ds" || item == "describe")
         {
             PluginManager::loadPlugins();
@@ -525,7 +540,7 @@ int main(int ac, char** av)
                     }
                 }
             }
-            //            qDebug() << file;
+            exit(0);
         }
 
         if (item == "run" || item == "dump")
@@ -551,6 +566,9 @@ int main(int ac, char** av)
 
             QStringList pluginParams;
             int p = i+2;
+            QString project = find("project", ac, p + 1, av);
+            QString drive = find("drive", ac, p + 1, av);
+
             for (; p < ac; ++p){
                 QString par(av[p]);
                 if (par.startsWith("commitName="))
@@ -565,8 +583,6 @@ int main(int ac, char** av)
                     break;
             }
 
-            QString project=find("project", ac, p+1, av);
-            QString drive = find("drive", ac, p+1, av);
             QStringList plates;
             ScreensHandler& handler = ScreensHandler::getHandler();
 
