@@ -76,8 +76,9 @@ void helper::listParams(QJsonObject ob)
         qApp->exit();
 }
 
-void helper::startProcess(QJsonObject ob, QRegExp siteMatcher)
+void helper::startProcess(QJsonObject ob)
 {
+    QRegExp siteMatcher;
 
     QJsonArray startParams;
 
@@ -225,16 +226,17 @@ void helper::startProcess(QJsonObject ob, QRegExp siteMatcher)
 
     }
 
-    //if (!dump.isEmpty())
+    if (!dump.isEmpty())
     {
         qDebug() << procArray;
         // Save Json to file
 
         qApp->exit();
+        exit(0);
     }
 
-    qApp->exit();
-    if (false)
+    //qApp->exit();
+    if (true)
     {
 
         connect(this, &QHttpServer::newConnection,
@@ -259,7 +261,7 @@ void helper::startProcess(QJsonObject ob, QRegExp siteMatcher)
             qDebug() << "can not listen on" <<  port;
         }
 
-        NetworkProcessHandler::handler().startProcess(proc, startParams);
+        NetworkProcessHandler::handler().startProcess(proc, procArray);
     }
 }
 
@@ -451,15 +453,19 @@ void startProcess(QString proc, QString commitName,  QStringList params, QString
         qApp->processEvents();
     NetworkProcessHandler::handler().getParameters(proc);
 
-    helper h;
+    helper *h = new helper();
 
-    h.setParams(proc, commitName, params, plates);
-    h.setDump(dumpfile);
+    if (proc.endsWith("BirdView"))
+        commitName = "BirdView";
 
-    qApp->connect(&NetworkProcessHandler::handler(), SIGNAL(parametersReady(QJsonObject)),
-                  &h, SLOT(startProcess(QJsonObject)));
+    h->setParams(proc, commitName, params, plates);
+    h->setDump(dumpfile);
+
+    qApp->connect(&NetworkProcessHandler::handler(), &NetworkProcessHandler::parametersReady,
+                    [h](QJsonObject o) { h->startProcess(o);  });
 
     qApp->exec();
+    delete h;
 }
 
 int main(int ac, char** av)
