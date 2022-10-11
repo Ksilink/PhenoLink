@@ -74,3 +74,13 @@ install(TARGETS CheckoutQueueServer COMPONENT applications DESTINATION bin)
 
 
 
+add_custom_target(Deploy
+     "C:/Program Files (x86)/Windows Kits/10/bin/10.0.19041.0/x64/signtool.exe"  sign /a /tr http://timestamp.globalsign.com/tsa/r6advanced1 /td SHA256  "${PROJECT_BINARY_DIR}/bin/Release/Checkout.exe"
+     COMMAND "C:/Program Files (x86)/Windows Kits/10/bin/10.0.19041.0/x64/signtool.exe"  sign /a /tr http://timestamp.globalsign.com/tsa/r6advanced1 /td SHA256  "${PROJECT_BINARY_DIR}/bin/Release/CheckoutHttpServer.exe"
+     COMMAND "C:/Program Files (x86)/NSIS/makensis.exe"  "${PROJECT_BINARY_DIR}/Installer_vs2015.nsi"
+     COMMAND "C:/Program Files (x86)/Windows Kits/10/bin/10.0.19041.0/x64/signtool.exe"  sign /a /tr http://timestamp.globalsign.com/tsa/r6advanced1 /td SHA256  "${PROJECT_BINARY_DIR}/Checkout_InstallerV${Checkout_VERSION_MAJOR}.${Checkout_VERSION_MINOR}.${Checkout_VERSION_COMPLEMENT}${Checkout_VERSION_RELEASE}.exe"
+
+     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+     DEPENDS CheckoutHttpServer Checkout
+     )
+

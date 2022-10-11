@@ -256,7 +256,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     //    _progress->setVisible(true);
 
     ui->overlayInfos->hide();
-    connect(ui->pickOverlay, SIGNAL(currentTextChanged(const QString &)), this, SLOT(overlay_selection(const QString&)));
+    connect(ui->pickOverlay, SIGNAL(currentTextChanged(QString)), this, SLOT(overlay_selection(QString)));
 
     shrt_startR = new QShortcut(this);
     shrt_startR->setKey(Qt::CTRL + Qt::Key_Return);
