@@ -181,19 +181,19 @@ int main(int ac, char** av)
     {
         qDebug() << "CheckoutQueue Serveur Help:";
         qDebug()      << "\t-p <port>: specify the port to run on";
-        qDebug()        << "\t-c <cpu>: Adjust the maximum number of threads";
-        qDebug()        << "\t-n <node>: Try to force NUMA node (windows only)";
-        qDebug()        << "\t-s <commands> :  List of commands executed at start time";
-        qDebug()        << "\t-m <path> :  Mapping of windows drive to linux drives";
-        qDebug()        << "\t-rs <value> :  Maximum concurrent disk access by this instance";
-        qDebug()        << "\t-proxy <host> :  Set the queue proxy process computer:port";
+        qDebug()      << "\t-c <cpu>: Adjust the maximum number of threads";
+        qDebug()      << "\t-n <node>: Try to force NUMA node (windows only)";
+        qDebug()      << "\t-s <commands> :  List of commands executed at start time";
+        qDebug()      << "\t-m <path> :  Mapping of windows drive to linux drives";
+        qDebug()      << "\t-rs <value> :  Maximum concurrent disk access by this instance";
+        qDebug()      << "\t-proxy <host> :  Set the queue proxy process computer:port";
 
-        qDebug()        << "\t-t <path> :  Set the storage path for plugins infos";
-        qDebug()        << "\t-d : Run in debug mode (windows only launches a console)";
-        qDebug()       << "\t-Crashed: Reports that the process has been restarted after crashing" ;
-        qDebug()       << "\t-conf <config>: Specify a config file for python env setting json dict";
-        qDebug()        << "\t\t shall contain env. variable with list of values,";
-        qDebug()       << "$NAME will be substituted by current env value called 'NAME'";
+        qDebug()      << "\t-t <path> :  Set the storage path for plugins infos";
+        qDebug()      << "\t-d : Run in debug mode (windows only launches a console)";
+        qDebug()      << "\t-Crashed: Reports that the process has been restarted after crashing" ;
+        qDebug()      << "\t-conf <config>: Specify a config file for python env setting json dict";
+        qDebug()      << "\t\t shall contain env. variable with list of values,";
+        qDebug()      << "\t\t $NAME will be substituted by current env value called 'NAME'";
         ;
 
         exit(0);
