@@ -383,7 +383,7 @@ public:
 
         QString hash =_meta.first().hash;
 
-        if (i <= _hashtoBias[hash].size())
+        if (i >= _hashtoBias[hash].size())
         {
             _hashtoBias[hash].resize(i+1);
         }
