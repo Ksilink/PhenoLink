@@ -77,23 +77,25 @@ if (WIN32) # do the win32 download
     if (ONNX_GPU)
         set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-win-x64-gpu-1.11.1.zip")
         set(ONNX_ROOTDIR "onnxruntime-win-x64-gpu-1.11.1")
+        set(ONNX_TARGET "onnxruntime-win-gpu.zip")
         add_definitions(-DUSE_CUDA)
     else()
         set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-win-x64-1.11.1.zip")
         set(ONNX_ROOTDIR "onnxruntime-win-x64-1.11.1")
+        set(ONNX_TARGET "onnxruntime-win.zip")
     endif(ONNX_GPU)
-    set(ONNX_TARGET "onnxruntime-win.zip")
 
 elseif(LINUX) # do the linux download
     if (ONNX_GPU)
         set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-linux-x64-gpu-1.11.1.tgz")
          set(ONNX_ROOTDIR "onnxruntime-linux-x64-gpu-1.11.1")
+         set(ONNX_TARGET "onnxruntime-linux-gpu.tgz")
          add_definitions(-DUSE_CUDA)
     else()
         set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-linux-x64-1.11.1.tgz")
         set(ONNX_ROOTDIR "onnxruntime-linux-x64-1.11.1")
+        set(ONNX_TARGET "onnxruntime-linux.tgz")
     endif(ONNX_GPU)
-    set(ONNX_TARGET "onnxruntime-linux.tgz")
 
 else() # MacOSX ?
 
@@ -111,9 +113,6 @@ include_directories("${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/include" "${PROJECT_B
 link_directories("${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/lib")
 
 message("Setting ONNX include & Lib to : ${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}")
-
-
-#option(PLUGIN_NWD_ONLY "Build only WD plugins" OFF)
 
 set(PLUGIN_NWD_OLY OFF)
 
@@ -276,7 +275,7 @@ set (CPACK_RESOURCE_FILE_LICENSE
      "${CMAKE_CURRENT_SOURCE_DIR}/License.txt")
 set (CPACK_PACKAGE_VERSION_MAJOR "${Checkout_VERSION_MAJOR}")
 set (CPACK_PACKAGE_VERSION_MINOR "${Checkout_VERSION_MINOR}.${Checkout_VERSION_COMPLEMENT}")
+
 include (CPack)
 
 
-#include ()
