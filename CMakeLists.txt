@@ -144,7 +144,6 @@ ENDIF(WIN32)
 
 find_package(bsoncxx   REQUIRED)
 find_package(mongocxx   REQUIRED)
-find_package(Boost 1.56.0 REQUIRED)
 
 find_package(OpenCV REQUIRED )
 message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} ${OpenCV_LIBS} ")

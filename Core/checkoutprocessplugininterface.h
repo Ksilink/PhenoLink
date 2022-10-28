@@ -82,7 +82,7 @@ class DllPluginManagerExport CheckoutProcessPluginInterface
 {
 public:
 
-    enum State { NotStarted, Running, Finished };
+    enum State { NotStarted, Running, Finished, Crashed };
 
     typedef QMap<int, QColor> Colormap;
 
@@ -483,6 +483,8 @@ public:
     void finished();
     void started(qint64 time);
     State processState();
+
+    void crashed();
 
     bool isFinished();
 

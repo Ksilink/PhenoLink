@@ -753,15 +753,16 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
         if (!obj[i].isObject()) continue;
         QJsonObject ob = obj[i].toObject();
 
-        if (ob["State"].toString() == "Finished")
+        if (ob["State"].toString() == "Finished" ||
+                ob["State"].toString() == "Crashed")
         {
 
-            addToComputedDataModel(ob);
+            if (ob["State"].toString() == "Finished")
+                addToComputedDataModel(ob);
 
             QString hash=ob["Hash"].toString();
             hash_to_save_mtx.lock();
             _status.remove(hash);
-            //            qDebug() << "GUI Finished Hash" << hash << _hash_to_save.contains(hash);
 
 
 

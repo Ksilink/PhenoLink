@@ -104,7 +104,9 @@ void CheckoutProcessPluginInterface::write(QJsonObject &json) const
 
     json["Parameters"] = params;
     json["ReturnData"] = ret;
-    json["State"] = QString(_state == Running ? "Running" : (_state == Finished ? "Running" : "NotStarted")); // Not allowed to change state here
+    json["State"] = QString(_state == Running ? "Running" :
+                           (_state == Finished ? "Running" :
+                           (_state == Crashed ? "Crashed": "NotStarted"))); // Not allowed to change state here
     json["Pos"] = getPosition();
 
     json["shallDisplay"] =  _callParams["shallDisplay"];
@@ -301,9 +303,13 @@ void CheckoutProcessPluginInterface::started(qint64 time)
 
 CheckoutProcessPluginInterface::State CheckoutProcessPluginInterface::processState() { return _state; }
 
+void CheckoutProcessPluginInterface::crashed() {
+    _state = Crashed;
+}
+
 bool CheckoutProcessPluginInterface::isFinished()
 {
-    return _state == Finished;
+    return (_state == Finished) || (_state == Crashed);
 }
 
 #include <RegistrableImageType.h>

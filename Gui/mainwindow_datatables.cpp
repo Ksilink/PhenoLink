@@ -535,8 +535,9 @@ void MainWindow::networkProcessFinished(QJsonArray dat)
             if (!data.contains(v))
                 return;
 
-        msg += QString("Process Finished %1 in %2 ms, retrieving network data").arg(data["Hash"].toString()).arg(data["ElapsedTime"].toString());
-        // ui->statusBar->showMessage(msg);
+        // State can be Finished or Crashed at this step
+        msg += QString("Process %1 %2 in %3 ms, retrieving network data")
+                .arg(data["State"].toString(), data["Hash"].toString(),data["ElapsedTime"].toString());
 
 
         if (_StatusProgress)
@@ -544,6 +545,9 @@ void MainWindow::networkProcessFinished(QJsonArray dat)
             _StatusProgress->setValue(_StatusProgress->value()+1);
         }
 
+
+        if (data["State"].toString() == "Crashed")
+            continue;
 
 
         int procId = data["ProcessStartId"].toInt();

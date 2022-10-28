@@ -134,11 +134,11 @@ void CheckoutHttpClient::sendQueue()
 
             for (int i = 0; i < reqs.size() && collapsed.size() < 500; ++i) // do not merge more than 500 reqs
                 if (reqs.at(i).url == url && (
-                    url.path().startsWith("/addData/") ||
-                    url.path().startsWith("/Start") ||
-                    url.path().startsWith("/Ready") ||
-                    url.path().startsWith("/ServerDone")
-                    ))
+                            url.path().startsWith("/addData/") ||
+                            url.path().startsWith("/Start") ||
+                            url.path().startsWith("/Ready") ||
+                            url.path().startsWith("/ServerDone")
+                            ))
                     collapsed << i;
         }
         if (collapsed.size() > 0)
@@ -203,7 +203,7 @@ void CheckoutHttpClient::sendQueue()
                     onIncomingData(res->collectedData());
                     icli->killConnection();
                     this->iclient.removeAll(icli);
-//                    delete icli;
+                    //                    delete icli;
                 });
             }
             else
@@ -249,7 +249,7 @@ void CheckoutHttpClient::onIncomingData(const QByteArray& data)
         return;
     }
 
-//    qDebug()  << "HTTP Response" << val;
+    //    qDebug()  << "HTTP Response" << val;
 }
 
 void CheckoutHttpClient::finalize()
@@ -536,10 +536,15 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
     QJsonObject ob;
     ob["hash"] = hash;
 
-
-    //    qDebug() << ds;
     auto l = QStringList() << "TaskID" << "DataHash" << "WorkID";
     for (auto& k : l) if (ds.contains(k)) ob[k] = ds[k];
+
+    if (ds["State"].toString()=="Crashed")
+    {
+        res.push_back(ob);
+        return res;
+    }
+
 
     QString plate = ds["XP"].toString().replace("\\","/").replace("/",""), commit = ds["CommitName"].toString();
     QString plateID = plate + commit;
@@ -549,6 +554,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
         plateData.insert(plateID, new DataFrame);
 
     DataFrame& store =  *plateData[plateID];
+
 
     if (store.outfile.isEmpty()&&!commit.isEmpty())
     {
@@ -572,15 +578,15 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
             {
                 int tgt = 0;
                 QString path = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5%6.fth").arg(dbP,
-                                                                                          ds["Project"].toString(),
-                                commit, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
+                                                                                            ds["Project"].toString(),
+                        commit, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
 
                 while (QFile::exists(path))
                 {
                     tgt ++;
                     path = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5%6.fth").arg(dbP,
-                                                                                                             ds["Project"].toString(),
-                                                   commit, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
+                                                                                        ds["Project"].toString(),
+                            commit, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
                 }
                 QFile::copy(store.outfile, path);
             }
@@ -716,7 +722,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
 void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like to serialize this one
 {
 
-
+    if (ds["State"].toString()=="Crashed")  return;
 
     QString plate = ds["XP"].toString(), commit = ds["CommitName"].toString();
 
@@ -988,7 +994,7 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res, bool 
     }
 
     client->send(QString("/addData/%1").arg(commitname), QString(), data);
-
+    qApp->processEvents();
 }
 
 void NetworkProcessHandler::removeHash(QString hash)
