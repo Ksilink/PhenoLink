@@ -994,7 +994,7 @@ void NetworkProcessHandler::finishedProcess(QString hash, QJsonObject res, bool 
     }
 
     client->send(QString("/addData/%1").arg(commitname), QString(), data);
-    qApp->processEvents();
+//    qApp->processEvents();
 }
 
 void NetworkProcessHandler::removeHash(QString hash)
