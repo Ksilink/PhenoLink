@@ -105,7 +105,7 @@ void CheckoutProcessPluginInterface::write(QJsonObject &json) const
     json["Parameters"] = params;
     json["ReturnData"] = ret;
     json["State"] = QString(_state == Running ? "Running" :
-                           (_state == Finished ? "Running" :
+                           (_state == Finished ? "Finished" :
                            (_state == Crashed ? "Crashed": "NotStarted"))); // Not allowed to change state here
     json["Pos"] = getPosition();
 
