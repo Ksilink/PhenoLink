@@ -331,6 +331,14 @@ QString CheckoutProcessPluginInterface::user()
     return _callParams["Username"].toString()+ "@" +  _callParams["Computer"].toString();
 }
 
+
+QString CheckoutProcessPluginInterface::getDataStorePath()
+{ 
+    return CheckoutProcess::handler().getStoragePath(); 
+}
+
+
+
 QJsonObject CheckoutProcessPluginInterface::createStatusMessage()
 {
     QJsonObject ob;

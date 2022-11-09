@@ -494,9 +494,8 @@ public:
     void setColormap(void* data, Colormap color);
     QString user();
 
-    QString getDataStorePath() { return datastore; }
-    void setDataStorePath(QString path) { datastore = path;}
-
+    QString getDataStorePath();
+    
 protected:
     QString path;
     QStringList authors;

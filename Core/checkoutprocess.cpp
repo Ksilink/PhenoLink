@@ -49,7 +49,7 @@ CheckoutProcess& CheckoutProcess::handler()
 void CheckoutProcess::addProcess(CheckoutProcessPluginInterface *proc)
 {
     _plugins[proc->getPath()] = proc;
-    proc->setDataStorePath(storage_path);
+  //  proc->setDataStorePath(storage_path);
     //  QJsonObject obj;  proc->write(obj);  qDebug() << obj;
 }
 
