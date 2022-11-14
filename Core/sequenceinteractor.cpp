@@ -1653,6 +1653,7 @@ QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
 
 
                 auto pal = colormap::palettes.at("jet").rescale(cmin, cmax);
+// pal.range
                 if (colormap::palettes.count(overlay_coding[it.key()].second.toStdString()))
                 {
                     pal = colormap::palettes.at(overlay_coding[it.key()].second.toStdString()).rescale(cmin, cmax);

@@ -997,22 +997,23 @@ QString CheckoutProcess::dumpHtmlStatus()
     body += QString("<h2>Connected Users : %1</h2>").arg(_peruser_futures.size());
 
     for (auto it = _peruser_futures.begin(), e = _peruser_futures.end(); it != e; ++it)
-    {
-        body += QString("%1 : %2"/* <a href='/Cancel/%1'>Cancel User Processes</a><br>"*/).arg(it.key()).arg(it.value().size());
-        QMap<QString, int> counter;
-        status_protect.lock();
+        if (it.value().size())
+        {
+            body += QString("%1 : %2<br>"/* <a href='/Cancel/%1'>Cancel User Processes</a><br>"*/).arg(it.key()).arg(it.value().size());
+            QMap<QString, int> counter;
+            status_protect.lock();
 
-        //        for (auto q: it.value())
-        //        {
-        //            auto pl = static_cast<PluginRunner*>(q);
-        //            counter[pl->name()]++;
-        //        }
+            //        for (auto q: it.value())
+            //        {
+            //            auto pl = static_cast<PluginRunner*>(q);
+            //            counter[pl->name()]++;
+            //        }
 
-        //        for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
-        //            body += QString("<p>%1 : %2 </p>").arg(it.key()).arg(it.value());
+            //        for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
+            //            body += QString("<p>%1 : %2 </p>").arg(it.key()).arg(it.value());
 
-        status_protect.unlock();
-    }
+            status_protect.unlock();
+        }
     QHostInfo info;
     QStringList addresses;
     for (auto v : info.addresses())

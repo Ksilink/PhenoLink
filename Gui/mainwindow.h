@@ -222,6 +222,8 @@ private slots:
 
     void on_dockWidget_visibilityChanged(bool visible);
 
+    void on_actionOverlay_controls_triggered(bool checked);
+
 public slots:
 
     void updateCurrentSelection();

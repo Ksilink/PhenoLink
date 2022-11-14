@@ -155,6 +155,7 @@
     <addaction name="separator"/>
     <addaction name="menuUnpack"/>
     <addaction name="actionShare_Intensity_Controls"/>
+    <addaction name="actionOverlay_controls"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -1109,6 +1110,14 @@
    </property>
    <property name="text">
     <string>Share Intensity Controls</string>
+   </property>
+  </action>
+  <action name="actionOverlay_controls">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Overlay controls</string>
    </property>
   </action>
  </widget>

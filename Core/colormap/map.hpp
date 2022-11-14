@@ -73,6 +73,9 @@ namespace colormap {
             return a->second.mix(b->second, mix);
         }
 
+        std::pair<double,double> scale()
+        { return range; }
+
     private:
         std::map<double, Color> supports;
         std::pair<double,double> range;

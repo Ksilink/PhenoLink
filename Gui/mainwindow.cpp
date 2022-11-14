@@ -3209,3 +3209,11 @@ void MainWindow::exportForAWS()
 }
 
 
+
+void MainWindow::on_actionOverlay_controls_triggered(bool checked)
+{
+    QSettings set;
+    set.setValue("ShowOveraly", checked);
+
+}
+
