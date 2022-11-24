@@ -796,7 +796,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     // Nico@DESKTOP-KH3G5D0:Tools/Speed/SpeedTesting(5)
 
     QString username = set.value("UserName", "").toString(),
-        hostname = QHostInfo::localHostName();
+            hostname = QHostInfo::localHostName();
 
     // Set the cancel name of the object
     _cancelation->setObjectName(QString("%1@%2:%3(%4)").arg(username,hostname, proc.replace("/", "") ).arg(WorkID));
@@ -1086,7 +1086,7 @@ void MainWindow::startProcessRun(QString exp)
         _StatusProgress->setFormat("%v / %m");
         _cancelation = new QPushButton(QIcon(":/cancel.png"), "", this);
 
-      _cancelation->connect(_cancelation, &QPushButton::clicked,
+        _cancelation->connect(_cancelation, &QPushButton::clicked,
                               [this](bool){ auto cancel = this->_cancelation->objectName();
             NetworkProcessHandler::handler().sendCommand(QString("/Cancel/?proc=%1").arg(cancel));
         });
@@ -1118,6 +1118,45 @@ void MainWindow::on_pluginhistory(QString )
     pluginHistory(cb);
 }
 
+bool compare_js(QJsonValue v1, QJsonValue v2)
+{
+    if (v1.type() != v2.type())
+        return false;
+
+    if (v1.isString())
+        return v1.toString()==v2.toString();
+    if (v1.isDouble())
+        return v1.toDouble()==v2.toDouble();
+
+    return true;
+}
+
+bool compare_par(QJsonObject ob1, QJsonObject ob2)
+{
+    bool comp = true;
+    QStringList vs = QStringList() << "Value" << "Value2";
+
+    if (!ob1.contains("Value"))
+        return false;
+
+    for (auto n: vs)
+    {
+
+        if (ob1[n].isString() || ob1[n].isDouble())
+            comp &= compare_js(ob1[n],ob2[n]);
+
+        if (ob1[n].isArray())
+        {
+            auto a1 = ob1[n].toArray(), a2 = ob2[n].toArray();
+
+            for (int i = 0; i < std::min(a1.size(), a2.size()); ++i)
+                comp &= compare_js(a1[i], a2[i]);
+
+        }
+    }
+    return comp;
+}
+
 void MainWindow::pluginHistory(QComboBox * cb)
 {
 
@@ -1125,11 +1164,11 @@ void MainWindow::pluginHistory(QComboBox * cb)
     // Reload the json !
     if (path.isEmpty())
     {
-        QJsonObject params;
-        CheckoutProcess::handler().getParameters(_preparedProcess, params);
+        //        QJsonObject params;
+        CheckoutProcess::handler().getParameters(_preparedProcess, _processParams);
         int idx = cb->currentIndex();
         if (idx >= 0)
-            setupProcessCall(params, idx);
+            setupProcessCall(_processParams, idx);
         return;
     }
 
@@ -1145,11 +1184,10 @@ void MainWindow::pluginHistory(QComboBox * cb)
     // Check file contains Path & that this path is our process :p
     if (!reloaded.contains("Path") || reloaded["Path"] != this->_preparedProcess )
     {
-        QJsonObject params;
-        CheckoutProcess::handler().getParameters(_preparedProcess, params);
+        CheckoutProcess::handler().getParameters(_preparedProcess, _processParams);
         int idx = cb->currentIndex();
         if (idx >= 0)
-            setupProcessCall(params, idx);
+            setupProcessCall(_processParams, idx);
     }
 
     // Quick & dirty check for file content if missing skip history reload
@@ -1157,5 +1195,31 @@ void MainWindow::pluginHistory(QComboBox * cb)
         if (!reloaded.contains(QString(str)))
             return;
 
-    setupProcessCall(reloaded, cb->currentIndex());
+    QJsonArray params = _processParams["Parameters"].toArray(),
+            rel_par = reloaded["Parameters"].toArray();
+    // now we iterate through this params, search in reloaded a diffe
+    for (int i = 0; i < params.size(); ++i)
+    {
+        auto ref_tag = params[i].toObject()["Tag"].toString();
+        for (int j = 0; j < rel_par.size(); ++j)
+        {
+            if (ref_tag == rel_par[j].toObject()["Tag"].toString() &&
+                    !compare_par(params[i].toObject(), rel_par[j].toObject()))
+            {
+                  auto ob=params[i].toObject();
+                  ob["Value"] = rel_par[j].toObject()["Value"];
+                  if (rel_par[j].toObject().contains("Value2"))
+                      ob["Value2"] = rel_par[j].toObject()["Value2"];
+                  ob["NonDefault"]=true;
+                  params.replace(i, ob);
+                  break;
+            }
+        }
+    }
+
+    _processParams["Parameters"] = params;
+
+
+    // We need to adjust the _processParams wrt to reloaded entry, to avoid the value changes effect
+    setupProcessCall(_processParams, cb->currentIndex());
 }

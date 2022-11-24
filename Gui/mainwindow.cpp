@@ -1161,6 +1161,7 @@ void MainWindow::prepareProcessCall()
 
     if (_preparedProcess.isEmpty()) return;
 
+//    _processParams = QJsonObject();
     CheckoutProcess::handler().getParameters(process);
 }
 
@@ -1230,6 +1231,22 @@ Widget* setupProcessParameterBool(Widget* s, QJsonObject& par, QString def)
     return s;
 }
 
+bool isdiff(QJsonValueRef a, QJsonValueRef b)
+{
+    if (a.isDouble() && b.isDouble())
+        return a.toDouble() != b.toDouble();
+    if (a.isString() && b.isString())
+        return a.toString() != b.toString();
+    if (a.isString() && b.isDouble())
+        return a.toString().toDouble() != b.toDouble();
+    if (a.isDouble() && b.isString())
+        return a.toDouble() != b.toString().toDouble();
+
+
+
+    return true;
+}
+
 template <class Widget>
 Widget* setupProcessParameterInt(Widget* s, QJsonObject& par, QString def)
 {
@@ -1244,6 +1261,13 @@ Widget* setupProcessParameterInt(Widget* s, QJsonObject& par, QString def)
     {
         s->setValue(getValInt(par, def));
     }
+
+    if (par.contains("NonDefault") && (par.contains("Value") && isdiff(par[def], par["Default"])))
+    {
+        s->setStyleSheet("color: rgb(182,64,18);");
+    }
+
+
     return s;
 }
 
@@ -1264,6 +1288,12 @@ Widget* setupProcessParameterDouble(Widget* s, QJsonObject& par, QString def)
 
     if (par.contains(def))
         s->setValue(getValDouble(par,def));
+
+    if (par.contains("NonDefault")&& (par.contains("Value") && isdiff(par[def], par["Default"])))
+    {
+        s->setStyleSheet("color: rgb(182,64,18);");
+    }
+
     return s;
 }
 
@@ -1545,27 +1575,20 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
 void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 {
     bool reloaded = idx > 0;
+    if (!reloaded) _processParams = obj;
 
     QMap<QString, QList<QWidget*> > spc_widgets;
 
     _syncmapper.clear();
 
     QString process = obj["Path"].toString();
-    //    qDebug() << obj;
 
-    //    QList<QWidget*> list = ui->processingArea->findChildren<QWidget*>();
     _enableIf.clear();
     _disable.clear();
 
     _commitName = nullptr;
     _typeOfprocessing = nullptr;
 
-    //    foreach(QWidget* wid, list)
-    //    {
-    //        wid->hide();
-    //        wid->close();
-    ////        ui->processingArea->layout()->removeWidget(wid);
-    //    }
 
     QFormLayout* layo = dynamic_cast<QFormLayout*>(ui->processingArea->layout());
     if (!layo) {
@@ -1690,7 +1713,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                 if (ar.size() && pos < ar.size())
                 {
                     par["Value"]=ar[pos];
-                    par["Value2"]=ar2[pos];
+                    if (pos < ar2.size())
+                        par["Value2"]=ar2[pos];
                 }
 
 
@@ -1787,7 +1811,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                         if (par.contains("Value"))
                         {
                             if (par["Value"].isArray())
-                                par["Default"] = par["Value"].toArray().at(c);
+                                par["Default"] = par["Value"].toArray().at(c-start);
                             else if (!par["Value"].toString().isEmpty())
                                 par["Default"] = par["Value"];
                             reloaded = false;

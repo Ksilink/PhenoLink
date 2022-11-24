@@ -337,17 +337,14 @@ private:
     ScreensModel *mdl;               // Object for Data representation
     SequenceInteractor _sinteractor; // variable keeping track of the interaction with sequences
     QString    _preparedProcess; // Name of the current process
+    QJsonObject _processParams;
+
+
     QComboBox* _typeOfprocessing, *_history; // Keep tracks of the user selected type of processing (current image, current well, all screens, etc...)
     QLineEdit* _commitName;       // If non empty shall be used to commit the data to a database
 
-//    QCheckBox* _shareTags;
 
     QModelIndex _icon_model;    // Variable used to keep track of the model for which we want to change the icon
-
-//    ImageForm* _images;       // Previ
-
-//    unsigned _numberOfChannels;
-//    bool _startingProcesses; // Flag to keep track of process that are awaiting a start
 
     QList<QCheckBox*> _ChannelPicker;  // keep track of visual selection of channels
     QSet<int> _channelsIds; // To keep track of the number of channels loaded & their respective true "value" i.e. C1/C2, etc...
@@ -359,7 +356,6 @@ private:
 
     QMap<QString, QJsonObject> _waitingForImages;
 
-//    QWinTaskbarProgress *_progress;
     QProgressBar* _StatusProgress;
     QPushButton* _cancelation;
 
