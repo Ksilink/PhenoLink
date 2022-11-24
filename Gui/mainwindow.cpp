@@ -1262,7 +1262,8 @@ Widget* setupProcessParameterInt(Widget* s, QJsonObject& par, QString def)
         s->setValue(getValInt(par, def));
     }
 
-    if (par.contains("NonDefault") && (par.contains("Value") && isdiff(par[def], par["Default"])))
+    if ((par.contains("NonDefault") && (par.contains("Value")
+                                       && isdiff(par[ def], par["Default"]))))
     {
         s->setStyleSheet("color: rgb(182,64,18);");
     }
@@ -1289,10 +1290,12 @@ Widget* setupProcessParameterDouble(Widget* s, QJsonObject& par, QString def)
     if (par.contains(def))
         s->setValue(getValDouble(par,def));
 
-    if (par.contains("NonDefault")&& (par.contains("Value") && isdiff(par[def], par["Default"])))
+    if ((par.contains("NonDefault") && (par.contains("Value")
+                                       && isdiff(par[ def], par["Default"]))))
     {
         s->setStyleSheet("color: rgb(182,64,18);");
     }
+
 
     return s;
 }
@@ -1471,6 +1474,14 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
 
     if (wid == nullptr)
         qDebug() << "Not handled" << par;
+
+
+
+    if (!(par.contains("NonDefault") && (par.contains("Value")
+                                       && isdiff(par[ reloaded ? "Value" : "Default"], par["Default"]))))
+    {
+        wid->setStyleSheet("color: rgb(182,64,18);");
+    }
 
 
     return wid;
