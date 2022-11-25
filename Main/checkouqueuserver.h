@@ -141,6 +141,9 @@ protected:
 
     CheckoutHttpClient* client;
     QList<QProcess*> postproc;
+
+    int cpu_counts;
+
 };
 
 

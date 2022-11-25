@@ -29,8 +29,8 @@ else()
     set(CMAKE_C_FLAGS "-Wno-deprecated")
 endif(WIN32)
 
-set(Checkout_VERSION_MAJOR 2)
-set(Checkout_VERSION_MINOR 1)
+set(Checkout_VERSION_MAJOR 22)
+set(Checkout_VERSION_MINOR 11)
 set(Checkout_VERSION_COMPLEMENT R)
 set(Checkout_VERSION_RELEASE 0)
 
@@ -46,6 +46,10 @@ execute_process(
   RESULT_VARIABLE   git_return
   OUTPUT_VARIABLE   app_hash_short)
 string(STRIP "${app_hash_short}" app_hash_short)
+
+
+
+
 execute_process(
   COMMAND           "${GIT_EXECUTABLE}"
                     rev-parse
@@ -54,7 +58,31 @@ execute_process(
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/../CheckoutPlugins"
   RESULT_VARIABLE   git_return
   OUTPUT_VARIABLE   plugin_hash_short)
+
+
+if (EXISTS "${CMAKE_SOURCE_DIR}/../PhenoLinkPluginsPrivate" )
+    execute_process(
+      COMMAND           "${GIT_EXECUTABLE}"
+                        rev-parse
+                        --short
+                        HEAD
+      WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/../PhenoLinkPluginsPrivate"
+      RESULT_VARIABLE   git_return
+      OUTPUT_VARIABLE   plugin_priv_hash_short)
+
+  string(CONCAT "${plugin_hash_short}" "${plugin_hash_short}" plugin_priv_hash_short)
+
+  set(PLUGIN_PRIVATE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../PhenoLinkPluginsPrivate")
+
+endif()
+
 string(STRIP "${plugin_hash_short}" plugin_hash_short)
+
+
+
+
+
+
 
 message(STATUS "With App git hash ${app_hash_short}-${plugin_hash_short}${git_dirty}")
 set(Checkout_VERSION_RELEASE "${Checkout_VERSION_RELEASE}-${app_hash_short}-${plugin_hash_short}${git_dirty}")

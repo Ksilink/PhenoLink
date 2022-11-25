@@ -155,7 +155,6 @@
     <addaction name="separator"/>
     <addaction name="menuUnpack"/>
     <addaction name="actionShare_Intensity_Controls"/>
-    <addaction name="actionOverlay_controls"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>

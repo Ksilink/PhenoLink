@@ -235,7 +235,7 @@ QString stringIP(quint32 ip)
             .arg((ip >> 24) & 0xFF);
 }
 
-Server::Server(): QHttpServer(), client(nullptr)
+Server::Server(): QHttpServer(), client(nullptr), cpu_counts(0)
 {
 #ifdef WIN32
 
@@ -614,11 +614,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
         // If not using cbor outputs the version also
         QStringList prcs = procs.pluginPaths(query.contains("json"));
-        int processor_count = (int)std::thread::hardware_concurrency();
-
         QJsonObject ob;
 
-        ob["CPU"] = processor_count;
+        ob["CPU"] = cpu_counts;
+        ob["Queue"] = true;
         ob["Processes"] = QJsonArray::fromStringList(QStringList(proc_list.begin(), proc_list.end()));
         // Need to keep track of processes list from servers
         setHttpResponse(ob, res, !query.contains("json"));
@@ -959,6 +958,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         {
             auto obj = ob.at(i).toMap().toJsonObject();
             QString pr = obj["Path"].toString();
+            cpu_counts += obj["CPU"].toInt();
             proc_list.insert(pr);
             proc_params[pr][QString("%1:%2").arg(serverIP).arg(port)] = obj;
         }

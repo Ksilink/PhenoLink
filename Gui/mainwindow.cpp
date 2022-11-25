@@ -607,6 +607,34 @@ QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, QString itemName, ImageIn
     connect(box, SIGNAL(toggled(bool)), this, SLOT(displayTile(bool)), Qt::UniqueConnection);
     //  connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
 
+
+    if (itemName != "Tile")
+    {
+        box->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(box, &QPushButton::customContextMenuRequested,
+                [this, box](QPoint pos){
+            QMenu menu(this);
+            menu.addAction("Show controls");
+            auto res = menu.exec(box->mapToGlobal(pos));
+            if (res)
+            {
+                //qDebug() << "Expose the controls!!!";
+                //this->_sinteractor
+                // Let's add a right click options to the controls
+                // if Scale popup a bar control box
+                // (move (bar + text) left/right/up/down
+                //  move text (left/right/up/down)
+                // font & size options for scale
+                // font color & bar color
+
+                // If other overlay:
+                // add a lower bound/upper bound control to handle color shade
+
+            }
+        });
+    }
+
+
     return box;
 }
 
@@ -724,7 +752,7 @@ void MainWindow::updateCurrentSelection()
     if (_imageControls.contains(inter->getExperimentName()))
         toDel << _imageControls[inter->getExperimentName()];
 
-    wwid = new QWidget;
+    wwid = new QWidget(ui->imageControl);
 
     //    QVBoxLayout* bvl = new QVBoxLayout(wwid);
     QGridLayout* bvl = new QGridLayout(wwid);
@@ -859,6 +887,7 @@ void MainWindow::updateCurrentSelection()
         bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), "Scale", fo), 2, 0);
         bvl->addWidget(new QLabel("Scale: ", wwid), 2, 1);
         bvl->addWidget(setupTilePosition(new QSpinBox(wwid), "Scale", fo), 2, 2);
+
 
 
         QStringList overlays = inter->getMetaList();
