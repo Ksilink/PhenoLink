@@ -1,9 +1,9 @@
-# Checkout
+# PhenoLink
 
-![Image](./Figs/Checkout2.png)
+![Image](./FIGS/Checkout2.png)
 
 ## Description
-Checkout is a multipurpose open source high content image analysis software developped at [Ksilink](https://www.ksilink.com/) entirely written in C++ for computational speed purposes.  
+PhenoLink, former "Checkout" is a multipurpose open source high content image analysis software developped at [Ksilink](https://www.ksilink.com/) entirely written in C++ for computational speed purposes.  
 Dedicated to biological images produced with automated microscpes, Checkout has a ability to display and analyze all types of images (2D, 3D, 2D+t, 3D+t, Multichannels, etc.) in a speedy and efficient manner due to different level of multi-processing granularities. 
 
 ## Features
@@ -13,7 +13,7 @@ Dedicated to biological images produced with automated microscpes, Checkout has 
            margin-left: auto;
            margin-right: auto;
            width: 70%;"
-src ="./Figs/Checkout_MP.png">
+src ="./FIGS/Checkout_MP.png">
 * ### Multi Readers
   Mainly developed for Yokogawa (CV7000/CV8000), Checkout also handles InCell and Zeiss readers. More readers can be of course implemented. 
 * ### Image Processing
@@ -22,7 +22,7 @@ src ="./Figs/Checkout_MP.png">
            margin-left: auto;
            margin-right: auto;
            width: 60%;"
-   src="./Figs/Segm.png">
+   src="./FIGS/Segm.png">
 
   [OPENCV](https://opencv.org/)  
   [DLIB](http://dlib.net)  
