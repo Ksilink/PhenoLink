@@ -19,10 +19,11 @@ public:
 
 protected:
     QWidget *features();
-    QWidget* networkOptions();
-    QWidget* screensPaths();
+    QWidget *networkOptions();
+    QWidget *screensPaths();
     QWidget *dashOptions();
     QWidget *notebooksOptions();
+    QWidget *searchOptions();
 
     QWidget* appDirectory();
     QLayout *buildPaths(QString fname);
@@ -67,8 +68,6 @@ protected:
 };
 
 
-
-
 class DllGuiExport PythonOptionEditor : public QWidget
 {
     Q_OBJECT
@@ -90,6 +89,27 @@ protected:
     ctkPathListWidget* pythonPluginPath;
     ctkPathLineEdit* init_script;
 };
+
+
+class DllGuiExport SearchOptionEditor : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit SearchOptionEditor(QWidget *parent = 0);
+
+protected:
+    QWidget *searchPath();
+signals:
+
+public slots:
+
+    void updatePaths();
+
+protected:
+    ctkPathListWidget* _searchPath;
+};
+
+
 
 
 class QListWidget;

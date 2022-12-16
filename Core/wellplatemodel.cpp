@@ -2404,6 +2404,7 @@ QString ScreensHandler::findPlate(QString plate, QStringList projects, QString d
                                          << "Z:/BTSData/MeasurementData/"
                                          << "W:/BTSData/MeasurementData/"
                                          << "K:/BTSData/MeasurementData/"
+                                         << "O:/BTSData/MeasurementData/"
                                          << "C:/Data/").toStringList();
     if (!drives.isEmpty())
     {

@@ -120,8 +120,8 @@ QWidget *PythonOptionEditor::pythonPluginsPath()
     foreach (QString d, data)
     {
         QString absolutePath = QFileInfo(d).absoluteFilePath();
-        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
-        qDebug() << d << absolutePath;
+        //        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
+        //        qDebug() << d << absolutePath;
         if (!pythonPluginPath->addPath(d))
             qDebug() << "Warning path not added";
     }
@@ -182,6 +182,7 @@ ConfigDialog::ConfigDialog()
 
     pagesWidget = new QStackedWidget;
     pagesWidget->addWidget(new GlobalOptions);
+    pagesWidget->addWidget(new SearchOptionEditor);
     pagesWidget->addWidget(new PythonOptionEditor);
 
     //    pagesWidget->addWidget(new QueryPage);
@@ -218,6 +219,13 @@ void ConfigDialog::createIcons()
     configButton->setText(tr("Configuration"));
     configButton->setTextAlignment(Qt::AlignHCenter);
     configButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
+    QListWidgetItem *searchButton = new QListWidgetItem(contentsWidget);
+    searchButton->setIcon(QIcon(":/search.png"));
+    searchButton->setText(tr("Search Path"));
+    searchButton->setTextAlignment(Qt::AlignHCenter);
+    searchButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
 
     QListWidgetItem *updateButton = new QListWidgetItem(contentsWidget);
     updateButton->setIcon(QIcon(":/python.png"));
@@ -362,14 +370,14 @@ QWidget *GlobalOptions::features()
     mainLayout->addRow("Intensity Margin (% of range intensity) ", intensity_refreshRatio);
 
 
-//    refreshRate = new QSpinBox();
-//    refreshRate->setMinimum(0);
-//    refreshRate->setMaximum(60000);
-//    refreshRate->setValue(set.value("RefreshRate", 300).toInt());
-//    refreshRate->setToolTip("Default: 300");
-//    connect(refreshRate, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
+    //    refreshRate = new QSpinBox();
+    //    refreshRate->setMinimum(0);
+    //    refreshRate->setMaximum(60000);
+    //    refreshRate->setValue(set.value("RefreshRate", 300).toInt());
+    //    refreshRate->setToolTip("Default: 300");
+    //    connect(refreshRate, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
 
-//    mainLayout->addRow("Process Query Refressh Rate ", refreshRate);
+    //    mainLayout->addRow("Process Query Refressh Rate ", refreshRate);
 
 
     minServerProcs = new QSpinBox();
@@ -381,14 +389,14 @@ QWidget *GlobalOptions::features()
 
     mainLayout->addRow("Minimum Process List Size ", minServerProcs);
 
-//    maxRefreshQuery = new QSpinBox();
-//    maxRefreshQuery->setMinimum(0);
-//    maxRefreshQuery->setMaximum(1000);
-//    maxRefreshQuery->setValue(set.value("maxRefreshQuery", 100).toInt());
-//    maxRefreshQuery->setToolTip("Default: 100");
-//    connect(maxRefreshQuery, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
+    //    maxRefreshQuery = new QSpinBox();
+    //    maxRefreshQuery->setMinimum(0);
+    //    maxRefreshQuery->setMaximum(1000);
+    //    maxRefreshQuery->setValue(set.value("maxRefreshQuery", 100).toInt());
+    //    maxRefreshQuery->setToolTip("Default: 100");
+    //    connect(maxRefreshQuery, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
 
-//    mainLayout->addRow("Maximum states query", maxRefreshQuery);
+    //    mainLayout->addRow("Maximum states query", maxRefreshQuery);
 
 
     unpackScaling = new QDoubleSpinBox();
@@ -516,6 +524,13 @@ QWidget *GlobalOptions::notebooksOptions()
     return ppython;
 }
 
+QWidget *GlobalOptions::searchOptions()
+{
+    return NULL;
+}
+
+
+
 QWidget *GlobalOptions::screensPaths()
 {
     QSettings set;
@@ -536,8 +551,8 @@ QWidget *GlobalOptions::screensPaths()
     foreach (QString d, data)
     {
         QString absolutePath = QFileInfo(d).absoluteFilePath();
-        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
-        qDebug() << d << absolutePath;
+//        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
+//        qDebug() << d << absolutePath;
         if (!screensPath->addPath(d))
             qDebug() << "Warning path not added";
     }
@@ -639,8 +654,8 @@ void GlobalOptions::updatePaths()
     set.setValue("UserName", username->text());
 
     set.setValue("MinProcs", minServerProcs->value());
-//    set.setValue("RefreshRate", refreshRate->value());
-//    set.setValue("maxRefreshQuery", maxRefreshQuery->value());
+    //    set.setValue("RefreshRate", refreshRate->value());
+    //    set.setValue("maxRefreshQuery", maxRefreshQuery->value());
     set.setValue("unpackScaling", unpackScaling->value());
 
 
@@ -648,7 +663,7 @@ void GlobalOptions::updatePaths()
     set.setValue("RefreshSliderRatio", intensity_refreshRatio->value());
 
 
-//    this->parentWidget()->startTimer(refreshRate->value());
+    //    this->parentWidget()->startTimer(refreshRate->value());
 
 
     QStringList var;
@@ -707,7 +722,7 @@ void GlobalOptions::copyDirectory()
 void printParent(QObject* ob, int pos = 0)
 {
 
-    qDebug() << pos << ob->objectName();
+//    qDebug() << pos << ob->objectName();
     if (ob->parent())
         printParent(ob->parent(), pos + 1);
 }
@@ -793,7 +808,7 @@ void GlobalOptions::showInGraphicalShell(QWidget *parent, const QString &pathIn)
     if (!QFileInfo(pathIn).isDir())
         param << QLatin1String("/select,");
     param << QDir::toNativeSeparators(pathIn);
-//    QString command = explorer + " " + param;
+    //    QString command = explorer + " " + param;
     QProcess::startDetached(explorer, param);
 #elif defined(Q_OS_MAC)
     Q_UNUSED(parent)
@@ -823,4 +838,77 @@ void GlobalOptions::showInGraphicalShell(QWidget *parent, const QString &pathIn)
         showGraphicalShellError(parent, app, error);
 #endif
 #endif
+}
+
+SearchOptionEditor::SearchOptionEditor(QWidget *parent)
+{
+
+
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+
+    mainLayout->addWidget(searchPath());
+
+    setLayout(mainLayout);
+
+}
+
+QWidget *SearchOptionEditor::searchPath()
+{
+    QSettings set;
+    QFileIconProvider icp;
+
+    ctkCollapsibleGroupBox* ppython = new ctkCollapsibleGroupBox("Plate Search Path");
+
+
+    _searchPath = new ctkPathListWidget;
+    _searchPath->setMode(ctkPathListWidget::DirectoriesOnly);
+    _searchPath->setDirectoryIcon(icp.icon(QFileIconProvider::Folder));
+
+    ctkPathListButtonsWidget* pathEdit = new ctkPathListButtonsWidget();
+    pathEdit->init(_searchPath);
+    pathEdit->setOrientation(Qt::Vertical);
+
+    pathEdit->setIconAddDirectoryButton(QIcon(":/plus.png"));
+
+    pathEdit->setIconRemoveButton(QIcon(":/minus.png"));
+    pathEdit->setIconEditButton(QIcon(":/edit.png"));
+
+    QStringList searchpaths = set.value("SearchPlate", QStringList() << "U:/BTSData/MeasurementData/"
+                                        << "Z:/BTSData/MeasurementData/"
+                                        << "W:/BTSData/MeasurementData/"
+                                        << "K:/BTSData/MeasurementData/"
+                                        << "O:/BTSData/MeasurementData/"
+                                        << "C:/Data/").toStringList();
+
+    foreach (QString d, searchpaths)
+    {
+        QString absolutePath = QFileInfo(d).absoluteFilePath();
+        //        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
+        //        qDebug() << d << absolutePath;
+        if (!_searchPath->addPath(d))
+            qDebug() << "Warning search path not added";
+    }
+    connect(_searchPath, SIGNAL(pathsChanged(QStringList,QStringList)), this, SLOT(updatePaths()));
+    connect(_searchPath, SIGNAL(currentPathChanged(QString,QString)), this, SLOT(updatePaths()));
+
+
+    QHBoxLayout *mainLayout = new QHBoxLayout;
+    mainLayout->addWidget(_searchPath);
+    mainLayout->addWidget(pathEdit);
+
+    mainLayout->addStretch(1);
+    mainLayout->addSpacing(12);
+
+    ppython->setLayout(mainLayout);
+
+    return ppython;
+}
+
+void SearchOptionEditor::updatePaths()
+{
+    QStringList sp = _searchPath->paths();
+
+    QSettings s;
+    s.setValue("SearchPlate", sp);
+
 }

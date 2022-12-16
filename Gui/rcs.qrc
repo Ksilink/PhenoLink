@@ -34,5 +34,6 @@
         <file alias="configuration.png">Images/configuration.png</file>
         <file alias="copy.png">Images/copy.png</file>
         <file alias="cancel.png">Images/cancel.png</file>
+        <file alias="search.png">Images/search.png</file>
     </qresource>
 </RCC>

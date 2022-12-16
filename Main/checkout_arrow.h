@@ -26,9 +26,12 @@ template<class K,class V>
 QMapWrapper<K,V> wrapQMap(const QMap<K,V>& map) {
     return QMapWrapper<K,V>(map);
 }
+
 #define ArrowGet(var, id, call, msg) \
     auto id = call; if (!id.ok()) { qDebug() << msg << QString::fromStdString(id.status().message()); return ; } auto var = id.ValueOrDie();
 
+#define ArrowBreak(var, id, call, msg) \
+    auto id = call; if (!id.ok()) { qDebug() << msg << QString::fromStdString(id.status().message()); break ; } auto var = id.ValueOrDie();
 
 template <class T>
 struct mytrait
@@ -199,14 +202,14 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
         QString ur = QString(bp + "/" + file).replace("\\", "/").replace("//", "/");
 
         std::string uri = ur.toStdString(), root_path;
-        ArrowGet(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file << ur << QString::fromStdString(root_path));
+        ArrowBreak(fs, r0, fs::FileSystemFromUriOrPath(uri, &root_path), "Arrow File not loading" << file << ur << QString::fromStdString(root_path));
 
-        ArrowGet(input, r1, fs->OpenInputFile(uri), "Error opening arrow file" << bp + file << ur << QString::fromStdString(root_path));
-        ArrowGet(reader, r2, arrow::ipc::RecordBatchFileReader::Open(input), "Error Reading records");
+        ArrowBreak(input, r1, fs->OpenInputFile(uri), "Error opening arrow file" << bp + file << ur << QString::fromStdString(root_path));
+        ArrowBreak(reader, r2, arrow::ipc::RecordBatchFileReader::Open(input), "Error Reading records");
 
         auto schema = reader->schema();
 
-        ArrowGet(rowC, r3, reader->CountRows(), "Error reading row count");
+        ArrowBreak(rowC, r3, reader->CountRows(), "Error reading row count");
         //        qDebug() << "file" << file << schema->fields().size()  << rowC ;
 
         for (int record = 0; rowC > 0 && record < reader->num_record_batches(); ++record)
