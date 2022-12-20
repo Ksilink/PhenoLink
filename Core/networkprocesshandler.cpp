@@ -565,11 +565,19 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
             dbP = QString("/mnt/shares/") + dbP.replace(":","");
 #endif
 
-        dbP.replace("\\", "/").replace("//", "/");
 
-        store.outfile = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5.fth").arg(dbP,
-                                                                                   ds["Project"].toString(),
-                commit, plate, srv).replace("\\", "/").replace("//", "/");
+        // FIXME:  Cloud solution adjustements needed here !
+
+        dbP.replace("\\", "/").replace("//", "/");
+        QString folder = QString("%1/PROJECTS/%2/Checkout_Results/%3").arg(dbP,
+                                                                          ds["Project"].toString(),
+                                        commit);
+
+        QDir d;
+        if (!d.exists(folder)) // Ensure the folder exists for writing the feather file
+            d.mkpath(folder);
+
+        store.outfile = QString("%1/%4%5.fth").arg(folder, plate, srv).replace("\\", "/").replace("//", "/");
         store.plate = plate;
 
         if (store.fresh)
@@ -577,16 +585,12 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
             if (QFile::exists(store.outfile))
             {
                 int tgt = 0;
-                QString path = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5%6.fth").arg(dbP,
-                                                                                            ds["Project"].toString(),
-                        commit, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
+                QString path = QString("%1/%4%5%6.fth").arg(folder, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
 
                 while (QFile::exists(path))
                 {
                     tgt ++;
-                    path = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4%5%6.fth").arg(dbP,
-                                                                                        ds["Project"].toString(),
-                            commit, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
+                    path = QString("%1/%4%5%6.fth").arg(folder, plate, srv).arg(tgt).replace("\\", "/").replace("//", "/");
                 }
                 QFile::copy(store.outfile, path);
             }
