@@ -182,6 +182,19 @@ QList<bool> double_checker(QSet<QString>& skiper, std::shared_ptr<arrow::RecordB
 }
 
 
+
+template <class T>
+bool is_arrow_type(QList<  std::shared_ptr<arrow::Array> >& list)
+{
+
+    bool res = false;
+
+    for (auto c: list) if (std::dynamic_pointer_cast<T>(c))  res= true;
+
+    return res;
+}
+
+
 void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 {
     qDebug() << "Fusing" << files << "to" << out;
@@ -193,6 +206,8 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
     QList<QList<bool> > de_doubler; // to remove the double
     QSet<QString> skiper; // to track the doubles
+
+    QList<int> per_file_counter;
 
     int counts = 0;
 
@@ -211,6 +226,7 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
         ArrowBreak(rowC, r3, reader->CountRows(), "Error reading row count");
         //        qDebug() << "file" << file << schema->fields().size()  << rowC ;
+        per_file_counter << rowC;
 
         for (int record = 0; rowC > 0 && record < reader->num_record_batches(); ++record)
         {
@@ -233,16 +249,20 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
             {
                 if (!fields.contains(f->name()))
                     fields[f->name()] = f;
-                if (counts != 0 && !datas.contains(f->name()))
-                { // Assure that we add non existing cols with empty data if in case
-                    std::shared_ptr<arrow::Array> ar;
+                //                if (counts != 0 && !datas.contains(f->name()))
+                //                { // Assure that we add non existing cols with empty data if in case
+                //                    std::shared_ptr<arrow::Array> ar;
 
-                    arrow::NumericBuilder<arrow::FloatType> bldr;
-                    bldr.AppendNulls(counts);
-                    bldr.Finish(&ar);
+                //                    arrow::NumericBuilder<arrow::FloatType> bldr;
+                //                    bldr.AppendNulls(counts);
+                //                    bldr.Finish(&ar);
 
-                    datas[f->name()].append(ar);
-                }
+                //                    datas[f->name()].append(ar);
+                //                    qDebug() << QString::fromStdString(f->name()) << counts;
+                //                }
+
+//                qDebug() << QString::fromStdString(f->name()) << counts;
+
                 datas[f->name()].append(rb->GetColumnByName(f->name()));
 
                 {
@@ -256,26 +276,36 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
             }
         }
 
-        for (auto& f : datas.keys())
-        { // Make sure we add data to empty columns
-            if (!lists.contains(f))
-            {
-                if (datas.contains("Well"))
-                {
-                  for (auto& wc :   datas["Well"])
-                        datas[f].append(std::shared_ptr<arrow::NullArray>(new arrow::NullArray(wc->length())));
-                }
-            }
-        }
+        //        for (auto& f : datas.keys())
+        //        { // Make sure we add data to empty columns
+        //            if (!lists.contains(f))
+        //            {
+        //                if (datas.contains("Well"))
+        //                {
+        //                  for (auto& wc :   datas["Well"])
+        //                        datas[f].append(std::shared_ptr<arrow::NullArray>(new arrow::NullArray(wc->length())));
+        //                }
+        //            }
+        //        }
 
         counts += rowC;
     }
 
+    for (QMap<std::string, QList<  std::shared_ptr<arrow::Array> > >::iterator wd = datas.begin(), end = datas.end(); wd != end; ++wd)
+    {
+        for (int i = 0; i < per_file_counter.size() ; ++i)
+        {
+            //       for (int j = 0; j < per_file_counter.size(); ++j)
+            if (i >= wd.value().size())
+                datas[wd.key()].insert(i, std::shared_ptr<arrow::NullArray>(new arrow::NullArray(per_file_counter.at(i))));
+            if (wd.value().at(i)->length() != per_file_counter.at(i))
+                datas[wd.key()].insert(i, std::shared_ptr<arrow::NullArray>(new arrow::NullArray(per_file_counter.at(i))));
+//            qDebug() << QString::fromStdString(wd.key()) << wd.value().at(i)->length();
+        }
+    }
+
 
     // Let's construct a double out filtering
-
-
-
 
     std::vector<std::shared_ptr<arrow::Field> > ff;
     for (auto& item : datas.keys())
@@ -284,16 +314,23 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
     std::vector<std::shared_ptr<arrow::Array> > dat(ff.size());
 
     int p = 0;
-    for (auto wd : wrapQMap(datas))
+
+    //    for (auto wd : wrapQMap(datas))
+    for (QMap<std::string, QList<  std::shared_ptr<arrow::Array> > >::iterator wd = datas.begin(), end = datas.end(); wd != end; ++wd)
     {
-        //     qDebug() << QString::fromStdString(wd.first);
-        if (std::dynamic_pointer_cast<arrow::FloatArray>(wd.second.first()))
-            concat<arrow::NumericBuilder<arrow::FloatType>, arrow::FloatArray >(wd.second, dat[p], de_doubler);
-        else if (std::dynamic_pointer_cast<arrow::Int16Array>(wd.second.first()))
-            concat<arrow::NumericBuilder<arrow::Int16Type>, arrow::Int16Array >(wd.second, dat[p], de_doubler);
-        else if (std::dynamic_pointer_cast<arrow::StringArray>(wd.second.first()))
-            concat<arrow::StringBuilder, arrow::StringArray >(wd.second, dat[p], de_doubler);
-        //        qDebug() << p << QString::fromStdString(wd.first) << dat[p]->length();
+//        qDebug() << QString::fromStdString(wd.key());
+        if (is_arrow_type<arrow::FloatArray>(wd.value()))
+            concat<arrow::NumericBuilder<arrow::FloatType>, arrow::FloatArray >(wd.value(), dat[p], de_doubler);
+        else if (is_arrow_type<arrow::Int16Array>(wd.value()))
+            concat<arrow::NumericBuilder<arrow::Int16Type>, arrow::Int16Array >(wd.value(), dat[p], de_doubler);
+        else if (is_arrow_type<arrow::StringArray>(wd.value()))
+            concat<arrow::StringBuilder, arrow::StringArray >(wd.value(), dat[p], de_doubler);
+        else
+            qDebug() << p << "No concat!!!";
+
+
+//        qDebug() << p << QString::fromStdString(wd.key()) << dat[p]->length();
+
         p++;
     }
 

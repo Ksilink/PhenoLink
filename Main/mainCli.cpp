@@ -33,6 +33,10 @@
 #include "qhttp/qhttpserverconnection.hpp"
 #include "qhttp/qhttpserverrequest.hpp"
 #include "qhttp/qhttpserverresponse.hpp"
+
+
+#include "checkout_arrow.h"
+
 using namespace qhttp::server;
 
 void help()
@@ -46,6 +50,7 @@ void help()
     qDebug() << "\trun plugin/name [key=value] {list of plate names}: Run the plugin on the plates";
     qDebug() << "\tdump {output.json} plugin/name [key=value] [plate names]: Dumps the description of the run";
     qDebug() << "\tload {output.json} [start=0] [end=-1]: Load and run a description of a run, can be used to skip parts (start/end option)";
+    qDebug() << "\tfuse project='projectName' commit=commitname: Refuse the plates in the commit name folder";
     qDebug() << "ckcli options:";
     qDebug() << "\tServer=IP:port : set server ip/port option";
     qApp->exit();
@@ -462,7 +467,7 @@ void startProcess(QString proc, QString commitName,  QStringList params, QString
     h->setDump(dumpfile);
 
     qApp->connect(&NetworkProcessHandler::handler(), &NetworkProcessHandler::parametersReady,
-                    [h](QJsonObject o) { h->startProcess(o);  });
+                  [h](QJsonObject o) { h->startProcess(o);  });
 
     qApp->exec();
     delete h;
@@ -551,8 +556,6 @@ int main(int ac, char** av)
 
         if (item == "run" || item == "dump")
         {
-
-
             QString dumpfile;
 
             PluginManager::loadPlugins();
@@ -563,8 +566,8 @@ int main(int ac, char** av)
 
             if (item == "dump")
             {
-                   dumpfile = av[i+1];
-                   i++;
+                dumpfile = av[i+1];
+                i++;
             }
 
             QString process(av[i+1]), commit;
@@ -606,6 +609,70 @@ int main(int ac, char** av)
                 startProcess(process, commit, pluginParams, plates, dumpfile);
         }
 
+
+        if (item == "fuse")
+        {
+            QString project = find("project", ac, i + 1, av);
+            QString commit = find("commit", ac, i + 1, av);
+
+            QSettings set;
+
+            QString dbP = set.value("databaseDir", "L:").toString();
+#ifndef  WIN32
+            if (dbP.contains(":"))
+                dbP = QString("/mnt/shares/") + dbP.replace(":","");
+#endif
+
+
+            // FIXME:  Cloud solution adjustements needed here !
+
+            dbP.replace("\\", "/").replace("//", "/");
+            QString folder = QString("%1/PROJECTS/%2/Checkout_Results/%3").arg(dbP,
+                                                                               project,
+                                                                               commit);
+
+            QDir dir(folder);
+
+            //            qDebug() << "folder" << folder << dir << QString("*_[0-9]*[0-9][0-9][0-9][0-9].fth");
+            QStringList files = dir.entryList(QStringList() << QString("*_[0-9]*[0-9][0-9][0-9][0-9].fth"), QDir::Files);
+            //            qDebug() << files;
+
+            QStringList plates;
+
+            for (auto pl: files)
+            {
+                QString t(pl.left(pl.lastIndexOf("_")));
+                if (!plates.contains(t))
+                    plates << t;
+            }
+            qDebug() << plates;
+
+            for (auto plate: plates)
+            {
+
+                QStringList files = dir.entryList(QStringList() << QString("%1_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(plate), QDir::Files);
+
+
+                QString concatenated = QString("%1/%2.fth").arg(folder,plate.replace("/",""));
+                if (files.isEmpty())
+                {
+                    qDebug() << "Error fusing the data to generate" << concatenated;
+                    qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(plate.replace("/", ""));
+                } //C:/Users/NicolasWiestDaessle/Documents/CheckoutDB
+                else
+                {
+
+                    if (QFile::exists(concatenated)) // In case the feather exists already add this for fusion at the end of the process since arrow fuse handles duplicates if will skip value if recomputed and keep non computed ones (for instance when redoing a well computation)
+                    {
+                        dir.rename(concatenated, concatenated + ".torm");
+                        files << concatenated.split("/").last()+".torm";
+                    }
+
+                    fuseArrow(folder, files, concatenated,plate.replace("\\", "/").replace("/",""));
+                }
+
+            }
+        }
     }
 
     delete a;
