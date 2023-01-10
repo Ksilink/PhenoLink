@@ -658,7 +658,7 @@ int main(int ac, char** av)
                 {
                     qDebug() << "Error fusing the data to generate" << concatenated;
                     qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(plate.replace("/", ""));
-                } //C:/Users/NicolasWiestDaessle/Documents/CheckoutDB
+                }
                 else
                 {
 

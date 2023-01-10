@@ -193,8 +193,8 @@ find_package(AWSSDK CONFIG COMPONENTS core s3 REQUIRED)
 #target_link_libraries(main PRIVATE ${AWSSDK_LIBRARIES})
 
 # Google Cloud (Google Cloud Storage)
-# find_package(google_cloud_cpp_storage CONFIG REQUIRED)
-# target_link_libraries(main PRIVATE CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc)
+find_package(google_cloud_cpp_storage CONFIG REQUIRED)
+#target_link_libraries(main PRIVATE CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc)
 
 # find_package(google_cloud_cpp_storagetransfer CONFIG REQUIRED)
 # target_link_libraries(main PRIVATE google-cloud-cpp::storagetransfer google-cloud-cpp::storagetransfer_protos google-cloud-cpp::experimental-storagetransfer)

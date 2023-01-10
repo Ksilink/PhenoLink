@@ -41,6 +41,19 @@ endif(WIN32)
 install(TARGETS ckcli COMPONENT applications DESTINATION bin)
 
 
+add_executable(PhenoLinkUploader mainUploader.cpp mainUploader.h ${AppRCFile})
+
+target_include_directories(PhenoLinkUploader PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if (WIN32)
+    target_link_libraries(PhenoLinkUploader Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  arrow_shared ${ARROW_LIBRARIES}  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc)
+else()
+    target_link_libraries(PhenoLinkUploader Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  arrow ${ARROW_LIBRARIES}  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc )
+endif(WIN32)
+
+install(TARGETS PhenoLinkUploader COMPONENT applications DESTINATION bin)
+
+
+
 
 #add_custom_command(TARGET Checkout  PRE_BUILD
 #    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
