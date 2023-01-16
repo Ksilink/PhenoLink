@@ -45,7 +45,11 @@
         {
             "name":"google-cloud-cpp",
             "features": ["storage"]
+        },
+        {
+            "name": "azure-storage-blobs-cpp"
         }
+
 
     ]
 }

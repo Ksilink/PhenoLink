@@ -9,6 +9,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFormLayout>
+#include <QComboBox>
 #include <ctkWidgets/ctkPathListWidget.h>
 #include <ctkWidgets/ctkPathListButtonsWidget.h>
 #include <ctkWidgets/ctkCollapsibleGroupBox.h>
@@ -181,11 +182,11 @@ ConfigDialog::ConfigDialog()
     contentsWidget->setSpacing(12);
 
     pagesWidget = new QStackedWidget;
+
     pagesWidget->addWidget(new GlobalOptions);
     pagesWidget->addWidget(new SearchOptionEditor);
     pagesWidget->addWidget(new PythonOptionEditor);
-
-    //    pagesWidget->addWidget(new QueryPage);
+    pagesWidget->addWidget(new CloudOptionEditor);
 
     QPushButton *closeButton = new QPushButton(tr("Close"));
 
@@ -232,6 +233,14 @@ void ConfigDialog::createIcons()
     updateButton->setText(tr("Python Options"));
     updateButton->setTextAlignment(Qt::AlignHCenter);
     updateButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
+
+    QListWidgetItem *cloud = new QListWidgetItem(contentsWidget);
+    cloud->setIcon(QIcon(":/upload_cloud.png"));
+    cloud->setText(tr("Cloud Options"));
+    cloud->setTextAlignment(Qt::AlignHCenter);
+    cloud->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
 
     //    QListWidgetItem *queryButton = new QListWidgetItem(contentsWidget);
     //    queryButton->setIcon(QIcon(":/images/query.png"));
@@ -551,8 +560,8 @@ QWidget *GlobalOptions::screensPaths()
     foreach (QString d, data)
     {
         QString absolutePath = QFileInfo(d).absoluteFilePath();
-//        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
-//        qDebug() << d << absolutePath;
+        //        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
+        //        qDebug() << d << absolutePath;
         if (!screensPath->addPath(d))
             qDebug() << "Warning path not added";
     }
@@ -722,7 +731,7 @@ void GlobalOptions::copyDirectory()
 void printParent(QObject* ob, int pos = 0)
 {
 
-//    qDebug() << pos << ob->objectName();
+    //    qDebug() << pos << ob->objectName();
     if (ob->parent())
         printParent(ob->parent(), pos + 1);
 }
@@ -911,4 +920,88 @@ void SearchOptionEditor::updatePaths()
     QSettings s;
     s.setValue("SearchPlate", sp);
 
+}
+
+CloudOptionEditor::CloudOptionEditor(QWidget *parent)
+{
+    // Create the form layout
+    formLayout = new QFormLayout;
+
+    // Create the combo box to select the cloud provider
+    providerComboBox_ = new QComboBox;
+    providerComboBox_->addItem("AWS");
+    providerComboBox_->addItem("GCS");
+    providerComboBox_->addItem("Azure");
+
+    // Connect the combo box to the slot to update the form fields
+    connect(providerComboBox_, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &CloudOptionEditor::updateFormFields);
+
+    // Create the form fields
+    accessKeyEdit_ = new QLineEdit;
+    secretKeyEdit_ = new QLineEdit;
+    bucketEdit_ = new QLineEdit;
+    keyEdit_ = new QLineEdit;
+    connectionStringEdit_ = new QLineEdit;
+    containerEdit_ = new QLineEdit;
+    blobEdit_ = new QLineEdit;
+
+    // Add the form fields to the layout
+    formLayout->addRow("Cloud Provider:", providerComboBox_);
+    formLayout->addRow("Access Key:", accessKeyEdit_);
+    formLayout->addRow("Secret Key:", secretKeyEdit_);
+    formLayout->addRow("Bucket:", bucketEdit_);
+    formLayout->addRow("Key:", keyEdit_);
+    formLayout->addRow("Connection String:", connectionStringEdit_);
+    formLayout->addRow("Container:", containerEdit_);
+    formLayout->addRow("Blob:", blobEdit_);
+
+    // Create the group box to hold the form fields
+    QGroupBox *formGroupBox = new QGroupBox("Cloud Storage Information");
+    formGroupBox->setLayout(formLayout);
+
+    // Create the main layout
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(formGroupBox);
+
+    // Set the main layout
+    setLayout(mainLayout);
+
+    // Restore from the Save Settings
+
+    // Update the form fields to show the fields for the selected provider
+    updateFormFields();
+}
+
+QWidget *CloudOptionEditor::searchPath()
+{
+    return new QWidget();
+}
+
+void CloudOptionEditor::updateFormFields()
+{
+    // Get the selected provider
+    QString provider = providerComboBox_->currentText();
+
+    // Show or hide the form fields based on the selected provider
+    accessKeyEdit_->setVisible(provider == "AWS");
+    formLayout->labelForField(accessKeyEdit_)->setVisible(provider == "AWS");
+
+    secretKeyEdit_->setVisible(provider == "AWS");
+    formLayout->labelForField(secretKeyEdit_)->setVisible(provider == "AWS");
+
+    bucketEdit_->setVisible(provider == "GCS" || provider == "AWS");
+    formLayout->labelForField(bucketEdit_)->setVisible(provider == "GCS" || provider == "AWS");
+
+    keyEdit_->setVisible(provider == "GCS");
+    formLayout->labelForField(keyEdit_)->setVisible(provider == "GCS");
+
+    connectionStringEdit_->setVisible(provider == "Azure");
+    formLayout->labelForField(connectionStringEdit_)->setVisible(provider == "Azure");
+
+    containerEdit_->setVisible(provider == "Azure");
+    formLayout->labelForField(containerEdit_)->setVisible(provider == "Azure");
+
+    blobEdit_->setVisible(provider == "Azure");
+    formLayout->labelForField(blobEdit_)->setVisible(provider == "Azure");
 }

@@ -17,6 +17,9 @@
 
 #include <google/cloud/storage/client.h>
 
+//#include <azure/storage/blobs.h>
+
+
 
 #include "mainUploader.h"
 
@@ -145,4 +148,22 @@ void GCSFileUploader::upload()
         return;
     }
     emit finished();
+}
+
+AzureFileUploader::AzureFileUploader(const QString &filePath, const QString &containerName, const QString &blobName)
+    : filePath_(filePath), containerName_(containerName), blobName_(blobName) {}
+
+void AzureFileUploader::upload() {
+//    try {
+//        azure::storage::cloud_blob_client client = azure::storage::cloud_blob_client::create_from_connection_string(connectionString);
+//        azure::storage::cloud_blob_container container = client.get_container_reference(containerName_.toStdString());
+//        container.create_if_not_exists();
+
+//        azure::storage::cloud_block_blob blob = container.get_block_blob_reference(blobName_.toStdString());
+//        blob.upload_from_file(filePath_.toStdString());
+
+//        std::cout << "File uploaded successfully to Azure!" << std::endl;
+//    } catch (const std::exception& e) {
+//        std::cerr << "Error uploading file: " << e.what() << std::endl;
+//    }
 }

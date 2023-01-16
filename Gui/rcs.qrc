@@ -35,5 +35,6 @@
         <file alias="copy.png">Images/copy.png</file>
         <file alias="cancel.png">Images/cancel.png</file>
         <file alias="search.png">Images/search.png</file>
+        <file alias="upload_cloud.png">Images/cloud-data-upload-icon.png</file>
     </qresource>
 </RCC>

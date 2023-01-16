@@ -47,6 +47,20 @@ private:
     QString m_keyName;
 };
 
+class AzureFileUploader {
+public:
+    AzureFileUploader(const QString &filePath, const QString &containerName, const QString &blobName);
+
+    void upload();
+
+private:
+    QString filePath_;
+    QString containerName_;
+    QString blobName_;
+};
+
+
+
 class ProgressBar : public QProgressBar
 {
     Q_OBJECT

@@ -4,11 +4,13 @@
 #include <QDialog>
 #include "Core/Dll.h"
 #include <QLineEdit>
+#include <QComboBox>
 #include <QSpinBox>
 
 class ctkPathListWidget;
 class ctkPathLineEdit;
 class QGridLayout;
+class QFormLayout;
 
 class DllGuiExport GlobalOptions: public QWidget
 {
@@ -109,6 +111,67 @@ protected:
     ctkPathListWidget* _searchPath;
 };
 
+
+
+class DllGuiExport CloudOptionEditor : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit CloudOptionEditor(QWidget *parent = 0);
+
+protected:
+    QWidget *searchPath();
+signals:
+
+
+public slots:
+
+    void updateFormFields();
+public:
+
+//    QString getProvider() const {
+//        return providerComboBox_->currentText();
+//    }
+
+//    QString getAccessKey() const {
+//        return accessKeyEdit_->text();
+//    }
+
+//    QString getSecretKey() const {
+//        return secretKeyEdit_->text();
+//    }
+
+//    QString getBucket() const {
+//        return bucketEdit_->text();
+//    }
+
+//    QString getKey() const {
+//        return keyEdit_->text();
+//    }
+
+//    QString getConnectionString() const {
+//        return connectionStringEdit_->text();
+//    }
+
+//    QString getContainer() const {
+//        return containerEdit_->text();
+//    }
+
+//    QString getBlob() const {
+//            return blobEdit_->text();
+//        }
+
+protected:
+    QFormLayout *formLayout;
+    QComboBox *providerComboBox_;
+    QLineEdit *accessKeyEdit_;
+    QLineEdit *secretKeyEdit_;
+    QLineEdit *bucketEdit_;
+    QLineEdit *keyEdit_;
+    QLineEdit *connectionStringEdit_;
+    QLineEdit *containerEdit_;
+    QLineEdit *blobEdit_;
+};
 
 
 
