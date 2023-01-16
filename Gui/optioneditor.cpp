@@ -968,6 +968,7 @@ CloudOptionEditor::CloudOptionEditor(QWidget *parent)
     setLayout(mainLayout);
 
     // Restore from the Save Settings
+    loadSettings();
 
     // Update the form fields to show the fields for the selected provider
     updateFormFields();
@@ -976,6 +977,38 @@ CloudOptionEditor::CloudOptionEditor(QWidget *parent)
 QWidget *CloudOptionEditor::searchPath()
 {
     return new QWidget();
+}
+
+void CloudOptionEditor::loadSettings()
+{
+    QSettings settings;
+
+    settings.beginGroup("CloudStorage");
+    providerComboBox_->setCurrentText(settings.value("provider", "AWS").toString());
+    accessKeyEdit_->setText(settings.value("accessKey").toString());
+    secretKeyEdit_->setText(settings.value("secretKey").toString());
+    bucketEdit_->setText(settings.value("bucket").toString());
+    keyEdit_->setText(settings.value("key").toString());
+    connectionStringEdit_->setText(settings.value("connectionString").toString());
+    containerEdit_->setText(settings.value("container").toString());
+    blobEdit_->setText(settings.value("blob").toString());
+    settings.endGroup();
+}
+
+void CloudOptionEditor::saveSettings()
+{
+    QSettings settings;
+
+    settings.beginGroup("CloudStorage");
+    settings.setValue("provider", providerComboBox_->currentText());
+    settings.setValue("accessKey", accessKeyEdit_->text());
+    settings.setValue("secretKey", secretKeyEdit_->text());
+    settings.setValue("bucket", bucketEdit_->text());
+    settings.setValue("key", keyEdit_->text());
+    settings.setValue("connectionString", connectionStringEdit_->text());
+    settings.setValue("container", containerEdit_->text());
+    settings.setValue("blob", blobEdit_->text());
+    settings.endGroup();
 }
 
 void CloudOptionEditor::updateFormFields()
