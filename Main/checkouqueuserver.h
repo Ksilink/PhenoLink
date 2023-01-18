@@ -110,10 +110,13 @@ protected:
 
 
    QStringList pendingTasks(bool html=false);
+   void timerEvent(QTimerEvent *event);
 
    unsigned int njobs();
    unsigned int nbUsers();
-    //
+
+protected:
+   //
     unsigned dport;
 
     // We need to maintain a worker list
@@ -137,6 +140,8 @@ protected:
 
     QSet<QString> proc_list;
     QMap<QString, QMap<QString, QJsonObject> >  proc_params; // Process name, server name => Proc descr
+
+    QMap<QString, int> timer_handler;
 
 
     CheckoutHttpClient* client;

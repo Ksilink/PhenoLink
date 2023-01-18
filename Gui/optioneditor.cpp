@@ -938,6 +938,8 @@ CloudOptionEditor::CloudOptionEditor(QWidget *parent)
             this, &CloudOptionEditor::updateFormFields);
 
     // Create the form fields
+    QList<QLineEdit*> connects;
+
     accessKeyEdit_ = new QLineEdit;
     secretKeyEdit_ = new QLineEdit;
     bucketEdit_ = new QLineEdit;
@@ -945,6 +947,12 @@ CloudOptionEditor::CloudOptionEditor(QWidget *parent)
     connectionStringEdit_ = new QLineEdit;
     containerEdit_ = new QLineEdit;
     blobEdit_ = new QLineEdit;
+
+    connects << accessKeyEdit_<<secretKeyEdit_<<bucketEdit_<<keyEdit_<<connectionStringEdit_<<containerEdit_<<blobEdit_;
+
+    for (auto item : connects)
+        connect(item, SIGNAL(textChanged(QString)), this, SLOT(saveSettings()));
+
 
     // Add the form fields to the layout
     formLayout->addRow("Cloud Provider:", providerComboBox_);
@@ -983,16 +991,15 @@ void CloudOptionEditor::loadSettings()
 {
     QSettings settings;
 
-    settings.beginGroup("CloudStorage");
-    providerComboBox_->setCurrentText(settings.value("provider", "AWS").toString());
-    accessKeyEdit_->setText(settings.value("accessKey").toString());
-    secretKeyEdit_->setText(settings.value("secretKey").toString());
-    bucketEdit_->setText(settings.value("bucket").toString());
-    keyEdit_->setText(settings.value("key").toString());
-    connectionStringEdit_->setText(settings.value("connectionString").toString());
-    containerEdit_->setText(settings.value("container").toString());
-    blobEdit_->setText(settings.value("blob").toString());
-    settings.endGroup();
+
+    providerComboBox_->setCurrentText(settings.value("CloudStorage/provider", "AWS").toString());
+    accessKeyEdit_->setText(settings.value("CloudStorage/accessKey").toString());
+    secretKeyEdit_->setText(settings.value("CloudStorage/secretKey").toString());
+    bucketEdit_->setText(settings.value("CloudStorage/bucket").toString());
+    keyEdit_->setText(settings.value("CloudStorage/key").toString());
+    connectionStringEdit_->setText(settings.value("CloudStorage/connectionString").toString());
+    containerEdit_->setText(settings.value("CloudStorage/container").toString());
+    blobEdit_->setText(settings.value("CloudStorage/blob").toString());
 }
 
 void CloudOptionEditor::saveSettings()
@@ -1037,4 +1044,6 @@ void CloudOptionEditor::updateFormFields()
 
     blobEdit_->setVisible(provider == "Azure");
     formLayout->labelForField(blobEdit_)->setVisible(provider == "Azure");
+
+    saveSettings();
 }

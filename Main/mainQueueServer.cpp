@@ -426,6 +426,17 @@ QStringList Server::pendingTasks(bool html)
     return res;
 }
 
+void Server::timerEvent(QTimerEvent *event)
+{
+    int id = event->timerId();
+    for (auto item =  timer_handler.begin(), end = timer_handler.end(); item != end; ++item)
+        if (item.value() == id)
+        {
+            qDebug() << "Timer check for" << item.key() << "Finished";
+        }
+}
+
+
 
 
 
@@ -752,13 +763,21 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         if (!workid.isEmpty())
         {
-            qDebug() << "Finished " << workid;
             auto t = QDateTime::currentDateTime().toSecsSinceEpoch() - running[workid]["SendTime"].toInt();
+            qDebug() << "Finished " << workid << "in" << t <<"s" ;
             QStringList wid = workid.split("!");
             QString ww = QString("%1!%2").arg(wid[0], wid[1].split("#")[0]);
 
             run_time[ww] += t;
             run_count[ww] ++;
+
+            float duration = (run_time[ww] / run_count[ww]); // Secs
+
+            if (!timer_handler.contains(ww))
+                killTimer(timer_handler[ww]);
+
+            int timer = startTimer(duration * 1100); // 110% of t
+            timer_handler[ww] = timer;
 
             running.remove(workid);
         }
