@@ -812,7 +812,7 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
 
             if (!r1.ok())
             {
-                qDebug() << "Arrow Error to Open Stream";
+                qDebug() << "Arrow Error to Open Stream" << tofile ;
                 return;
             }
             auto output = r1.ValueOrDie();
