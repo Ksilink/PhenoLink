@@ -74,13 +74,13 @@ void concat(const QList<std::shared_ptr<arrow::Array> >& list, std::shared_ptr<a
             {
                 if (c->IsValid(s))
                 {
-                    bldr.Append(_get(c, s));
+                    auto status = bldr.Append(_get(c, s));
                     //   qDebug() << s; // << QString("%1").arg(_get(c, s));
                 }
                 else
                 {
                     //   qDebug() << s << "-";
-                    bldr.AppendNull();
+                    auto status = bldr.AppendNull();
                 }
             }
         }
@@ -88,7 +88,7 @@ void concat(const QList<std::shared_ptr<arrow::Array> >& list, std::shared_ptr<a
         d++;
     }
 
-    bldr.Finish(&res);
+    auto status = bldr.Finish(&res);
 
 }
 
@@ -376,9 +376,9 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
         auto writer = r2.ValueOrDie();
 
-        writer->WriteTable(*table.get());
-        writer->Close();
-        output->Close();
+        auto res = writer->WriteTable(*table.get());
+        auto res2 = writer->Close();
+        auto res3 = output->Close();
 
 
         // Let's handle agg
@@ -401,9 +401,9 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
             for (auto& w : ws)
             {
-                wells.Append(w);
-                plate.Append(plateID.toStdString());
-                tags.Append(tgs[w]);
+                auto res = wells.Append(w);
+                res = plate.Append(plateID.toStdString());
+                res = tags.Append(tgs[w]);
 
                 int f = 0;
                 for (auto& name : fie)
@@ -411,17 +411,17 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
                     {
                         auto method = fields[name]->metadata()->Contains("Aggregation") ? QString::fromStdString(fields[name]->metadata()->Get("Aggregation").ValueOrDie()) : QString();
                         QList<float>& dat = agg[name][w];
-                        data[f].Append(Aggregate(dat, method));
+                        res = data[f].Append(Aggregate(dat, method));
                         f++;
                     }
             }
 
-            wells.Finish(&dat[0]);
-            plate.Finish(&dat[1]);
-            tags.Finish(&dat[2]);
+            auto res = wells.Finish(&dat[0]);
+            res = plate.Finish(&dat[1]);
+            res = tags.Finish(&dat[2]);
 
             for (int i = 0; i < agg.size(); ++i)
-                data[i].Finish(&dat[i + 3]);
+                res = data[i].Finish(&dat[i + 3]);
 
             auto schema =
                     arrow::schema(ff);
@@ -464,9 +464,9 @@ void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 
             auto writer = r2.ValueOrDie();
 
-            writer->WriteTable(*table.get());
-            writer->Close();
-            output->Close();
+            auto status = writer->WriteTable(*table.get());
+            status = writer->Close();
+            status = output->Close();
 
         }
 

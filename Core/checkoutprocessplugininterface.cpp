@@ -207,7 +207,6 @@ void CheckoutProcessPluginInterface::prepareData()
                     InputImageMetaData meta;
 
 
-                    //                  QDir dir(o["Data"].toArray().at(0).toString());
                     meta.file_path  = im->basePath(o);
                     meta.hash       = o["DataHash"].toString();
                     meta.pos        = o["Pos"].toString();
@@ -333,8 +332,8 @@ QString CheckoutProcessPluginInterface::user()
 
 
 QString CheckoutProcessPluginInterface::getDataStorePath()
-{ 
-    return CheckoutProcess::handler().getStoragePath(); 
+{
+    return CheckoutProcess::handler().getStoragePath();
 }
 
 

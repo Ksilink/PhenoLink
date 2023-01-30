@@ -829,8 +829,8 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
 
             auto writer = r2.ValueOrDie();
 
-            writer->WriteTable(*table.get());
-            writer->Close();
+            auto res = writer->WriteTable(*table.get());
+            auto res2 = writer->Close();
 
         }
     }
@@ -1144,21 +1144,21 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
             for (auto& k: items)
             {
                 auto v = k.split(";");
-                wells.Append(v[0].toStdString());
-                plate.Append(df.plate.toStdString());
+                auto status = wells.Append(v[0].toStdString());
+                status = plate.Append(df.plate.toStdString());
 
-                tp.Append(v[1].toInt());
-                fi.Append(v[2].toInt());
-                zp.Append(v[3].toInt());
-                ch.Append(v[4].toInt());
+                status = tp.Append(v[1].toInt());
+                status = fi.Append(v[2].toInt());
+                status = zp.Append(v[3].toInt());
+                status = ch.Append(v[4].toInt());
             }
 
-            wells.Finish(&dat[0]);
-            plate.Finish(&dat[1]);
-            tp.Finish(&dat[2]);
-            fi.Finish(&dat[3]);
-            zp.Finish(&dat[4]);
-            ch.Finish(&dat[5]);
+            auto status = wells.Finish(&dat[0]);
+            status = plate.Finish(&dat[1]);
+            status = tp.Finish(&dat[2]);
+            status = fi.Finish(&dat[3]);
+            status = zp.Finish(&dat[4]);
+            status = ch.Finish(&dat[5]);
 
             int dp = 6;
             for (auto& sk : df.arrStr.keys())
@@ -1169,11 +1169,11 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
                 for (auto&  k: items)
                 {
                     if (mp.contains(k))
-                        bldr.Append(mp.value(k).toStdString());
+                        auto status = bldr.Append(mp.value(k).toStdString());
                     else
-                        bldr.AppendNull();
+                        auto status = bldr.AppendNull();
                 }
-                bldr.Finish(&dat[dp]);
+                auto status = bldr.Finish(&dat[dp]);
                 dp++;
             }
 
@@ -1185,11 +1185,11 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
                 for (auto&  k: items)
                 {
                     if (mp.contains(k))
-                        bldr.Append(mp.value(k));
+                        auto status = bldr.Append(mp.value(k));
                     else
-                        bldr.AppendNull();
+                        auto status = bldr.AppendNull();
                 }
-                bldr.Finish(&dat[dp]);
+                auto status =  bldr.Finish(&dat[dp]);
                 dp++;
             }
 
@@ -1235,9 +1235,9 @@ void NetworkProcessHandler::storeData(QString d, bool finished)
 
         auto writer = r2.ValueOrDie();
 
-        writer->WriteTable(*table.get());
-        writer->Close();
-        output->Close();
+        auto status = writer->WriteTable(*table.get());
+        status = writer->Close();
+        status = output->Close();
     }
 
     if (finished)

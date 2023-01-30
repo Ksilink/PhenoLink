@@ -49,7 +49,6 @@ string(STRIP "${app_hash_short}" app_hash_short)
 
 
 
-
 execute_process(
   COMMAND           "${GIT_EXECUTABLE}"
                     rev-parse

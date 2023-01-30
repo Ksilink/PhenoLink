@@ -126,7 +126,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 #else
             bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
 #endif
-            QString pr = QString::fromStdString(view.to_string()).simplified();
+            QString pr = QString::fromStdString(std::string{view}).simplified();
             if (!pr.isEmpty())
                 _projects.insert(pr) ;
         }
@@ -161,7 +161,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 #else
                     bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
 #endif
-                    _well_tags[prj].insert(QString::fromStdString(view.to_string()).simplified());
+                    _well_tags[prj].insert(QString::fromStdString(std::string{view}).simplified());
                 }
             }
         }
@@ -240,7 +240,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 #else
                 bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
 #endif
-                data << QString::fromStdString(view.to_string()).simplified();
+                data << QString::fromStdString(std::string{view}).simplified();
             }
 
             ui->global_tags->addItems(data);
@@ -264,8 +264,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 bsoncxx::stdx::string_view prview = item["_id"]["project"].get_utf8().value;
                 bsoncxx::stdx::string_view cellview = item["_id"]["cell_lines"].get_utf8().value;
 #endif
-                QString t = QString::fromStdString(cellview.to_string()).simplified();
-                QString prj = QString::fromStdString(prview.to_string()).simplified();
+                QString t = QString::fromStdString(std::string{cellview}).simplified();
+                QString prj = QString::fromStdString(std::string{prview}).simplified();
 
                 _grouped_tags[prj]["CellLines"].insert(t);
             }

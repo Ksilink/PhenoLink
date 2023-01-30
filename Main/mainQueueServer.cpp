@@ -433,6 +433,8 @@ void Server::timerEvent(QTimerEvent *event)
         if (item.value() == id)
         {
             qDebug() << "Timer check for" << item.key() << "Finished";
+            killTimer(id);
+
         }
 }
 
@@ -771,14 +773,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             run_time[ww] += t;
             run_count[ww] ++;
 
-            float duration = (run_time[ww] / run_count[ww]); // Secs
-
-            if (!timer_handler.contains(ww))
-                killTimer(timer_handler[ww]);
-
-            int timer = startTimer(duration * 1100); // 110% of t
-            timer_handler[ww] = timer;
-
             running.remove(workid);
         }
 
@@ -800,6 +794,18 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 perjob_count[jobid]--;
 
                 qDebug() << "Work ID finished" << obj["TaskID"] << wwid << work_count.value(wwid);
+
+
+                float duration = (run_time[ww] / run_count[ww]); // Secs
+
+                if (!timer_handler.contains(ww))
+                    killTimer(timer_handler[ww]);
+
+                int timer = startTimer(duration * 1000);
+                timer_handler[ww] = timer;
+
+                qDebug() << "Starting timer" <<timer << "for" << ww;
+
                 if (work_count.value(wwid) == 0)
                 {
                     qDebug() << "Work ID finished" << wwid << "Aggregate & collate data" << obj["TaskID"].toString();
