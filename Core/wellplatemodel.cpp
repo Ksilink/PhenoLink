@@ -3666,8 +3666,8 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
         }
         auto writer = r2.ValueOrDie();
 
-        writer->WriteTable(*table.get());
-        writer->Close();
+        auto res = writer->WriteTable(*table.get());
+        res = writer->Close();
 
     }
 
@@ -3759,8 +3759,8 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
 
         auto writer = r2.ValueOrDie();
 
-        writer->WriteTable(*table.get());
-        writer->Close();
+        auto res = writer->WriteTable(*table.get());
+        res = writer->Close();
 
 
 
@@ -4222,8 +4222,8 @@ void StructuredMetaData::exportData()
     arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
     auto writer = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options).ValueOrDie();
 
-    writer->WriteTable(*table.get());
-    writer->Close();
+    auto res = writer->WriteTable(*table.get());
+    res = writer->Close();
 }
 
 cv::Mat& StructuredMetaData::content() { return _content; }
