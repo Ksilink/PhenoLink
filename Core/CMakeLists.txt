@@ -42,7 +42,7 @@ add_library(CheckoutCore SHARED
             checkouterrorhandler.cpp checkouterrorhandler.h
 
             ck_mongo.h ck_mongo.cpp
-
+            Cloud/PhenoLinkDir.h Cloud/PhenoLinkDir.cpp
             )
 
 include_directories(${ARROW_INCLUDE_DIR})
@@ -55,15 +55,17 @@ find_package(mongocxx   REQUIRED)
 find_package(Boost 1.56.0 REQUIRED)
 
 
+
+
 target_compile_definitions(CheckoutCore PUBLIC  -DGitPluginDate=${plugin_date})
 
 
 target_include_directories(CheckoutCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(WIN32)
-    target_link_libraries(CheckoutCore  QHttp Qt::Widgets Qt::Core Qt::Network Qt::Xml Qt::XmlPatterns  Qt::Concurrent ${OpenCV_LIBS} arrow_shared mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost)
+    target_link_libraries(CheckoutCore  QHttp Qt::Widgets Qt::Core Qt::Network Qt::Xml Qt::XmlPatterns  Qt::Concurrent ${OpenCV_LIBS} arrow_shared mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc Azure::azure-storage-blobs)
 else()
-        target_link_libraries(CheckoutCore PRIVATE QHttp Qt::Widgets Qt::Core Qt::Network Qt::Xml Qt::XmlPatterns  Qt::Concurrent ${OpenCV_LIBS} ${ARROW_LIBRARIES}  mongo::mongocxx_static mongo::bsoncxx_static Boost::boost )
+        target_link_libraries(CheckoutCore PRIVATE QHttp Qt::Widgets Qt::Core Qt::Network Qt::Xml Qt::XmlPatterns  Qt::Concurrent ${OpenCV_LIBS} ${ARROW_LIBRARIES}  mongo::mongocxx_static mongo::bsoncxx_static Boost::boost  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc Azure::azure-storage-blobs )
 endif(WIN32)
 #add_custom_command(TARGET CheckoutCore   PRE_BUILD
 #    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"

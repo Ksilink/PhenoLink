@@ -199,6 +199,7 @@ find_package(google_cloud_cpp_storage CONFIG REQUIRED)
 # target_link_libraries(main PRIVATE google-cloud-cpp::storagetransfer google-cloud-cpp::storagetransfer_protos google-cloud-cpp::experimental-storagetransfer)
 
 
+find_package(azure-storage-blobs-cpp CONFIG REQUIRED)
 
 
 if(BUILD_WITH_VTK)
