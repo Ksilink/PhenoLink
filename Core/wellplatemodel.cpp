@@ -12,6 +12,8 @@
 #include <QTextStream>
 #include <iostream>
 #include <vector>
+#include <string>
+#include <string_view>
 
 #undef signals
 #include <arrow/api.h>
@@ -3677,7 +3679,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
 #define StringBuild(data, access, dest){ arrow::StringBuilder bldr;        \
     for (QMap<unsigned, QMap<QString, QList<double> >    >::iterator it = factor.begin(), e = factor.end(); it != e; ++it) \
         {   data.push_back(access.toStdString());    \
-    ABORT_ON_FAILURE(bldr.Append(data.back()));   } \
+    ABORT_ON_FAILURE(bldr.Append(std::string_view{data.back()}));   } \
     ABORT_ON_FAILURE(bldr.Finish(&dest));  bldr.Reset(); }
 
 
