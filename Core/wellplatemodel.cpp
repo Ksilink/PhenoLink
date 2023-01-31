@@ -12,6 +12,8 @@
 #include <QTextStream>
 #include <iostream>
 #include <vector>
+#include <string>
+#include <string_view>
 
 #undef signals
 #include <arrow/api.h>
@@ -3666,8 +3668,8 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
         }
         auto writer = r2.ValueOrDie();
 
-        writer->WriteTable(*table.get());
-        writer->Close();
+        auto res = writer->WriteTable(*table.get());
+        res = writer->Close();
 
     }
 
@@ -3677,7 +3679,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
 #define StringBuild(data, access, dest){ arrow::StringBuilder bldr;        \
     for (QMap<unsigned, QMap<QString, QList<double> >    >::iterator it = factor.begin(), e = factor.end(); it != e; ++it) \
         {   data.push_back(access.toStdString());    \
-    ABORT_ON_FAILURE(bldr.Append(data.back()));   } \
+    ABORT_ON_FAILURE(bldr.Append(std::string_view{data.back()}));   } \
     ABORT_ON_FAILURE(bldr.Finish(&dest));  bldr.Reset(); }
 
 
@@ -3759,8 +3761,8 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
 
         auto writer = r2.ValueOrDie();
 
-        writer->WriteTable(*table.get());
-        writer->Close();
+        auto res = writer->WriteTable(*table.get());
+        res = writer->Close();
 
 
 
@@ -4222,8 +4224,8 @@ void StructuredMetaData::exportData()
     arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
     auto writer = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options).ValueOrDie();
 
-    writer->WriteTable(*table.get());
-    writer->Close();
+    auto res = writer->WriteTable(*table.get());
+    res = writer->Close();
 }
 
 cv::Mat& StructuredMetaData::content() { return _content; }

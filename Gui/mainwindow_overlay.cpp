@@ -91,6 +91,9 @@
 
 #include <Widgets/overlayfilter.h>
 
+#include <string>
+#include <string_view>
+
 #undef signals
 #include <arrow/api.h>
 #include <arrow/filesystem/filesystem.h>
