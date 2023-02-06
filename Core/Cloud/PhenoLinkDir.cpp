@@ -76,7 +76,7 @@ public:
 
 
 
-
+/*
 class GCSDir : public QDir
 {
 public:
@@ -135,8 +135,8 @@ public:
 };
 
 
-
-
+*/
+/*
 class AzureBlobDir : public QDir
 {
 public:
@@ -192,3 +192,4 @@ public:
         return list;
     }
 };
+*/

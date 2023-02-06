@@ -43,6 +43,9 @@
         },
         {
             "name": "azure-storage-blobs-cpp"
+        },
+        {
+            "name": "libjxl"
         }
 
 
