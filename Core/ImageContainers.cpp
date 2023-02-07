@@ -8,6 +8,8 @@
 
 #include "ImageContainers.h"
 
+#include <Core/phenolinkimage.h>
+
 #include <QDir>
 #include <QSemaphore>
 #include <Dll.h>
@@ -39,7 +41,8 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
 
 //            qDebug() << "bp:" << base_path << "file: "<<  data.at((int)i).toString();
             semaphore.acquire();
-            cv::Mat m = cv::imread((base_path + data.at((int)i).toString()).toStdString(), 2);
+            QString fname = base_path + data.at((int)i).toString();
+            cv::Mat m = pl::imread(fname, 2);
             semaphore.release();
 
             if (m.type() != CV_16U)
@@ -61,7 +64,8 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
     {
 //        qDebug() << "bp:" << base_path << "file: "<<  data.first().toString();
         semaphore.acquire();
-        mat = cv::imread((base_path + data.first().toString()).toStdString(), 2);
+        QString fn = base_path + data.first().toString();
+        mat = pl::imread(fn, 2);
         semaphore.release();
 
         if (mat.type() != CV_16U)

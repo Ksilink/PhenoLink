@@ -418,6 +418,7 @@ public:
             data.console.unlock();
             data.writeQueueMutex.lock();
             data.writen += comp.second.length();
+
             {
                 QMutexLocker lock(&data.mgroup3);
                 data.group3--;
@@ -427,7 +428,6 @@ public:
                 data.adjust_mem(-comp.second.length());
 
             comp.second.clear();
-
         }
         data.writeQueueMutex.unlock();
     }

@@ -754,7 +754,7 @@ void ImageForm::display3DRendering()
         foreach(QString s , l)
         {
             //            qDebug() << s;
-            cv::Mat im = cv::imread(s.toStdString(),  2);
+            cv::Mat im = pl::imread(s,  2);
             ImageInfos* ifo = _interactor->imageInfos(s);
 
             if (im.empty()) break;

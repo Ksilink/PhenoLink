@@ -1050,6 +1050,22 @@ QStringList SequenceFileModel::getAllFiles()
     return files;
 }
 
+void SequenceFileModel::toJxl()
+{
+    for (auto f = _data.begin(), fe = _data.end(); f != fe; ++f)
+        for (auto z = f.value().begin(), ze = f.value().end(); z != ze; ++z)
+            for (auto t = z.value().begin(), te = z.value().end(); t != te; ++t)
+                for (auto c = t.value().begin(), ce = t.value().end(); c != ce; c++)
+                {
+                    if (!c.value().isEmpty())
+                         {
+                        c.value().chop(4);
+                        c.value() = c.value() +".jxl";
+                        //qDebug() << c;
+                    }
+                }
+}
+
 StructuredMetaData& SequenceFileModel::getMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name)
 {
     static StructuredMetaData r;
@@ -1090,8 +1106,6 @@ QString SequenceFileModel::getBasePath()
 
 QMap<QString, StructuredMetaData>& SequenceFileModel::getMetas(int timePoint, int fieldIdx, int Zindex, int channel)
 {
-
-
     static QMap<QString, StructuredMetaData> r;
 
     if (_sdata.contains(fieldIdx))

@@ -135,6 +135,7 @@ public:
     void addMeta(int timePoint, int fieldIdx, int Zindex, int Channel, QString name, StructuredMetaData meta);
 
     QStringList getAllFiles();
+    void toJxl();
 
 
     // This model need to handle data set as well
@@ -209,6 +210,7 @@ public:
 
 
     QString getBasePath();
+
 
 protected:
 

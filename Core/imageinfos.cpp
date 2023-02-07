@@ -4,6 +4,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include <Core/checkouterrorhandler.h>
+#include "phenolinkimage.h"
 
 QMutex ImageInfos::_lockImage(QMutex::NonRecursive);
 
@@ -175,7 +176,7 @@ cv::Mat ImageInfos::image(float scale, bool reload)
 
         }
         else
-            _image = cv::imread(_name.toStdString(), 2);
+            _image = pl::imread(_name, 2);
 
         if (scale < 1.0) // Only resize after loading data
             cv::resize(_image, _image, cv::Size(), scale, scale, cv::INTER_AREA);
@@ -277,7 +278,7 @@ cv::Mat ImageInfos::bias(int channel, float )
     {
         qDebug() << "Loading bias file" << bias_file;
 
-        bias = cv::imread(bias_file.toStdString(), 2);
+        bias = pl::imread(bias_file, 2);
         _ifo.bias_single_loader[bias_file] = bias;
     }
 

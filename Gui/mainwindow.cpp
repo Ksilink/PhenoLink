@@ -3074,7 +3074,7 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
 {
     QSettings set;
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
-                                                      set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
+                                                      set.value("DirectFileOpen",QDir::home().path()).toString(), "jxl file (*.jxl);;tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );

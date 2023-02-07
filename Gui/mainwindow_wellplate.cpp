@@ -313,6 +313,7 @@ void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
 
     if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(pairs.second.toStdWString().c_str()))
     {
+
         mx.lock();
         pairs.first->setInvalid();
         mx.unlock();
@@ -394,8 +395,16 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
 
         for (auto seq : mdl->getAllSequenceFiles())
         {
-            for (auto l :seq->getAllFiles())
-                proc_mapps.append(qMakePair(seq,l));
+            QStringList fileList = seq->getAllFiles();
+            if (fileList.size())
+            {
+                QString jxl = fileList.at(0); jxl.chop(4);
+                if (QFile::exists(jxl+".jxl"))
+                    seq->toJxl();
+
+                for (auto l : seq->getAllFiles() )
+                    proc_mapps.append(qMakePair(seq,l));
+            }
         }
     }
 
