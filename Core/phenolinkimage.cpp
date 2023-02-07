@@ -34,16 +34,16 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
 
     auto dec = JxlDecoderMake(nullptr);
     if (JXL_DEC_SUCCESS !=
-        JxlDecoderSubscribeEvents(dec.get(), JXL_DEC_BASIC_INFO |
-            JXL_DEC_COLOR_ENCODING |
-            JXL_DEC_FULL_IMAGE)) {
+            JxlDecoderSubscribeEvents(dec.get(), JXL_DEC_BASIC_INFO |
+                                      JXL_DEC_COLOR_ENCODING |
+                                      JXL_DEC_FULL_IMAGE)) {
         fprintf(stderr, "JxlDecoderSubscribeEvents failed\n");
         return false;
     }
 
     if (JXL_DEC_SUCCESS != JxlDecoderSetParallelRunner(dec.get(),
-        JxlResizableParallelRunner,
-        runner.get())) {
+                                                       JxlResizableParallelRunner,
+                                                       runner.get())) {
         fprintf(stderr, "JxlDecoderSetParallelRunner failed\n");
         return false;
     }
@@ -56,7 +56,7 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
     JxlDecoderSetInput(dec.get(), jxl, comp.size());
     JxlDecoderCloseInput(dec.get());
     int xsize = 0, ysize = 0;
-    std::vector<unsigned short> pixels;
+    //    std::vector<unsigned short> pixels;
 
     for (;;) {
         JxlDecoderStatus status = JxlDecoderProcessInput(dec.get());
@@ -76,25 +76,25 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
             }
             xsize = info.xsize;
             ysize = info.ysize;
-//            std::cout << "Data " << xsize << " " << ysize << std::endl;
+            //            std::cout << "Data " << xsize << " " << ysize << std::endl;
             JxlResizableParallelRunnerSetThreads(
-                runner.get(),
-                JxlResizableParallelRunnerSuggestThreads(info.xsize, info.ysize));
+                        runner.get(),
+                        JxlResizableParallelRunnerSuggestThreads(info.xsize, info.ysize));
         }
         else if (status == JXL_DEC_COLOR_ENCODING) {
             // Get the ICC color profile of the pixel data
             size_t icc_size;
             if (JXL_DEC_SUCCESS !=
-                JxlDecoderGetICCProfileSize(
-                    dec.get(), &format, JXL_COLOR_PROFILE_TARGET_DATA, &icc_size)) {
+                    JxlDecoderGetICCProfileSize(
+                        dec.get(), &format, JXL_COLOR_PROFILE_TARGET_DATA, &icc_size)) {
                 fprintf(stderr, "JxlDecoderGetICCProfileSize failed\n");
                 return false;
             }
             icc_profile.resize(icc_size);
             if (JXL_DEC_SUCCESS != JxlDecoderGetColorAsICCProfile(
-                dec.get(), &format,
-                JXL_COLOR_PROFILE_TARGET_DATA,
-                icc_profile.data(), icc_profile.size())) {
+                        dec.get(), &format,
+                        JXL_COLOR_PROFILE_TARGET_DATA,
+                        icc_profile.data(), icc_profile.size())) {
                 fprintf(stderr, "JxlDecoderGetColorAsICCProfile failed\n");
                 return false;
             }
@@ -102,7 +102,7 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
         else if (status == JXL_DEC_NEED_IMAGE_OUT_BUFFER) {
             size_t buffer_size;
             if (JXL_DEC_SUCCESS !=
-                JxlDecoderImageOutBufferSize(dec.get(), &format, &buffer_size)) {
+                    JxlDecoderImageOutBufferSize(dec.get(), &format, &buffer_size)) {
                 fprintf(stderr, "JxlDecoderImageOutBufferSize failed\n");
                 return false;
             }
@@ -111,12 +111,13 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
                 return false;
             }
 
-            pixels.resize(xsize * ysize);
-            void* pixels_buffer = (void*)pixels.data();
-            size_t pixels_buffer_size = pixels.size();
+            //            pixels.resize(xsize * ysize);
+            reconstructed=cv::Mat(ysize, xsize, CV_16U);
+            void* pixels_buffer = (void*)reconstructed.data;//pixels.data();
+            size_t pixels_buffer_size = reconstructed.total()*2;
             if (JXL_DEC_SUCCESS != JxlDecoderSetImageOutBuffer(dec.get(), &format,
-                pixels_buffer,
-                pixels_buffer_size * 2)) {
+                                                               pixels_buffer,
+                                                               pixels_buffer_size)) {
                 fprintf(stderr, "JxlDecoderSetImageOutBuffer failed\n");
                 return false;
             }
@@ -129,7 +130,7 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
             // All decoding successfully finished.
             // It's not required to call JxlDecoderReleaseInput(dec.get()) here since
             // the decoder will be destroyed.
-            cv::Mat(ysize, xsize, CV_16U, pixels.data()).copyTo(reconstructed);
+            //            cv::Mat(ysize, xsize, CV_16U, pixels.data()).copyTo(reconstructed);
             return true;
         }
         else {
@@ -146,23 +147,30 @@ cv::Mat pl::imread(QString &path, int flags)
 {
     cv::Mat res;
 
-        QFile f(path);
-        if (f.open(QFile::ReadOnly))
+    if (!QFile::exists(path))
+    {
+        path.chop(4);
+        path+=".jxl";
+    }
+
+
+    QFile f(path);
+    if (f.open(QFile::ReadOnly))
+    {
+        QByteArray b = f.readAll();
+        if (path.endsWith(".jxl"))
         {
-            QByteArray b = f.readAll();
-            if (path.endsWith(".jxl"))
-            {
-                decode(b, res);
-            }
-            else
-            {
-                cv::Mat m(b.length(), 1, CV_8U, b.data());
-                res = cv::imdecode(m, flags);
-            }
+            decode(b, res);
         }
         else
         {
-            qDebug() << "File openning error" << path;
+            cv::Mat m(b.length(), 1, CV_8U, b.data());
+            res = cv::imdecode(m, flags);
         }
+    }
+    else
+    {
+        qDebug() << "File openning error" << path;
+    }
     return res;
 }
