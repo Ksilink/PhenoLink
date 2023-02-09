@@ -23,12 +23,23 @@
 
 
 
+#include "jxl/encode.h"
+#include "jxl/encode_cxx.h"
+
+#include "jxl/decode.h"
+#include "jxl/decode_cxx.h"
+#include "jxl/thread_parallel_runner.h"
+#include "jxl/thread_parallel_runner_cxx.h"
+#include "jxl/resizable_parallel_runner.h"
+#include "jxl/resizable_parallel_runner_cxx.h"
+
 
 struct Data {
 
     QString outdir;
     QString indir;
     bool dry_run = false;
+    int effort;
 
     std::queue<QString> folderQueue;
     std::atomic<int> folderOver = 1;
@@ -60,9 +71,9 @@ struct Data {
 
     void adjust_mem(int mem)
     {
-//        qDebug() << "Pre Mem usage" << memusage << mem;
+        //        qDebug() << "Pre Mem usage" << memusage << mem;
         memusage.fetch_add(mem);
-//        qDebug() << "Post Mem usage" << memusage << mem;
+        //        qDebug() << "Post Mem usage" << memusage << mem;
 
     }
 
@@ -154,7 +165,7 @@ public:
                 data.group0 --;
                 if (data.group0 == 0 && data.folderQueue.empty())
                 {
-//                    qDebug() << "Scan Done";
+                    //                    qDebug() << "Scan Done";
                     break; // scan is over
                 }
             }
@@ -268,10 +279,110 @@ private:
 };
 
 
+
 class CompressProcessor : public QRunnable {
 public:
     CompressProcessor(Data &data)
         : data(data) {}
+
+
+
+    int compress(const cv::Mat& im, QByteArray& compressed)
+    {
+
+        auto enc = JxlEncoderMake(nullptr);
+        auto runner = JxlThreadParallelRunnerMake(
+            /*memory_manager=*/nullptr,
+            JxlThreadParallelRunnerDefaultNumWorkerThreads());
+
+        if (JXL_ENC_SUCCESS != JxlEncoderSetParallelRunner(enc.get(),
+            JxlThreadParallelRunner,
+            runner.get())) {
+            std::cerr << "JxlEncoderSetParallelRunner failed" << std::endl;
+            return -1;
+        }
+
+        JxlPixelFormat pixel_format = { 1, JXL_TYPE_UINT16, JXL_NATIVE_ENDIAN, 0 };
+        JxlBasicInfo basic_info;
+        basic_info.uses_original_profile = JXL_TRUE;
+        JxlEncoderInitBasicInfo(&basic_info);
+        basic_info.xsize = im.cols;
+        basic_info.ysize = im.rows;
+
+        basic_info.bits_per_sample = 16;
+        // //    basic_info.exponent_bits_per_sample = 8;
+        //    basic_info.uses_original_profile = JXL_FALSE; // W
+        basic_info.num_color_channels = 1;
+        basic_info.uses_original_profile = JXL_TRUE;
+
+        if (JXL_ENC_SUCCESS != JxlEncoderSetBasicInfo(enc.get(), &basic_info)) {
+            std::cerr << "JxlEncoderSetBasicInfo failed" << std::endl;
+            return -1;
+        }
+
+
+
+        JxlColorEncoding color_encoding = { };
+
+        JxlColorEncodingSetToLinearSRGB(&color_encoding, true);
+        color_encoding.color_space = JXL_COLOR_SPACE_GRAY;
+        if (JXL_ENC_SUCCESS !=
+            JxlEncoderSetColorEncoding(enc.get(), &color_encoding)) {
+            std::cerr << "JxlEncoderSetColorEncoding failed" << std::endl;
+            return -1;
+        }
+
+        //color_encoding.u
+
+
+        JxlEncoderFrameSettings* frame_settings =
+            JxlEncoderFrameSettingsCreate(enc.get(), nullptr);
+
+
+        JxlEncoderFrameSettingsSetOption(frame_settings, JXL_ENC_FRAME_SETTING_EFFORT, 6);
+
+        if (JXL_ENC_SUCCESS !=
+            JxlEncoderSetFrameLossless(frame_settings, true))
+            std::cerr << "Warning Lossless mode not set!" << std::endl;
+
+        JxlEncoderFrameSettingsSetOption(frame_settings, JXL_ENC_FRAME_SETTING_MODULAR, 1); // force lossless
+        JxlEncoderFrameSettingsSetOption(frame_settings, JXL_ENC_FRAME_SETTING_KEEP_INVISIBLE, 1);
+        ///JxlEncoderSetFrameDistance(frame_settings,  1e-9);
+
+
+
+        if (JXL_ENC_SUCCESS !=
+            JxlEncoderAddImageFrame(frame_settings, &pixel_format,
+                (void*)im.ptr(), im.total() * sizeof(unsigned short int))) {
+            std::cerr << "JxlEncoderAddImageFrame failed" << std::endl;
+            return -1;
+        }
+        JxlEncoderCloseInput(enc.get());
+
+
+        compressed.resize(64);
+        uint8_t* next_out = (uint8_t*)compressed.data();
+        size_t avail_out = compressed.size() - (next_out - (uint8_t*)compressed.data());
+        JxlEncoderStatus process_result = JXL_ENC_NEED_MORE_OUTPUT;
+        while (process_result == JXL_ENC_NEED_MORE_OUTPUT) {
+            process_result = JxlEncoderProcessOutput(enc.get(), &next_out, &avail_out);
+            if (process_result == JXL_ENC_NEED_MORE_OUTPUT) {
+                size_t offset = next_out - (uint8_t*)compressed.data();
+                compressed.resize(compressed.size() * 2);
+                next_out = (uint8_t*)compressed.data() + offset;
+                avail_out = compressed.size() - offset;
+            }
+        }
+        compressed.resize(next_out - (uint8_t*)compressed.data());
+        if (JXL_ENC_SUCCESS != process_result) {
+            std::cerr << "JxlEncoderProcessOutput failed" << std::endl;
+            return -1;
+        }
+        return 0;
+    }
+
+
+
 
     void run() override {
         // Here we compress the tif files if any :)
@@ -322,24 +433,41 @@ public:
             w = im.cols;
             h = im.rows;
             png = (unsigned char*)im.ptr();
-            unsigned char * encoded = nullptr;
             size_t stride = w * nb_chans * (bitdepth > 8 ? 2 : 1);
 
             size_t num_threads=1;
-            int encoded_size = JxlFastLosslessEncode(png,
+            int encoded_size = 0;
+            QByteArray compressed;
+            if (effort < 0)
+            {
+                unsigned char * encoded = nullptr;
+
+                encoded_size = JxlFastLosslessEncode(png,
                                                      w, stride, h,
                                                      nb_chans,
                                                      bitdepth, /*big_endian=*/false,
                                                      effort, &encoded, &num_threads, +parallel_runner);
 
+                 compressed = QByteArray((const char*)encoded, encoded_size);
+                 delete encoded;
 
-
-            QByteArray compressed((const char*)encoded, encoded_size);
+            }
+            else
+            {
+                if (0 != compress(im, compressed))
+                {
+                    qDebug() << "Compression error";
+                    exit(-1);
+                }
+            }
+//            QByteArray compressed((const char*)encoded, encoded_size);
 
             data.writeQueueMutex.lock();
             if (!data.dry_run)
                 data.writeQueue.push(std::make_pair(jxl, compressed));
-            delete encoded;
+
+
+
             data.adjust_mem(-comp.second.length() );
             data.writeQueueMutex.unlock();
 
@@ -480,7 +608,7 @@ long long fromSi(QString value)
 
     long long res = value.toLongLong();
 
-     return res*factor;
+    return res*factor;
 }
 
 
@@ -502,12 +630,12 @@ int main(int argc, char *argv[]) {
     {
 
         QString value = settings.value(it.key(), it.value()).toString();
-        parser.addOption(QCommandLineOption(it.key(),QString("number of file %1 (default: %2)").arg(it.key(), value), it.key(), value));
+        parser.addOption(QCommandLineOption(it.key(),QString("number of %1 (default: %2)").arg(it.key(), value), it.key(), value));
     }
 
     parser.addOption(QCommandLineOption("rescan", "force a full rescan of the folder"));
     parser.addOption(QCommandLineOption("dry-run", "Skip the writing at the end"));
-
+    parser.addOption(QCommandLineOption("effort", "Set the compression effort (default: -1)", "effort", "-1"));
 
     parser.process(a);
 
@@ -551,6 +679,7 @@ int main(int argc, char *argv[]) {
     // if rescan is required just get back to epoch :p
     if (parser.isSet("rescan"))
         data.ts = QDateTime::fromSecsSinceEpoch(0);
+    data.effort = parser.value("effort").toInt();
     // wath ever happens now just store the timestamp
     settings.setValue("timestamp", QDateTime::currentDateTime());
 

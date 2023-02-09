@@ -2,6 +2,11 @@
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(PkgConfig)
+pkg_check_modules(Jxl REQUIRED IMPORTED_TARGET libjxl)
+pkg_check_modules(JxlThreads REQUIRED IMPORTED_TARGET libjxl_threads)
+
+
 IF(WIN32)
 
     SET(GUI_TYPE WIN32)
@@ -57,9 +62,9 @@ install(TARGETS PhenoLinkUploader COMPONENT applications DESTINATION bin)
 add_executable(CpTranscode mainCpTranscode.cpp ${AppRCFile} enc_fast_lossless.cc)
 target_include_directories(CpTranscode PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if (WIN32)
-    target_link_libraries(CpTranscode Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS}   arrow_shared ${ARROW_LIBRARIES}  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc )
+    target_link_libraries(CpTranscode Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS}   arrow_shared ${ARROW_LIBRARIES}  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc PkgConfig::Jxl PkgConfig::JxlThreads)
 else()
-    target_link_libraries(CpTranscode Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS}  "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc )
+    target_link_libraries(CpTranscode Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS}  "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc PkgConfig::Jxl PkgConfig::JxlThreads)
 endif(WIN32)
 
 install(TARGETS CpTranscode COMPONENT applications DESTINATION bin)
