@@ -38,7 +38,7 @@ struct Data {
 
     QString outdir;
     QString indir;
-    bool dry_run = false;
+    bool dry_run = false, inplace = false;
     int effort;
 
     std::queue<QString> folderQueue;
@@ -99,6 +99,7 @@ public:
     InputProcessor(Data &data) : data(data) {}
 
     void run() override {
+//        qDebug() << "Start scan";
         data.folder_mut.lock();
         while (data.isrunning())
         {
@@ -136,11 +137,10 @@ public:
                 if (file.endsWith(".") || file.endsWith(".."))
                     continue;
 
-                //                qDebug() << file;
                 auto finfo = it.fileInfo();
                 if (finfo.isDir())
                 {
-                    //                    qDebug() << "Directorrrryyy" << finfo.absoluteFilePath();
+//                    qDebug() << "Directorrrryyy" << finfo.absoluteFilePath();
                     data.folder_mut.lock();
                     data.folderOver ++;
                     data.folderQueue.push(finfo.absoluteFilePath());
@@ -148,13 +148,13 @@ public:
                 }
                 else if (finfo.isFile() && finfo.lastModified() > data.ts)
                 {
-                    //                  qDebug() << "File" << finfo.absoluteFilePath();
+ //                   qDebug() << "File" << finfo.absoluteFilePath();
                     QMutexLocker lock(&data.inputQueueMutex);
                     data.fileQueue.push(finfo.absoluteFilePath().mid(data.indir.length()));
                 }
                 add++;
             }
-            //            qDebug() << "Scan thread finished" << add;
+//            qDebug() << "Scan thread finished" << add;
 
 
             data.folder_mut.lock();
@@ -223,12 +223,17 @@ public:
 
             // check if the file is absent from destination !!!
             QString jxl = infile;
-            if (!QFileInfo::exists(QString("%1/%2").arg(data.outdir, infile)) &&
-                    !QFileInfo::exists(QString("%1/%2").arg(data.outdir, jxl.replace(".tif", ".jxl"))) // due to the transcription :)
-                    )
+
+            if (jxl.endsWith(".tif"))
+            {
+                jxl.chop(4);
+                jxl += ".jxl";
+            }
+//            qDebug()  << "jxl" << QString("%1/%2").arg(data.outdir, jxl);
+            if (!QFileInfo::exists(QString("%1/%2").arg(data.outdir, jxl)))
             {
                 QString file(QString("%1/%2").arg(data.indir, infile));
-                //                qDebug() << "Loading file for copy" << file;
+//                qDebug() << "Loading file for copy" << file;
                 data.copy_count++;
                 data.console.lock();
 
@@ -553,7 +558,18 @@ public:
             }
 
             if (!file.endsWith(".jxl"))
+            {
                 data.adjust_mem(-comp.second.length());
+            }
+            else
+            {
+                if (data.inplace)
+                {
+                    QString tif = file; tif.chop(4); tif += ".tif";
+                    qDebug() << "Remove" << data.inplace << file << tif;
+                    QFile::remove(tif);
+                }
+            }
 
             comp.second.clear();
         }
@@ -650,6 +666,12 @@ int main(int argc, char *argv[]) {
     }
 
     Data data;
+
+    data.inplace = (data.indir == data.outdir);
+
+    if (data.inplace)
+        qDebug() << "In place processing";
+
 
     data.folderQueue.push(positionalArguments.at(0)); // Set the first directory to parse !!!
     data.indir = positionalArguments.at(0);
