@@ -566,7 +566,6 @@ public:
                 if (data.inplace)
                 {
                     QString tif = file; tif.chop(4); tif += ".tif";
-                    qDebug() << "Remove" << data.inplace << file << tif;
                     QFile::remove(tif);
                 }
             }
