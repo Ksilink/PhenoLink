@@ -740,7 +740,8 @@ int main(int argc, char *argv[]) {
     QThreadPool::globalInstance()->waitForDone();
 
 
-    QTime t(0,0); t.addMSecs(timer.elapsed());
+    QTime t(0,0);
+    t = t.addMSecs(timer.elapsed());
 
     qDebug() << "\nSynchronisation of" << si(data.readed) << "in" << t.toString("hh:mm:ss.zzz");
     qDebug() << "End file compression " << si(data.writen);
