@@ -14,6 +14,7 @@
 #include <QDebug>
 
 #include <QElapsedTimer>
+#include <QTime>
 
 #include <queue>
 #include <utility>
@@ -738,7 +739,10 @@ int main(int argc, char *argv[]) {
     // Wait for all threads to finish
     QThreadPool::globalInstance()->waitForDone();
 
-    qDebug() << "\nSynchronisation of" << si(data.readed) << "in" << timer.elapsed() / 1000. << "s";
+
+    QTime t(0,0); t.addMSecs(timer.elapsed());
+
+    qDebug() << "\nSynchronisation of" << si(data.readed) << "in" << t.toString("hh:mm:ss.zzz");
     qDebug() << "End file compression " << si(data.writen);
 
 
