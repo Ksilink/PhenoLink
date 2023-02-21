@@ -462,7 +462,7 @@ public:
             {
                 if (0 != compress(im, compressed))
                 {
-                    qDebug() << "Compression error";
+                    qDebug() << "Compression error" << comp << jxl;
                     exit(-1);
                 }
             }
