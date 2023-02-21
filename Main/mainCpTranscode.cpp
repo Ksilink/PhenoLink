@@ -250,22 +250,25 @@ public:
                 if (reader.open(QIODevice::ReadOnly))
                 {
                     QByteArray q = reader.readAll();
-                    data.adjust_mem(q.size());
+                    if (q.size() > 0)
+                    {
+                        data.adjust_mem(q.size());
 
-                    if (file.endsWith(".tif"))
-                    {
-                        QMutexLocker locker(&data.compressQueueMutex);
-                        data.compressQueue.push(std::make_pair(infile, q));
+                        if (file.endsWith(".tif") )
+                        {
+                            QMutexLocker locker(&data.compressQueueMutex);
+                            data.compressQueue.push(std::make_pair(infile, q));
+                        }
+                        else
+                        {
+                            QMutexLocker lock(&data.writeQueueMutex);
+                            if (!data.dry_run)
+                                data.writeQueue.push(std::make_pair(infile, q));
+                        }
+                        data.inputQueueMutex.lock();
+                        data.readed += q.size();
+                        data.inputQueueMutex.unlock();
                     }
-                    else
-                    {
-                        QMutexLocker lock(&data.writeQueueMutex);
-                        if (!data.dry_run)
-                            data.writeQueue.push(std::make_pair(infile, q));
-                    }
-                    data.inputQueueMutex.lock();
-                    data.readed += q.size();
-                    data.inputQueueMutex.unlock();
                 }
 
             }
@@ -444,7 +447,7 @@ public:
             size_t num_threads=1;
             int encoded_size = 0;
             QByteArray compressed;
-            if (effort < 0)
+            if (effort <= 0)
             {
                 unsigned char * encoded = nullptr;
 
@@ -462,7 +465,7 @@ public:
             {
                 if (0 != compress(im, compressed))
                 {
-                    qDebug() << "Compression error" << comp << jxl;
+                    qDebug() << "Compression error" << comp.first << jxl;
                     exit(-1);
                 }
             }
