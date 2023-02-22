@@ -519,7 +519,7 @@ void Server::WorkerMonitor()
                 {
 
                     QJsonObject pr = queue.dequeue();
-                    if (!proc_params[pr["Path"].toString()].contains(next_worker))
+                    /*if (!proc_params[pr["Path"].toString()].contains(next_worker))
                     {
                         auto project = pr["Project"].toString();
                         int priority = pr.contains("Priority") ? pr["Priority"].toInt() : 1;
@@ -532,7 +532,7 @@ void Server::WorkerMonitor()
                             jobs[""][priority].enqueue(pr); // Unmapped project goes to "global" path
                         workers_lock.unlock();
                         continue;
-                    }
+                    }*/
 
                     CheckoutHttpClient* sr = nullptr;
                     if (clients[next_worker])
