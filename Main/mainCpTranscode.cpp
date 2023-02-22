@@ -439,47 +439,49 @@ public:
 
             cv::Mat m(comp.second.length(), 1, CV_8U, comp.second.data());
             auto im =  cv::imdecode(m, -1);
-            w = im.cols;
-            h = im.rows;
-            png = (unsigned char*)im.ptr();
-            size_t stride = w * nb_chans * (bitdepth > 8 ? 2 : 1);
-
-            size_t num_threads=1;
-            int encoded_size = 0;
-            QByteArray compressed;
-            if (effort <= 0)
+            if (im.cols != 0 || im.rows != 0)
             {
-                unsigned char * encoded = nullptr;
+                w = im.cols;
+                h = im.rows;
+                png = (unsigned char*)im.ptr();
+                size_t stride = w * nb_chans * (bitdepth > 8 ? 2 : 1);
 
-                encoded_size = JxlFastLosslessEncode(png,
-                                                     w, stride, h,
-                                                     nb_chans,
-                                                     bitdepth, /*big_endian=*/false,
-                                                     effort, &encoded, &num_threads, +parallel_runner);
-
-                 compressed = QByteArray((const char*)encoded, encoded_size);
-                 delete encoded;
-
-            }
-            else
-            {
-                if (0 != compress(im, compressed))
+                size_t num_threads=1;
+                int encoded_size = 0;
+                QByteArray compressed;
+                if (effort <= 0)
                 {
-                    qDebug() << "Compression error" << comp.first << jxl;
-                    exit(-1);
+                    unsigned char * encoded = nullptr;
+
+                    encoded_size = JxlFastLosslessEncode(png,
+                                                        w, stride, h,
+                                                        nb_chans,
+                                                        bitdepth, /*big_endian=*/false,
+                                                        effort, &encoded, &num_threads, +parallel_runner);
+
+                    compressed = QByteArray((const char*)encoded, encoded_size);
+                    delete encoded;
+
                 }
+                else
+                {
+                    if (0 != compress(im, compressed))
+                    {
+                        qDebug() << "Compression error" << comp.first << jxl;
+                        exit(-1);
+                    }
+                }
+    //            QByteArray compressed((const char*)encoded, encoded_size);
+
+                data.writeQueueMutex.lock();
+                if (!data.dry_run)
+                    data.writeQueue.push(std::make_pair(jxl, compressed));
+
+
+
+                data.adjust_mem(-comp.second.length() );
+                data.writeQueueMutex.unlock();
             }
-//            QByteArray compressed((const char*)encoded, encoded_size);
-
-            data.writeQueueMutex.lock();
-            if (!data.dry_run)
-                data.writeQueue.push(std::make_pair(jxl, compressed));
-
-
-
-            data.adjust_mem(-comp.second.length() );
-            data.writeQueueMutex.unlock();
-
             comp.second.clear();
             data.compressQueueMutex.lock();
             {

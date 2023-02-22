@@ -72,20 +72,20 @@ void loadPlugins(bool isServer)
 
         void operator()(QString fileName)
         {
-            //            qDebug() << "Checking file" << fileName << pluginsDir.absoluteFilePath(fileName);
+            qDebug() << "Checking file" << fileName << pluginsDir.absoluteFilePath(fileName);
             QPluginLoader pluginLoader(pluginsDir.absoluteFilePath(fileName));
 
 
             QObject *plugin = pluginLoader.instance();
 
-            //            if (!pluginLoader.isLoaded())
-            //                qDebug() << pluginLoader.errorString();
+                        if (!pluginLoader.isLoaded())
+                            qDebug() << pluginLoader.errorString();
 
 
             if (plugin)
             {
                 bool added = false;
-                //qDebug() << "Plugin" << pluginsDir.absoluteFilePath(fileName);
+            //    qDebug() << "Plugin" << pluginsDir.absoluteFilePath(fileName);
                 CheckoutDataLoaderPluginInterface* pl = qobject_cast<CheckoutDataLoaderPluginInterface*>(plugin);
                 if (pl)
                 {
