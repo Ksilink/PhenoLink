@@ -107,6 +107,7 @@ public:
 
             auto rec = data.folderQueue.pop();
             if (rec)
+
             {
                 {
                     QMutexLocker lock(&data.mgroup0);
@@ -145,6 +146,11 @@ public:
                 }
 
             }
+            else
+            {
+                  QThread::msleep(200); // to release the mutex burden if too many access
+            }
+
         }
 //        data.folder_mut.unlock();
     }
@@ -172,12 +178,7 @@ public:
             auto infile = data.fileQueue.pop();
             if (!infile)
             {
-
-                if (data.fileQueue.size() == 0)
-                {
-                    QThread::msleep(200); // file queue is empty wait
-                    continue;
-                }
+                QThread::msleep(200); // file queue is empty wait
             }
             else
             {
@@ -356,12 +357,6 @@ public:
         // otherwise direct rewrite of the files
         while (data.isrunning())
         {
-            if (data.compressQueue.size() == 0)
-            {
-                QThread::msleep(200); // wait for memory consumtion
-                continue;
-            }
-
             auto comp = data.compressQueue.pop();
             if (comp)
             {
@@ -438,7 +433,10 @@ public:
                     data.group2 --;
                 }
             }
-
+            else
+            {
+                  QThread::msleep(200); // to release the mutex burden if too many access
+            }
         }
     }
 
@@ -455,16 +453,9 @@ public:
 
         while (data.isrunning())
         {
-            {// memory consumption checks
-                if (data.writeQueue.size() == 0)
-                {
-                    QThread::msleep(200); // wait for memory consumtion
-                    continue;
-                }
-            }
-
             auto comp = data.writeQueue.pop();
             if (comp)
+
             {
                 {
                     QMutexLocker lock(&data.mgroup3);
@@ -521,6 +512,10 @@ public:
                 }
 
                 (*comp).second.clear();
+            }
+            else
+            {
+                  QThread::msleep(200); // to release the mutex burden if too many access
             }
         }
     }
