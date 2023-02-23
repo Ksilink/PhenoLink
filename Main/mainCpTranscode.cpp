@@ -91,13 +91,20 @@ struct Data {
                 ||  group0 > 0
                 ||  group1 > 0
                 ||  group2 > 0
-                ||  group3 > 0
                 );
+    }
+
+    bool scanFolder()
+    {
+        return (folderOver != 0
+                ||  folderQueue.size() != 0
+                ||   group0 > 0)
+                ;
     }
 
     bool hasFile()
     {
-        return (folderOver != 0 || folderQueue.size() != 0 || fileQueue.size() != 0 || group0 > 0 );
+        return (scanFolder() || fileQueue.size() != 0 );
 
     }
 
@@ -108,13 +115,7 @@ struct Data {
     }
 
 
-    bool scanFolder()
-    {
-        return (folderOver != 0
-                ||  folderQueue.size() != 0
-                ||   group0 > 0)
-                ;
-    }
+
 
 
 
@@ -399,16 +400,17 @@ public:
                 unsigned w, h;
                 size_t nb_chans = 1, bitdepth = 16;
 
-
                 auto parallel_runner = [](void* , void* opaque,
                         void fun(void*, size_t), size_t count){
                     for (size_t i = 0; i < count; ++i)
                         fun(opaque, i);
                 };
 
-
                 cv::Mat m((*comp).second.length(), 1, CV_8U, (*comp).second.data());
+
                 auto im =  cv::imdecode(m, -1);
+                m.release();
+
                 if (im.cols != 0 || im.rows != 0)
                 {
                     w = im.cols;
@@ -432,7 +434,6 @@ public:
 
                         compressed = QByteArray((const char*)encoded, encoded_size);
                         delete encoded;
-
                     }
                     else
                     {
@@ -446,12 +447,12 @@ public:
 
                     if (!data.dry_run)
                         data.writeQueue.push(std::make_pair(jxl, compressed));
-
-
-
                     data.adjust_mem(-(*comp).second.length() );
                 }
+
                 (*comp).second.clear();
+                im.release();
+
                 {
                     QMutexLocker lock(&data.mgroup2);
                     data.group2 --;
@@ -462,9 +463,6 @@ public:
                   QThread::msleep(200); // to release the mutex burden if too many access
             }
         }
-
-//        qDebug() << QThread::currentThreadId() << "Over";
-
     }
 
 private:
@@ -483,17 +481,12 @@ public:
             auto comp = data.writeQueue.pop();
             if (comp)
             {
-                {
-                    QMutexLocker lock(&data.mgroup3);
-                    data.group3 ++;
-                }
-                {
+                { // Check folder path
                     QStringList folders = (*comp).first.replace("\\", "/").split("/");
                     folders.pop_back();
                     QDir d;
                     d.mkpath(data.outdir+"/"+folders.join("/"));
                 }
-
 
                 QString file = data.outdir + "/" + (*comp).first;
                 //            qDebug() << "Writing" << file;
@@ -518,11 +511,6 @@ public:
                 std::flush(std::cout);
                 data.console.unlock();
                 data.writen += (*comp).second.length();
-
-                {
-                    QMutexLocker lock(&data.mgroup3);
-                    data.group3--;
-                }
 
                 if (!file.endsWith(".jxl"))
                 {
@@ -716,8 +704,6 @@ int main(int argc, char *argv[]) {
 
     qDebug() << "\nSynchronisation of" << si(data.readed) << "in" << t.toString("hh:mm:ss.zzz");
     qDebug() << "End file compression " << si(data.writen);
-
-
 
     return 0;
 }
