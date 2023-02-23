@@ -95,6 +95,29 @@ struct Data {
                 );
     }
 
+    bool hasFile()
+    {
+        return (folderOver != 0 || folderQueue.size() != 0 || fileQueue.size() != 0 || group0 > 0 );
+
+    }
+
+
+    bool hasCompress()
+    {
+        return (hasFile() || compressQueue.size() != 0 || group1 > 0);
+    }
+
+
+    bool scanFolder()
+    {
+        return (folderOver != 0
+                ||  folderQueue.size() != 0
+                ||   group0 > 0)
+                ;
+    }
+
+
+
 };
 
 class InputProcessor : public QRunnable {
@@ -102,12 +125,12 @@ public:
     InputProcessor(Data &data) : data(data) {}
 
     void run() override {
-        while (data.isrunning())
-        {
+//        qDebug() << QThread::currentThreadId() << "Input Started";
 
+        while (data.scanFolder())
+        {
             auto rec = data.folderQueue.pop();
             if (rec)
-
             {
                 {
                     QMutexLocker lock(&data.mgroup0);
@@ -135,14 +158,10 @@ public:
                 }
 
                 data.prepared+=add;
-                data.folderOver--;
                 {
                     QMutexLocker lock(&data.mgroup0);
                     data.group0 --;
-                    if (data.group0 == 0 && data.folderQueue.size() == 0)
-                    {
-                        break; // scan is over
-                    }
+                    data.folderOver--;
                 }
 
             }
@@ -150,9 +169,9 @@ public:
             {
                   QThread::msleep(200); // to release the mutex burden if too many access
             }
-
         }
-//        data.folder_mut.unlock();
+//        qDebug() << QThread::currentThreadId() << " Input Over";
+
     }
 
 private:
@@ -166,9 +185,10 @@ public:
     FileProcessor(Data &data) : data(data) {}
 
     void run() override {
-        while (data.isrunning())
-        {
+//        qDebug() << QThread::currentThreadId() << "File Started";
 
+        while (data.hasFile())
+        {
             if (data.memusage > data.max_data)
             {
                 QThread::msleep(200); // wait for memory consumtion
@@ -240,6 +260,8 @@ public:
             }
 
         }
+//        qDebug() << QThread::currentThreadId() << "File Over";
+
     }
 
 private:
@@ -251,7 +273,8 @@ private:
 class CompressProcessor : public QRunnable {
 public:
     CompressProcessor(Data &data)
-        : data(data) {}
+        : data(data) {
+    }
 
 
 
@@ -353,9 +376,10 @@ public:
 
 
     void run() override {
+//        qDebug() << QThread::currentThreadId() << "Started";
         // Here we compress the tif files if any :)
         // otherwise direct rewrite of the files
-        while (data.isrunning())
+        while (data.hasCompress())
         {
             auto comp = data.compressQueue.pop();
             if (comp)
@@ -438,6 +462,9 @@ public:
                   QThread::msleep(200); // to release the mutex burden if too many access
             }
         }
+
+//        qDebug() << QThread::currentThreadId() << "Over";
+
     }
 
 private:
@@ -455,7 +482,6 @@ public:
         {
             auto comp = data.writeQueue.pop();
             if (comp)
-
             {
                 {
                     QMutexLocker lock(&data.mgroup3);
