@@ -22,7 +22,7 @@
 #include <opencv2/opencv.hpp>
 #include <enc_fast_lossless.h>
 
-
+#include "mutex_queue.h"
 
 #include "jxl/encode.h"
 #include "jxl/encode_cxx.h"
@@ -42,24 +42,26 @@ struct Data {
     bool dry_run = false, inplace = false;
     int effort;
 
-    std::queue<QString> folderQueue;
+    //    std::queue<QString> folderQueue;
+
+    ThreadsafeQueue<QString> folderQueue;
+
     std::atomic<int> folderOver = 1;
     QMutex folder_mut;
     // First x threads will recursively seek folders and dig into them
 
 
-    std::queue<QString> fileQueue;
-    QMutex inputQueueMutex;
+    ThreadsafeQueue<QString> fileQueue;
     std::atomic<long long> memusage = 0;
 
     std::atomic<long long> copy_count=0, write_count=0;
     QMutex console;
 
-    std::queue<std::pair<QString, QByteArray>> compressQueue;
-    std::queue<std::pair<QString, QByteArray>> writeQueue;
+    ThreadsafeQueue<std::pair<QString, QByteArray>> compressQueue;
+    ThreadsafeQueue<std::pair<QString, QByteArray>> writeQueue;
 
-    QMutex compressQueueMutex;
-    QMutex writeQueueMutex;
+//    QMutex compressQueueMutex;
+//    QMutex writeQueueMutex;
 
     long long max_data;
     std::atomic<long long> prepared = 0, readed = 0, writen = 0;
@@ -82,10 +84,10 @@ struct Data {
 
     bool isrunning(){
         return (folderOver != 0
-                || ! folderQueue.empty()
-                || !fileQueue.empty()
-                || !compressQueue.empty()
-                || !writeQueue.empty()
+                ||  folderQueue.size() != 0
+                || fileQueue.size() != 0
+                || compressQueue.size() != 0
+                || writeQueue.size() != 0
                 ||  group0 > 0
                 ||  group1 > 0
                 ||  group2 > 0
@@ -100,79 +102,51 @@ public:
     InputProcessor(Data &data) : data(data) {}
 
     void run() override {
-//        qDebug() << "Start scan";
-        data.folder_mut.lock();
         while (data.isrunning())
         {
 
-            if (data.folderQueue.empty())
+            auto rec = data.folderQueue.pop();
+            if (rec)
             {
-                data.folder_mut.unlock();
-                QThread::msleep(100);
-                data.folder_mut.lock();
                 {
                     QMutexLocker lock(&data.mgroup0);
-                    if (data.group0 == 0)
+                    data.group0 ++;
+                }
+
+                QDirIterator it(*rec);
+                int add = 0;
+                while (it.hasNext())
+                {
+                    QString file = it.next();
+                    if (file.endsWith(".") || file.endsWith(".."))
+                        continue;
+
+                    auto finfo = it.fileInfo();
+                    if (finfo.isDir())
                     {
-                        //                        qDebug() << "Releasing scan thread";
-                        break;
+                        data.folderQueue.push(finfo.absoluteFilePath());
+                    }
+                    else if (finfo.isFile() && finfo.lastModified() > data.ts)
+                    {
+                        data.fileQueue.push(finfo.absoluteFilePath().mid(data.indir.length()));
+                    }
+                    add++;
+                }
+
+                data.prepared+=add;
+                data.folderOver--;
+                {
+                    QMutexLocker lock(&data.mgroup0);
+                    data.group0 --;
+                    if (data.group0 == 0 && data.folderQueue.size() == 0)
+                    {
+                        break; // scan is over
                     }
                 }
-                continue;
+
             }
-
-            {
-                QMutexLocker lock(&data.mgroup0);
-                data.group0 ++;
-            }
-
-            auto rec = data.folderQueue.front();
-            data.folderQueue.pop();
-            data.folder_mut.unlock();
-
-            QDirIterator it(rec);
-            int add = 0;
-            while (it.hasNext())
-            {
-                QString file = it.next();
-                if (file.endsWith(".") || file.endsWith(".."))
-                    continue;
-
-                auto finfo = it.fileInfo();
-                if (finfo.isDir())
-                {
-//                    qDebug() << "Directorrrryyy" << finfo.absoluteFilePath();
-                    data.folder_mut.lock();
-                    data.folderOver ++;
-                    data.folderQueue.push(finfo.absoluteFilePath());
-                    data.folder_mut.unlock();
-                }
-                else if (finfo.isFile() && finfo.lastModified() > data.ts)
-                {
- //                   qDebug() << "File" << finfo.absoluteFilePath();
-                    QMutexLocker lock(&data.inputQueueMutex);
-                    data.fileQueue.push(finfo.absoluteFilePath().mid(data.indir.length()));
-                }
-                add++;
-            }
-//            qDebug() << "Scan thread finished" << add;
-
-
-            data.folder_mut.lock();
-            data.prepared+=add;
-            data.folderOver--;
-            {
-                QMutexLocker lock(&data.mgroup0);
-                data.group0 --;
-                if (data.group0 == 0 && data.folderQueue.empty())
-                {
-                    //                    qDebug() << "Scan Done";
-                    break; // scan is over
-                }
-            }
-
         }
-        data.folder_mut.unlock();
+//        data.folder_mut.unlock();
     }
 
 private:
@@ -186,101 +160,85 @@ public:
     FileProcessor(Data &data) : data(data) {}
 
     void run() override {
-
-        data.inputQueueMutex.lock();
         while (data.isrunning())
         {
 
-            {// memory consumption checks
-                //                QMutexLocker lock(&data.compressQueueMutex);
-                if (data.memusage > data.max_data)
+            if (data.memusage > data.max_data)
+            {
+                QThread::msleep(200); // wait for memory consumtion
+                continue;
+            }
+
+            auto infile = data.fileQueue.pop();
+            if (!infile)
+            {
+
+                if (data.fileQueue.size() == 0)
                 {
-                    //                    qDebug() << "Above Memory" << data.memusage << "/"<< data.max_data;
-                    data.inputQueueMutex.unlock();
-
-                    QThread::msleep(200); // wait for memory consumtion
-
-                    data.inputQueueMutex.lock();
+                    QThread::msleep(200); // file queue is empty wait
                     continue;
                 }
             }
-            if (data.fileQueue.empty())
+            else
             {
-                data.inputQueueMutex.unlock();
-
-                QThread::msleep(200); // wait for memory consumtion
-
-                data.inputQueueMutex.lock();
-                continue;
-            }
-            {
-                QMutexLocker lock(&data.mgroup1);
-                data.group1 ++;
-            }
-
-            auto infile = data.fileQueue.front();
-            data.fileQueue.pop();
-            data.inputQueueMutex.unlock();
-
-            // check if the file is absent from destination !!!
-            QString jxl = infile;
-
-            if (jxl.endsWith(".tif"))
-            {
-                jxl.chop(4);
-                jxl += ".jxl";
-            }
-//            qDebug()  << "jxl" << QString("%1/%2").arg(data.outdir, jxl);
-            if (!QFileInfo::exists(QString("%1/%2").arg(data.outdir, jxl)))
-            {
-                QString file(QString("%1/%2").arg(data.indir, infile));
-//                qDebug() << "Loading file for copy" << file;
-                data.copy_count++;
-                data.console.lock();
-
-                //                std::cout << "\r" << "read" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " <<data.fileQueue.size() << " " << data.write_count / (float)data.copy_count << " " << data.memusage << "                                         \n";
-
-                std::cout << "\r" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " << data.write_count / (float)data.copy_count << "                                         ";
-                std::flush(std::cout);
-                data.console.unlock();
-
-
-                //                data.inputSemaphore.acquire(); // allow a controlled concurrent access to hard drive
-                QFile reader(file);
-                if (reader.open(QIODevice::ReadOnly))
                 {
-                    QByteArray q = reader.readAll();
-                    if (q.size() > 0)
-                    {
-                        data.adjust_mem(q.size());
+                    QMutexLocker lock(&data.mgroup1);
+                    data.group1 ++;
+                }
+                // check if the file is absent from destination !!!
+                QString jxl = *infile;
 
-                        if (file.endsWith(".tif") )
+                if (jxl.endsWith(".tif"))
+                {
+                    jxl.chop(4);
+                    jxl += ".jxl";
+                }
+                //            qDebug()  << "jxl" << QString("%1/%2").arg(data.outdir, jxl);
+                if (!QFileInfo::exists(QString("%1/%2").arg(data.outdir, jxl)))
+                {
+                    QString file(QString("%1/%2").arg(data.indir, *infile));
+                    //                qDebug() << "Loading file for copy" << file;
+                    data.copy_count++;
+                    data.console.lock();
+
+                    //                std::cout << "\r" << "read" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " <<data.fileQueue.size() << " " << data.write_count / (float)data.copy_count << " " << data.memusage << "                                         \n";
+
+                    std::cout << "\r" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " << data.write_count / (float)data.copy_count << "                                         ";
+                    std::flush(std::cout);
+                    data.console.unlock();
+
+
+                    //                data.inputSemaphore.acquire(); // allow a controlled concurrent access to hard drive
+                    QFile reader(file);
+                    if (reader.open(QIODevice::ReadOnly))
+                    {
+                        QByteArray q = reader.readAll();
+                        if (q.size() > 0)
                         {
-                            QMutexLocker locker(&data.compressQueueMutex);
-                            data.compressQueue.push(std::make_pair(infile, q));
+                            data.adjust_mem(q.size());
+
+                            if (file.endsWith(".tif") )
+                            {
+                                data.compressQueue.push(std::make_pair(*infile, q));
+                            }
+                            else
+                            {
+                                if (!data.dry_run)
+                                    data.writeQueue.push(std::make_pair(*infile, q));
+                            }
+                            data.readed += q.size();
                         }
-                        else
-                        {
-                            QMutexLocker lock(&data.writeQueueMutex);
-                            if (!data.dry_run)
-                                data.writeQueue.push(std::make_pair(infile, q));
-                        }
-                        data.inputQueueMutex.lock();
-                        data.readed += q.size();
-                        data.inputQueueMutex.unlock();
                     }
+
                 }
 
-            }
-
-            data.inputQueueMutex.lock();
-            {
-                QMutexLocker lock(&data.mgroup1);
-                data.group1 --;
+                {
+                    QMutexLocker lock(&data.mgroup1);
+                    data.group1 --;
+                }
             }
 
         }
-        data.inputQueueMutex.unlock();
     }
 
 private:
@@ -301,12 +259,12 @@ public:
 
         auto enc = JxlEncoderMake(nullptr);
         auto runner = JxlThreadParallelRunnerMake(
-            /*memory_manager=*/nullptr,
-            JxlThreadParallelRunnerDefaultNumWorkerThreads());
+                    /*memory_manager=*/nullptr,
+                    JxlThreadParallelRunnerDefaultNumWorkerThreads());
 
         if (JXL_ENC_SUCCESS != JxlEncoderSetParallelRunner(enc.get(),
-            JxlThreadParallelRunner,
-            runner.get())) {
+                                                           JxlThreadParallelRunner,
+                                                           runner.get())) {
             std::cerr << "JxlEncoderSetParallelRunner failed" << std::endl;
             return -1;
         }
@@ -336,7 +294,7 @@ public:
         JxlColorEncodingSetToLinearSRGB(&color_encoding, true);
         color_encoding.color_space = JXL_COLOR_SPACE_GRAY;
         if (JXL_ENC_SUCCESS !=
-            JxlEncoderSetColorEncoding(enc.get(), &color_encoding)) {
+                JxlEncoderSetColorEncoding(enc.get(), &color_encoding)) {
             std::cerr << "JxlEncoderSetColorEncoding failed" << std::endl;
             return -1;
         }
@@ -345,13 +303,13 @@ public:
 
 
         JxlEncoderFrameSettings* frame_settings =
-            JxlEncoderFrameSettingsCreate(enc.get(), nullptr);
+                JxlEncoderFrameSettingsCreate(enc.get(), nullptr);
 
 
         JxlEncoderFrameSettingsSetOption(frame_settings, JXL_ENC_FRAME_SETTING_EFFORT, 6);
 
         if (JXL_ENC_SUCCESS !=
-            JxlEncoderSetFrameLossless(frame_settings, true))
+                JxlEncoderSetFrameLossless(frame_settings, true))
             std::cerr << "Warning Lossless mode not set!" << std::endl;
 
         JxlEncoderFrameSettingsSetOption(frame_settings, JXL_ENC_FRAME_SETTING_MODULAR, 1); // force lossless
@@ -361,8 +319,8 @@ public:
 
 
         if (JXL_ENC_SUCCESS !=
-            JxlEncoderAddImageFrame(frame_settings, &pixel_format,
-                (void*)im.ptr(), im.total() * sizeof(unsigned short int))) {
+                JxlEncoderAddImageFrame(frame_settings, &pixel_format,
+                                        (void*)im.ptr(), im.total() * sizeof(unsigned short int))) {
             std::cerr << "JxlEncoderAddImageFrame failed" << std::endl;
             return -1;
         }
@@ -396,101 +354,92 @@ public:
     void run() override {
         // Here we compress the tif files if any :)
         // otherwise direct rewrite of the files
-        data.compressQueueMutex.lock();
         while (data.isrunning())
         {
+            if (data.compressQueue.size() == 0)
             {
-                if (data.compressQueue.empty())
-                {
-                    data.compressQueueMutex.unlock();
-                    QThread::msleep(200); // wait for memory consumtion
-                    data.compressQueueMutex.lock();
-                    continue;
-                }
+                QThread::msleep(200); // wait for memory consumtion
+                continue;
             }
 
+            auto comp = data.compressQueue.pop();
+            if (comp)
             {
-                QMutexLocker lock(&data.mgroup2);
-                data.group2 ++;
-            }
-
-            auto comp = data.compressQueue.front();
-            data.compressQueue.pop();
-            data.compressQueueMutex.unlock();
-
-            //                qDebug() << "jxl'ify" << comp.first;
-            QString jxl=comp.first; jxl.replace(".tif", ".jxl");
-
-            // generate the jxl file :)
-
-
-            unsigned char* png;
-            unsigned w, h;
-            size_t nb_chans = 1, bitdepth = 16;
-            int effort = 32;
-
-
-            auto parallel_runner = [](void* , void* opaque,
-                    void fun(void*, size_t), size_t count){
-                for (size_t i = 0; i < count; ++i)
-                    fun(opaque, i);
-            };
-
-
-            cv::Mat m(comp.second.length(), 1, CV_8U, comp.second.data());
-            auto im =  cv::imdecode(m, -1);
-            if (im.cols != 0 || im.rows != 0)
-            {
-                w = im.cols;
-                h = im.rows;
-                png = (unsigned char*)im.ptr();
-                size_t stride = w * nb_chans * (bitdepth > 8 ? 2 : 1);
-
-                size_t num_threads=1;
-                int encoded_size = 0;
-                QByteArray compressed;
-                if (effort <= 0)
                 {
-                    unsigned char * encoded = nullptr;
-
-                    encoded_size = JxlFastLosslessEncode(png,
-                                                        w, stride, h,
-                                                        nb_chans,
-                                                        bitdepth, /*big_endian=*/false,
-                                                        effort, &encoded, &num_threads, +parallel_runner);
-
-                    compressed = QByteArray((const char*)encoded, encoded_size);
-                    delete encoded;
-
+                    QMutexLocker lock(&data.mgroup2);
+                    data.group2 ++;
                 }
-                else
+
+                //                qDebug() << "jxl'ify" << comp.first;
+                QString jxl=(*comp).first; jxl.replace(".tif", ".jxl");
+
+                // generate the jxl file :)
+
+
+                unsigned char* png;
+                unsigned w, h;
+                size_t nb_chans = 1, bitdepth = 16;
+
+
+                auto parallel_runner = [](void* , void* opaque,
+                        void fun(void*, size_t), size_t count){
+                    for (size_t i = 0; i < count; ++i)
+                        fun(opaque, i);
+                };
+
+
+                cv::Mat m((*comp).second.length(), 1, CV_8U, (*comp).second.data());
+                auto im =  cv::imdecode(m, -1);
+                if (im.cols != 0 || im.rows != 0)
                 {
-                    if (0 != compress(im, compressed))
+                    w = im.cols;
+                    h = im.rows;
+                    png = (unsigned char*)im.ptr();
+                    size_t stride = w * nb_chans * (bitdepth > 8 ? 2 : 1);
+
+                    size_t num_threads=1;
+                    int encoded_size = 0;
+                    QByteArray compressed;
+                    if (data.effort <= 0)
                     {
-                        qDebug() << "Compression error" << comp.first << jxl;
-                        exit(-1);
+
+                        unsigned char * encoded = nullptr;
+
+                        encoded_size = JxlFastLosslessEncode(png,
+                                                             w, stride, h,
+                                                             nb_chans,
+                                                             bitdepth, /*big_endian=*/false,
+                                                             32, &encoded, &num_threads, +parallel_runner);
+
+                        compressed = QByteArray((const char*)encoded, encoded_size);
+                        delete encoded;
+
                     }
+                    else
+                    {
+                        if (0 != compress(im, compressed))
+                        {
+                            qDebug() << "Compression error" << (*comp).first << jxl;
+                            exit(-1);
+                        }
+                    }
+                    //            QByteArray compressed((const char*)encoded, encoded_size);
+
+                    if (!data.dry_run)
+                        data.writeQueue.push(std::make_pair(jxl, compressed));
+
+
+
+                    data.adjust_mem(-(*comp).second.length() );
                 }
-    //            QByteArray compressed((const char*)encoded, encoded_size);
-
-                data.writeQueueMutex.lock();
-                if (!data.dry_run)
-                    data.writeQueue.push(std::make_pair(jxl, compressed));
-
-
-
-                data.adjust_mem(-comp.second.length() );
-                data.writeQueueMutex.unlock();
-            }
-            comp.second.clear();
-            data.compressQueueMutex.lock();
-            {
-                QMutexLocker lock(&data.mgroup2);
-                data.group2 --;
+                (*comp).second.clear();
+                {
+                    QMutexLocker lock(&data.mgroup2);
+                    data.group2 --;
+                }
             }
 
         }
-        data.compressQueueMutex.unlock();
     }
 
 private:
@@ -503,82 +452,77 @@ public:
         : data(data) {}
 
     void run() override {
-        data.writeQueueMutex.lock();
+
         while (data.isrunning())
         {
             {// memory consumption checks
-                if (data.writeQueue.empty())
+                if (data.writeQueue.size() == 0)
                 {
-                    data.writeQueueMutex.unlock();
                     QThread::msleep(200); // wait for memory consumtion
-                    data.writeQueueMutex.lock();
                     continue;
                 }
             }
+
+            auto comp = data.writeQueue.pop();
+            if (comp)
             {
-                QMutexLocker lock(&data.mgroup3);
-                data.group3 ++;
-            }
-
-
-            auto comp = data.writeQueue.front();
-            data.writeQueue.pop();
-            data.writeQueueMutex.unlock();
-
-            {
-                QStringList folders = comp.first.replace("\\", "/").split("/");
-                folders.pop_back();
-                QDir d;
-                d.mkpath(data.outdir+"/"+folders.join("/"));
-            }
-
-
-            QString file = data.outdir + "/" + comp.first;
-            //            qDebug() << "Writing" << file;
-            QFile res(file);
-            if (res.open(QIODevice::WriteOnly))
-            {
-                res.write(comp.second);
-            }
-            else
-            {
-
-                qDebug() << "Write Thread Error:" << res.errorString();
-                qDebug() << file << "(" << data.outdir << comp.first << ")";
-                exit(0);
-            }
-
-            data.write_count++;
-            data.console.lock();
-            //            std::cout << "\r" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " <<data.fileQueue.size() << " " << data.write_count / (float)data.copy_count << " " << data.memusage << "                                         \n";
-
-            std::cout << "\r" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " << data.write_count / (float)data.copy_count << "                                         ";
-            std::flush(std::cout);
-            data.console.unlock();
-            data.writeQueueMutex.lock();
-            data.writen += comp.second.length();
-
-            {
-                QMutexLocker lock(&data.mgroup3);
-                data.group3--;
-            }
-
-            if (!file.endsWith(".jxl"))
-            {
-                data.adjust_mem(-comp.second.length());
-            }
-            else
-            {
-                if (data.inplace)
                 {
-                    QString tif = file; tif.chop(4); tif += ".tif";
-                    QFile::remove(tif);
+                    QMutexLocker lock(&data.mgroup3);
+                    data.group3 ++;
                 }
-            }
+                {
+                    QStringList folders = (*comp).first.replace("\\", "/").split("/");
+                    folders.pop_back();
+                    QDir d;
+                    d.mkpath(data.outdir+"/"+folders.join("/"));
+                }
 
-            comp.second.clear();
+
+                QString file = data.outdir + "/" + (*comp).first;
+                //            qDebug() << "Writing" << file;
+                QFile res(file);
+                if (res.open(QIODevice::WriteOnly))
+                {
+                    res.write((*comp).second);
+                }
+                else
+                {
+
+                    qDebug() << "Write Thread Error:" << res.errorString();
+                    qDebug() << file << "(" << data.outdir << (*comp).first << ")";
+                    exit(0);
+                }
+
+                data.write_count++;
+                data.console.lock();
+                //            std::cout << "\r" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " <<data.fileQueue.size() << " " << data.write_count / (float)data.copy_count << " " << data.memusage << "                                         \n";
+
+                std::cout << "\r" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " << data.write_count / (float)data.copy_count << "                                         ";
+                std::flush(std::cout);
+                data.console.unlock();
+                data.writen += (*comp).second.length();
+
+                {
+                    QMutexLocker lock(&data.mgroup3);
+                    data.group3--;
+                }
+
+                if (!file.endsWith(".jxl"))
+                {
+                    data.adjust_mem(-(*comp).second.length());
+                }
+                else
+                {
+                    if (data.inplace)
+                    {
+                        QString tif = file; tif.chop(4); tif += ".tif";
+                        QFile::remove(tif);
+                    }
+                }
+
+                (*comp).second.clear();
+            }
         }
-        data.writeQueueMutex.unlock();
     }
 
 private:
@@ -707,6 +651,7 @@ int main(int argc, char *argv[]) {
     if (parser.isSet("rescan"))
         data.ts = QDateTime::fromSecsSinceEpoch(0);
     data.effort = parser.value("effort").toInt();
+
     // wath ever happens now just store the timestamp
     settings.setValue("timestamp", QDateTime::currentDateTime());
 
