@@ -251,6 +251,7 @@ public:
                             data.readed += q.size();
                         }
                     }
+                    reader.close();
 
                 }
 
@@ -377,7 +378,7 @@ public:
 
 
     void run() override {
-//        qDebug() << QThread::currentThreadId() << "Started";
+//        qDebug() << QThread::currentThreadId() << "Compress Started";
         // Here we compress the tif files if any :)
         // otherwise direct rewrite of the files
         while (data.hasCompress())
@@ -433,7 +434,8 @@ public:
                                                              32, &encoded, &num_threads, +parallel_runner);
 
                         compressed = QByteArray((const char*)encoded, encoded_size);
-                        delete encoded;
+                        free(encoded);
+                     //   delete encoded;
                     }
                     else
                     {
@@ -451,6 +453,7 @@ public:
                 }
 
                 (*comp).second.clear();
+                (*comp).second.squeeze();
                 im.release();
 
                 {
@@ -463,6 +466,7 @@ public:
                   QThread::msleep(200); // to release the mutex burden if too many access
             }
         }
+//        qDebug() << QThread::currentThreadId() << "Compress Over";
     }
 
 private:
@@ -503,6 +507,8 @@ public:
                     exit(0);
                 }
 
+                res.close();
+
                 data.write_count++;
                 data.console.lock();
                 //            std::cout << "\r" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " <<data.fileQueue.size() << " " << data.write_count / (float)data.copy_count << " " << data.memusage << "                                         \n";
@@ -526,6 +532,7 @@ public:
                 }
 
                 (*comp).second.clear();
+                (*comp).second.squeeze();
             }
             else
             {

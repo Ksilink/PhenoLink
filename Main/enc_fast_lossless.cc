@@ -3798,6 +3798,9 @@ size_t JxlFastLosslessEncode(const unsigned char* rgba, size_t width,
                                                output_size - total)) != 0) {
     total += written;
   }
+
+  JxlFastLosslessFreeFrameState(frame_state);
+
   return total;
 }
 
