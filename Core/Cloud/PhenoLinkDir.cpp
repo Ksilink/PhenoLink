@@ -88,16 +88,18 @@ public:
         QStringList list;
 
         google::cloud::storage::Client storageClient;
-        auto bucket = storageClient.bucket(path().toStdString());
+        auto bucket = storageClient.ListObjects(path().toStdString());
+
+        if (bucket.begin() == bucket.end()) return list;
 
         std::vector<std::future<void>> futures;
         std::unordered_map<QString, std::pair<std::int64_t, std::string>> fileData;
 
-        for (auto& [object, _] : bucket)
+        for ( auto object = bucket.begin(), end = bucket.end(); object != end; ++object)
         {
-            QString fileName = QString::fromStdString(object.name());
+            QString fileName = QString::fromStdString(object->value().name());
             // apply filters
-            if ((filters & QDir::Files) && object.size() == 0)
+            if ((filters & QDir::Files) && object->value().kind() .size() == 0)
                 continue;
             if ((filters & QDir::Dirs) && object.size() != 0)
                 continue;
@@ -135,7 +137,7 @@ public:
 };
 
 
-*/
+
 /*
 class AzureBlobDir : public QDir
 {

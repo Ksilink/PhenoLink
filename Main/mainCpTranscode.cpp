@@ -67,6 +67,7 @@ struct Data {
     std::atomic<long long> prepared = 0, readed = 0, writen = 0;
 
     QDateTime ts;
+    QDateTime older;
 
     std::atomic<long long> group0 = 0, group1 = 0, group2 = 0, group3 = 0;
     QMutex mgroup0, mgroup1, mgroup2, mgroup3;
@@ -147,7 +148,7 @@ public:
                         continue;
 
                     auto finfo = it.fileInfo();
-                    if (finfo.isDir())
+                    if (finfo.isDir() && (!data.older.isNull() && finfo.lastModified() < data.older))
                     {
                         data.folderQueue.push(finfo.absoluteFilePath());
                     }
@@ -431,7 +432,7 @@ public:
                                                              w, stride, h,
                                                              nb_chans,
                                                              bitdepth, /*big_endian=*/false,
-                                                             32, &encoded, &num_threads, +parallel_runner);
+                                                              32, &encoded, &num_threads, +parallel_runner);
 
                         compressed = QByteArray((const char*)encoded, encoded_size);
                         free(encoded);
@@ -606,7 +607,9 @@ int main(int argc, char *argv[]) {
                                    {"input-threads", "4" },
                                    {"compress-threads", "8"},
                                    {"write-threads", "4"},
-                                   {"max-memory", "2Go"}};
+                                   {"max-memory", "2Go"},
+                                  {"older", "0M"} };
+
     for (auto it = opts.begin(), end = opts.end(); it != end; ++it)
     {
 
@@ -617,6 +620,8 @@ int main(int argc, char *argv[]) {
     parser.addOption(QCommandLineOption("rescan", "force a full rescan of the folder"));
     parser.addOption(QCommandLineOption("dry-run", "Skip the writing at the end"));
     parser.addOption(QCommandLineOption("effort", "Set the compression effort (default: -1)", "effort", "-1"));
+
+
 
     parser.process(a);
 
@@ -632,15 +637,18 @@ int main(int argc, char *argv[]) {
 
     Data data;
 
+
+    data.folderQueue.push(positionalArguments.at(0)); // Set the first directory to parse !!!
+    data.indir = positionalArguments.at(0);
+    data.outdir = positionalArguments.at(1);
+
+
     data.inplace = (data.indir == data.outdir);
 
     if (data.inplace)
         qDebug() << "In place processing";
 
 
-    data.folderQueue.push(positionalArguments.at(0)); // Set the first directory to parse !!!
-    data.indir = positionalArguments.at(0);
-    data.outdir = positionalArguments.at(1);
 
 
     int scanThreads = parser.value("scan-threads").toInt();
@@ -648,6 +656,45 @@ int main(int argc, char *argv[]) {
     int compressThreads = parser.value("compress-threads").toInt();
     int writeThreads = parser.value("write-threads").toInt();
 
+    if (parser.isSet("older"))
+    {
+        QString older = parser.value("older").toLower();
+
+        auto date = QDateTime::currentDateTime();
+        bool conv;
+        int days = older.toInt(&conv);
+        if (conv)
+        {
+            date=date.addDays(-days);
+        }
+        else
+        {
+            int start = 0;
+            for (int i = 0; i < older.length(); ++i)
+            {
+                if (older.at(i) == 'y')
+                {
+                    date=date.addYears(-older.midRef(start, i-start).toInt());
+                    start = i+1;
+                }
+                if (older.at(i) == 'm')
+                {
+                    date=date.addMonths(-older.midRef(start, i-start).toInt());
+                    start = i+1;
+                }
+                if (older.at(i) == 'd')
+                {
+                    date=date.addDays(-older.midRef(start, i-start).toInt());
+                    start = i+1;
+                }
+
+            }
+        }
+        data.older = date;
+        qDebug() << "Only taking folder into accont if they are older than " << date.toString();
+//        qDebug() << older.toInt();
+
+    }
 
     //    data.inputSemaphore.acquire(inputThreads);
     //    data.compressSemaphore.acquire(compressThreads);
