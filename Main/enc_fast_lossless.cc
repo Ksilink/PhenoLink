@@ -3741,7 +3741,7 @@ namespace default_implementation {
 
 namespace AVX2 {
 #define FJXL_AVX2
-#include "lib/jxl/enc_fast_lossless.cc"
+#include "enc_fast_lossless.cc"
 #undef FJXL_AVX2
 }  // namespace AVX2
 
