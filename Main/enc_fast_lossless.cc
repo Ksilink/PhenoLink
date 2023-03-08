@@ -3765,7 +3765,7 @@ namespace AVX2 {
 
 namespace AVX512 {
 #define FJXL_AVX512
-#include "lib/jxl/enc_fast_lossless.cc"
+#include "enc_fast_lossless.cc"
 #undef FJXL_AVX512
 }  // namespace AVX512
 
