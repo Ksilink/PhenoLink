@@ -39,7 +39,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
         {
             if (im >= 0 && im != (int)i) continue;
 
-//            qDebug() << "bp:" << base_path << "file: "<<  data.at((int)i).toString();
+            //            qDebug() << "bp:" << base_path << "file: "<<  data.at((int)i).toString();
             semaphore.acquire();
             QString fname = base_path + data.at((int)i).toString();
             cv::Mat m = pl::imread(fname, 2);
@@ -62,7 +62,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
     }
     else
     {
-//        qDebug() << "bp:" << base_path << "file: "<<  data.first().toString();
+        //        qDebug() << "bp:" << base_path << "file: "<<  data.first().toString();
         semaphore.acquire();
         QString fn = base_path + data.first().toString();
         mat = pl::imread(fn, 2);
@@ -218,7 +218,8 @@ void TimeImage::loadFromJSON(QJsonObject data, QString base_path, bool noload)
 
             QJsonArray chans = ob["Data"].toArray();
 
-        images.push_back(loadImage(chans,-1,bp));
+            images.push_back(loadImage(chans,-1,bp));
+        }
     }
 }
 
@@ -346,7 +347,7 @@ QString TimeStackedImage::basePath(QJsonObject data)
 void TimeStackedImage::storeJson(QJsonObject json)
 {
     _data = json;
-//    _count = json["Data"].toArray().size();
+    //    _count = json["Data"].toArray().size();
     QJsonArray stack =    json["Data"].toArray();
     QString bp = json["BasePath"].toString();
 
