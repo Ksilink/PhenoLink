@@ -198,22 +198,28 @@ size_t ImageContainer::getChannelCount()
 }
 
 
-void TimeImage::loadFromJSON(QJsonObject data, QString base_path)
+void TimeImage::loadFromJSON(QJsonObject data, QString base_path, bool noload)
 {
     _loaded = true;
 
     QString bp = data.contains("BasePath") ? data["BasePath"].toString() : base_path;
     QJsonArray times =    data["Data"].toArray();
-    for (int i = 0; i < times.size(); ++i)
+
+    if (noload)
+        _data = data;
+    else
     {
-        QJsonObject ob = times.at(i).toObject();
+        for (int i = 0; i < times.size(); ++i)
+        {
+            QJsonObject ob = times.at(i).toObject();
 
-        if (bp.isEmpty())
-            bp = ob["BasePath"].toString();
+            if (bp.isEmpty())
+                bp = ob["BasePath"].toString();
 
-        QJsonArray chans = ob["Data"].toArray();
+            QJsonArray chans = ob["Data"].toArray();
 
-        images.push_back(loadImage(chans));
+            images.push_back(loadImage(chans));
+        }
     }
 }
 
@@ -223,7 +229,7 @@ QString TimeImage::basePath(QJsonObject data)
     return getbasePath(times);
 }
 
-cv::Mat TimeImage::getImage(size_t i, QString base_path)
+cv::Mat TimeImage::getImage(size_t i, size_t chann, QString base_path)
 {
     if (_loaded) return (*this)[i];
 
@@ -236,7 +242,7 @@ cv::Mat TimeImage::getImage(size_t i, QString base_path)
             bp = ob["BasePath"].toString();
         QJsonArray chans = ob["Data"].toArray();
 
-        return loadImage(chans, -1, bp);
+        return loadImage(chans, chann, bp);
     }
 }
 
