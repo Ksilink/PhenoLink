@@ -50,7 +50,7 @@ protected:
 class DllCoreExport TimeImage: public ImageContainer
 {
 public:
-    virtual void loadFromJSON(QJsonObject data, QString bp = QString());
+    virtual void loadFromJSON(QJsonObject data, QString bp = QString(), bool noload=false);
     virtual QString basePath(QJsonObject json);
 
     virtual cv::Mat getImage(size_t i, size_t chann = -1, QString base_path = QString());

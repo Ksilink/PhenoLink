@@ -510,7 +510,7 @@ void TimeImageXP::storeJson(QJsonObject json)
     _count = _data["Data"].toArray().size();
 }
 
-TimeImage TimeImageXP::getImage(size_t i, QString bp)
+TimeImage TimeImageXP::getImage(size_t i, QString bp, bool noload)
 {
     if (_loaded) return (*this)[i];
 
@@ -522,7 +522,7 @@ TimeImage TimeImageXP::getImage(size_t i, QString bp)
 
     ob["BasePath"] = bp;
     TimeImage im;
-    im.loadFromJSON(ob, bp);
+    im.loadFromJSON(ob, bp, noload);
 
     return im;
 
