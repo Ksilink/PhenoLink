@@ -202,7 +202,7 @@ void TimeImage::loadFromJSON(QJsonObject data, QString base_path)
 {
     _loaded = true;
 
-    QString bp = data.contains("BasePath") ? data["BasePath"].toString() : base_path;
+    QString bp = base_path.isEmpty() ? data["BasePath"].toString() : base_path;
     QJsonArray times =    data["Data"].toArray();
     for (int i = 0; i < times.size(); ++i)
     {
@@ -213,7 +213,7 @@ void TimeImage::loadFromJSON(QJsonObject data, QString base_path)
 
         QJsonArray chans = ob["Data"].toArray();
 
-        images.push_back(loadImage(chans));
+        images.push_back(loadImage(chans,-1,bp));
     }
 }
 
@@ -513,7 +513,6 @@ TimeImage TimeImageXP::getImage(size_t i, QString bp)
     QJsonObject ob = stack.at((int)i).toObject();
     if (bp.isEmpty() && ob.contains("BasePath"))
         bp = ob["BasePath"].toString();
-
     ob["BasePath"] = bp;
     TimeImage im;
     im.loadFromJSON(ob, bp);
