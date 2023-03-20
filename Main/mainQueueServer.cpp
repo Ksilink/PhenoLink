@@ -435,6 +435,10 @@ void Server::timerEvent(QTimerEvent *event)
             qDebug() << "Timer check for" << item.key() << "Finished";
             killTimer(id);
 
+
+
+
+
         }
 }
 
@@ -624,11 +628,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     QString urlpath = req->url().path(), query = req->url().query();
 
 
-    qDebug()  << QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz")
-              << qhttp::Stringify::toString(req->method())
-              << qPrintable(urlpath)
-              << qPrintable(query)
-              << data.size();
 
     CheckoutProcess& procs = CheckoutProcess::handler();
 
@@ -677,7 +676,6 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         return;
     }
 
-
     if (urlpath== "/status.html" || urlpath=="/index.html")
     {
         HTMLstatus(res);
@@ -685,6 +683,12 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     }
 
 
+
+    qDebug()  << QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz")
+              << qhttp::Stringify::toString(req->method())
+              << qPrintable(urlpath)
+              << qPrintable(query)
+              << data.size();
 
 
     if (urlpath.startsWith("/Ready")) // Server is ready /Ready/{port}
@@ -809,12 +813,13 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
                 if (!timer_handler.contains(ww))
                     killTimer(timer_handler[ww]);
+                if (duration > 0)
+                {
+                    int timer = startTimer(duration * 1000);
+                    timer_handler[ww] = timer;
 
-                int timer = startTimer(duration * 1000);
-                timer_handler[ww] = timer;
-
-                qDebug() << "Starting timer" <<timer << "for" << ww;
-
+                    qDebug() << "Starting timer" <<timer << duration << "s for" << ww;
+                }
                 if (work_count.value(wwid) == 0)
                 {
                     qDebug() << "Work ID finished" << wwid << "Aggregate & collate data" << obj["TaskID"].toString();
@@ -853,7 +858,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                             files << concatenated.split("/").last()+".torm";
                         }
 
-                        fuseArrow(path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+                        QtConcurrent::run(fuseArrow,
+                                          path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+
+//                        fuseArrow(path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
                     }
 
                     // qDebug() << agg.keys() << obj.keys();
@@ -865,28 +873,36 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                         // Setup the call to python
                         // Also change working directory to the "concatenated" folder
                         auto arr = agg["PostProcesses"].toArray();
-                        for (int i = 0; i < arr.size(); ++i )
-                        { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
-                            QString script = arr[i].toString().replace("\\", "/");
-                            auto args = QStringList() << adjust(script)  << concatenated;
-                            QProcess* python = new QProcess();
+
+                        QFuture<void> future = QtConcurrent::run([this, arr, concatenated, path]{
+
+                            for (int i = 0; i < arr.size(); ++i )
+                            { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
+                                QString script = arr[i].toString().replace("\\", "/");
+                                auto args = QStringList() << adjust(script)  << concatenated;
+                                QProcess* python = new QProcess();
 
 
-                            postproc << python;
+                                this->postproc << python;
 
-                            python->setProcessEnvironment(python_config);
-                            qDebug() << python_config.value("PATH");
-                            qDebug() << args;
+                                python->setProcessEnvironment(python_config);
+                                qDebug() << python_config.value("PATH");
+                                qDebug() << args;
 
-                            postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
-                            postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".log");
-                            postproc.last()->setWorkingDirectory(path);
+                                postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
+                                postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".log");
+                                postproc.last()->setWorkingDirectory(path);
 
-                            postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
-                            postproc.last()->setArguments(args);
+                                postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
+                                postproc.last()->setArguments(args);
 
-                            postproc.last()->start();
-                        }
+                                postproc.last()->start();
+                            }
+
+                        });
+
+
+
                     }
                     else
                         qDebug() << "No Postprocesses";
@@ -903,33 +919,38 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                         QStringList xps;
                         for (auto d: data) xps << d.toString().replace("\\", "/").replace("/", "")+".fth";
 
-
                         auto arr = agg["PostProcessesScreen"].toArray();
-                        for (int i = 0; i < arr.size(); ++i )
-                        { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
-                            QString script = arr[i].toString().replace("\\", "/");
-                            QDir dir(path);
 
-                            auto args = QStringList() << adjust(script);
-                            //<< concatenated;
-                            for (auto & d: xps) if (QFile::exists(path+"/"+d))  args << d;
-                            QProcess* python = new QProcess();
+                        QFuture<void> future = QtConcurrent::run([this, arr, xps, concatenated, path]{
+                            for (int i = 0; i < arr.size(); ++i )
+                            { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
+                                QString script = arr[i].toString().replace("\\", "/");
+    //                            QDir dir(path);
 
-                            postproc << python;
+                                auto args = QStringList() << adjust(script);
+                                //<< concatenated;
+                                for (auto & d: xps) if (QFile::exists(path+"/"+d))  args << d;
+                                QProcess* python = new QProcess();
 
-                            python->setProcessEnvironment(python_config);
-                            qDebug() << python_config.value("PATH");
-                            qDebug() << args;
+                                this->postproc << python;
 
-                            postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
-                            postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".screen_log");
-                            postproc.last()->setWorkingDirectory(path);
+                                python->setProcessEnvironment(python_config);
+                                qDebug() << python_config.value("PATH");
+                                qDebug() << args;
 
-                            postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
-                            postproc.last()->setArguments(args);
+                                postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
+                                postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".screen_log");
+                                postproc.last()->setWorkingDirectory(path);
 
-                            postproc.last()->start();
-                        }
+                                postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
+                                postproc.last()->setArguments(args);
+
+                                postproc.last()->start();
+                            }
+
+                        });
+
+
 
                     }
                     else
