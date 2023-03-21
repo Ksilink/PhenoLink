@@ -136,6 +136,7 @@ public:
     void addMeta(int timePoint, int fieldIdx, int Zindex, int Channel, QString name, StructuredMetaData meta);
 
     QStringList getAllFiles();
+    void toJxl();
 
 
     // This model need to handle data set as well
@@ -210,6 +211,7 @@ public:
 
 
     QString getBasePath();
+
 
 protected:
 
@@ -456,7 +458,7 @@ public:
     void setPattern(QPoint pos, QString col);
 
 
-
+void addMetadataFile(QString f);
 
 
     QList<SequenceFileModel*> getSelection();
@@ -544,6 +546,7 @@ protected:
     QMap<int, QMap<int, int> > toField;
     QPair<QList<double>, QList<double> > fields_pos;
     QStringList _channelNames;
+    QStringList _otherfiles;
 };
 
 typedef QList<ExperimentFileModel*> Screens;

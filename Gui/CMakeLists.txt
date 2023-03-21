@@ -2,6 +2,9 @@ add_definitions(-DExportGuiSymbols)
 add_definitions(-DQHTTP_MEMORY_LOG=0)
 add_definitions(-DQHTTP_HAS_CLIENT)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(CheckoutGui_SRC
                 mainwindow.cpp mainwindow_wellplate.cpp
                 mainwindow_datatables.cpp mainwindow_startprocesses.cpp

@@ -69,6 +69,37 @@ QJsonObject &TaggerPlate::getTags() {
     return tagger;
 }
 
+void TaggerPlate::setCategories(QMap<QString, QStringList> map)
+{
+    QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    if (!ml) return;
+
+    QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
+    if (!model) return;
+
+    QStandardItem* root = model->invisibleRootItem();
+
+    for (auto& name: map.keys())
+    {
+        QStandardItem* parent = nullptr;
+        for (int i = 0; i < root->rowCount(); ++i)
+            if (root->child(i)->text() == name)
+            {
+                parent = root->child(i);
+                break;
+            }
+
+        if (!parent)
+        {
+            parent = new QStandardItem(name);
+            root->appendRow(parent);
+        }
+
+        for (auto& subname: map[name]) parent->appendRow(new QStandardItem(subname));
+    }
+
+}
+
 void TaggerPlate::on_setTags_clicked()
 {
     QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
@@ -143,6 +174,42 @@ void TaggerPlate::on_plates_design_currentIndexChanged(const QString &)
 
 
 // Find Template
+void TaggerPlate::apply_template(QString script)
+{
+    if (script.isEmpty()) return;
+
+    QFile of(script);
+    if (of.open(QIODevice::ReadOnly))
+    {
+        QByteArray ar = of.readAll();
+        auto tags = QJsonDocument::fromJson(ar);
+
+        auto tg = tags.object();
+        tg.remove("_id");
+        //            auto ftag = tagger.object();
+        for (auto k : tags.object().keys())
+            if (k != "map")
+            {
+                tagger[k] = tg[k];
+
+            }
+            else
+            {
+                QJsonObject maps = tg[k].toObject(), res;
+                for (auto& v : maps.keys())
+                {
+                    //                        qDebug() << v;
+                    auto k = v;
+                    res[v.replace(".", "::")] = maps[k];
+                }
+                tagger[k] = res;
+            }
+
+        QByteArray bar = QJsonDocument(tagger).toJson();
+        updatePlate();
+    }
+}
+
 void TaggerPlate::on_pushButton_clicked()
 {
 
@@ -153,36 +220,7 @@ void TaggerPlate::on_pushButton_clicked()
 
     if (!script.isEmpty())
     {
-        QFile of(script);
-        if (of.open(QIODevice::ReadOnly))
-        {
-            QByteArray ar = of.readAll();
-            auto tags = QJsonDocument::fromJson(ar);
-
-            auto tg = tags.object();
-            tg.remove("_id");
-            //            auto ftag = tagger.object();
-            for (auto k : tags.object().keys())
-                if (k != "map")
-                {
-                    tagger[k] = tg[k];
-
-                }
-                else
-                {
-                    QJsonObject maps = tg[k].toObject(), res;
-                    for (auto& v : maps.keys())
-                    {
-                        //                        qDebug() << v;
-                        auto k = v;
-                        res[v.replace(".", "::")] = maps[k];
-                    }
-                    tagger[k] = res;
-                }
-
-            QByteArray bar = QJsonDocument(tagger).toJson();
-            updatePlate();
-        }
+        apply_template(script);
     }
 
 }

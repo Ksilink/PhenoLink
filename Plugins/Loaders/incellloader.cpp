@@ -87,8 +87,8 @@ ExperimentFileModel *InCellLoader::getExperimentModel(QString _file)
     QFile mlf(_file);
     if (!mlf.open(QFile::ReadOnly))
     {
-        qDebug() << "Error openning file" << _file;
-        _error += QString("Error oppenning file %1").arg(_file);
+        qDebug() << "Error opening file" << _file;
+        _error += QString("Error opening file %1").arg(_file);
         return 0;
     }
 
@@ -108,7 +108,7 @@ ExperimentFileModel *InCellLoader::getExperimentModel(QString _file)
     if (!d.setContent(&mlf))
     {
         qDebug() << "Not loading" << _file;
-        _error += QString("Error openning file %1").arg(_file);
+        _error += QString("Error opening file %1").arg(_file);
         mlf.close();
         return 0;
     }

@@ -20,8 +20,8 @@
 #include "Core/config.h"
 
 #ifdef WIN32
-    #include <windows.h>
-    #include <wincon.h>
+#include <windows.h>
+#include <wincon.h>
 #endif
 
 #include <QtConcurrent>
@@ -136,8 +136,8 @@ void startup_execute(QString file)
 
 
 int CheckoutOpenCVErrorCallback( int status, const char* func_name,
-                                       const char* err_msg, const char* file_name,
-                                       int line, void* )
+                                 const char* err_msg, const char* file_name,
+                                 int line, void* )
 {
 
     qDebug() << "OpenCV issued error";
@@ -146,6 +146,8 @@ int CheckoutOpenCVErrorCallback( int status, const char* func_name,
     throw cv::Exception(status, err_msg, func_name, file_name, line);
     return 1;
 }
+
+#include <checkout_python.h>
 
 int main(int ac, char** av)
 {
@@ -164,14 +166,40 @@ int main(int ac, char** av)
     cv::redirectError(&CheckoutOpenCVErrorCallback);
 
 
-//    qDebug() << "Runtime PATH" << QString("%1").arg(getenv("PATH"));
+    //    qDebug() << "Runtime PATH" << QString("%1").arg(getenv("PATH"));
 
     QSettings sets;
     uint port = sets.value("ServerPort", 13378).toUInt();
     if (!sets.contains("ServerPort") || sets.value("ServerPort", 13378) != port ) sets.setValue("ServerPort", port);
 
- QStringList data;
+    QStringList data;
     for (int i = 1; i < ac; ++i) { data << av[i];  }
+
+
+
+    if (data.contains("-h") || data.contains("-help"))
+    {
+        qDebug() << "CheckoutQueue Serveur Help:";
+        qDebug()      << "\t-p <port>: specify the port to run on";
+        qDebug()      << "\t-c <cpu>: Adjust the maximum number of threads";
+        qDebug()      << "\t-n <node>: Try to force NUMA node (windows only)";
+        qDebug()      << "\t-s <commands> :  List of commands executed at start time";
+        qDebug()      << "\t-m <path> :  Mapping of windows drive to linux drives";
+        qDebug()      << "\t-rs <value> :  Maximum concurrent disk access by this instance";
+        qDebug()      << "\t-proxy <host> :  Set the queue proxy process computer:port";
+
+        qDebug()      << "\t-t <path> :  Set the storage path for plugins infos";
+        qDebug()      << "\t-d : Run in debug mode (windows only launches a console)";
+        qDebug()      << "\t-Crashed: Reports that the process has been restarted after crashing" ;
+        qDebug()      << "\t-conf <config>: Specify a config file for python env setting json dict";
+        qDebug()      << "\t\t shall contain env. variable with list of values,";
+        qDebug()      << "\t\t $NAME will be substituted by current env value called 'NAME'";
+        ;
+
+        exit(0);
+    }
+
+
     if (data.contains("-p"))
     {
         int idx = data.indexOf("-p")+1;
@@ -188,6 +216,8 @@ int main(int ac, char** av)
         if (data.size() > idx) nb_Threads = data.at(idx).toInt();
         qDebug() << "Changing max threads :" << nb_Threads;
     }
+
+    if (nb_Threads < 2) nb_Threads = 2;
 
     qDebug() << "Max number of threads : " << nb_Threads;
     QThreadPool::globalInstance()->setMaxThreadCount(nb_Threads);
@@ -217,11 +247,45 @@ int main(int ac, char** av)
         startup_execute(file);
     }
 
+
+    if (data.contains("-t"))
+    {
+        int idx = data.indexOf("-t")+1;
+        QString file;
+        if (data.size() > idx) file = data.at(idx);
+        qDebug() << "Setting Storage path :" << file;
+        CheckoutProcess::handler().setStoragePath(file);
+    }
+    else
+    {
+        QString file;
+#if WIN32
+        file = "L:/";
+#else
+        file = "/mnt/shares/L/";
+#endif
+        qDebug() << "Setting Storage path :" << file;
+        CheckoutProcess::handler().setStoragePath(file);
+    }
+
     PluginManager::loadPlugins(true);
     Server server;
 
     server.setPort(port);
 
+    if (data.contains("-conf"))
+    {
+        QString config;
+        int idx = data.indexOf("-conf")+1;
+        if (data.size() > idx) config = data.at(idx);
+        qDebug() << "Using server config:" << config;
+
+        QFile loadFile(config);
+
+        QProcessEnvironment python_config;
+        parse_python_conf(loadFile, python_config);
+        CheckoutProcess::handler().setEnvironment(python_config);
+    }
 
 #ifndef WIN32
     if (data.contains("-m")) // to override the default path mapping !
@@ -271,9 +335,10 @@ int main(int ac, char** av)
         //if (data.contains("-Crashed"))
 
         server.proxyAdvert(ps[0], ps.size() == 2 ? ps[1].toInt() : 13378);
-
+        NetworkProcessHandler::handler().addProxyPort(port);
     }
-
+    else
+        NetworkProcessHandler::handler().setNoProxyMode();
 
 
     return server.start(port);
@@ -440,8 +505,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     if (urlpath.startsWith("/Proxy"))
     {
 
-       uint16_t port;
-       QString host = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
+        uint16_t port;
+        QString host = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
 
 
         QStringList queries = query.split("&");
@@ -466,13 +531,15 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     if (urlpath.startsWith("/Start/"))
     {
+        QString srvIp = stringIP(req->connection()->tcpSocket()->localAddress().toIPv4Address());
         QString refIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
         QString proc = urlpath.mid(7);
 
-
-
-        auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
+        auto ob = QCborValue::fromCbor(data).toArray().toJsonArray();
         QJsonArray Core,Run;
+
+        qDebug() << "Starting Processes" << ob.size();
+
         for (int i = 0; i < ob.size(); ++i)
         {
             QJsonObject obj = ob.at(i).toObject();
@@ -483,7 +550,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
             if (!obj.contains("Process_hash"))
             {
-//                QString sHash = hash.toHex();
+                //                QString sHash = hash.toHex();
                 Core.append(obj["CoreProcess_hash"]);
                 Run.append(obj["CoreProcess_hash"].toString());
                 obj["Process_hash"] = obj["CoreProcess_hash"];
@@ -504,9 +571,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         // Response is obj
         //        qDebug() << ob << refIP; // Address to push results to !
+        procs.setServerName(srvIp);
 
         setHttpResponse(obj, res, !query.contains("json"));
-        auto res = QtConcurrent::run(&CheckoutProcess::startProcessServer, &procs,  proc, ob);
+        procs.startProcessServer(proc, ob);
 
         if (!proxy.isEmpty() && !proxy.startsWith(refIP)) {
             // Shall tell the proxy we have process ongoing that where not sent from his side
@@ -516,6 +584,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                              QString("port=%1&cpus=%2").arg(dport).arg(ob.size()), QJsonArray());
 
         }
+
     }
 
     if (data.size())
@@ -533,7 +602,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         int total = 0;
         auto args = root.value("args").toArray();
-        for ( const auto jv : args ) {
+        for ( const auto& jv : args ) {
             total += jv.toInt();
         }
         root["args"] = total;
@@ -614,12 +683,15 @@ void Server::proxyAdvert(QString host, int port, bool crashed)
     int processor_count = QThreadPool::globalInstance()->maxThreadCount();
     client->send(QString("/Ready/%1").arg(processor_count),
                  QString("affinity=%1&port=%2&cpu=%3&reset&available=1&crashed=%4")
-                    .arg(affinity_list.join(",")).arg(dport).arg(processor_count).arg(crashed),
+                 .arg(affinity_list.join(",")).arg(dport).arg(processor_count).arg(crashed),
                  QJsonArray());
+
+
 }
 
 void Server::finished(QString hash, QJsonObject ob)
 {
+    Q_UNUSED(hash);
     //    qDebug() << "Finishing on server side";
 
     if (client && ob.contains("TaskID") && !ob["TaskID"].isNull())
@@ -630,13 +702,14 @@ void Server::finished(QString hash, QJsonObject ob)
 
         client->send(QString("/Ready/0"),
                      QString("affinity=%1&port=%2&available=%3")
-                        .arg(affinity_list.join(","))
-                        .arg(dport)
-                        .arg(QThreadPool::globalInstance()->activeThreadCount() <= QThreadPool::globalInstance()->maxThreadCount()),
+                     .arg(affinity_list.join(","))
+                     .arg(dport)
+                     .arg(QThreadPool::globalInstance()->activeThreadCount() <= QThreadPool::globalInstance()->maxThreadCount() ?
+                              QThreadPool::globalInstance()->maxThreadCount()-QThreadPool::globalInstance()->activeThreadCount() : 1),
                      ar);
     }
 
-    NetworkProcessHandler::handler().finishedProcess(hash, ob);
+    //    NetworkProcessHandler::handler().finishedProcess(hash, ob);
 
     if (client && CheckoutProcess::handler().numberOfRunningProcess() <= 1)
         client->send(QString("/ServerDone"),
@@ -727,8 +800,8 @@ void Control::timerEvent(QTimerEvent * event)
     }
     trayIcon->setToolTip(tooltip);
 
-//    if (lastNpro != npro && npro == 0)
-//        trayIcon->showMessage("Checkout Server", "Checkout server has finished all his process");
+    //    if (lastNpro != npro && npro == 0)
+    //        trayIcon->showMessage("Checkout Server", "Checkout server has finished all his process");
 
     lastNpro = npro;
 

@@ -5,6 +5,8 @@
 #include <wellplatemodel.h>
 
 
+#include <QtConcurrent>
+
 #include <QSharedMemory>
 #include <config.h>
 
@@ -45,6 +47,7 @@ CheckoutProcess& CheckoutProcess::handler()
 void CheckoutProcess::addProcess(CheckoutProcessPluginInterface *proc)
 {
     _plugins[proc->getPath()] = proc;
+  //  proc->setDataStorePath(storage_path);
     //  QJsonObject obj;  proc->write(obj);  qDebug() << obj;
 }
 
@@ -75,10 +78,10 @@ QStringList CheckoutProcess::pluginPaths(bool withVersion)
         if (plugin)
         {
             l << (withVersion ?
-                     QString("%1 - %2 (%3 - last git %4)").arg(plugin->getPath(), plugin->plugin_version(),
-                                                               plugin->buildTime(), plugin->gitTime())
-                     :
-                     plugin->getPath() );
+                      QString("%1 - %2 (%3 - last git %4)").arg(plugin->getPath(), plugin->plugin_version(),
+                                                                plugin->buildTime(), plugin->gitTime())
+                    :
+                      plugin->getPath() );
         }
     return l;
 }
@@ -109,6 +112,16 @@ QString CheckoutProcess::setDriveMap(QString map)
 QString CheckoutProcess::getDriveMap()
 {
     return drive_map;
+}
+
+QString CheckoutProcess::getStoragePath()
+{
+    return storage_path;
+}
+
+void CheckoutProcess::setStoragePath(QString map)
+{
+    storage_path = map;
 }
 
 
@@ -175,7 +188,7 @@ class PluginRunner : public QRunnable
 {
 
 public:
-    PluginRunner(CheckoutProcessPluginInterface* plu, QString hash): plugin(plu), _hash(hash)
+    PluginRunner(CheckoutProcessPluginInterface* plu, QString hash): plugin(plu), _hash(hash), exec_through_run(false)
     {
     }
 
@@ -188,8 +201,18 @@ public:
 
     virtual void	run()
     {
+        exec_through_run = true;
+        (*this)();
+    }
+
+
+    QJsonObject effector()
+    {
         int p = 0;
+        QJsonObject result ;
         try {
+
+            ///            plugin->moveToThread(QThread::currentThread());
 
             QElapsedTimer dtimer;       // Do the process timing
             dtimer.start();
@@ -205,15 +228,15 @@ public:
             p=5;
             plugin->finished();
             p=6;
-            CheckoutProcess::handler().removeRunner(plugin->user(), (void*)this);
+            //            CheckoutProcess::handler().removeRunner(plugin->user(), (void*)this);
             p=7;
             // - 4) Do the gathering of processes data
             //        qDebug() << "Gathering data";
-            QJsonObject result = plugin->gatherData(timer.elapsed());
-
+            result = plugin->gatherData(timer.elapsed());
             p=8;
             qDebug() << timer.elapsed() << "(ms) done";
-            CheckoutProcess::handler().finishedProcess(_hash, result);
+            if (exec_through_run)
+                CheckoutProcess::handler().finishedProcess(_hash, result);
             p=9;
         }
         catch (...)
@@ -224,7 +247,18 @@ public:
         // Plugin should be deletable now, should not be saved anywhere
         delete plugin;
         plugin=0;
+        return result;
+
     }
+
+
+    QJsonObject operator()()
+    {
+        return effector();
+    }
+
+
+
 
     ~PluginRunner()
     {
@@ -235,9 +269,47 @@ public:
 protected:
     CheckoutProcessPluginInterface* plugin;
     QString _hash;
-
+    bool exec_through_run;
 };
 
+
+QJsonObject run_plugin(CheckoutProcessPluginInterface* plugin)
+{
+
+    QJsonObject result ;
+    int p = 0;
+    try {
+        QElapsedTimer dtimer;       // Do the process timing
+        dtimer.start();
+        p=1;
+        plugin->prepareData();
+        p=2;
+        plugin->started(dtimer.elapsed());
+        p=3;
+        QElapsedTimer timer;       // Do the process timing
+        timer.start();
+        p=4;
+        plugin->exec();
+        p=5;
+        plugin->finished();
+        p=6;
+        result = plugin->gatherData(timer.elapsed());
+        p=8;
+
+        qDebug() << timer.elapsed() << "(ms) done";
+
+        p=9;
+    }
+    catch (...)
+    {
+        plugin->printMessage(QString("Plugin: %1 failed to run properly, trying to recover (%2)").arg(plugin->getPath()).arg(p));
+        plugin->finished();
+    }
+    // Plugin should be deletable now, should not be saved anywhere
+    delete plugin;
+    plugin=0;
+    return result;
+}
 
 
 void CheckoutProcess::startProcess(QString process, QJsonArray &array)
@@ -444,6 +516,10 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray array)
             plugin->read(params);
 
             //           qDebug() << "Starting process";
+
+
+#ifdef OLD_RUNNER
+
             PluginRunner* runner = new PluginRunner(plugin, hash);
             if (runner)
             {
@@ -461,6 +537,27 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray array)
             {
                 qDebug() << "Unable to start runner";
             }
+#else
+
+            QFutureWatcher<QJsonObject>* wa = new QFutureWatcher<QJsonObject>();
+            // Connect the finished
+            connect(wa, &QFutureWatcher<QJsonObject>::finished, this,  &CheckoutProcess::watcher_finished);
+            //            QString key = params["Username"].toString() + "@" + params["Computer"].toString();
+
+
+            QString key = QString("%1@%2#%3#%4!%5")
+                    .arg(params["Username"].toString(), params["Computer"].toString(),
+                    params["Path"].toString(), params["WorkID"].toString(),
+                    params["XP"].toString());
+
+            qDebug() << "Adding Process" << key << _peruser_futures[key].size();
+            status_protect.lock();
+            _peruser_futures[key].push_back(wa);
+            status_protect.unlock();
+
+            QFuture<QJsonObject> fut = QtConcurrent::run(run_plugin, plugin);
+            wa->setFuture(fut);
+#endif
         }
     }
     else
@@ -540,7 +637,7 @@ void CheckoutProcess::networkProcessStarted(QString core, QString hash)
     _hash_to_save[hash]=_counter;
     if (_counter)    (*_counter)++;
     hash_to_save_mtx.unlock();
-//    emit processStarted(hash);
+    //    emit processStarted(hash);
 
 }
 
@@ -635,6 +732,13 @@ void CheckoutProcess::addToComputedDataModel(QJsonObject ob)
 
 }
 
+void CheckoutProcess::setEnvironment(QProcessEnvironment env) { _env = env; }
+
+QString CheckoutProcess::getEnv(QString key, QString def)
+{
+    return _env.value(key, def);
+}
+
 
 void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
 {
@@ -647,15 +751,16 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
         if (!obj[i].isObject()) continue;
         QJsonObject ob = obj[i].toObject();
 
-        if (ob["State"].toString() == "Finished")
+        if (ob["State"].toString() == "Finished" ||
+                ob["State"].toString() == "Crashed")
         {
 
-            addToComputedDataModel(ob);
+            if (ob["State"].toString() == "Finished")
+                addToComputedDataModel(ob);
 
             QString hash=ob["Hash"].toString();
             hash_to_save_mtx.lock();
             _status.remove(hash);
-            //            qDebug() << "GUI Finished Hash" << hash << _hash_to_save.contains(hash);
 
 
 
@@ -696,6 +801,41 @@ void CheckoutProcess::networkupdateProcessStatus(QJsonArray obj)
     emit processFinished(finished);
 
     emit updateProcessStatus(unfinished);
+}
+
+void CheckoutProcess::watcher_finished()
+{
+
+    QFutureWatcher<QJsonObject>* wa = dynamic_cast<QFutureWatcher<QJsonObject>* >(sender());
+    if (wa)
+    {
+        QJsonObject ob = wa->result();
+        QString hash = ob["Process_hash"].toString();
+
+        //        CheckoutProcess::handler().finishedProcess(hash, ob);
+        QMutexLocker locker(&process_mutex);
+
+        //CheckoutProcessPluginInterface* intf = _status[hash];
+
+        _status.remove(hash);
+        _finished[hash] = ob;
+
+        QString key = QString("%1@%2#%3#%4!%5")
+                .arg(ob["Username"].toString(), ob["Computer"].toString(),
+                ob["Path"].toString(), ob["WorkID"].toString(),
+                ob["XP"].toString());
+
+        _peruser_futures[key].removeAll(wa) ;
+
+        qDebug() << "Process" << key << "Remaining jobs" << _peruser_futures[key].size();
+
+        NetworkProcessHandler::handler().finishedProcess(hash, ob, _peruser_futures[key].size()==0);
+
+
+        emit finishedJob(hash, ob);
+    }
+    else
+        qDebug() << "Error Retrieving watcher for QFuture of processes";
 }
 
 void CheckoutProcess::refreshProcessStatus()
@@ -757,12 +897,13 @@ void CheckoutProcess::finishedProcess(QString hash, QJsonObject result)
     CheckoutProcessPluginInterface* intf = _status[hash];
     if (dynamic_cast<ProcessDataHolder*>(intf))  return ;
 
-    //    qDebug() << "Process finished " << hash << "emiting signal";
-    emit finishedJob(hash, result);
     _status.remove(hash);
     _finished[hash] = result;
 
-    qDebug() << "process finished, remaining" << _status.size();
+    emit finishedJob(hash, result);
+
+
+    //    qDebug() << "process finished, remaining" << _status.size();
     //    qDebug() << "Removing" << hash;
 }
 
@@ -788,7 +929,7 @@ void CheckoutProcess::attachPayload(QString hash, std::vector<unsigned char> dat
     if (pos != 0)
         hash += QString("%1").arg(pos);
 
-    _payloads_vectors[hash] = data;
+    _payloads_vectors[hash] = std::move(data);
 
     emit payloadAvailable(hash);
 }
@@ -809,21 +950,36 @@ unsigned CheckoutProcess::errors()
     return NetworkProcessHandler::handler().errors();
 }
 
+void CheckoutProcess::setServerName(QString n)
+{
+    server_name = n;
+}
+
+QString CheckoutProcess::serverName()
+{
+    return server_name;
+
+}
+
+
+
+
 void CheckoutProcess::getStatus(QJsonObject& ob)
 {
-    for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
+    Q_UNUSED(ob);
+    for (auto it = _peruser_futures.begin(), e = _peruser_futures.end(); it != e; ++it)
     {
-        QMap<QString, int> counter;
-        status_protect.lock();
+        //        QMap<QString, int> counter;
+        //        status_protect.lock();
 
-        for (auto q: it.value())
-        {
-            auto pl = static_cast<PluginRunner*>(q);
-            counter[pl->name()]++;
-        }
-        for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
-            ob[it.key()]=it.value();
-        status_protect.unlock();
+        //        for (auto q: it.value())
+        //        {
+        //            auto pl = static_cast<QFutureWatcher<QJsonObject>*>(q);
+        //            counter[pl->name()]++;
+        //        }
+        //        for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
+        //            ob[it.key()]=it.value();
+        //        status_protect.unlock();
     }
 }
 
@@ -836,25 +992,26 @@ QString CheckoutProcess::dumpHtmlStatus()
 {
     QString body;
 
-    body += QString("<h2>Connected Users : %1</h2>").arg(_peruser_runners.size());
+    body += QString("<h2>Connected Users : %1</h2>").arg(_peruser_futures.size());
 
-    for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
-    {
-        body += QString("%1 : %2 <a href='/Cancel/%1'>Cancel User Processes</a><br>").arg(it.key()).arg(it.value().size());
-        QMap<QString, int> counter;
-        status_protect.lock();
-
-        for (auto q: it.value())
+    for (auto it = _peruser_futures.begin(), e = _peruser_futures.end(); it != e; ++it)
+        if (it.value().size())
         {
-            auto pl = static_cast<PluginRunner*>(q);
-            counter[pl->name()]++;
+            body += QString("%1 : %2<br>"/* <a href='/Cancel/%1'>Cancel User Processes</a><br>"*/).arg(it.key()).arg(it.value().size());
+            QMap<QString, int> counter;
+            status_protect.lock();
+
+            //        for (auto q: it.value())
+            //        {
+            //            auto pl = static_cast<PluginRunner*>(q);
+            //            counter[pl->name()]++;
+            //        }
+
+            //        for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
+            //            body += QString("<p>%1 : %2 </p>").arg(it.key()).arg(it.value());
+
+            status_protect.unlock();
         }
-
-        for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
-            body += QString("<p>%1 : %2 </p>").arg(it.key()).arg(it.value());
-
-        status_protect.unlock();
-    }
     QHostInfo info;
     QStringList addresses;
     for (auto v : info.addresses())
@@ -868,42 +1025,43 @@ QStringList CheckoutProcess::users()
     QStringList users, del;
     status_protect.lock();
 
-    for (auto it = _peruser_runners.begin(), e = _peruser_runners.end(); it != e; ++it)
+    for (auto it = _peruser_futures.begin(), e = _peruser_futures.end(); it != e; ++it)
         if (it.value().size() > 0)
             users << it.key();
         else
             del << it.key();
 
     for (auto v: del)
-        _peruser_runners.remove(v);
+        _peruser_futures.remove(v);
     status_protect.unlock();
     return users;
 }
 
-void CheckoutProcess::removeRunner(QString user, void *run) {
+void CheckoutProcess::removeRunner(QString user, QFutureWatcher<QJsonObject>* run) {
     status_protect.lock();
-    _peruser_runners[user].removeOne(run);
-    if (_peruser_runners[user].isEmpty())
-        _peruser_runners.remove(user);
+    _peruser_futures[user].removeOne(run);
+    if (_peruser_futures[user].isEmpty())
+        _peruser_futures.remove(user);
     status_protect.unlock();
 }
 
 void CheckoutProcess::cancelUser(QString user)
 {
+    Q_UNUSED(user);
     status_protect.lock();
-    for (auto q : _peruser_runners[user])
-    {
-        auto res = QThreadPool::globalInstance()->tryTake(static_cast<PluginRunner*>(q));
-        Q_UNUSED(res);
-    }
-    _peruser_runners[user].clear();
-    _peruser_runners.remove(user);
+    //    for (auto q : _peruser_futures[user])
+    //    {
+    //        auto res = QThreadPool::globalInstance()->tryTake(static_cast<PluginRunner*>(q));
+    //        Q_UNUSED(res);
+    //    }
+    //    _peruser_futures[user].clear();
+    //    _peruser_futures.remove(user);
     status_protect.unlock();
 }
 
 void CheckoutProcess::finishedProcess(QStringList /*dhash*/)
 {
-//    NetworkProcessHandler::handler().processFinished(dhash);
+    //    NetworkProcessHandler::handler().processFinished(dhash);
 }
 
 std::vector<unsigned char> CheckoutProcess::detachPayload(QString hash)

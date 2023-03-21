@@ -48,7 +48,9 @@ public:
 
     QPixmap getSubPixmap(QString overlay, int id);
     void setTag(QString overlay, int id, QStringList tags);
+
     QStringList getTag(QString overlay, int id);
+    QStringList getOverlayValues(QString overlay, int id);
     int getTagSize(QString overlay);
 
     QImage getPixmapChannels(int field, bool bias_correction = false, float scale = 1.);

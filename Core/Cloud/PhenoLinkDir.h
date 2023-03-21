@@ -1,0 +1,4 @@
+#ifndef PHENOLINKDIR_H
+#define PHENOLINKDIR_H
+
+#endif // PHENOLINKDIR_H

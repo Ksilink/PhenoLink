@@ -754,7 +754,7 @@ void ImageForm::display3DRendering()
         foreach(QString s , l)
         {
             //            qDebug() << s;
-            cv::Mat im = cv::imread(s.toStdString(),  2);
+            cv::Mat im = pl::imread(s,  2);
             ImageInfos* ifo = _interactor->imageInfos(s);
 
             if (im.empty()) break;
@@ -1381,14 +1381,14 @@ void ImageForm::sharePicture()
     if (!iclient)
         iclient = new qhttp::client::QHttpClient(this);
 
-    QString d=QString("%1/%2/CoolImages/").arg(set.value("databaseDir").toString(),
-                                               _interactor->getProjectName());
+    QString d=QString("%1/PROJECTS/%2/CoolImages/").arg(set.value("databaseDir").toString(),
+                                                        _interactor->getProjectName());
 
     QDir dd; dd.mkpath(d);
 
     QString path = QString("%1/%2_%3.jpg").arg(d,
                                                _interactor->getExperimentName(),
-                                               QDateTime::currentDateTime().toString("%Y%M%D_%h%m%s"));
+                                               QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss"));
 
     QPixmap pixmap(this->size());
     this->render(&pixmap);
@@ -1401,6 +1401,12 @@ void ImageForm::sharePicture()
     //    auto const encoded = buf.data().toBase64();
 
     // Pixmap to base64 png
+    pixmap.convertFromImage(pixmap.toImage().scaledToHeight(120));
+
+    QByteArray bytes;
+    QBuffer buffer(&bytes);
+    pixmap.save(&buffer, "PNG");
+
     // Create json
     QString json = QString("{ \"type\":\"message\", \"attachments\":[ { \"contentType\":\"application/vnd.microsoft.card.adaptive\",\
                            \"content\":{\
@@ -1410,18 +1416,18 @@ void ImageForm::sharePicture()
                            \"body\":[\
                            {\
                                \"type\": \"TextBlock\",\
-                               \"text\": \"Project %1 plate %2\"\
+                               \"text\": \"Project: %1 \r\nplate: %2\"\
                            },\
                            {\
                                \"type\": \"Image\",\
-                               \"url\": \"http://192.168.2.127:13380/Images/%3\"\
+                               \"url\": \"data:image/png;base64,%3\"\
                            }\
                            ] } } ] }").arg(_interactor->getProjectName(),
-_interactor->getExperimentName(),
-path);
+                                _interactor->getExperimentName(),
+                                bytes.toBase64());
 
-// send through http webhook
-QString webhook("http://192.168.2.127:8122/"); //"https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8");
+        // send through http webhook
+        QString webhook("http://192.168.2.127:8122/"); //"https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8");
 
 iclient->request(qhttp::EHTTP_POST,
                  webhook,

@@ -33,19 +33,26 @@
 #include "qhttp/qhttpserverconnection.hpp"
 #include "qhttp/qhttpserverrequest.hpp"
 #include "qhttp/qhttpserverresponse.hpp"
+
+
+#include "checkout_arrow.h"
+
 using namespace qhttp::server;
 
 void help()
 {
     qDebug() << "Checkout Command Line interface";
-    qDebug() << "ckcli:";
+    qDebug() << "ckcli [options] [commands] [parameters]";
+    qDebug() << "ckcli commands:";
     qDebug() << "\tls/list:  List available plugins";
     qDebug() << "\tls/list {plugin/name} Describe the plugin info";
     qDebug() << "\tds/describe platename: Load the plate for an overview";
     qDebug() << "\trun plugin/name [key=value] {list of plate names}: Run the plugin on the plates";
     qDebug() << "\tdump {output.json} plugin/name [key=value] [plate names]: Dumps the description of the run";
     qDebug() << "\tload {output.json} [start=0] [end=-1]: Load and run a description of a run, can be used to skip parts (start/end option)";
-
+    qDebug() << "\tfuse project='projectName' commit=commitname: Refuse the plates in the commit name folder";
+    qDebug() << "ckcli options:";
+    qDebug() << "\tServer=IP:port : set server ip/port option";
     qApp->exit();
 }
 
@@ -76,6 +83,7 @@ void helper::listParams(QJsonObject ob)
 
 void helper::startProcess(QJsonObject ob, QRegularExpression siteMatcher)
 {
+    QRegExp siteMatcher;
 
     QJsonArray startParams;
 
@@ -223,16 +231,17 @@ void helper::startProcess(QJsonObject ob, QRegularExpression siteMatcher)
 
     }
 
-    //if (!dump.isEmpty())
+    if (!dump.isEmpty())
     {
         qDebug() << procArray;
         // Save Json to file
 
         qApp->exit();
+        exit(0);
     }
 
-    qApp->exit();
-    if (false)
+    //qApp->exit();
+    if (true)
     {
 
         connect(this, &QHttpServer::newConnection,
@@ -257,7 +266,7 @@ void helper::startProcess(QJsonObject ob, QRegularExpression siteMatcher)
             qDebug() << "can not listen on" <<  port;
         }
 
-        NetworkProcessHandler::handler().startProcess(proc, startParams);
+        NetworkProcessHandler::handler().startProcess(proc, procArray);
     }
 }
 
@@ -340,6 +349,7 @@ void dumpProcess(QString proc = QString())
         {
             qDebug() << path;
         }
+        exit(0);
     }
     else
     {
@@ -448,15 +458,19 @@ void startProcess(QString proc, QString commitName,  QStringList params, QString
         qApp->processEvents();
     NetworkProcessHandler::handler().getParameters(proc);
 
-    helper h;
+    helper *h = new helper();
 
-    h.setParams(proc, commitName, params, plates);
-    h.setDump(dumpfile);
+    if (proc.endsWith("BirdView"))
+        commitName = "BirdView";
 
-    qApp->connect(&NetworkProcessHandler::handler(), SIGNAL(parametersReady(QJsonObject)),
-                  &h, SLOT(startProcess(QJsonObject)));
+    h->setParams(proc, commitName, params, plates);
+    h->setDump(dumpfile);
+
+    qApp->connect(&NetworkProcessHandler::handler(), &NetworkProcessHandler::parametersReady,
+                  [h](QJsonObject o) { h->startProcess(o);  });
 
     qApp->exec();
+    delete h;
 }
 
 int main(int ac, char** av)
@@ -491,6 +505,17 @@ int main(int ac, char** av)
     for (int i = 1; i < ac; ++i)
     {
         QString item(av[i]);
+        if (item.startsWith("Server=")) // Overload the configuraiton servers
+        {
+            var.clear();
+            var << item.split("=").at(1);
+        }
+    }
+
+
+    for (int i = 1; i < ac; ++i)
+    {
+        QString item(av[i]);
 
         if (item == "ls" || item == "list")
         {
@@ -502,6 +527,7 @@ int main(int ac, char** av)
             else
                 dumpProcess(QString(av[i+1]));
         }
+
         if (item == "ds" || item == "describe")
         {
             PluginManager::loadPlugins();
@@ -525,13 +551,11 @@ int main(int ac, char** av)
                     }
                 }
             }
-            //            qDebug() << file;
+            exit(0);
         }
 
         if (item == "run" || item == "dump")
         {
-
-
             QString dumpfile;
 
             PluginManager::loadPlugins();
@@ -542,8 +566,8 @@ int main(int ac, char** av)
 
             if (item == "dump")
             {
-                   dumpfile = av[i+1];
-                   i++;
+                dumpfile = av[i+1];
+                i++;
             }
 
             QString process(av[i+1]), commit;
@@ -551,6 +575,9 @@ int main(int ac, char** av)
 
             QStringList pluginParams;
             int p = i+2;
+            QString project = find("project", ac, p + 1, av);
+            QString drive = find("drive", ac, p + 1, av);
+
             for (; p < ac; ++p){
                 QString par(av[p]);
                 if (par.startsWith("commitName="))
@@ -565,8 +592,6 @@ int main(int ac, char** av)
                     break;
             }
 
-            QString project=find("project", ac, p+1, av);
-            QString drive = find("drive", ac, p+1, av);
             QStringList plates;
             ScreensHandler& handler = ScreensHandler::getHandler();
 
@@ -584,6 +609,70 @@ int main(int ac, char** av)
                 startProcess(process, commit, pluginParams, plates, dumpfile);
         }
 
+
+        if (item == "fuse")
+        {
+            QString project = find("project", ac, i + 1, av);
+            QString commit = find("commit", ac, i + 1, av);
+
+            QSettings set;
+
+            QString dbP = set.value("databaseDir", "L:").toString();
+#ifndef  WIN32
+            if (dbP.contains(":"))
+                dbP = QString("/mnt/shares/") + dbP.replace(":","");
+#endif
+
+
+            // FIXME:  Cloud solution adjustements needed here !
+
+            dbP.replace("\\", "/").replace("//", "/");
+            QString folder = QString("%1/PROJECTS/%2/Checkout_Results/%3").arg(dbP,
+                                                                               project,
+                                                                               commit);
+
+            QDir dir(folder);
+
+            //            qDebug() << "folder" << folder << dir << QString("*_[0-9]*[0-9][0-9][0-9][0-9].fth");
+            QStringList files = dir.entryList(QStringList() << QString("*_[0-9]*[0-9][0-9][0-9][0-9].fth"), QDir::Files);
+            //            qDebug() << files;
+
+            QStringList plates;
+
+            for (auto pl: files)
+            {
+                QString t(pl.left(pl.lastIndexOf("_")));
+                if (!plates.contains(t))
+                    plates << t;
+            }
+            qDebug() << plates;
+
+            for (auto plate: plates)
+            {
+
+                QStringList files = dir.entryList(QStringList() << QString("%1_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(plate), QDir::Files);
+
+
+                QString concatenated = QString("%1/%2.fth").arg(folder,plate.replace("/",""));
+                if (files.isEmpty())
+                {
+                    qDebug() << "Error fusing the data to generate" << concatenated;
+                    qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(plate.replace("/", ""));
+                }
+                else
+                {
+
+                    if (QFile::exists(concatenated)) // In case the feather exists already add this for fusion at the end of the process since arrow fuse handles duplicates if will skip value if recomputed and keep non computed ones (for instance when redoing a well computation)
+                    {
+                        dir.rename(concatenated, concatenated + ".torm");
+                        files << concatenated.split("/").last()+".torm";
+                    }
+
+                    fuseArrow(folder, files, concatenated,plate.replace("\\", "/").replace("/",""));
+                }
+
+            }
+        }
     }
 
     delete a;

@@ -313,6 +313,7 @@ void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
 
     if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(pairs.second.toStdWString().c_str()))
     {
+
         mx.lock();
         pairs.first->setInvalid();
         mx.unlock();
@@ -394,8 +395,16 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
 
         for (auto seq : mdl->getAllSequenceFiles())
         {
-            for (auto l :seq->getAllFiles())
-                proc_mapps.append(qMakePair(seq,l));
+            QStringList fileList = seq->getAllFiles();
+            if (fileList.size())
+            {
+                QString jxl = fileList.at(0); jxl.chop(4);
+                if (QFile::exists(jxl+".jxl"))
+                    seq->toJxl();
+
+                for (auto l : seq->getAllFiles() )
+                    proc_mapps.append(qMakePair(seq,l));
+            }
         }
     }
 
@@ -457,12 +466,9 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
         // With the _channelsIds we can
 
         QStringList ch = mdl->getChannelNames();
-        if (_channelsNames.size() != ch.size())
+        for (int i = 0; i < ch.size(); ++i)
         {
-            for (int i = 0; i < ch.size(); ++i)
-            {
-                _channelsNames[i+1] = ch.at(i);
-            }
+            _channelsNames[i+1] = ch.at(i);
         }
     }
 
@@ -478,14 +484,16 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
     if (!set.value("AlwaysUnpack", false).toBool() || !set.value("AlwaysUnpack", false).toBool())
     {
         if (multifield)
+        {
             multifield = (QMessageBox::question(this, "Multi Field Detected", "Do you want to automatically unpack wells on display ?") == QMessageBox::Yes);
-    }
-    else
-    {
-        if (set.value("AlwaysUnpack", false).toBool())
-            multifield = true;
-        if (set.value("NeverUnpack", false).toBool())
-            multifield = false;
+        }
+        else
+        {
+            if (set.value("AlwaysUnpack", false).toBool())
+                multifield = true;
+            if (set.value("NeverUnpack", false).toBool())
+                multifield = false;
+        }
     }
 
 
@@ -513,6 +521,11 @@ Screens MainWindow::findPlate(QString plate, QStringList project, QString drive)
     QString file = handler.findPlate(plate, project, drive);
     if (file.isEmpty())   return Screens();
     return loadSelection(QStringList() << file, false);
+}
+
+void MainWindow::clearScreenSelection()
+{
+    mdl->clearCheckedDirectories();
 }
 
 
@@ -780,7 +793,8 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
             if (mdl->hasMeasurements(QPoint(r, c)))
             {
 
-                QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString(QChar('A')+(char)r) + colname + ".jpg";
+                QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+r)
+                        + colname + ".jpg";
                 if (QFile::exists(img2Path))
                     hasBirdview2 = true;
                 break;
@@ -838,14 +852,14 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
                 if (mdl->hasMeasurements(QPoint(r, c)))
                 {
 
-                    QString imgPath = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString(QChar('A'+(char)r))
-                                          + colname + ".jpg";
-                    QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString(QChar('A'+(char)r))
-                                          + colname + ".jpg";
+                    QString imgPath = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
+                            + colname + ".jpg";
+                    QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+r)
+                            + colname + ".jpg";
 
 
                     out <<    "<td><img width='100%' src='file://"
-                           <<  (hasBirdview2 ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString(QChar('A'+r)) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString(QChar('A'+r)) << colname << "&json'" <<"/></td>";
+                           <<  (hasBirdview2 ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+r) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'" <<"/></td>";
                     if (res.isEmpty())
                         res = imgPath;
                 }
@@ -887,51 +901,17 @@ void MainWindow::createBirdView()
     }
     if (!mdl) { qDebug() << "No model found" ; return ; }
 
-    QDir dir(QDir::cleanPath(mdl->fileName()));
-    dir.cdUp(); dir.cdUp();
-    QString platename = mdl->name();
-    //        qDebug() << dir.path() << platename;
 
-    QString fpath(QString("%1/birdview_%2.html").arg(dir.path(), mdl->name()));
+    QSettings set;
+    QString dbP=set.value("databaseDir").toString();
+
+    QString fpath = QString("%1/PROJECTS/%2/Checkout_Results/BirdView/birdview_%3.html").arg(dbP,mdl->getProjectName(), mdl->name());
+
     QFile file(fpath);
     QString imgName = generatePlate(file, mdl);
     file.close();
 
-    QStringList ds=dir.path().split("/").last().split('_');
-#if _WIN64
-    if (ds.size() >= 3)
-    {
-        QString time = ds.last(); ds.pop_back();
-        QString date = ds.last();
-        QDateTime dt = QDateTime::fromString(QString("%1#%2").arg(date, time), "yyyyMMdd#hhmmss");
-        qDebug() << dt;
-        auto pt = dir.path().replace("/","\\").toLocal8Bit();
-        struct tm tmm;
-        struct _utimbuf ut;
-
-        tmm.tm_hour = dt.time().hour();
-        tmm.tm_min = dt.time().minute();
-        tmm.tm_sec = dt.time().second();
-
-        tmm.tm_year = dt.date().year() - 1900;
-        tmm.tm_mday = dt.date().day();
-        tmm.tm_mon = dt.date().month()- 1 ;
-
-        tmm.tm_wday = 0;
-        tmm.tm_yday = 0;
-        tmm.tm_isdst = 0;
-
-        ut.actime = mktime(&tmm);
-        ut.modtime = mktime(&tmm);
-
-        int retval = _utime(pt.data(), &ut);
-        qDebug() << "Adjusting creation time of" << fpath << "to" << dt << "utime: " << retval;
-
-    }
-#endif
-
     // Launch the HTML viewer on the birdview file
-
     QWebEngineView *view = new QWebEngineView(this);
     QUrl url(fpath);
     view->load(url);

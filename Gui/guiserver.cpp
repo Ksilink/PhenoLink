@@ -139,7 +139,7 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
     }
 
 
-    if (urlpath.startsWith("/addImage/"))
+    else if (urlpath.startsWith("/addImage/"))
     { // Now let's do the fun part :)
         auto ob = QCborValue::fromCbor(data);
 
@@ -151,16 +151,15 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
 
         win->networkRetrievedImage(lsfm);
         mutex.unlock();
-        return;
     }
 
-    if (urlpath.startsWith("/Message"))
+    else if (urlpath.startsWith("/Message"))
     {
         QString message(data);
         QMessageBox::information(win, "Remote Message", message);
     }
 
-    if (urlpath.startsWith("/Load"))
+    else if (urlpath.startsWith("/Load"))
     {
         //        "/Load/?plate=&wells=&field=&tile=&unpacked"
         QStringList queries = query.split("&"), wells, plates;
@@ -229,8 +228,13 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                 }
             }
 
+            for (auto& lmdl: ScreensHandler::getHandler().getScreens())
+                lmdl->clearState(ExperimentFileModel::IsSelected);
+
             for (auto &mdl: (sc))
             {
+                win->resetSelection();
+                win->clearScreenSelection();
                 mdl->clearState(ExperimentFileModel::IsSelected);
                 ExperimentDataTableModel* xpmdl = mdl->computedDataModel();
 
@@ -245,7 +249,8 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                     }
                 }
 
-                win->displayWellSelection();
+
+               // win->displayWellSelection();
                 if (wells.isEmpty() && lpl.size() >= 1)
                 {
                     wells = lpl[1].split("/");  // so we can do a query plate:well1/well2/well3,plate:well1/well2 etc...
@@ -258,7 +263,6 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                         mdl->select(pos, true);
                 }
 
-                win->displayWellSelection();
                 for (auto &sfm : mdl->getSelection())
                     if (sfm->isValid())
                     {
@@ -281,14 +285,11 @@ void GuiServer::process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpRe
                             }
                         }
                     }
+                win->displayWellSelection();
             }
 
         }
 
-        QJsonObject ob;
-        setHttpResponse(ob, res, !query.contains("json"));
-
-        return;
     }
 
 

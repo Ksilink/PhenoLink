@@ -3,7 +3,7 @@
 
 #include <networkprocesshandler.h>
 
-
+#include <checkoutprocess.h>
 
 
 
@@ -11,9 +11,16 @@ QMutex CheckoutProcessPluginInterface::mutex;
 QMap<QString, QVector<cv::Mat*> > CheckoutProcessPluginInterface::_hashtoBias;
 QMap<QString, int > CheckoutProcessPluginInterface::_hashtoBiasCount;
 
+QString CheckoutProcessPluginInterface::datastore;
+
 CheckoutProcessPluginInterface::CheckoutProcessPluginInterface(): _state(NotStarted)
 {
     _infos << QString("[%1]").arg((quint64)QThread::currentThreadId());
+}
+
+QString CheckoutProcessPluginInterface::getEnv(QString key, QString def)
+{
+    return CheckoutProcess::handler().getEnv(key, def);
 }
 
 
@@ -36,6 +43,33 @@ CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addDependency(QS
 CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addDependencies(QStringList dep)
 {
     _dependencies.append(dep);
+    return *this;
+}
+
+CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addPostProcessScreen(QStringList dep)
+{
+    for (auto& d : dep)  _multi_postprocess << d;
+    return *this;
+}
+
+CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addPostProcessScreen(QString d)
+{
+    _multi_postprocess << d;
+    return *this;
+}
+
+
+
+
+CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addPostProcess(QStringList dep)
+{
+    for (auto& d : dep)  _postprocess << d;
+    return *this;
+}
+
+CheckoutProcessPluginInterface &CheckoutProcessPluginInterface::addPostProcess(QString d)
+{
+    _postprocess << d;
     return *this;
 }
 
@@ -65,9 +99,14 @@ void CheckoutProcessPluginInterface::write(QJsonObject &json) const
     auto deps = QSet<QString>(_dependencies.begin(), _dependencies.end());
     json["Dependencies"] =  QJsonArray::fromStringList(QStringList(deps.begin(), deps.end()));
 
+    json["PostProcesses"] = QJsonArray::fromStringList(_postprocess);
+    json["PostProcessesScreen"] = QJsonArray::fromStringList(_multi_postprocess);
+
     json["Parameters"] = params;
     json["ReturnData"] = ret;
-    json["State"] = QString(_state == Running ? "Running" : (_state == Finished ? "Running" : "NotStarted")); // Not allowed to change state here
+    json["State"] = QString(_state == Running ? "Running" :
+                           (_state == Finished ? "Finished" :
+                           (_state == Crashed ? "Crashed": "NotStarted"))); // Not allowed to change state here
     json["Pos"] = getPosition();
 
     json["shallDisplay"] =  _callParams["shallDisplay"];
@@ -125,6 +164,8 @@ int getKeyFromJSON(QString key, QJsonObject ob)
 void CheckoutProcessPluginInterface::prepareData()
 {
 
+//    qDebug() << "Plugin Prepare data" << _callParams.keys();
+
     QString hash = _callParams["Process_hash"].toString();
     //  qDebug() << "Process hash func: " << hash;
     int p = 0;
@@ -166,7 +207,6 @@ void CheckoutProcessPluginInterface::prepareData()
                     InputImageMetaData meta;
 
 
-                    //                  QDir dir(o["Data"].toArray().at(0).toString());
                     meta.file_path  = im->basePath(o);
                     meta.hash       = o["DataHash"].toString();
                     meta.pos        = o["Pos"].toString();
@@ -262,9 +302,13 @@ void CheckoutProcessPluginInterface::started(qint64 time)
 
 CheckoutProcessPluginInterface::State CheckoutProcessPluginInterface::processState() { return _state; }
 
+void CheckoutProcessPluginInterface::crashed() {
+    _state = Crashed;
+}
+
 bool CheckoutProcessPluginInterface::isFinished()
 {
-    return _state == Finished;
+    return (_state == Finished) || (_state == Crashed);
 }
 
 #include <RegistrableImageType.h>
@@ -285,6 +329,14 @@ QString CheckoutProcessPluginInterface::user()
 {
     return _callParams["Username"].toString()+ "@" +  _callParams["Computer"].toString();
 }
+
+
+QString CheckoutProcessPluginInterface::getDataStorePath()
+{
+    return CheckoutProcess::handler().getStoragePath();
+}
+
+
 
 QJsonObject CheckoutProcessPluginInterface::createStatusMessage()
 {
@@ -372,17 +424,20 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     ob["LoadingTime"] = _result["LoadingTime"];
     ob["Data"] = arr;
     ob["Path"] = getPath();
-    ob["Pos"] = getPosition();
     ob["ElapsedTime"] = QString("%1").arg(time);
     ob["State"] = QString(_state == Running ? "Running" : (_state == Finished ? "Finished" : "NotStarted"));
     ob["Pos"] = getPosition();
+
     ob["shallDisplay"] = _shallDisplay;
-    qDebug() << "In plugin processStartId" << processStartId << _callParams["ProcessStartId"];
+//    qDebug() << "In plugin processStartId" << processStartId << _callParams["ProcessStartId"];
 
 
     ob["ProcessStartId"] = processStartId;
-    auto d = QStringList() << "XP" << "DataHash" << "CommitName" << "ReplyTo" << "Parameters" << "StartTime" << "TaskID" << "WorkID" ;
-    for (auto s: d)
+    auto d = QStringList() << "XP" << "DataHash" << "CommitName" << "ReplyTo"
+                           << "Parameters" << "StartTime" << "TaskID" << "WorkID"
+                           <<"WellTags" << "PostProcesses" << "PostProcessesScreen"
+                          << "Process_hash" << "Project" << "Computer" << "Username";
+    for (auto & s: d)
         ob[s] = _callParams[s];
 
 

@@ -93,8 +93,11 @@ public:
 
 
     void toggleBinarized();
-
     bool isBinarized();
+
+    void toggleGradients();
+    bool isGradient();
+
 
 
     void setColorMap(QString name);
@@ -203,6 +206,8 @@ protected:
     int _channel;
     QString _colormap;
     bool _binarized;
+    bool _gradients;
+
     QSize _size;
 
     QTimer* range_timer;
