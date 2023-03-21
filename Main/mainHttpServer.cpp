@@ -609,6 +609,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         QByteArray body = QJsonDocument(root).toJson();
         //        res->addHeader("connection", "keep-alive");
+        res->addHeader("connection", "close");
         res->addHeader("content-length", QString::number(body.length()).toLatin1());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body);
