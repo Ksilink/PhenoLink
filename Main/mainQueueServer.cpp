@@ -833,130 +833,132 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
                     dbP.replace("\\", "/").replace("//", "/");
                     auto agg = running[obj["TaskID"].toString()];
-
-                    QString path = QString("%1/PROJECTS/%2/Checkout_Results/%3").arg(dbP,
-                                                                                     agg["Project"].toString(),
-                            agg["CommitName"].toString()).replace("\\", "/").replace("//", "/");;
-
-                    QThread::sleep(5); // Let time to sync
-
-                    QDir dir(path);
-
-                    QStringList files = dir.entryList(QStringList() << QString("%1_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
-                    QString concatenated = QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/",""));
-                    if (files.isEmpty())
-                    {
-                        qDebug() << "Error fusing the data to generate" << concatenated;
-                        qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", ""));
-                    }
-                    else
+                    if (!agg["CommitName"].toString().isEmpty())
                     {
 
-                        if (QFile::exists(concatenated)) // In case the feather exists already add this for fusion at the end of the process since arrow fuse handles duplicates if will skip value if recomputed and keep non computed ones (for instance when redoing a well computation)
+                        QString path = QString("%1/PROJECTS/%2/Checkout_Results/%3").arg(dbP,
+                                                                                         agg["Project"].toString(),
+                                agg["CommitName"].toString()).replace("\\", "/").replace("//", "/");;
+
+                        QThread::sleep(5); // Let time to sync
+
+                        QDir dir(path);
+
+                        QStringList files = dir.entryList(QStringList() << QString("%1_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
+                        QString concatenated = QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/",""));
+                        if (files.isEmpty())
                         {
-                            dir.rename(concatenated, concatenated + ".torm");
-                            files << concatenated.split("/").last()+".torm";
+                            qDebug() << "Error fusing the data to generate" << concatenated;
+                            qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", ""));
+                        }
+                        else
+                        {
+
+                            if (QFile::exists(concatenated)) // In case the feather exists already add this for fusion at the end of the process since arrow fuse handles duplicates if will skip value if recomputed and keep non computed ones (for instance when redoing a well computation)
+                            {
+                                dir.rename(concatenated, concatenated + ".torm");
+                                files << concatenated.split("/").last()+".torm";
+                            }
+
+                            QtConcurrent::run(fuseArrow,
+                                              path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+
+                            //                        fuseArrow(path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
                         }
 
-                        QtConcurrent::run(fuseArrow,
-                                          path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+                        // qDebug() << agg.keys() << obj.keys();
 
-//                        fuseArrow(path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+                        if (agg.contains("PostProcesses") && agg["PostProcesses"].toArray().size() > 0)
+                        {
+                            qDebug() << "We need to run the post processes:" << agg["PostProcesses"].toArray();
+                            // Set our python env first
+                            // Setup the call to python
+                            // Also change working directory to the "concatenated" folder
+                            auto arr = agg["PostProcesses"].toArray();
+
+                            QFuture<void> future = QtConcurrent::run([this, arr, concatenated, path]{
+
+                                for (int i = 0; i < arr.size(); ++i )
+                                { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
+                                    QString script = arr[i].toString().replace("\\", "/");
+                                    auto args = QStringList() << adjust(script)  << concatenated;
+                                    QProcess* python = new QProcess();
+
+
+                                    this->postproc << python;
+
+                                    python->setProcessEnvironment(python_config);
+                                    qDebug() << python_config.value("PATH");
+                                    qDebug() << args;
+
+                                    postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
+                                    postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".log");
+                                    postproc.last()->setWorkingDirectory(path);
+
+                                    postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
+                                    postproc.last()->setArguments(args);
+
+                                    postproc.last()->start();
+                                }
+
+                            });
+
+
+
+                        }
+                        else
+                            qDebug() << "No Postprocesses";
+
+
+
+                        if (  perjob_count[jobid] == 0 && agg.contains("PostProcessesScreen")&& agg["PostProcessesScreen"].toArray().size() > 0)
+                        {
+                            qDebug() << "We need to run the post processes:" << agg["PostProcessesScreen"].toArray();
+                            // Set our python env first
+                            // Setup the call to python
+                            // Also change working directory to the "concatenated" folder
+                            auto data = agg["Experiments"].toArray();
+                            QStringList xps;
+                            for (auto d: data) xps << d.toString().replace("\\", "/").replace("/", "")+".fth";
+
+                            auto arr = agg["PostProcessesScreen"].toArray();
+
+                            QFuture<void> future = QtConcurrent::run([this, arr, xps, concatenated, path]{
+                                for (int i = 0; i < arr.size(); ++i )
+                                { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
+                                    QString script = arr[i].toString().replace("\\", "/");
+                                    //                            QDir dir(path);
+
+                                    auto args = QStringList() << adjust(script);
+                                    //<< concatenated;
+                                    for (auto & d: xps) if (QFile::exists(path+"/"+d))  args << d;
+                                    QProcess* python = new QProcess();
+
+                                    this->postproc << python;
+
+                                    python->setProcessEnvironment(python_config);
+                                    qDebug() << python_config.value("PATH");
+                                    qDebug() << args;
+
+                                    postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
+                                    postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".screen_log");
+                                    postproc.last()->setWorkingDirectory(path);
+
+                                    postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
+                                    postproc.last()->setArguments(args);
+
+                                    postproc.last()->start();
+                                }
+
+                            });
+
+
+
+                        }
+                        else
+                            qDebug() << "No Screen Post-processes";
                     }
-
-                    // qDebug() << agg.keys() << obj.keys();
-
-                    if (agg.contains("PostProcesses") && agg["PostProcesses"].toArray().size() > 0)
-                    {
-                        qDebug() << "We need to run the post processes:" << agg["PostProcesses"].toArray();
-                        // Set our python env first
-                        // Setup the call to python
-                        // Also change working directory to the "concatenated" folder
-                        auto arr = agg["PostProcesses"].toArray();
-
-                        QFuture<void> future = QtConcurrent::run([this, arr, concatenated, path]{
-
-                            for (int i = 0; i < arr.size(); ++i )
-                            { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
-                                QString script = arr[i].toString().replace("\\", "/");
-                                auto args = QStringList() << adjust(script)  << concatenated;
-                                QProcess* python = new QProcess();
-
-
-                                this->postproc << python;
-
-                                python->setProcessEnvironment(python_config);
-                                qDebug() << python_config.value("PATH");
-                                qDebug() << args;
-
-                                postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
-                                postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".log");
-                                postproc.last()->setWorkingDirectory(path);
-
-                                postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
-                                postproc.last()->setArguments(args);
-
-                                postproc.last()->start();
-                            }
-
-                        });
-
-
-
-                    }
-                    else
-                        qDebug() << "No Postprocesses";
-
-
-
-                    if (  perjob_count[jobid] == 0 && agg.contains("PostProcessesScreen")&& agg["PostProcessesScreen"].toArray().size() > 0)
-                    {
-                        qDebug() << "We need to run the post processes:" << agg["PostProcessesScreen"].toArray();
-                        // Set our python env first
-                        // Setup the call to python
-                        // Also change working directory to the "concatenated" folder
-                        auto data = agg["Experiments"].toArray();
-                        QStringList xps;
-                        for (auto d: data) xps << d.toString().replace("\\", "/").replace("/", "")+".fth";
-
-                        auto arr = agg["PostProcessesScreen"].toArray();
-
-                        QFuture<void> future = QtConcurrent::run([this, arr, xps, concatenated, path]{
-                            for (int i = 0; i < arr.size(); ++i )
-                            { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
-                                QString script = arr[i].toString().replace("\\", "/");
-    //                            QDir dir(path);
-
-                                auto args = QStringList() << adjust(script);
-                                //<< concatenated;
-                                for (auto & d: xps) if (QFile::exists(path+"/"+d))  args << d;
-                                QProcess* python = new QProcess();
-
-                                this->postproc << python;
-
-                                python->setProcessEnvironment(python_config);
-                                qDebug() << python_config.value("PATH");
-                                qDebug() << args;
-
-                                postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
-                                postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".screen_log");
-                                postproc.last()->setWorkingDirectory(path);
-
-                                postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
-                                postproc.last()->setArguments(args);
-
-                                postproc.last()->start();
-                            }
-
-                        });
-
-
-
-                    }
-                    else
-                        qDebug() << "No Screen Post-processes";
                 }
-
                 // Check if we have finished the TaskID subsets to pure task id i.e. Screen processing and launch subsequents multiplate python runners
                 running.remove(obj["TaskID"].toString());
 
@@ -1232,7 +1234,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
                         for (auto& item: q)
                         {
-                 /*           qDebug() << item["Username"].toString() << item["Computer"].toString()
+                            /*           qDebug() << item["Username"].toString() << item["Computer"].toString()
                                 << item["Path"].toString() << item["WorkID"].toString();*/
                             if (item["Username"].toString() == name[0] &&
                                     item["Computer"].toString() == name[1] &&
@@ -1527,13 +1529,13 @@ void Server::recover(QString f)
     QFile io(f);
     if (io.open(QFile::ReadOnly))
     {
-       auto ar = QCborValue::fromCbor(io.readAll()).toArray();
-       int prio = ar.size();
-       for (int i = 0; i < prio; i++)
-       {
-           auto obj = ar[i].toJsonValue().toObject();
-           jobs[""][prio].enqueue(obj);
-       }
+        auto ar = QCborValue::fromCbor(io.readAll()).toArray();
+        int prio = ar.size();
+        for (int i = 0; i < prio; i++)
+        {
+            auto obj = ar[i].toJsonValue().toObject();
+            jobs[""][prio].enqueue(obj);
+        }
     }
 }
 
