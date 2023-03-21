@@ -1229,7 +1229,15 @@ public:
                 for (int i = 0; i < t.size(); ++i)
                     _vectorNames << t[i].toString();
             }
-
+            if (data.contains("Data"))
+            {
+                auto sdata = d["Data"].toArray();
+                for (int j = 0; j < sdata.size(); ++j)
+                {
+                    auto d = sdata.at(j).toObject();
+                    setProperties(d, QString("f%1t%2").arg(i).arg(j));
+                }
+            }
         }
     }
 
