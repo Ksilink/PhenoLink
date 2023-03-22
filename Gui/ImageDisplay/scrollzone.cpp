@@ -21,7 +21,7 @@
 
 ScrollZone::ScrollZone(QWidget *parent) :
     QScrollArea(parent),
-      _progDiag(nullptr)
+    _progDiag(nullptr)
 {
 
     QWidget* wid = new QWidget(this);
@@ -65,7 +65,7 @@ void ScrollZone::removeSequences(QList<SequenceFileModel *> &lsfm)
 
     }
 
-   _mainwin->resetSelection();
+    _mainwin->resetSelection();
 
 }
 
@@ -114,7 +114,8 @@ void ScrollZone::dropEvent(QDropEvent *event)
         groupId++;
     }
 
-//    qDebug() << "Loading with key" << key;
+
+    //    qDebug() << "Loading with key" << key;
 
     ImageInfos::key(key);
 
@@ -178,34 +179,36 @@ void ScrollZone::addSelectedWells()
         SequenceViewContainer::getHandler().setCurrent(last);
         //          _mainwin->updateCurrentSelection();
     }
-      if (!_progDiag) {
-          _progDiag = new QProgressDialog(this);
-          _progDiag->setWindowModality(Qt::WindowModal);
-        }
-      _progDiag->setLabelText("Loading Wells");
-      _progDiag->setMaximum(2*count);
+    if (!_progDiag) {
+        _progDiag = new QProgressDialog(this);
+    }
+    _progDiag->setLabelText("Loading Wells");
+    _progDiag->setMaximum(2*count);
+
+    QList< SequenceInteractor*> all;
+    for (auto &sfm : sfm_list)
+    {
+        SequenceInteractor* intr = new SequenceInteractor(sfm, QString("0"));
+        intr->preloadImage();
 
 
-   QList< SequenceInteractor*> all;
-   for (auto& sfm : sfm_list)
-   {
-       SequenceInteractor* intr = new SequenceInteractor(sfm, QString("0"));
-       intr->preloadImage();
-       _progDiag->setValue(_progDiag->value()+1);
-       all << intr;
-       qApp->processEvents();
-   }
+        _progDiag->setValue(_progDiag->value()+1);
+        all <<  intr;
+        qApp->processEvents();
+    }
 
+    // =  QtConcurrent::blockingMapped(sfm_list, InsertFctor(this, _progDiag));
     _progDiag->setLabelText("Displaying Wells");
     foreach(SequenceInteractor* m, all)
     {
         _progDiag->setValue(_progDiag->value()+1);
         insertImage(m->getSequenceFileModel(), m);
+        _progDiag->setValue(_progDiag->value()+1);
         qApp->processEvents();
     }
-      _progDiag->close();
-      delete _progDiag;
-      _progDiag = 0;
+    _progDiag->close();
+    delete _progDiag;
+    _progDiag = 0;
 }
 
 int ScrollZone::items()
@@ -233,22 +236,8 @@ void ScrollZone::insertImage(SequenceFileModel* sfm, SequenceInteractor* iactor)
 
     ImageForm* f = new ImageForm(this, !sfm->hasProperty("unpack"));
     _seq_toImg[sfm] = f;
-    f->moveToThread(thread());
 
-
-    SequenceInteractor* intr =  0;
-    if (iactor)
-    {
-        intr = iactor ;
-    }
-        else
-    {
-        intr = new SequenceInteractor(sfm, QString("0"));
-
-    }
-
-    intr->moveToThread(thread());
-
+    SequenceInteractor* intr =  iactor ? iactor : new SequenceInteractor(sfm, QString("0"));
     f->setModelView(sfm, intr);
 
     setupImageFormInteractor(f);
@@ -257,8 +246,6 @@ void ScrollZone::insertImage(SequenceFileModel* sfm, SequenceInteractor* iactor)
     connect(f, SIGNAL(overlayInfos(QString, QString,int)),
             _mainwin, SLOT(change_overlay_details(QString, QString, int)));
 
-
-   // qApp->processEvents();
 }
 
 
@@ -286,7 +273,7 @@ void ScrollZone::clearSelection()
 
 void ScrollZone::updateSelection()
 {
-    foreach (ImageForm* f, _selection)
+    for (ImageForm* f: _selection)
         f->update();
 }
 

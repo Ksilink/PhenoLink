@@ -8,6 +8,8 @@
 
 #include "ImageContainers.h"
 
+#include <Core/phenolinkimage.h>
+
 #include <QDir>
 #include <QSemaphore>
 #include <Dll.h>
@@ -37,9 +39,10 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
         {
             if (im >= 0 && im != (int)i) continue;
 
-//            qDebug() << "bp:" << base_path << "file: "<<  data.at((int)i).toString();
+            //            qDebug() << "bp:" << base_path << "file: "<<  data.at((int)i).toString();
             semaphore.acquire();
-            cv::Mat m = cv::imread((base_path + data.at((int)i).toString()).toStdString(), 2);
+            QString fname = base_path + data.at((int)i).toString();
+            cv::Mat m = pl::imread(fname, 2);
             semaphore.release();
 
             if (m.type() != CV_16U)
@@ -59,9 +62,10 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
     }
     else
     {
-//        qDebug() << "bp:" << base_path << "file: "<<  data.first().toString();
+        //        qDebug() << "bp:" << base_path << "file: "<<  data.first().toString();
         semaphore.acquire();
-        mat = cv::imread((base_path + data.first().toString()).toStdString(), 2);
+        QString fn = base_path + data.first().toString();
+        mat = pl::imread(fn, 2);
         semaphore.release();
 
         if (mat.type() != CV_16U)
@@ -75,6 +79,22 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
     }
 
     return mat;
+}
+
+
+QStringList _getImageFile(QJsonArray data, int im, QString base_path = QString())
+{
+    QStringList res;
+
+    if (data.size() > 1)
+    {
+        for (size_t i = 0; i < (size_t)data.size(); ++i)
+        {
+            if (im >= 0 && im != (int)i) continue;
+            res << base_path + data.at((int)i).toString();
+        }
+    }
+    return res;
 }
 
 namespace cocvMat
@@ -178,22 +198,28 @@ size_t ImageContainer::getChannelCount()
 }
 
 
-void TimeImage::loadFromJSON(QJsonObject data, QString base_path)
+void TimeImage::loadFromJSON(QJsonObject data, QString base_path, bool noload)
 {
     _loaded = true;
 
-    QString bp = data.contains("BasePath") ? data["BasePath"].toString() : base_path;
+    QString bp = base_path.isEmpty() ? data["BasePath"].toString() : base_path;
     QJsonArray times =    data["Data"].toArray();
-    for (int i = 0; i < times.size(); ++i)
+
+    if (noload)
+        _data = data;
+    else
     {
-        QJsonObject ob = times.at(i).toObject();
+        for (int i = 0; i < times.size(); ++i)
+        {
+            QJsonObject ob = times.at(i).toObject();
 
-        if (bp.isEmpty())
-            bp = ob["BasePath"].toString();
+            if (bp.isEmpty())
+                bp = ob["BasePath"].toString();
 
-        QJsonArray chans = ob["Data"].toArray();
+            QJsonArray chans = ob["Data"].toArray();
 
-        images.push_back(loadImage(chans));
+            images.push_back(loadImage(chans,-1,bp));
+        }
     }
 }
 
@@ -203,7 +229,7 @@ QString TimeImage::basePath(QJsonObject data)
     return getbasePath(times);
 }
 
-cv::Mat TimeImage::getImage(size_t i, QString base_path)
+cv::Mat TimeImage::getImage(size_t i, size_t chann, QString base_path)
 {
     if (_loaded) return (*this)[i];
 
@@ -216,7 +242,7 @@ cv::Mat TimeImage::getImage(size_t i, QString base_path)
             bp = ob["BasePath"].toString();
         QJsonArray chans = ob["Data"].toArray();
 
-        return loadImage(chans, -1, bp);
+        return loadImage(chans, chann, bp);
     }
 }
 
@@ -321,7 +347,7 @@ QString TimeStackedImage::basePath(QJsonObject data)
 void TimeStackedImage::storeJson(QJsonObject json)
 {
     _data = json;
-//    _count = json["Data"].toArray().size();
+    //    _count = json["Data"].toArray().size();
     QJsonArray stack =    json["Data"].toArray();
     QString bp = json["BasePath"].toString();
 
@@ -421,6 +447,19 @@ cv::Mat ImageXP::getImage(int i, int c, QString bp)
 
 }
 
+QStringList ImageXP::getImageFile(int i, int c, QString bp)
+{
+    QJsonArray field =    _data["Data"].toArray();
+    bp = _data.contains("BasePath") ? _data["BasePath"].toString() : bp;
+
+    QJsonObject ob = field.at(i).toObject();
+    if (bp.isEmpty() && ob.contains("BasePath"))
+        bp = ob["BasePath"].toString();
+    QJsonArray chans = ob["Data"].toArray();
+
+    return _getImageFile(chans,c, bp);
+}
+
 
 TimeImageXP::TimeImageXP(): _loaded(false) {}
 
@@ -471,7 +510,7 @@ void TimeImageXP::storeJson(QJsonObject json)
     _count = _data["Data"].toArray().size();
 }
 
-TimeImage TimeImageXP::getImage(size_t i, QString bp)
+TimeImage TimeImageXP::getImage(size_t i, QString bp, bool noload)
 {
     if (_loaded) return (*this)[i];
 
@@ -480,10 +519,9 @@ TimeImage TimeImageXP::getImage(size_t i, QString bp)
     QJsonObject ob = stack.at((int)i).toObject();
     if (bp.isEmpty() && ob.contains("BasePath"))
         bp = ob["BasePath"].toString();
-
     ob["BasePath"] = bp;
     TimeImage im;
-    im.loadFromJSON(ob, bp);
+    im.loadFromJSON(ob, bp, noload);
 
     return im;
 

@@ -64,7 +64,10 @@ private slots:
     void on_pushButton_clicked();
 
     void on_mapcsv();
+    void on_maptemplate();
     void on_populate();
+
+    void on_Plates_currentChanged(int index);
 
 private:
     QStringList dataset;

@@ -82,6 +82,7 @@ public:
 
     void process(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res);
     uint serverPort();
+    void recover(QString file);
     void setPort(uint port) {dport = port;};
 
 public slots:
@@ -104,20 +105,23 @@ protected:
    void WorkerMonitor();
 
 
-   QString pickWorker();
+   QString pickWorker(QString process = QString());
    QQueue<QJsonObject> &getHighestPriorityJob(QString server);
 
 
-   QStringList pendingTasks();
+   QStringList pendingTasks(bool html=false);
+   void timerEvent(QTimerEvent *event);
 
    unsigned int njobs();
    unsigned int nbUsers();
-    //
+
+protected:
+   //
     unsigned dport;
 
     // We need to maintain a worker list
-    QQueue<QString > workers;
-    QSet<QString> rmWorkers;
+    QQueue<QString>  workers;
+    QSet<QString>  rmWorkers;
 
 
     // Who's connected
@@ -129,7 +133,7 @@ protected:
     // Pending
     QMap<QString, QJsonObject > running;
 
-    QMap<QString, unsigned int> run_time, run_count;
+    QMap<QString, unsigned int> run_time, run_count, work_count, perjob_count;
     // Project Affinity map
     QMap<QString, QString> project_affinity; // projection of project name to server name
 
@@ -137,8 +141,14 @@ protected:
     QSet<QString> proc_list;
     QMap<QString, QMap<QString, QJsonObject> >  proc_params; // Process name, server name => Proc descr
 
+    QMap<QString, int> timer_handler;
+
 
     CheckoutHttpClient* client;
+    QList<QProcess*> postproc;
+
+    int cpu_counts;
+
 };
 
 

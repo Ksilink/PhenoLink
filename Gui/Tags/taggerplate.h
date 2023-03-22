@@ -29,6 +29,9 @@ public:
         path = p;
     }
 
+    void setCategories(QMap<QString, QStringList> map);
+
+
     void setTags(
             QMap<QString, QMap<QString, QSet<QString > > > &data,
             QMap<QString, QSet<QString> >  &othertags,
@@ -42,7 +45,10 @@ public:
     void setColorFG(int r, int c, QString color);
     void updatePlate();
     QJsonObject refreshJson();
+    QString getPlate()  { return plate; }
 
+
+    void apply_template(QString script);
 
 private slots:
     void on_setTags_clicked();

@@ -37,10 +37,10 @@ QHttpClient::isOpen() const {
 void
 QHttpClient::killConnection() {
     Q_D(QHttpClient);
+    d->isocket.close();
 
     d->iconnectingTimer.stop();
     d->itimer.stop();
-    d->isocket.close();
 }
 
 TBackend

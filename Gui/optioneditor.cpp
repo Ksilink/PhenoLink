@@ -9,6 +9,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFormLayout>
+#include <QComboBox>
 #include <ctkWidgets/ctkPathListWidget.h>
 #include <ctkWidgets/ctkPathListButtonsWidget.h>
 #include <ctkWidgets/ctkCollapsibleGroupBox.h>
@@ -120,8 +121,8 @@ QWidget *PythonOptionEditor::pythonPluginsPath()
     foreach (QString d, data)
     {
         QString absolutePath = QFileInfo(d).absoluteFilePath();
-        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
-        qDebug() << d << absolutePath;
+        //        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
+        //        qDebug() << d << absolutePath;
         if (!pythonPluginPath->addPath(d))
             qDebug() << "Warning path not added";
     }
@@ -181,10 +182,11 @@ ConfigDialog::ConfigDialog()
     contentsWidget->setSpacing(12);
 
     pagesWidget = new QStackedWidget;
-    pagesWidget->addWidget(new GlobalOptions);
-    pagesWidget->addWidget(new PythonOptionEditor);
 
-    //    pagesWidget->addWidget(new QueryPage);
+    pagesWidget->addWidget(new GlobalOptions);
+    pagesWidget->addWidget(new SearchOptionEditor);
+    pagesWidget->addWidget(new PythonOptionEditor);
+    pagesWidget->addWidget(new CloudOptionEditor);
 
     QPushButton *closeButton = new QPushButton(tr("Close"));
 
@@ -219,11 +221,26 @@ void ConfigDialog::createIcons()
     configButton->setTextAlignment(Qt::AlignHCenter);
     configButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
+    QListWidgetItem *searchButton = new QListWidgetItem(contentsWidget);
+    searchButton->setIcon(QIcon(":/search.png"));
+    searchButton->setText(tr("Search Path"));
+    searchButton->setTextAlignment(Qt::AlignHCenter);
+    searchButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
+
     QListWidgetItem *updateButton = new QListWidgetItem(contentsWidget);
     updateButton->setIcon(QIcon(":/python.png"));
     updateButton->setText(tr("Python Options"));
     updateButton->setTextAlignment(Qt::AlignHCenter);
     updateButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
+
+    QListWidgetItem *cloud = new QListWidgetItem(contentsWidget);
+    cloud->setIcon(QIcon(":/upload_cloud.png"));
+    cloud->setText(tr("Cloud Options"));
+    cloud->setTextAlignment(Qt::AlignHCenter);
+    cloud->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
 
     //    QListWidgetItem *queryButton = new QListWidgetItem(contentsWidget);
     //    queryButton->setIcon(QIcon(":/images/query.png"));
@@ -362,14 +379,14 @@ QWidget *GlobalOptions::features()
     mainLayout->addRow("Intensity Margin (% of range intensity) ", intensity_refreshRatio);
 
 
-//    refreshRate = new QSpinBox();
-//    refreshRate->setMinimum(0);
-//    refreshRate->setMaximum(60000);
-//    refreshRate->setValue(set.value("RefreshRate", 300).toInt());
-//    refreshRate->setToolTip("Default: 300");
-//    connect(refreshRate, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
+    //    refreshRate = new QSpinBox();
+    //    refreshRate->setMinimum(0);
+    //    refreshRate->setMaximum(60000);
+    //    refreshRate->setValue(set.value("RefreshRate", 300).toInt());
+    //    refreshRate->setToolTip("Default: 300");
+    //    connect(refreshRate, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
 
-//    mainLayout->addRow("Process Query Refressh Rate ", refreshRate);
+    //    mainLayout->addRow("Process Query Refressh Rate ", refreshRate);
 
 
     minServerProcs = new QSpinBox();
@@ -381,14 +398,14 @@ QWidget *GlobalOptions::features()
 
     mainLayout->addRow("Minimum Process List Size ", minServerProcs);
 
-//    maxRefreshQuery = new QSpinBox();
-//    maxRefreshQuery->setMinimum(0);
-//    maxRefreshQuery->setMaximum(1000);
-//    maxRefreshQuery->setValue(set.value("maxRefreshQuery", 100).toInt());
-//    maxRefreshQuery->setToolTip("Default: 100");
-//    connect(maxRefreshQuery, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
+    //    maxRefreshQuery = new QSpinBox();
+    //    maxRefreshQuery->setMinimum(0);
+    //    maxRefreshQuery->setMaximum(1000);
+    //    maxRefreshQuery->setValue(set.value("maxRefreshQuery", 100).toInt());
+    //    maxRefreshQuery->setToolTip("Default: 100");
+    //    connect(maxRefreshQuery, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
 
-//    mainLayout->addRow("Maximum states query", maxRefreshQuery);
+    //    mainLayout->addRow("Maximum states query", maxRefreshQuery);
 
 
     unpackScaling = new QDoubleSpinBox();
@@ -516,6 +533,13 @@ QWidget *GlobalOptions::notebooksOptions()
     return ppython;
 }
 
+QWidget *GlobalOptions::searchOptions()
+{
+    return NULL;
+}
+
+
+
 QWidget *GlobalOptions::screensPaths()
 {
     QSettings set;
@@ -536,8 +560,8 @@ QWidget *GlobalOptions::screensPaths()
     foreach (QString d, data)
     {
         QString absolutePath = QFileInfo(d).absoluteFilePath();
-        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
-        qDebug() << d << absolutePath;
+        //        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
+        //        qDebug() << d << absolutePath;
         if (!screensPath->addPath(d))
             qDebug() << "Warning path not added";
     }
@@ -640,8 +664,8 @@ void GlobalOptions::updatePaths()
     set.setValue("UserName", username->text());
 
     set.setValue("MinProcs", minServerProcs->value());
-//    set.setValue("RefreshRate", refreshRate->value());
-//    set.setValue("maxRefreshQuery", maxRefreshQuery->value());
+    //    set.setValue("RefreshRate", refreshRate->value());
+    //    set.setValue("maxRefreshQuery", maxRefreshQuery->value());
     set.setValue("unpackScaling", unpackScaling->value());
 
 
@@ -649,7 +673,7 @@ void GlobalOptions::updatePaths()
     set.setValue("RefreshSliderRatio", intensity_refreshRatio->value());
 
 
-//    this->parentWidget()->startTimer(refreshRate->value());
+    //    this->parentWidget()->startTimer(refreshRate->value());
 
 
     QStringList var;
@@ -708,7 +732,7 @@ void GlobalOptions::copyDirectory()
 void printParent(QObject* ob, int pos = 0)
 {
 
-    qDebug() << pos << ob->objectName();
+    //    qDebug() << pos << ob->objectName();
     if (ob->parent())
         printParent(ob->parent(), pos + 1);
 }
@@ -794,7 +818,7 @@ void GlobalOptions::showInGraphicalShell(QWidget *parent, const QString &pathIn)
     if (!QFileInfo(pathIn).isDir())
         param << QLatin1String("/select,");
     param << QDir::toNativeSeparators(pathIn);
-//    QString command = explorer + " " + param;
+    //    QString command = explorer + " " + param;
     QProcess::startDetached(explorer, param);
 #elif defined(Q_OS_MAC)
     Q_UNUSED(parent)
@@ -824,4 +848,203 @@ void GlobalOptions::showInGraphicalShell(QWidget *parent, const QString &pathIn)
         showGraphicalShellError(parent, app, error);
 #endif
 #endif
+}
+
+SearchOptionEditor::SearchOptionEditor(QWidget *parent)
+{
+
+
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+
+    mainLayout->addWidget(searchPath());
+
+    setLayout(mainLayout);
+
+}
+
+QWidget *SearchOptionEditor::searchPath()
+{
+    QSettings set;
+    QFileIconProvider icp;
+
+    ctkCollapsibleGroupBox* ppython = new ctkCollapsibleGroupBox("Plate Search Path");
+
+
+    _searchPath = new ctkPathListWidget;
+    _searchPath->setMode(ctkPathListWidget::DirectoriesOnly);
+    _searchPath->setDirectoryIcon(icp.icon(QFileIconProvider::Folder));
+
+    ctkPathListButtonsWidget* pathEdit = new ctkPathListButtonsWidget();
+    pathEdit->init(_searchPath);
+    pathEdit->setOrientation(Qt::Vertical);
+
+    pathEdit->setIconAddDirectoryButton(QIcon(":/plus.png"));
+
+    pathEdit->setIconRemoveButton(QIcon(":/minus.png"));
+    pathEdit->setIconEditButton(QIcon(":/edit.png"));
+
+    QStringList searchpaths = set.value("SearchPlate", QStringList() << "U:/BTSData/MeasurementData/"
+                                        << "Z:/BTSData/MeasurementData/"
+                                        << "W:/BTSData/MeasurementData/"
+                                        << "K:/BTSData/MeasurementData/"
+                                        << "O:/BTSData/MeasurementData/"
+                                        << "C:/Data/").toStringList();
+
+    foreach (QString d, searchpaths)
+    {
+        QString absolutePath = QFileInfo(d).absoluteFilePath();
+        //        qDebug() << QFileInfo(d).isDir() <<  QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first();
+        //        qDebug() << d << absolutePath;
+        if (!_searchPath->addPath(d))
+            qDebug() << "Warning search path not added";
+    }
+    connect(_searchPath, SIGNAL(pathsChanged(QStringList,QStringList)), this, SLOT(updatePaths()));
+    connect(_searchPath, SIGNAL(currentPathChanged(QString,QString)), this, SLOT(updatePaths()));
+
+
+    QHBoxLayout *mainLayout = new QHBoxLayout;
+    mainLayout->addWidget(_searchPath);
+    mainLayout->addWidget(pathEdit);
+
+    mainLayout->addStretch(1);
+    mainLayout->addSpacing(12);
+
+    ppython->setLayout(mainLayout);
+
+    return ppython;
+}
+
+void SearchOptionEditor::updatePaths()
+{
+    QStringList sp = _searchPath->paths();
+
+    QSettings s;
+    s.setValue("SearchPlate", sp);
+
+}
+
+CloudOptionEditor::CloudOptionEditor(QWidget *parent)
+{
+    // Create the form layout
+    formLayout = new QFormLayout;
+
+    // Create the combo box to select the cloud provider
+    providerComboBox_ = new QComboBox;
+    providerComboBox_->addItem("AWS");
+    providerComboBox_->addItem("GCS");
+    providerComboBox_->addItem("Azure");
+
+    // Connect the combo box to the slot to update the form fields
+    connect(providerComboBox_, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &CloudOptionEditor::updateFormFields);
+
+    // Create the form fields
+    QList<QLineEdit*> connects;
+
+    accessKeyEdit_ = new QLineEdit;
+    secretKeyEdit_ = new QLineEdit;
+    bucketEdit_ = new QLineEdit;
+    keyEdit_ = new QLineEdit;
+    connectionStringEdit_ = new QLineEdit;
+    containerEdit_ = new QLineEdit;
+    blobEdit_ = new QLineEdit;
+
+    connects << accessKeyEdit_<<secretKeyEdit_<<bucketEdit_<<keyEdit_<<connectionStringEdit_<<containerEdit_<<blobEdit_;
+
+    for (auto item : connects)
+        connect(item, SIGNAL(textChanged(QString)), this, SLOT(saveSettings()));
+
+
+    // Add the form fields to the layout
+    formLayout->addRow("Cloud Provider:", providerComboBox_);
+    formLayout->addRow("Access Key:", accessKeyEdit_);
+    formLayout->addRow("Secret Key:", secretKeyEdit_);
+    formLayout->addRow("Bucket:", bucketEdit_);
+    formLayout->addRow("Key:", keyEdit_);
+    formLayout->addRow("Connection String:", connectionStringEdit_);
+    formLayout->addRow("Container:", containerEdit_);
+    formLayout->addRow("Blob:", blobEdit_);
+
+    // Create the group box to hold the form fields
+    QGroupBox *formGroupBox = new QGroupBox("Cloud Storage Information");
+    formGroupBox->setLayout(formLayout);
+
+    // Create the main layout
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(formGroupBox);
+
+    // Set the main layout
+    setLayout(mainLayout);
+
+    // Restore from the Save Settings
+    loadSettings();
+
+    // Update the form fields to show the fields for the selected provider
+    updateFormFields();
+}
+
+QWidget *CloudOptionEditor::searchPath()
+{
+    return new QWidget();
+}
+
+void CloudOptionEditor::loadSettings()
+{
+    QSettings settings;
+
+
+    providerComboBox_->setCurrentText(settings.value("CloudStorage/provider", "AWS").toString());
+    accessKeyEdit_->setText(settings.value("CloudStorage/accessKey").toString());
+    secretKeyEdit_->setText(settings.value("CloudStorage/secretKey").toString());
+    bucketEdit_->setText(settings.value("CloudStorage/bucket").toString());
+    keyEdit_->setText(settings.value("CloudStorage/key").toString());
+    connectionStringEdit_->setText(settings.value("CloudStorage/connectionString").toString());
+    containerEdit_->setText(settings.value("CloudStorage/container").toString());
+    blobEdit_->setText(settings.value("CloudStorage/blob").toString());
+}
+
+void CloudOptionEditor::saveSettings()
+{
+    QSettings settings;
+
+    settings.beginGroup("CloudStorage");
+    settings.setValue("provider", providerComboBox_->currentText());
+    settings.setValue("accessKey", accessKeyEdit_->text());
+    settings.setValue("secretKey", secretKeyEdit_->text());
+    settings.setValue("bucket", bucketEdit_->text());
+    settings.setValue("key", keyEdit_->text());
+    settings.setValue("connectionString", connectionStringEdit_->text());
+    settings.setValue("container", containerEdit_->text());
+    settings.setValue("blob", blobEdit_->text());
+    settings.endGroup();
+}
+
+void CloudOptionEditor::updateFormFields()
+{
+    // Get the selected provider
+    QString provider = providerComboBox_->currentText();
+
+    // Show or hide the form fields based on the selected provider
+    accessKeyEdit_->setVisible(provider == "AWS");
+    formLayout->labelForField(accessKeyEdit_)->setVisible(provider == "AWS");
+
+    secretKeyEdit_->setVisible(provider == "AWS");
+    formLayout->labelForField(secretKeyEdit_)->setVisible(provider == "AWS");
+
+    bucketEdit_->setVisible(provider == "GCS" || provider == "AWS");
+    formLayout->labelForField(bucketEdit_)->setVisible(provider == "GCS" || provider == "AWS");
+
+    keyEdit_->setVisible(provider == "GCS");
+    formLayout->labelForField(keyEdit_)->setVisible(provider == "GCS");
+
+    connectionStringEdit_->setVisible(provider == "Azure");
+    formLayout->labelForField(connectionStringEdit_)->setVisible(provider == "Azure");
+
+    containerEdit_->setVisible(provider == "Azure");
+    formLayout->labelForField(containerEdit_)->setVisible(provider == "Azure");
+
+    blobEdit_->setVisible(provider == "Azure");
+    formLayout->labelForField(blobEdit_)->setVisible(provider == "Azure");
+
+    saveSettings();
 }

@@ -4,6 +4,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include <Core/checkouterrorhandler.h>
+#include "phenolinkimage.h"
 
 QMutex ImageInfos::_lockImage;
 
@@ -17,7 +18,7 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
     bias_correction(false),
     _saturate(true), _uninverted(true),
 
-    _channel(channel), _binarized(false),
+    _channel(channel), _binarized(false), _gradients(false),
     range_timer(NULL), range_timerId(-1)
 {
     QMutexLocker lock(&_lockImage);
@@ -175,7 +176,7 @@ cv::Mat ImageInfos::image(float scale, bool reload)
 
         }
         else
-            _image = cv::imread(_name.toStdString(), 2);
+            _image = pl::imread(_name, 2);
 
         if (scale < 1.0) // Only resize after loading data
             cv::resize(_image, _image, cv::Size(), scale, scale, cv::INTER_AREA);
@@ -277,7 +278,7 @@ cv::Mat ImageInfos::bias(int channel, float )
     {
         qDebug() << "Loading bias file" << bias_file;
 
-        bias = cv::imread(bias_file.toStdString(), 2);
+        bias = pl::imread(bias_file, 2);
         _ifo.bias_single_loader[bias_file] = bias;
     }
 
@@ -335,6 +336,18 @@ void ImageInfos::toggleBinarized()
 
 bool ImageInfos::isBinarized() { return _binarized; }
 
+void ImageInfos::toggleGradients()
+{
+    _gradients = !_gradients;
+    propagate();
+}
+
+bool ImageInfos::isGradient() { return _gradients; }
+
+
+
+
+
 void ImageInfos::setColorMap(QString name){
     _colormap = name;
     propagate();
@@ -354,9 +367,10 @@ void ImageInfos::propagate()
                 _channel == ifo->_channel) // Only propagate status to same channel & plates
         {
             ifo->_uninverted = this->_uninverted;
-            ifo->_saturate = this->_saturate;
-            ifo->_colormap = this->_colormap;
-            ifo->_binarized = this->_binarized;
+            ifo->_saturate   = this->_saturate;
+            ifo->_colormap   = this->_colormap;
+            ifo->_binarized  = this->_binarized;
+            ifo->_gradients  = this->_gradients;
             ifo->_parent->modifiedImage();
         }
 

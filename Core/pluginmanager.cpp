@@ -78,14 +78,14 @@ void loadPlugins(bool isServer)
 
             QObject *plugin = pluginLoader.instance();
 
-            if (!pluginLoader.isLoaded())
-                qDebug() << pluginLoader.errorString();
+                        if (!pluginLoader.isLoaded())
+                            qDebug() << pluginLoader.errorString();
 
 
             if (plugin)
             {
                 bool added = false;
-                //qDebug() << "Plugin" << pluginsDir.absoluteFilePath(fileName);
+            //    qDebug() << "Plugin" << pluginsDir.absoluteFilePath(fileName);
                 CheckoutDataLoaderPluginInterface* pl = qobject_cast<CheckoutDataLoaderPluginInterface*>(plugin);
                 if (pl)
                 {

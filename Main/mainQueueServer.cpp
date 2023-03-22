@@ -37,6 +37,8 @@ using namespace qhttp::server;
 #include <Core/networkprocesshandler.h>
 
 
+QString storage_path;
+
 std::ofstream outfile("c:/temp/CheckoutServer_log.txt");
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &, const QString &msg)
@@ -105,6 +107,10 @@ void startup_execute(QString file)
 
 }
 
+QProcessEnvironment python_config;
+
+#include <checkout_python.h>
+
 int main(int ac, char** av)
 {
 #ifdef WIN32
@@ -127,6 +133,22 @@ int main(int ac, char** av)
 
     QStringList data;
     for (int i = 1; i < ac; ++i) { data << av[i];  }
+
+    if (data.contains("-h") || data.contains("-help"))
+    {
+        qDebug() << "CheckoutQueue Serveur Help:";
+        qDebug() << "\t-p <port>: specify the port to run on";
+        qDebug() << "\t-d : Run in debug mode (windows only launches a console)";
+        qDebug() << "\t-Crashed: Reports that the process has been restarted after crashing";
+        qDebug() << "\t-c <config>: Specify a config file for python env setting json dict";
+        qDebug() << "\t-t <path> :  Set the storage path for plugins postprocesses";
+        qDebug() << "\t\t shall contain env. variable with list of values,";
+        qDebug()<< "$NAME will be substituted by current env value called 'NAME'";
+        ;
+
+        exit(0);
+    }
+
     if (data.contains("-p"))
     {
         int idx = data.indexOf("-p")+1;
@@ -143,14 +165,52 @@ int main(int ac, char** av)
     }
 
 
+    if (data.contains("-c"))
+    {
+        QString config;
+        int idx = data.indexOf("-c")+1;
+        if (data.size() > idx) config = data.at(idx);
+        qDebug() << "Using server config:" << config;
+
+        QFile loadFile(config);
+
+        parse_python_conf(loadFile, python_config);
+
+    }
+
+    if (data.contains("-t"))
+    {
+        int idx = data.indexOf("-t")+1;
+        QString file;
+        if (data.size() > idx) storage_path = data.at(idx);
+        qDebug() << "Setting Storage path :" << storage_path;
+    }
+    else
+    {
+#if WIN32
+        storage_path = "L:/";
+#else
+        storage_path = "/mnt/shares/L/";
+#endif
+    }
+
+
 #if WIN32
 
     if (data.contains("-d"))
         show_console();
 #endif
 
+
+
+
     Server server;
     server.setPort(port);
+    if (QFile::exists(QString("%1/Temp/checkout_queue_pendingjobs.json").arg(storage_path)))
+    {
+        server.recover(QString("%1/Temp/checkout_queue_pendingjobs.json").arg(storage_path));
+    }
+
 
     return server.start(port);
 }
@@ -175,7 +235,7 @@ QString stringIP(quint32 ip)
             .arg((ip >> 24) & 0xFF);
 }
 
-Server::Server(): QHttpServer(), client(nullptr)
+Server::Server(): QHttpServer(), client(nullptr), cpu_counts(0)
 {
 #ifdef WIN32
 
@@ -249,7 +309,9 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
 
     for (auto& srv: workers)
         if (!rmWorkers.contains(srv))
+        {
             servers[srv] ++;
+        }
 
     body += "<h3>Cores Listing</h3>";
     //for (auto it = runni)
@@ -273,7 +335,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
 
     body += "<h3>Awaiting Jobs</h3>";
 
-    body += pendingTasks().join("<br>") + "<br>";
+    body += pendingTasks(true).join("<br>") + "<br>";
 
     body += "<h3>Running Jobs</h3>";
 
@@ -282,7 +344,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
         runs[task.key().split("!").first()]++;
 
     for (auto it = runs.begin(), e = runs.end(); it != e; ++it)
-        body += QString("%1 => %2 <a href='/Cancel/?proc=%1'>Cancel</a>&nbsp;<a href='/Restart'>Force Restart</a><br>").arg(it.key()).arg(it.value());
+        body += QString("%1 => %2  <a href='/Details/?proc=%1'>Details</a>&nbsp;<a href='/Restart'>Force Restart</a><br>").arg(it.key()).arg(it.value());
 
     message = QString("<html><title>Checkout Queue Status %2</title><body>%1</body></html>").arg(body).arg(CHECKOUT_VERSION);
 
@@ -333,7 +395,7 @@ unsigned int Server::nbUsers()
 }
 
 
-QStringList Server::pendingTasks()
+QStringList Server::pendingTasks(bool html)
 {
     QMutexLocker lock(&workers_lock);
 
@@ -356,18 +418,37 @@ QStringList Server::pendingTasks()
     QStringList res;
     for (auto it = names.begin(), e = names.end(); it != e; ++it)
     {
-        res << QString("%1 => %2").arg(it.key()).arg(it.value());
+        QString key = it.key();
+        res << QString("%1 => %2").arg((html ? key + "<a href='/Cancel/?proc=" + key.replace(" ", "")
+                                               +"'>Cancel</a>&nbsp;" : key)).arg(it.value());
     }
 
     return res;
 }
+
+void Server::timerEvent(QTimerEvent *event)
+{
+    int id = event->timerId();
+    for (auto item =  timer_handler.begin(), end = timer_handler.end(); item != end; ++item)
+        if (item.value() == id)
+        {
+            qDebug() << "Timer check for" << item.key() << "Finished";
+            killTimer(id);
+
+
+
+
+
+        }
+}
+
 
 
 
 
 QQueue<QJsonObject>& Server::getHighestPriorityJob(QString server)
 {
-   // QMutexLocker locker(&workers_lock);
+    // QMutexLocker locker(&workers_lock);
 
     if (jobs.contains(server)) // does this server have some affinity with the current process ?
     { // if yes we dequeue from this one
@@ -435,31 +516,46 @@ void Server::WorkerMonitor()
             {
                 QQueue<QJsonObject>& queue = getHighestPriorityJob(next_worker);
 
+
                 // Hey hey look what we have here: the job to be run by next_worker let's call the start func then :
                 // start it :)
                 if (queue.size())
                 {
 
                     QJsonObject pr = queue.dequeue();
-                    QString srv = next_worker; // Set proxy name
+                    /*if (!proc_params[pr["Path"].toString()].contains(next_worker))
+                    {
+                        auto project = pr["Project"].toString();
+                        int priority = pr.contains("Priority") ? pr["Priority"].toInt() : 1;
+
+                        if (project_affinity.contains(project))
+                        {
+                            jobs[project_affinity[project]][priority].enqueue(pr);
+                        }
+                        else
+                            jobs[""][priority].enqueue(pr); // Unmapped project goes to "global" path
+                        workers_lock.unlock();
+                        continue;
+                    }*/
+
                     CheckoutHttpClient* sr = nullptr;
-                    if (clients[srv])
-                        sr = clients[srv];
+                    if (clients[next_worker])
+                        sr = clients[next_worker];
                     else
                     {
-                        auto t = next_worker.split(":");
-                        clients[srv] = new CheckoutHttpClient(t[0], t[1].toInt());
-                        sr = clients[srv];
+                        QStringList srl = next_worker.split(":");
+                        clients[next_worker] = new CheckoutHttpClient(srl[0], srl[1].toInt());
+                        sr = clients[next_worker];
                     }
-//                    sr->setCollapseMode(false);
+                    //                    sr->setCollapseMode(false);
                     QString taskid = QString("%1@%2#%3#%4!%5#%6:%7")
-                        .arg(pr["Username"].toString(), pr["Computer"].toString(),
-                             pr["Path"].toString(), pr["WorkID"].toString(),
-                             pr["XP"].toString(), pr["Pos"].toString(), pr["Process_hash"].toString());
+                            .arg(pr["Username"].toString(), pr["Computer"].toString(),
+                            pr["Path"].toString(), pr["WorkID"].toString(),
+                            pr["XP"].toString(), pr["Pos"].toString(), pr["Process_hash"].toString());
 
                     pr["TaskID"] = taskid;
 
-                    //  qDebug()  << "Taskid" << taskid << pr;
+                    qDebug()  << "Sending Work ID"  << taskid << "to" << next_worker;
                     QJsonArray ar; ar.append(pr);
 
                     sr->send(QString("/Start/%1").arg(pr["Path"].toString()), QString(""), ar);
@@ -472,7 +568,7 @@ void Server::WorkerMonitor()
 
             }
             workers_lock.unlock();
-            QThread::msleep(2);
+            //            QThread::msleep(2);
         }
         else
         {
@@ -483,11 +579,11 @@ void Server::WorkerMonitor()
     }
 }
 
-QString Server::pickWorker()
+QString Server::pickWorker(QString )
 {
+
     static QString lastsrv;
 
-    //    QMutexLocker locker(&workers_lock);
     if (lastsrv.isEmpty())
     {
         auto next_worker = workers.back();
@@ -511,6 +607,19 @@ QString Server::pickWorker()
 
 }
 
+
+#include <checkout_arrow.h>
+
+
+QString adjust(QString script)
+{
+#ifdef WIN32
+    return storage_path + script;
+#else
+    return storage_path + script.replace(":", "");
+#endif
+}
+
 void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpResponse* res)
 {
 
@@ -525,11 +634,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
         // If not using cbor outputs the version also
         QStringList prcs = procs.pluginPaths(query.contains("json"));
-        int processor_count = (int)std::thread::hardware_concurrency();
-
         QJsonObject ob;
 
-        ob["CPU"] = processor_count;
+        ob["CPU"] = cpu_counts;
+        ob["Queue"] = true;
         ob["Processes"] = QJsonArray::fromStringList(QStringList(proc_list.begin(), proc_list.end()));
         // Need to keep track of processes list from servers
         setHttpResponse(ob, res, !query.contains("json"));
@@ -548,7 +656,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
     if (urlpath.startsWith("/Images/"))
     {
-        QFile of(urlpath.mid(8));
+        QString fp = urlpath.mid(8);
+        qDebug() << "Exposing file" << fp;
+
+
+        QFile of(fp);
         if (of.open(QFile::ReadOnly))
         {
             QByteArray body = of.readAll();
@@ -563,17 +675,19 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         return;
     }
 
-
     if (urlpath== "/status.html" || urlpath=="/index.html")
     {
         HTMLstatus(res);
         return;
     }
 
-    qDebug() << qhttp::Stringify::toString(req->method())
-             << qPrintable(urlpath)
-             << qPrintable(query)
-             << data.size();
+
+
+    qDebug()  << QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz")
+              << qhttp::Stringify::toString(req->method())
+              << qPrintable(urlpath)
+              << qPrintable(query)
+              << data.size();
 
 
     if (urlpath.startsWith("/Ready")) // Server is ready /Ready/{port}
@@ -587,7 +701,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         QString workid, cpu;
 
         bool reset = false;
-        bool avail = true;
+        int avail = 0;
         bool crashed = false;
         for (auto q : queries)
         {
@@ -614,7 +728,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                 workid = q.replace("workid=","");
             }
             if (q.startsWith("available="))
-                avail = (q == "available=1");
+            {
+                avail = (q.replace("available=", "").toInt());
+                avail = avail > 0 ? avail : 1;
+            }
             if (q.startsWith("crashed="))
             {
                 crashed = (q=="crashed=true");
@@ -629,61 +746,230 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         qDebug() << reset << avail << cpu << workid;
         QMutexLocker lock(&workers_lock);
-        QString w = QString("%1:%2").arg(serverIP).arg(port);
 
+        QString cw = QString("%1:%2").arg(serverIP).arg(port);
 
         if (reset) // Occurs if servers reconnect
         {
-            workers.removeAll(w);
-            workers_status[w]=0;
+            workers.removeAll(cw);
+            workers_status[cw]=0;
         }
         auto ob = QCborValue::fromCbor(data).toJsonValue().toArray();
 
-        if (avail && ob.size() == 0 )
+        if (avail > 0 && ob.size() == 0 )
         {
-            if (workers_status[w] >= 0)
+            if (workers_status[cw] >= 0)
             {
-                for (int i= 0; i< (cpu.isEmpty() ? 1 : cpu.toInt()); ++i)
-                    workers.enqueue(w);
+                if (cpu.isEmpty())
+                    workers.enqueue(cw);
+                else
+                    for (int i= 0; i <  (cpu.isEmpty() ? avail : cpu.toInt()) ; ++i)
+                        workers.enqueue(cw);
+
             }
         }
 
 
         if (!cpu.isEmpty())
-            workers_status[w]+=cpu.toInt();
+            workers_status[cw]+=cpu.toInt();
         else if (ob.size() == 0)
-            workers_status[w]++;
+            workers_status[cw]++;
 
         if (!workid.isEmpty())
         {
-            qDebug() << "Finished " << workid;
             auto t = QDateTime::currentDateTime().toSecsSinceEpoch() - running[workid]["SendTime"].toInt();
-            QString ww = workid.split("!")[0];
+            qDebug() << "Finished " << workid << "in" << t <<"s" ;
+            QStringList wid = workid.split("!");
+            QString ww = QString("%1!%2").arg(wid[0], wid[1].split("#")[0]);
 
             run_time[ww] += t;
             run_count[ww] ++;
 
             running.remove(workid);
         }
+
         for (int i = 0; i < ob.size(); ++i)
         {
             auto obj = ob[i].toObject();
             if (obj.contains("TaskID"))
             {
-
-
                 auto t = QDateTime::currentDateTime().toSecsSinceEpoch() - running[obj["TaskID"].toString()]["SendTime"].toInt();
-                QString ww = workid.split("!")[0];
+                QStringList wid = obj["TaskID"].toString().split("!");
+                QString wwid = QString("%1!%2").arg(wid[0], wid[1].split("#")[0]);
+                QString ww = obj["TaskID"].toString().split("!")[0];
+                QString jobid = wid[0];
 
                 run_time[ww] += t;
                 run_count[ww] ++;
 
-                running.remove(obj["TaskID"].toString());
-                workers.enqueue(w);
-                workers_status[w]++;
-            }
-        }
+                work_count[wwid] --;
+                perjob_count[jobid]--;
 
+                qDebug() << "Work ID finished" << obj["TaskID"] << wwid << work_count.value(wwid);
+
+
+                float duration = (run_time[ww] / run_count[ww]); // Secs
+
+                if (!timer_handler.contains(ww))
+                    killTimer(timer_handler[ww]);
+                if (duration > 0)
+                {
+                    int timer = startTimer(duration * 1000);
+                    timer_handler[ww] = timer;
+
+                    qDebug() << "Starting timer" <<timer << duration << "s for" << ww;
+                }
+                if (work_count.value(wwid) == 0)
+                {
+                    qDebug() << "Work ID finished" << wwid << "Aggregate & collate data" << obj["TaskID"].toString();
+                    QSettings set;
+                    QString dbP = set.value("databaseDir", "L:/").toString();
+
+#ifndef  WIN32
+                    if (dbP.contains(":"))
+                        dbP = QString("/mnt/shares/") + dbP.replace(":","");
+#endif
+
+                    dbP.replace("\\", "/").replace("//", "/");
+                    auto agg = running[obj["TaskID"].toString()];
+
+                    QString path = QString("%1/PROJECTS/%2/Checkout_Results/%3").arg(dbP,
+                                                                                     agg["Project"].toString(),
+                            agg["CommitName"].toString()).replace("\\", "/").replace("//", "/");;
+
+                    QThread::sleep(5); // Let time to sync
+
+                    QDir dir(path);
+
+                    QStringList files = dir.entryList(QStringList() << QString("%1_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
+                    QString concatenated = QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/",""));
+                    if (files.isEmpty())
+                    {
+                        qDebug() << "Error fusing the data to generate" << concatenated;
+                        qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", ""));
+                    }
+                    else
+                    {
+
+                        if (QFile::exists(concatenated)) // In case the feather exists already add this for fusion at the end of the process since arrow fuse handles duplicates if will skip value if recomputed and keep non computed ones (for instance when redoing a well computation)
+                        {
+                            dir.rename(concatenated, concatenated + ".torm");
+                            files << concatenated.split("/").last()+".torm";
+                        }
+
+                        QtConcurrent::run(fuseArrow,
+                                          path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+
+//                        fuseArrow(path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+                    }
+
+                    // qDebug() << agg.keys() << obj.keys();
+
+                    if (agg.contains("PostProcesses") && agg["PostProcesses"].toArray().size() > 0)
+                    {
+                        qDebug() << "We need to run the post processes:" << agg["PostProcesses"].toArray();
+                        // Set our python env first
+                        // Setup the call to python
+                        // Also change working directory to the "concatenated" folder
+                        auto arr = agg["PostProcesses"].toArray();
+
+                        QFuture<void> future = QtConcurrent::run([this, arr, concatenated, path]{
+
+                            for (int i = 0; i < arr.size(); ++i )
+                            { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
+                                QString script = arr[i].toString().replace("\\", "/");
+                                auto args = QStringList() << adjust(script)  << concatenated;
+                                QProcess* python = new QProcess();
+
+
+                                this->postproc << python;
+
+                                python->setProcessEnvironment(python_config);
+                                qDebug() << python_config.value("PATH");
+                                qDebug() << args;
+
+                                postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
+                                postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".log");
+                                postproc.last()->setWorkingDirectory(path);
+
+                                postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
+                                postproc.last()->setArguments(args);
+
+                                postproc.last()->start();
+                            }
+
+                        });
+
+
+
+                    }
+                    else
+                        qDebug() << "No Postprocesses";
+
+
+
+                    if (  perjob_count[jobid] == 0 && agg.contains("PostProcessesScreen")&& agg["PostProcessesScreen"].toArray().size() > 0)
+                    {
+                        qDebug() << "We need to run the post processes:" << agg["PostProcessesScreen"].toArray();
+                        // Set our python env first
+                        // Setup the call to python
+                        // Also change working directory to the "concatenated" folder
+                        auto data = agg["Experiments"].toArray();
+                        QStringList xps;
+                        for (auto d: data) xps << d.toString().replace("\\", "/").replace("/", "")+".fth";
+
+                        auto arr = agg["PostProcessesScreen"].toArray();
+
+                        QFuture<void> future = QtConcurrent::run([this, arr, xps, concatenated, path]{
+                            for (int i = 0; i < arr.size(); ++i )
+                            { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
+                                QString script = arr[i].toString().replace("\\", "/");
+    //                            QDir dir(path);
+
+                                auto args = QStringList() << adjust(script);
+                                //<< concatenated;
+                                for (auto & d: xps) if (QFile::exists(path+"/"+d))  args << d;
+                                QProcess* python = new QProcess();
+
+                                this->postproc << python;
+
+                                python->setProcessEnvironment(python_config);
+                                qDebug() << python_config.value("PATH");
+                                qDebug() << args;
+
+                                postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
+                                postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".screen_log");
+                                postproc.last()->setWorkingDirectory(path);
+
+                                postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
+                                postproc.last()->setArguments(args);
+
+                                postproc.last()->start();
+                            }
+
+                        });
+
+
+
+                    }
+                    else
+                        qDebug() << "No Screen Post-processes";
+                }
+
+                // Check if we have finished the TaskID subsets to pure task id i.e. Screen processing and launch subsequents multiplate python runners
+                running.remove(obj["TaskID"].toString());
+
+                workers.enqueue(cw);
+                workers_status[cw]++;
+            }
+
+
+        }
+        {
+            QJsonObject ob;
+            setHttpResponse(ob, res, false);
+        }
+        return;
     }
 
     if (urlpath.startsWith("/Affinity"))
@@ -707,7 +993,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
         for (auto& project: projects)
             project_affinity[project]=QString("%1:%2").arg(srv, port);
-
+        {
+            QJsonObject ob;
+            setHttpResponse(ob, res, false);
+        }
+        return;
     }
 
 
@@ -722,12 +1012,16 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         {
             auto obj = ob.at(i).toMap().toJsonObject();
             QString pr = obj["Path"].toString();
+            cpu_counts += obj["CPU"].toInt();
             proc_list.insert(pr);
             proc_params[pr][QString("%1:%2").arg(serverIP).arg(port)] = obj;
         }
-
+        {
+            QJsonObject ob;
+            setHttpResponse(ob, res, false);
+        }
         //        qDebug() << proc_params;
-
+        return;
     }
 
     if (urlpath.startsWith("/Proxy"))
@@ -751,13 +1045,17 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         if (client)
         {
             qDebug() << "Reseting proxy";
-            delete client;
+            //delete client;
         }
 
         rmWorkers.remove(QString("%1:%2").arg(srv, port));
 
         client = new CheckoutHttpClient(srv, port.toUInt());
         client->send("/Proxy", QString("port=%1").arg(dport), QJsonArray());
+
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
+        return;
     }
 
     if (urlpath.startsWith("/rm"))
@@ -772,15 +1070,10 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             if (q.startsWith("host="))
                 srv = q.replace("host=", "");
         }
-        {
-//            QMutexLocker lock(&workers_lock);
-
-            rmWorkers.insert(QString("%1:%2").arg(srv, port));
-            //workers_status.remove(QString("%1:%2").arg(srv,port));
-        }
+        rmWorkers.insert(QString("%1:%2").arg(srv, port));
 
         HTMLstatus(res, QString("Removed server %1:%2").arg(srv,port));
-      return;
+        return;
     }
 
     if (urlpath.startsWith("/Status"))
@@ -789,6 +1082,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         procs.getStatus(ob);
         //            qDebug() << path << ob;
         setHttpResponse(ob, res, !query.contains("json"));
+        return;
     }
 
     if (urlpath.startsWith("/ServerDone"))
@@ -834,6 +1128,11 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             running.clear();
             workers_lock.unlock();
         }
+        {
+            QJsonObject ob;
+            setHttpResponse(ob, res, false);
+        }
+        return;
     }
 
     if (urlpath.startsWith("/Restart"))
@@ -859,6 +1158,46 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         return;
     }
 
+    if (urlpath.startsWith("/Details/"))
+    {
+
+        QStringList queries = query.split("&");
+        QString proc, body;
+        for (auto& q : queries)
+        {
+            if (q.startsWith("proc="))
+            {
+                proc = q.replace("proc=","");
+
+                for (auto& srv: jobs)
+                {
+                    for (auto& q: srv)
+                    {
+                        QList<QJsonObject> torm;
+
+                        for (auto& obj: q)
+                        {
+                            QString workid = QString("%1@%2#%3#%4!%5#%6:%7")
+                                    .arg(obj["Username"].toString(), obj["Computer"].toString(),
+                                    obj["Path"].toString(), obj["WorkID"].toString(),
+                                    obj["XP"].toString(),  obj["Pos"].toString(), obj["Process_hash"].toString());
+
+                            body += QString("<li>%1</li>").arg(workid);
+                        }
+                    }
+                }
+            }
+        }
+
+        auto message = QString("<html><title>Checkout Processes Listing</title><body><ul>%1</ul></body></html>").arg(body);
+
+
+        res->setStatusCode(qhttp::ESTATUS_OK);
+        res->addHeaderValue("content-length", message.size());
+        res->end(message.toUtf8());
+
+        return;
+    }
 
     if (urlpath.startsWith("/Cancel/"))
     {
@@ -874,13 +1213,16 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
                 QMutexLocker lock(&workers_lock);
                 // Clear up the jobs
-                QStringList job = proc.split("#");
+                QStringList job = proc.split(":");
                 if (job.size() < 2)
                     break;
                 QStringList name = job[0].split("@");
-                QString jobname  = job[1];
-                QString workid = job.back();
+                int idx = job[1].indexOf('(');
+                QString jobname  = job[1].mid(0, idx).replace(" ", "");
+                QString workid = job[1].mid(idx+1).replace(")", "");
 
+
+                qDebug() << "rm job command:" << name[0] << name[1] << jobname << workid;
                 for (auto& srv: jobs)
                 {
                     for (auto& q: srv)
@@ -889,17 +1231,19 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
                         for (auto& item: q)
                         {
+                 /*           qDebug() << item["Username"].toString() << item["Computer"].toString()
+                                << item["Path"].toString() << item["WorkID"].toString();*/
                             if (item["Username"].toString() == name[0] &&
                                     item["Computer"].toString() == name[1] &&
-                                    item["Path"].toString() == jobname &&
+                                    item["Path"].toString().replace(" ", "") == jobname &&
                                     item["WorkID"].toString() == workid)
                                 torm << item;
                         }
-                        cancelProcs = (int)torm.size();
+                        cancelProcs += (int)torm.size();
+
+                        qDebug() << "Trying to remove" << cancelProcs;
                         for (auto& it : torm)
                             q.removeAll(it);
-
-
                     }
                 }
 
@@ -924,22 +1268,58 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             }
             if (q.startsWith("cpus"))
             {
-                    cpus = q.replace("cpus=","").toInt();
-                    if (cpus < 1) cpus = 1;
+                cpus = q.replace("cpus=","").toInt();
+                if (cpus < 1) cpus = 1;
             }
         }
 
         qDebug() << "Suspending" << serverIP << "CPU on port" << port;
-        QMutexLocker lock(&workers_lock);
-        //        workers.enqueue(qMakePair(serverIP, port));
-        QString w = QString("%1:%2").arg(serverIP).arg(port);
-        for (int i = 0; i < cpus; ++i) workers.removeOne(w);
-        workers_status[w] -= cpus;;
 
+        QMutexLocker lock(&workers_lock);
+        QString cw = QString("%1:%2").arg(serverIP).arg(port);
+        for (int i = 0; i < cpus; ++i) workers.removeOne(cw);
+        workers_status[cw] -= cpus;;
+
+        {
+            QJsonObject ob;
+            setHttpResponse(ob, res, false);
+        }
+        return;
     }
+
+    if (urlpath.startsWith("/Quit"))
+    {
+        QJsonObject ob;
+        setHttpResponse(ob, res, false);
+
+        workers_lock.lock();
+        QJsonArray ar;
+
+        // Look for jobs
+        for (auto& srv: jobs.keys())
+            for (auto& prio: jobs[srv].values())
+                for (auto& obj: prio)
+                    ar.append(obj);
+
+        // Look for ongoing (unwatched) tasks
+        for (auto& tasks: running.values())
+            ar.append(tasks);
+        if (ar.size())
+        {
+            QFile store(QString("%1/Temp/checkout_queue_pendingjobs.json").arg(storage_path));
+
+            if (store.open(QFile::WriteOnly))
+                store.write(QCborValue::fromJsonValue(ar).toCbor());
+        }
+        qApp->exit(0);
+        workers_lock.unlock();
+    }
+
 
     if (urlpath.startsWith("/Start/"))
     {
+
+
         QString refIP = stringIP(req->connection()->tcpSocket()->peerAddress().toIPv4Address());
         QString proc = urlpath.mid(7);
 
@@ -949,6 +1329,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         for (int i = 0; i < ob.size(); ++i)
         {
             QJsonObject obj = ob.at(i).toObject();
+
 
             QByteArray arr = QCborValue::fromJsonValue(obj).toCbor();
             arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
@@ -974,6 +1355,16 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
             workers_lock.unlock();
 
+            QString workid = QString("%1@%2#%3#%4!%5")
+                    .arg(obj["Username"].toString(), obj["Computer"].toString(),
+                    obj["Path"].toString(), obj["WorkID"].toString(),
+                    obj["XP"].toString());
+            QString jobid = QString("%1@%2#%3#%4")
+                    .arg(obj["Username"].toString(), obj["Computer"].toString(),
+                    obj["Path"].toString(), obj["WorkID"].toString());
+
+            work_count[workid]++;
+            perjob_count[jobid]++;
 
             ob.replace(i, obj);
         }
@@ -985,6 +1376,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         setHttpResponse(obj, res, !query.contains("json"));
         //        QtConcurrent::run(&procs, &CheckoutProcess::startProcessServer,
         //                          proc, ob);
+        return;
 
     }
 
@@ -1009,7 +1401,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         root["args"] = total;
 
         QByteArray body = QJsonDocument(root).toJson();
-        //        res->addHeader("connection", "keep-alive");
+       res->addHeader("connection", "close");
         res->addHeader("content-length", QString::number(body.length()).toLatin1());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body);
@@ -1017,8 +1409,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     else
     {
         QString body = QString("Server Query received, with empty content (%1)").arg(urlpath);
-        //        res->addHeader("connection", "close");
-        res->addHeader("content-length", QString::number(body.length()).toLatin1());
+        res->addHeader("connection", "close");
+        res->addHeaderValue("content-length", body.length());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body.toLatin1());
     }
@@ -1092,7 +1484,7 @@ void Control::timerEvent(QTimerEvent * event)
         tooltip = QString("CheckoutQueueServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
 
     QStringList missing_users;
-    for (auto user : procs.users())
+    for (auto& user : procs.users())
     {
         tooltip = QString("%1\r\n%2").arg(tooltip).arg(user);
         bool missing = true;
@@ -1105,10 +1497,10 @@ void Control::timerEvent(QTimerEvent * event)
         if (missing) missing_users << user;
     }
 
-    for (auto old: _users)
+    for (auto & old: _users)
     {
         bool rem = true;
-        for (auto ne: procs.users())
+        for (auto &ne: procs.users())
         {
             if (ne == old->text())
                 rem = false;
@@ -1127,8 +1519,21 @@ void Control::timerEvent(QTimerEvent * event)
         _users.append(_cancelMenu->addAction(user));
 }
 
-
-
 #endif
+
+void Server::recover(QString f)
+{
+    QFile io(f);
+    if (io.open(QFile::ReadOnly))
+    {
+       auto ar = QCborValue::fromCbor(io.readAll()).toArray();
+       int prio = ar.size();
+       for (int i = 0; i < prio; i++)
+       {
+           auto obj = ar[i].toJsonValue().toObject();
+           jobs[""][prio].enqueue(obj);
+       }
+    }
+}
 
 

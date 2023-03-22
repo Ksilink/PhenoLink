@@ -12,6 +12,8 @@
 #include <QTextStream>
 #include <iostream>
 #include <vector>
+#include <string>
+#include <string_view>
 
 #undef signals
 #include <arrow/api.h>
@@ -145,6 +147,11 @@ void ExperimentFileModel::setPattern(QPoint Pos, QString col)
     {
         res.setPattern(col);
     }
+}
+
+void ExperimentFileModel::addMetadataFile(QString f)
+{
+    _otherfiles << f;
 }
 
 
@@ -706,24 +713,23 @@ void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, boo
 
     auto schema = reader->schema();
 
-    if (schema->HasMetadata())
-    {
-        auto meta = schema->metadata();
-        qDebug() << "Metadatas";
-        for (auto key : meta->keys())
-        {
-            qDebug() << QString::fromStdString(key) << QString::fromStdString(meta->Get(key).ValueOrDie());
-
-        }
-    }
-
-
-    ArrowGet(count, r3, reader->CountRows(), "Arrow No rows available");
+    //    if (schema->HasMetadata())
+    //    {
+    //        auto meta = schema->metadata();
+    //        qDebug() << "Metadatas";
+    //        for (auto key : meta->keys())
+    //        {
+    //            qDebug() << QString::fromStdString(key) << QString::fromStdString(meta->Get(key).ValueOrDie());
+    //        }
+    //    }
 
 
-    qDebug() << "Nb Rows: " << count;
+//    ArrowGet(count, r3, reader->CountRows(), "Arrow No rows available");
 
-    qDebug() << "Fields content";
+
+//    qDebug() << "Nb Rows: " << count;
+
+//    qDebug() << "Fields content";
 
     std::list<std::string> fields;
     for (auto f : schema->fields())
@@ -759,14 +765,7 @@ void ExperimentFileModel::reloadDatabaseDataFeather(QString file, QString t, boo
                     data->addData(QString::fromStdString(field), fieldid->Value(s), sliceId->Value(s), tp->Value(s), chan->Value(s), pos, array->Value(s));
             }
         }
-
     }
-
-
-
-
-
-
 }
 
 
@@ -1051,6 +1050,22 @@ QStringList SequenceFileModel::getAllFiles()
     return files;
 }
 
+void SequenceFileModel::toJxl()
+{
+    for (auto f = _data.begin(), fe = _data.end(); f != fe; ++f)
+        for (auto z = f.value().begin(), ze = f.value().end(); z != ze; ++z)
+            for (auto t = z.value().begin(), te = z.value().end(); t != te; ++t)
+                for (auto c = t.value().begin(), ce = t.value().end(); c != ce; c++)
+                {
+                    if (!c.value().isEmpty())
+                         {
+                        c.value().chop(4);
+                        c.value() = c.value() +".jxl";
+                        //qDebug() << c;
+                    }
+                }
+}
+
 StructuredMetaData& SequenceFileModel::getMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name)
 {
     static StructuredMetaData r;
@@ -1091,8 +1106,6 @@ QString SequenceFileModel::getBasePath()
 
 QMap<QString, StructuredMetaData>& SequenceFileModel::getMetas(int timePoint, int fieldIdx, int Zindex, int channel)
 {
-
-
     static QMap<QString, StructuredMetaData> r;
 
     if (_sdata.contains(fieldIdx))
@@ -2407,6 +2420,7 @@ QString ScreensHandler::findPlate(QString plate, QStringList projects, QString d
                                          << "Z:/BTSData/MeasurementData/"
                                          << "W:/BTSData/MeasurementData/"
                                          << "K:/BTSData/MeasurementData/"
+                                         << "O:/BTSData/MeasurementData/"
                                          << "C:/Data/").toStringList();
     if (!drives.isEmpty())
     {
@@ -2423,10 +2437,13 @@ QString ScreensHandler::findPlate(QString plate, QStringList projects, QString d
 
     if (!projects.isEmpty())
     {
-        for (auto& file : searchpaths)
+        QStringList temp;
+        for (auto& file : searchPaths)
             for (auto &project: projects)
                 if (dir.exists(file) && dir.exists(file + project))
-                    searchPaths.push_front(file + project);
+                    temp.push_back(file + project);
+
+        searchPaths = temp + searchPaths;
     }
     else
     {
@@ -2811,10 +2828,19 @@ ExperimentFileModel* ScreensHandler::addDataToDb(QString hash, QString commit, Q
     datamdl->setCommitName(commit);
 
     QString id = data.take("Pos").toString();
+
+    if (id.isEmpty())
+    {
+        return 0;
+    }
+
     int fieldId = data.take("FieldId").toInt(),
             timepoint = data.take("TimePos").toInt(),
             sliceId = data.take("zPos").toInt(),
             channel = data.take("Channel").toInt();
+
+    if (data.contains("TaskID"))  data.take("TaskID");
+    if (data.contains("WorkID"))  data.take("WorkID");
 
     data.take("hash");
     data.take("DataHash");
@@ -3554,8 +3580,10 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
     }
 
 
-    bool csv = false, feather = true;
+    bool csv = false, feather = false;
 
+    if (_dataset.size()==0 || _dataset.first().data.first().size() == 0)
+        return 0;
     if (feather)
     { // Feather writing of the Non Aggregated
         std::vector<std::shared_ptr<arrow::Field> > fields;
@@ -3654,8 +3682,8 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
         }
         auto writer = r2.ValueOrDie();
 
-        writer->WriteTable(*table.get());
-        writer->Close();
+        auto res = writer->WriteTable(*table.get());
+        res = writer->Close();
 
     }
 
@@ -3665,7 +3693,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
 #define StringBuild(data, access, dest){ arrow::StringBuilder bldr;        \
     for (QMap<unsigned, QMap<QString, QList<double> >    >::iterator it = factor.begin(), e = factor.end(); it != e; ++it) \
         {   data.push_back(access.toStdString());    \
-    ABORT_ON_FAILURE(bldr.Append(data.back()));   } \
+    ABORT_ON_FAILURE(bldr.Append(std::string_view{data.back()}));   } \
     ABORT_ON_FAILURE(bldr.Finish(&dest));  bldr.Reset(); }
 
 
@@ -3747,8 +3775,8 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
 
         auto writer = r2.ValueOrDie();
 
-        writer->WriteTable(*table.get());
-        writer->Close();
+        auto res = writer->WriteTable(*table.get());
+        res = writer->Close();
 
 
 
@@ -4210,8 +4238,8 @@ void StructuredMetaData::exportData()
     arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
     auto writer = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options).ValueOrDie();
 
-    writer->WriteTable(*table.get());
-    writer->Close();
+    auto res = writer->WriteTable(*table.get());
+    res = writer->Close();
 }
 
 cv::Mat& StructuredMetaData::content() { return _content; }

@@ -25,6 +25,12 @@
 
 #include <QSettings>
 
+#include <QFileDialog>
+#include <QDir>
+#include <QFormLayout>
+#include <QDialogButtonBox>
+
+
 #include <Core/ck_mongo.h>
 
 using namespace qhttp::client;
@@ -45,7 +51,6 @@ tagger::tagger(QStringList datas, QWidget *parent) :
     setWindowTitle("Setting Plate Tags");
     setModal(true);
     ui->setupUi(this);
-
     mongocxx::uri uri("mongodb://192.168.2.127:27017");
     mongocxx::client client(uri);
 
@@ -121,7 +126,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 #else
             bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
 #endif
-            QString pr = QString::fromStdString(view.to_string()).simplified();
+            QString pr = QString::fromStdString(std::string{view}).simplified();
             if (!pr.isEmpty())
                 _projects.insert(pr) ;
         }
@@ -156,7 +161,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 #else
                     bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
 #endif
-                    _well_tags[prj].insert(QString::fromStdString(view.to_string()).simplified());
+                    _well_tags[prj].insert(QString::fromStdString(std::string{view}).simplified());
                 }
             }
         }
@@ -235,7 +240,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 #else
                 bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
 #endif
-                data << QString::fromStdString(view.to_string()).simplified();
+                data << QString::fromStdString(std::string{view}).simplified();
             }
 
             ui->global_tags->addItems(data);
@@ -259,8 +264,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 bsoncxx::stdx::string_view prview = item["_id"]["project"].get_utf8().value;
                 bsoncxx::stdx::string_view cellview = item["_id"]["cell_lines"].get_utf8().value;
 #endif
-                QString t = QString::fromStdString(cellview.to_string()).simplified();
-                QString prj = QString::fromStdString(prview.to_string()).simplified();
+                QString t = QString::fromStdString(std::string{cellview}).simplified();
+                QString prj = QString::fromStdString(std::string{prview}).simplified();
 
                 _grouped_tags[prj]["CellLines"].insert(t);
             }
@@ -269,104 +274,121 @@ tagger::tagger(QStringList datas, QWidget *parent) :
     }
     catch(...) {}
 
+    QWidget *twobut = new QWidget();
+    twobut->setLayout(new QHBoxLayout());
+
+    twobut->layout()->setContentsMargins(0,0,0,0);
+    twobut->layout()->setSpacing(1);
+
     auto button = new QPushButton("Map CSV");
-    ui->Plates->setCornerWidget(button);
+    auto button2 = new QPushButton("Map Template");
+
+
+    twobut->layout()->addWidget(button);
+    twobut->layout()->addWidget(button2);
+
+    ui->Plates->setCornerWidget(twobut);
 
     connect(button, SIGNAL(clicked()), this, SLOT(on_mapcsv()));
+    connect(button2, SIGNAL(clicked()), this, SLOT(on_maptemplate()));
 
 
     QSettings set;
     this->ui->xp_operator->setCurrentText(set.value("UserName", "").toString());
 
 
-
-    for (auto & d: datas)
+    try
     {
-        QStringList str = d.split("/");
-        str.pop_back(); // remove the reference file name
-        QString plate = str.last(); str.pop_back();// should be the plate name
-        QString plateDate = str.last();
-        QStringList date = str.last().replace(plate+"_", "").split("_"); str.pop_back();
-        proj = str.last().simplified();
 
-        if (!proj.isEmpty())
-            _projects.insert(proj);
-
-        TaggerPlate* platet = new TaggerPlate(d, this);
-        platet->setPlateAcq(plateDate, plate);
-        platet->setPath(d);
-        QJsonObject& tags = platet->getTags();
-
-
-        this->ui->experiment->setText(plate);
-
-        this->ui->project->clear();
-        QStringList lst(_projects.begin(), _projects.end()); lst.sort();
-        lst.push_front("");
-        this->ui->project->addItems(lst);
-
-
-        // Try to find in the mongo the corresponding plate ?
-        auto db = client["tags"];
-
-        std::string plt = QString("%1/%2").arg(plateDate, plate).toStdString();
-
-        auto fold = db["tags"].find_one(make_document(kvp("plateAcq",plt)));
-
-        if (fold)
+        for (auto & d: datas)
         {
-            QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).toUtf8();
-            //qDebug() << arr;
-            QJsonParseError err;
-            tags=QJsonDocument::fromJson(arr, &err).object();
-            if (err.error != QJsonParseError::NoError)
-                qDebug() << err.errorString();
-            //arr = tags.toJson();
-            qDebug() <<"Mongodb info" << QString("%1/%2").arg(plateDate, plate) << tags["plateAcq"].toString() << tags["_id"].toObject()["$oid"].toString();
-            //qDebug() << arr;
-            if (tags.contains("meta") && tags["meta"].toObject().contains("project"))
+            QStringList str = d.split("/");
+            str.pop_back(); // remove the reference file name
+            QString plate = str.last(); str.pop_back();// should be the plate name
+            QString plateDate = str.last();
+            QStringList date = str.last().replace(plate+"_", "").split("_"); str.pop_back();
+            proj = str.last().simplified();
+
+            if (!proj.isEmpty())
+                _projects.insert(proj);
+
+            TaggerPlate* platet = new TaggerPlate(d, this);
+            platet->setPlateAcq(plateDate, plate);
+            platet->setPath(d);
+            QJsonObject& tags = platet->getTags();
+
+
+            this->ui->experiment->setText(plate);
+
+            this->ui->project->clear();
+            QStringList lst(_projects.begin(), _projects.end()); lst.sort();
+            lst.push_front("");
+            this->ui->project->addItems(lst);
+
+
+            // Try to find in the mongo the corresponding plate ?
+            auto db = client["tags"];
+
+            std::string plt = QString("%1/%2").arg(plateDate, plate).toStdString();
+
+            auto fold = db["tags"].find_one(make_document(kvp("plateAcq",plt)));
+
+            if (fold)
             {
-                proj = tags["meta"].toObject()["project"].toString(); // mandatoringly :D
-                //   qDebug() << proj;
+                QByteArray arr = QString::fromStdString(bsoncxx::to_json(*fold)).toUtf8();
+                //qDebug() << arr;
+                QJsonParseError err;
+                tags=QJsonDocument::fromJson(arr, &err).object();
+                if (err.error != QJsonParseError::NoError)
+                    qDebug() << err.errorString();
+                //arr = tags.toJson();
+                qDebug() <<"Mongodb info" << QString("%1/%2").arg(plateDate, plate) << tags["plateAcq"].toString() << tags["_id"].toObject()["$oid"].toString();
+                //qDebug() << arr;
+                if (tags.contains("meta") && tags["meta"].toObject().contains("project"))
+                {
+                    proj = tags["meta"].toObject()["project"].toString(); // mandatoringly :D
+                    //   qDebug() << proj;
+                }
+
             }
+            else
+            {
+                qDebug() << "Plate Acq not found" << plateDate << "/" << plate;
 
-        }
-        else
-        {
-            qDebug() << "Plate Acq not found" << plateDate << "/" << plate;
+                tags["plateAcq"]   = QString("%1/%2").arg(plateDate,plate);
+                tags["serverPath"] = d;
+                tags["plate"]      = plate;
 
-            tags["plateAcq"]   = QString("%1/%2").arg(plateDate,plate);
-            tags["serverPath"] = d;
-            tags["plate"]      = plate;
+                QStringList ops = QStringList() << "map" << "color_map" << "fgcolor_map" << "pattern_map";
+                for (auto& p : ops) tags[p] = QJsonObject();
 
-            QStringList ops = QStringList() << "map" << "color_map" << "fgcolor_map" << "pattern_map";
-            for (auto& p : ops) tags[p] = QJsonObject();
+                QJsonObject meta;
 
-            QJsonObject meta;
-
-            meta["project"]     = proj;
-            meta["global_tags"] = QJsonArray();
-            meta["operators"]   = QJsonObject();
-            meta["XP"]          = plate;
-            meta["cell_lines"]  = QJsonArray();
+                meta["project"]     = proj;
+                meta["global_tags"] = QJsonArray();
+                meta["operators"]   = QJsonObject();
+                meta["XP"]          = plate;
+                meta["cell_lines"]  = QJsonArray();
 
 
 
-            tags["meta"]=meta;
+                tags["meta"]=meta;
 
-            platet->updatePlate();
-        }
+                platet->updatePlate();
+            }
 
         int p = std::min(1, (int)(date.size()-1));
         ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(p)));
 
-        if (!proj.isEmpty())
-            this->ui->project->setCurrentText(proj);
+            if (!proj.isEmpty())
+                this->ui->project->setCurrentText(proj);
 
-        platet->setTags(_grouped_tags, _well_tags, proj);
+            platet->setTags(_grouped_tags, _well_tags, proj);
+        }
+
     }
-
-
+    catch (...)
+    {}
 }
 
 tagger::~tagger()
@@ -468,8 +490,8 @@ void tagger::on_pushButton_clicked()
     {
         bool ok;
         proj = QInputDialog::getText(this, tr("Please set Project name"),
-                                                 "", QLineEdit::Normal,
-                                                 proj, &ok);
+                                     "", QLineEdit::Normal,
+                                     proj, &ok);
         if (!ok) return;
     }
 
@@ -520,11 +542,158 @@ void tagger::on_pushButton_clicked()
     this->close();
 }
 
+
 void tagger::on_mapcsv()
 {
-
     qDebug() << "Query for CSV & Map CSV file to the plate names";
+    QString script = QFileDialog::getOpenFileName(this, "Choose Template storage path",
+                                                  QDir::home().path(), "CSV file (*.csv)",
+                                                  0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
+
+                                                  );
+
+    if (!script.isEmpty())
+    {
+        QFile io(script);
+        if (io.open(QFile::ReadOnly))
+        {
+            QString hea= io.readLine();
+            QStringList header = hea.contains(',') ? hea.split(',') : (hea.contains(";") ? hea.split(';') : (hea.contains('\t') ? hea.split('\t') : hea.split(",")));
+            QStringList h2 = header; h2.prepend("None/Skip");
+            int wc = 0, pc = 0, c=0;
+
+            for (auto& str: header)
+            {
+                if (str.contains("well", Qt::CaseInsensitive))
+                    wc = c;
+                if (str.contains("plate", Qt::CaseInsensitive))
+                    pc = c;
+                c++;
+            }
+
+            QDialog box(this);
+
+            auto layout = new QFormLayout();
+            box.setLayout(layout);
+            auto wells = new QComboBox(&box); wells->addItems(header);
+            wells->setCurrentIndex(wc);
+
+
+            auto plates = new QComboBox(&box); plates->addItems(h2);
+            plates->setCurrentIndex(pc+1);
+
+            layout->addRow("Pick Well Columns", wells);
+            layout->addRow("Pick Plate Columns", plates);
+
+            QList<QComboBox*> features;
+            for (int i = 2; i < header.size(); ++i)
+            {
+                features.push_back(new QComboBox(&box));
+                features.back()->addItems(h2);
+                layout->addRow(QString("Pick Feature %1").arg(i), features.back());
+            }
+            auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+                                                  | QDialogButtonBox::Cancel);
+
+            connect(buttonBox, &QDialogButtonBox::accepted, &box, &QDialog::accept);
+            connect(buttonBox, &QDialogButtonBox::rejected, &box, &QDialog::reject);
+            layout->addRow(buttonBox);
+
+            QMap<QString, QStringList> categories;
+
+            if (box.exec()==QDialog::Accepted)
+            {
+                while(true)
+                {
+                    hea= io.readLine();
+                    if (hea.isEmpty())
+                        break;
+                    header = hea.contains(',') ? hea.split(',') : (hea.contains(";") ? hea.split(';') : (hea.contains('\t') ? hea.split('\t') : hea.split(",")));
+
+                    QString well = header.at(wells->currentIndex()).toUpper();
+                    int r = (char)(well[0].toLatin1())-'A', c = well.midRef(1).toInt()-1;
+
+                    for (auto w: this->findChildren<TaggerPlate*>())
+                    {
+                        if (qobject_cast<TaggerPlate*>(w))
+                        {
+                            auto platet = qobject_cast<TaggerPlate*>(w);
+                            if (plates->currentIndex() != 0)
+                            {
+                                if (platet->getPlate() == header.at(plates->currentIndex()-1))
+                                {
+                                    for (auto& col : features)
+                                        if (col->currentIndex()!=0)
+                                        {
+                                            auto t = header.at(col->currentIndex()-1);
+                                            if (!categories[col->currentText()].contains(t))
+                                                categories[col->currentText()]<<t;
+                                            platet->setTag(r,c,t);
+                                        }
+                                }
+                            }
+                            else
+                            {
+                                for (auto& col : features)
+                                    if (col->currentIndex()!=0)
+                                    {
+                                        auto t = header.at(col->currentIndex()-1);
+                                        if (!categories[col->currentText()].contains(t))
+                                            categories[col->currentText()]<<t;
+                                        platet->setTag(r,c,header.at(col->currentIndex()-1));
+                                    }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            for (auto w: this->findChildren<TaggerPlate*>())
+            {
+                if (qobject_cast<TaggerPlate*>(w))
+                {
+                    auto platet = qobject_cast<TaggerPlate*>(w);
+                    platet->setCategories(categories);
+                }
+            }
+
+            delete layout;
+            delete plates;
+            delete wells;
+            for (auto& c: features)
+                delete c;
+            features.clear();
+
+        }
+
+    }
+
+
 }
+
+
+void tagger::on_maptemplate()
+{
+    QString script = QFileDialog::getOpenFileName(this, "Choose Template storage path",
+                                                  QDir::home().path(), "Tags json file (*.json)",
+                                                  0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
+                                                  );
+
+    if (!script.isEmpty())
+    {
+        for (auto w: this->findChildren<TaggerPlate*>())
+        {
+            if (qobject_cast<TaggerPlate*>(w))
+            {
+                auto platet = qobject_cast<TaggerPlate*>(w);
+                platet->apply_template(script);
+            }
+        }
+    }
+}
+
+
 
 void tagger::on_populate()
 {
@@ -537,5 +706,12 @@ void tagger::on_populate()
                 platet->setTags(_grouped_tags, _well_tags, proj);
             }
         }
+}
+
+
+void tagger::on_Plates_currentChanged(int index)
+{
+    // When changing plate fuse the inputs with next one
+
 }
 

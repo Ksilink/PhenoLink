@@ -23,8 +23,8 @@ ExperimentFileModel *YokogawaLoader::getExperimentModel(QString _file)
     QFile mrf(_file);
     if (!mrf.open(QFile::ReadOnly))
     {
-        qDebug() << "Error openning file" << _file;
-        _error += QString("Error oppenning file %1").arg(_file);
+        qDebug() << "Error opening file" << _file;
+        _error += QString("Error opening file %1").arg(_file);
         return 0;
     }
 
@@ -85,7 +85,7 @@ ExperimentFileModel *YokogawaLoader::getExperimentModel(QString _file)
     if (!d.setContent(&mlf))
     {
         qDebug() << "Not loading" << _mlf;
-        _error += QString("Error openning file %1").arg(_mlf);
+        _error += QString("Error opening file %1").arg(_mlf);
         mlf.close();
         return 0;
     }

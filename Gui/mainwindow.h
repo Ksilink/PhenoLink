@@ -54,7 +54,7 @@ public:
     void adaptSelection(QTableView* tw, QItemSelectionModel* sm, QSet<QString> &rs);
 
     void startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                 bool started, QRegularExpression siteMatcher);
+                                 bool started, QRegExp siteMatcher, QString exports);
 
     void on_actionRe_load_servers_triggered();
 
@@ -69,6 +69,8 @@ public:
     Screens loadSelection(QStringList checked, bool reload=true);
 
     Screens findPlate(QString plate, QStringList project, QString drive);
+
+    void clearScreenSelection();
 
     void resetSelection();
     void graySelection();
@@ -165,6 +167,7 @@ private slots:
     void loadPlateDisplay3();
     void loadPlateDisplaySample();
     void exportToCellProfiler();
+    void exportForAWS();
 
     void databaseModified();
     void on_actionStandard_toggled(bool arg1);
@@ -190,7 +193,7 @@ private slots:
 
     QJsonArray sortParameters(QJsonArray& arr);
 
-    void startProcessRun();
+    void startProcessRun(QString exp=QString());
     void channelCheckboxMenu(const QPoint&);
 
     void on_sync_fields_toggled(bool arg1);
@@ -214,6 +217,12 @@ private slots:
     void on_actionAlways_triggered(bool checked);
 
     void on_actionNever_triggered(bool checked);
+
+    void on_actionShare_Intensity_Controls_toggled(bool arg1);
+
+    void on_dockWidget_visibilityChanged(bool visible);
+
+    void on_actionOverlay_controls_triggered(bool checked);
 
 public slots:
 
@@ -328,17 +337,14 @@ private:
     ScreensModel *mdl;               // Object for Data representation
     SequenceInteractor _sinteractor; // variable keeping track of the interaction with sequences
     QString    _preparedProcess; // Name of the current process
+    QJsonObject _processParams;
+
+
     QComboBox* _typeOfprocessing, *_history; // Keep tracks of the user selected type of processing (current image, current well, all screens, etc...)
     QLineEdit* _commitName;       // If non empty shall be used to commit the data to a database
 
-//    QCheckBox* _shareTags;
 
     QModelIndex _icon_model;    // Variable used to keep track of the model for which we want to change the icon
-
-//    ImageForm* _images;       // Previ
-
-//    unsigned _numberOfChannels;
-//    bool _startingProcesses; // Flag to keep track of process that are awaiting a start
 
     QList<QCheckBox*> _ChannelPicker;  // keep track of visual selection of channels
     QSet<int> _channelsIds; // To keep track of the number of channels loaded & their respective true "value" i.e. C1/C2, etc...
@@ -350,8 +356,9 @@ private:
 
     QMap<QString, QJsonObject> _waitingForImages;
 
-//    QWinTaskbarProgress *_progress;
     QProgressBar* _StatusProgress;
+    QPushButton* _cancelation;
+
     int StartId;
 
     QSet<QFutureWatcher<void>*> _watchers;

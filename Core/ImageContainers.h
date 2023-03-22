@@ -50,10 +50,10 @@ protected:
 class DllCoreExport TimeImage: public ImageContainer
 {
 public:
-    virtual void loadFromJSON(QJsonObject data, QString bp = QString());
+    virtual void loadFromJSON(QJsonObject data, QString bp = QString(), bool noload=false);
     virtual QString basePath(QJsonObject json);
 
-    virtual cv::Mat getImage(size_t i, QString base_path = QString());
+    virtual cv::Mat getImage(size_t i, size_t chann = -1, QString base_path = QString());
 
 };
 
@@ -109,7 +109,7 @@ public:
     virtual QString basePath(QJsonObject json);
     virtual size_t getChannelCount();
     virtual cv::Mat getImage(int i, int c=-1, QString base_path = QString());
-
+    QStringList getImageFile(int i, int c=-1, QString base_path=QString());
 };
 
 // 2D + t + fields
@@ -127,7 +127,7 @@ public:
     virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
     virtual QString basePath(QJsonObject json);
     virtual void storeJson(QJsonObject json);
-    TimeImage getImage(size_t i, QString base_path = QString());
+    TimeImage getImage(size_t i, QString base_path = QString(), bool noload=false);
 
 
     virtual void  deallocate();

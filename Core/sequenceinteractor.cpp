@@ -518,7 +518,13 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
         int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
 
         bool exists = false;
-        info = ImageInfos::getInstance(this, file, exp + QString("%1").arg(ii), ii, exists, key);
+
+
+        QSettings set;
+        exp =  set.value("ShareControls", false).toBool() ? QString("%1").arg(ii) : exp + QString("%1").arg(ii);
+
+
+        info = ImageInfos::getInstance(this, file, exp, ii, exists, key);
         lock_infos.lock();
         _infos[file] = info;
         lock_infos.unlock();
@@ -761,9 +767,14 @@ void SequenceInteractor::preloadImage()
 {
 
     QList<QPair<int, QString> > list = getAllChannel();
-    for (QList<QPair<int, QString> >::iterator it = list.begin(), e = list.end(); it != e; ++it)
+    if (list.size() == 1)
+        imageInfos(list.at(0).second, list.at(0).first, loadkey)->image();
+    else
     {
-        imageInfos(it->second, it->first, loadkey)->image();
+        QList<ImageInfos*> ll;
+        for (auto& it: list) ll << imageInfos(it.second, it.first, loadkey);
+        QtConcurrent::blockingMap(ll, [](ImageInfos* i)
+        {  i->image();  })        ;
     }
 
 }
@@ -1088,7 +1099,12 @@ void SequenceInteractor::initImageInfos(int field)
         int channel = it->first;
         int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
         bool exists;
-        ImageInfos::getInstance(this, file, getExperimentName() + QString("%1").arg(ii), ii, exists, loadkey);
+
+        QSettings set;
+        QString exp =  set.value("ShareControls", false).toBool() ? QString("%1").arg(ii) : getExperimentName() + QString("%1").arg(ii);
+
+
+        ImageInfos::getInstance(this, file, exp, ii, exists, loadkey);
     }
 }
 
@@ -1637,6 +1653,7 @@ QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
 
 
                 auto pal = colormap::palettes.at("jet").rescale(cmin, cmax);
+// pal.range
                 if (colormap::palettes.count(overlay_coding[it.key()].second.toStdString()))
                 {
                     pal = colormap::palettes.at(overlay_coding[it.key()].second.toStdString()).rescale(cmin, cmax);
@@ -1797,8 +1814,48 @@ QStringList SequenceInteractor::getTag(QString overlay, int id)
         if (data.contains(overlay))
         {
             StructuredMetaData& k = data[overlay];
+            auto im = k.content();
+            QStringList header = k.property("ChannelNames").split(';');
 
-            return k.getTag(id);
+
+            return  k.getTag(id);
+
+        }
+    }
+
+    return QStringList();
+}
+
+QStringList SequenceInteractor::getOverlayValues(QString overlay, int id)
+{
+    int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
+
+    for (int c = 1; c <= cns; ++c)
+    {
+        QMap<QString, StructuredMetaData>& data = _mdl->getMetas(_timepoint, _field, _zpos, c);
+        if (data.contains(overlay))
+        {
+            StructuredMetaData& k = data[overlay];
+            auto im = k.content();
+            QStringList header = k.property("ChannelNames").split(';');
+
+
+            QStringList tags;
+            tags << QString("Id: %1").arg(id);
+            for (int i = 0; i < header.size(); i++)
+                if (!(header.at(i).endsWith("_X") ||
+                        header.at(i).endsWith("_Y") ||
+                        header.at(i).endsWith("_Top") ||
+                        header.at(i).endsWith("_Left") ||
+                        header.at(i).endsWith("_Height") ||
+                        header.at(i).endsWith("_Width")
+                        ) )
+                {
+                    tags << QString("%1: %2").arg(header.at(i)).arg(im.at<float>(id, i));
+                }
+
+
+            return tags;
         }
     }
 

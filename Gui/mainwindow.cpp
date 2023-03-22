@@ -252,7 +252,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     //    _progress->setVisible(true);
 
     ui->overlayInfos->hide();
-    connect(ui->pickOverlay, SIGNAL(currentTextChanged(const QString &)), this, SLOT(overlay_selection(const QString&)));
+    connect(ui->pickOverlay, SIGNAL(currentTextChanged(QString)), this, SLOT(overlay_selection(QString)));
 
     shrt_startR = new QShortcut(this);
     shrt_startR->setKey(Qt::CTRL | Qt::Key_Return);
@@ -264,6 +264,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
 
     ui->actionNever->setChecked(set.value("AlwaysUnpack", false).toBool());
     ui->actionAlways->setChecked(set.value("NeverUnpack", false).toBool());
+    ui->actionShare_Intensity_Controls->setChecked(set.value("ShareControls", false).toBool());
 }
 
 
@@ -602,6 +603,34 @@ QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, QString itemName, ImageIn
     connect(box, SIGNAL(toggled(bool)), this, SLOT(displayTile(bool)), Qt::UniqueConnection);
     //  connect(box, SIGNAL(toggled(bool)), qApp, SLOT(aboutQt()), Qt::UniqueConnection);
 
+
+    if (itemName != "Tile")
+    {
+        box->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(box, &QPushButton::customContextMenuRequested,
+                [this, box](QPoint pos){
+            QMenu menu(this);
+            menu.addAction("Show controls");
+            auto res = menu.exec(box->mapToGlobal(pos));
+            if (res)
+            {
+                //qDebug() << "Expose the controls!!!";
+                //this->_sinteractor
+                // Let's add a right click options to the controls
+                // if Scale popup a bar control box
+                // (move (bar + text) left/right/up/down
+                //  move text (left/right/up/down)
+                // font & size options for scale
+                // font color & bar color
+
+                // If other overlay:
+                // add a lower bound/upper bound control to handle color shade
+
+            }
+        });
+    }
+
+
     return box;
 }
 
@@ -719,7 +748,7 @@ void MainWindow::updateCurrentSelection()
     if (_imageControls.contains(inter->getExperimentName()))
         toDel << _imageControls[inter->getExperimentName()];
 
-    wwid = new QWidget;
+    wwid = new QWidget(ui->imageControl);
 
     //    QVBoxLayout* bvl = new QVBoxLayout(wwid);
     QGridLayout* bvl = new QGridLayout(wwid);
@@ -803,9 +832,6 @@ void MainWindow::updateCurrentSelection()
                 int trueChan = this->sender()->objectName().toInt();
                 this->_sinteractor.current()->getChannelImageInfos(trueChan)->toggleBinarized();
             });
-
-
-
         }
 
 
@@ -857,6 +883,7 @@ void MainWindow::updateCurrentSelection()
         bvl->addWidget(setupOverlayBox(new QCheckBox(wwid), "Scale", fo), 2, 0);
         bvl->addWidget(new QLabel("Scale: ", wwid), 2, 1);
         bvl->addWidget(setupTilePosition(new QSpinBox(wwid), "Scale", fo), 2, 2);
+
 
 
         QStringList overlays = inter->getMetaList();
@@ -986,14 +1013,14 @@ void MainWindow::refreshProcessMenu()
 
 void MainWindow::conditionChanged(QWidget* sen, int val)
 {
-//    qDebug() << "Changed conditionnal display" << sen->objectName();
+//    qDebug() << "Changed conditionnal display" << sen->objectName() << val;
     if (!_typeOfprocessing) return;
 
     if (_enableIf.contains(sen))
     {
         foreach(QWidget* w, _disable[sen])
         {
-            qDebug() << _disable[sen];
+        //    qDebug() << _disable[sen];
             //QWidget* w = _disable[sen];//->hide();
             if (!w) continue;
             if (!w->parentWidget()) continue;
@@ -1159,6 +1186,7 @@ void MainWindow::prepareProcessCall()
 
     if (_preparedProcess.isEmpty()) return;
 
+//    _processParams = QJsonObject();
     CheckoutProcess::handler().getParameters(process);
 }
 
@@ -1219,6 +1247,32 @@ double getValDouble(QJsonObject& par, QString v)
 }
 
 template <class Widget>
+Widget* setupProcessParameterBool(Widget* s, QJsonObject& par, QString def)
+{
+    if (par.contains(def))
+    {
+        s->setCheckState(getValInt(par, def)==1 ? Qt::Checked : Qt::Unchecked);
+    }
+    return s;
+}
+
+bool isdiff(QJsonValueRef a, QJsonValueRef b)
+{
+    if (a.isDouble() && b.isDouble())
+        return a.toDouble() != b.toDouble();
+    if (a.isString() && b.isString())
+        return a.toString() != b.toString();
+    if (a.isString() && b.isDouble())
+        return a.toString().toDouble() != b.toDouble();
+    if (a.isDouble() && b.isString())
+        return a.toDouble() != b.toString().toDouble();
+
+
+
+    return true;
+}
+
+template <class Widget>
 Widget* setupProcessParameterInt(Widget* s, QJsonObject& par, QString def)
 {
     double low = getValInt(par,"Range/Low"), high =  getValInt(par,"Range/High");
@@ -1232,6 +1286,14 @@ Widget* setupProcessParameterInt(Widget* s, QJsonObject& par, QString def)
     {
         s->setValue(getValInt(par, def));
     }
+
+    if ((par.contains("NonDefault") && (par.contains("Value")
+                                       && isdiff(par[ def], par["Default"]))))
+    {
+        s->setStyleSheet("color: rgb(182,64,18);");
+    }
+
+
     return s;
 }
 
@@ -1252,6 +1314,14 @@ Widget* setupProcessParameterDouble(Widget* s, QJsonObject& par, QString def)
 
     if (par.contains(def))
         s->setValue(getValDouble(par,def));
+
+    if ((par.contains("NonDefault") && (par.contains("Value")
+                                       && isdiff(par[ def], par["Default"]))))
+    {
+        s->setStyleSheet("color: rgb(182,64,18);");
+    }
+
+
     return s;
 }
 
@@ -1310,17 +1380,28 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
         {
             if (par["isIntegral"].toBool())
             {
-                wid = par["isSlider"].toBool() ?
-                            (QWidget*)setupProcessParameterInt(new QSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
-                          :
-                            (QWidget*)setupProcessParameterInt(new QSpinBox(), par,  reloaded ? "Value" : "Default");
+                if (par.contains("isBool") && par["isBool"].toBool())
+                {
+                    wid = setupProcessParameterBool(new QCheckBox(), par,  reloaded ? "Value" : "Default");
+                }
+                else
+                {
+                    wid = par["isSlider"].toBool() ?
+                                (QWidget*)setupProcessParameterInt(new QSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
+                              :
+                                (QWidget*)setupProcessParameterInt(new QSpinBox(), par,  reloaded ? "Value" : "Default");
+                }
             }
             else
             {
+
+
+
                 wid = par["isSlider"].toBool() ?
                             (QWidget*)setupProcessParameterDouble(new ctkDoubleSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
                           :
                             (QWidget*)setupProcessParameterDouble(new QDoubleSpinBox(), par,  reloaded ? "Value" : "Default");
+
             }
 
 
@@ -1420,6 +1501,14 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
         qDebug() << "Not handled" << par;
 
 
+
+    if (!(par.contains("NonDefault") && (par.contains("Value")
+                                       && isdiff(par[ reloaded ? "Value" : "Default"], par["Default"]))))
+    {
+        wid->setStyleSheet("color: rgb(182,64,18);");
+    }
+
+
     return wid;
 }
 
@@ -1486,7 +1575,7 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
 
     for (auto it = jsons.rbegin(), e= jsons.rend(); it != e; ++it)
     {
-        qDebug() << *it;
+     //   qDebug() << *it;
         for (auto & r: commits)
             if (r.contains(*it))
             {
@@ -1522,27 +1611,20 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
 void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 {
     bool reloaded = idx > 0;
+    if (!reloaded) _processParams = obj;
 
     QMap<QString, QList<QWidget*> > spc_widgets;
 
     _syncmapper.clear();
 
     QString process = obj["Path"].toString();
-    //    qDebug() << obj;
 
-//    QList<QWidget*> list = ui->processingArea->findChildren<QWidget*>();
     _enableIf.clear();
     _disable.clear();
 
     _commitName = nullptr;
     _typeOfprocessing = nullptr;
 
-//    foreach(QWidget* wid, list)
-//    {
-//        wid->hide();
-//        wid->close();
-////        ui->processingArea->layout()->removeWidget(wid);
-//    }
 
     QFormLayout* layo = dynamic_cast<QFormLayout*>(ui->processingArea->layout());
     if (!layo) {
@@ -1588,14 +1670,14 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
     QStringList h;
     for (int i = 0; i < _history->count(); ++i) h <<  _history->itemText(i);
-    qDebug() << h;
+ //   qDebug() << h;
 
     if (idx > 0) _history->setCurrentIndex(idx);
     else if (idx < 0 && _history->count() > 1)
     {
         _history->setCurrentIndex(1);
         pluginHistory(_history);
-//        delete cb;
+        //        delete cb;
         return;
     }
 
@@ -1662,11 +1744,13 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
             {
 
                 par["guiChan"] = channels;
+                qDebug() << ar.size();
 
-                if (ar.size())
+                if (ar.size() && pos < ar.size())
                 {
                     par["Value"]=ar[pos];
-                    par["Value2"]=ar2[pos];
+                    if (pos < ar2.size())
+                        par["Value2"]=ar2[pos];
                 }
 
 
@@ -1675,8 +1759,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                 {
                     QString nm;
 
-                    if (_channelsNames.size() == _channelsIds.size())
-                        nm = QString(_channelsNames[pos]);
+                    if (_channelsNames.contains(channels))
+                        nm = QString(_channelsNames[channels]);
                     else
                         nm = QString("Channel %1").arg(channels);
 
@@ -1712,7 +1796,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
                     QString nm;
 
-                    if (_channelsNames.size() == _channelsIds.size())
+                    if (_channelsNames.contains(i))
                         nm = QString(_channelsNames[i]);
                     else
                         nm = QString("Channel %1").arg(i);
@@ -1737,8 +1821,10 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                     }
                     par["Type"] = par["InnerType"];
 
-                    if (par["InnerType"].toString() == "unsigned" || par["InnerType"].toString() == "int") par["isIntegral"] = true;
-                    if (par["InnerType"].toString() == "double" || par["InnerType"].toString() == "float") par["isIntegral"] = false;
+                    if (par["InnerType"].toString() == "unsigned" || par["InnerType"].toString() == "int")
+                        par["isIntegral"] = true;
+                    if (par["InnerType"].toString() == "double" || par["InnerType"].toString() == "float")
+                        par["isIntegral"] = false;
 
 
 
@@ -1761,8 +1847,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                         if (par.contains("Value"))
                         {
                             if (par["Value"].isArray())
-                                par["Default"] = par["Value"].toArray().at(c);
-                            else
+                                par["Default"] = par["Value"].toArray().at(c-start);
+                            else if (!par["Value"].toString().isEmpty())
                                 par["Default"] = par["Value"];
                             reloaded = false;
                         }
@@ -1899,18 +1985,20 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                                 _enableIf[ll][val] << ww;
                                 _disable[ll] << ww;
 
-#define SetCondition(Type, setter, accessor, change) \
+#define SetCondition(Type, setter, accessor, change, slt) \
                                 { Type b = dynamic_cast<Type>(ll); \
-                    if (b) { \
-                    connect(b, SIGNAL(change(int)), this, SLOT(conditionChanged(int))); \
-                    b->setter(b->accessor()); } }
+    if (b) { \
+    connect(b, SIGNAL(change(int)), this, SLOT(slt(int))); \
+    b->setter(b->accessor()); } }
 
 
-                                SetCondition(QComboBox*, setCurrentIndex, currentIndex, currentIndexChanged);
-                                SetCondition(QSpinBox*, setValue, value, valueChanged);
-                                SetCondition(QDoubleSpinBox*, setValue, value, valueChanged);
-                                SetCondition(QSlider*, setValue, value, valueChanged);
-                                SetCondition(ctkDoubleSlider*, setValue, value, valueChanged);
+                                SetCondition(QComboBox*, setCurrentIndex, currentIndex, currentIndexChanged,conditionChanged);
+                                SetCondition(QSpinBox*, setValue, value, valueChanged,conditionChanged);
+                                SetCondition(QDoubleSpinBox*, setValue, value, valueChanged,conditionChanged);
+                                SetCondition(QSlider*, setValue, value, valueChanged,conditionChanged);
+                                SetCondition(ctkDoubleSlider*, setValue, value, valueChanged,conditionChanged);
+                                SetCondition(QCheckBox*, setCheckState, checkState, stateChanged, conditionChanged);
+
                             }
 
                     }
@@ -1922,8 +2010,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
 
 
-//    qDebug() << "Enable If" << _enableIf;
-//    qDebug() << "Disable" << _disable;
+    //    qDebug() << "Enable If" << _enableIf;
+    //    qDebug() << "Disable" << _disable;
 
     params = obj["ReturnData"].toArray();
     int resWidgets = 0;
@@ -1986,7 +2074,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     if (_scrollArea->items() == 0)
         _typeOfprocessing->setCurrentText( "Selected Screens");//Index(_typeOfprocessing->setCurrentText())
 
-   // if (_commitName) delete _commitName;
+    // if (_commitName) delete _commitName;
     _commitName = new QLineEdit();
     _commitName->setToolTip("If non empty data will be saved to database with table having specified name");
 
@@ -2013,6 +2101,8 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
         changed(QDoubleSpinBox*,  value );
         changed(QSlider*,  value );
         changed(ctkDoubleSlider*,  value );
+        changed(QCheckBox*,  checkState);
+
     }
     //}
 
@@ -2020,11 +2110,37 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
     QPushButton* button = new QPushButton("Start");
     button->setObjectName("ProcessStartButton");
+    button->setContextMenuPolicy(Qt::CustomContextMenu);
+
+
     connect(button, SIGNAL(pressed()), this, SLOT(startProcess()));
+    connect(button, &QPushButton::customContextMenuRequested,
+            [this, button](QPoint pos){
+        QMenu menu(this);
+        menu.addAction("Export Run command");
+        auto res = menu.exec(button->mapToGlobal(pos));
+        if (res)
+        {
+            qDebug() << "Do the export!!!";
+
+            QString dir = QFileDialog::getSaveFileName(this, tr("Save File"),
+                                                       QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/process_run.json", tr("JSON file (*.json)"),
+                                                       0, /*QFileDialog::DontUseNativeDialog
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | */QFileDialog::DontUseCustomDirectoryIcons
+                                                       );
+            if (dir.isEmpty()) return;
+            startProcessRun(dir);
+
+        }
+
+
+    });
+
+
+
+    //
+
     layo->addRow(button);
-
-
-
 
 }
 
@@ -2094,7 +2210,7 @@ void MainWindow::on_actionPython_Core_triggered()
     QString script = QFileDialog::getOpenFileName(this, "Choose Python script to execute",
                                                   QDir::home().path(), "Python file (*.py)",
                                                   0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
@@ -2564,8 +2680,17 @@ int longestMatch(QString a, QString b)
 }
 #include <QInputDialog>
 
+
+
+
+
 void MainWindow::exportToCellProfiler()
 {
+    bool split = false;
+    if (qobject_cast<QAction*>(sender()))
+    {
+        split = qobject_cast<QAction*>(sender())->text().contains("split");
+    }
 
     bool ok;
 
@@ -2606,7 +2731,7 @@ void MainWindow::exportToCellProfiler()
 
     QString dir = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/data_cellprofiler.csv", tr("CSV file (excel compatible) (*.csv)"),
                                                0, /*QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | */QFileDialog::DontUseCustomDirectoryIcons
                                                );
     if (dir.isEmpty()) return;
 
@@ -2672,14 +2797,25 @@ void MainWindow::exportToCellProfiler()
     //int slice = 1;
 
     //    QString t = dir;
-    QFile file(dir);//t.replace(".csv", QString("_%1.csv").arg(slice++, 4, 10, QChar('0'))));
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
-        return ;
 
-    QTextStream resFile(&file);
     auto l = --values.end();
-    for (auto c: values )      resFile << c.first << (c.first == l->first ? "" : ",");
-    resFile << Qt::endl;
+
+    QFile file;
+    QTextStream resFile;
+    if (!split)
+    {
+
+        file.setFileName(dir);//t.replace(".csv", QString("_%1.csv").arg(slice++, 4, 10, QChar('0'))));
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+            return ;
+
+        resFile.setDevice(&file);
+        for (auto c: values )      resFile << c.first << (c.first == l->first ? "" : ",");
+        resFile << Qt::endl;
+        resFile.flush();
+    }
+
+    int batchid = 0;
 
     for (auto xp: s)
     {
@@ -2687,7 +2823,10 @@ void MainWindow::exportToCellProfiler()
         // Empty all the configs
         for (auto c: values )  c.second=QString("0");
 
+
         values["Metadata_Plate"] = xp->name();
+
+
         // Set the basepath for all files:
         QString path = xp->fileName().split(":").last();
         QStringList p = path.split('/'); p.pop_back();
@@ -2726,10 +2865,38 @@ void MainWindow::exportToCellProfiler()
             if (validated_tags != tag_filter.size()) continue;
 
             auto wPos = seq->Pos();
+
+            bool issame = values.find("Metadata_Well") != values.end()
+                    && !values["Metadata_Well"].isEmpty()
+                    &&  values["Metadata_Well"] != wPos;
+
+
+
             values["Metadata_Well"] = wPos;
+
+
+
 
             if (!wellMatcher.pattern().isEmpty() && !wellMatcher.match(wPos).hasMatch())
                 continue;
+
+
+            if (split && issame)
+            {
+                file.close();
+                QStringList path = dir.replace("\\", "/").split("/");
+                QString f = path.takeLast();
+                path << QString("batch_%1").arg(batchid);
+                batchid++;
+                QDir d; d.mkpath(path.join("/"));
+                file.setFileName(path.join("/")+"/"+f);
+                resFile.flush();
+                resFile.setDevice(&file);
+                for (auto c: values )      resFile << c.first << (c.first == l->first ? "" : ",");
+                resFile << Qt::endl;
+                resFile.flush();
+            }
+
 
 
             for (unsigned int t = 0; t < seq->getTimePointCount(); ++t)
@@ -2857,6 +3024,7 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
         menu.addAction("Plate Map / Tags", this, SLOT(plateMap()));
         menu.addSeparator();
         menu.addAction("export for CP", this, SLOT(exportToCellProfiler()));
+        menu.addAction("export for CP (well split)", this, SLOT(exportToCellProfiler()));
         menu.addSeparator();
         menu.addAction("add Directory", this, SLOT(addDirectory()));
         menu.addAction("remove Directory", this, SLOT(rmDirectory()));
@@ -2881,7 +3049,7 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
         {
 
             auto d =  ui->treeView->model()->itemData(idx)[Qt::UserRole+4];
-            qDebug() << d;
+            //            qDebug() << d;
             QStringList path = d.toString().split('/');
             if (path.size() > 3)
             {
@@ -2902,9 +3070,9 @@ void MainWindow::on_actionOpen_Single_Image_triggered()
 {
     QSettings set;
     QStringList files = QFileDialog::getOpenFileNames(this, "Choose File to open",
-                                                      set.value("DirectFileOpen",QDir::home().path()).toString(), "tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
+                                                      set.value("DirectFileOpen",QDir::home().path()).toString(), "jxl file (*.jxl);;tiff file (*.tif *.tiff);;jpeg (*.jpg *.jpeg)",
                                                       0, /* QFileDialog::DontUseNativeDialog
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |*/ QFileDialog::DontUseCustomDirectoryIcons
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |*/ QFileDialog::DontUseCustomDirectoryIcons
                                                       );
 
     if (files.empty()) return;
@@ -2991,17 +3159,11 @@ void MainWindow::on_sync_zstack_toggled(bool arg1)
 
 void MainWindow::resetSelection()
 {
-    //
     foreach(QList<QWidget*> widl, _imageControls.values())
         foreach(QWidget* wid, widl)
         {
             if (wid) wid->hide(); // hide everything
         }
-
-
-
-
-
 }
 
 void MainWindow::on_start_process_triggered()
@@ -3049,8 +3211,6 @@ void MainWindow::on_actionDisplay_Remaining_Processes_triggered()
 
 void MainWindow::plateMap()
 {
-    //
-    //    mdl->clearCheckedDirectories();
     mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
     QStringList checked = mdl->getCheckedDirectories(false);
     if (checked.size())
@@ -3084,5 +3244,36 @@ void MainWindow::on_actionNever_triggered(bool checked)
     QSettings set;
     set.setValue("NeverUnpack", checked);
     ui->actionAlways->setChecked(!checked);
+}
+
+
+void MainWindow::on_actionShare_Intensity_Controls_toggled(bool checked)
+{
+    QSettings set;
+    set.setValue("ShareControls", checked);
+}
+
+
+
+void MainWindow::exportForAWS()
+{
+    //
+    // Store a arrow feather file  ( CheckoutAWSUpload.fth ) in the APPDATA writable path
+    // Metadata will contain the credentials to AWS
+    // First column will be the initial file name
+    // Second column will be the upload state
+
+    // We'll provide an empty file with credentials for clients that need to upload their data
+
+
+}
+
+
+
+void MainWindow::on_actionOverlay_controls_triggered(bool checked)
+{
+    QSettings set;
+    set.setValue("ShowOveraly", checked);
+
 }
 

@@ -5,7 +5,7 @@
 
     "version": "2.0",
 
-    "builtin-baseline": "0fd31b9dbb96e1ab86e0c9ee930790990a974bd3",
+
 
     "dependencies": [{
             "name": "opencv",
@@ -18,25 +18,36 @@
             "features": ["filesystem", "dataset"]
         },
         {
-            "name": "dlib",
-            "platform": "windows"
+            "name": "dlib"
         },
         {
-            "name": "mongo-cxx-driver",
-            "version>=": "3.6.5#2"
+            "name": "mongo-cxx-driver"
         },
         {
-            "name": "eigen3",
-            "version>=": "3.3.9#1"
+            "name": "eigen3"
         },
         {
-            "name": "gsl",
-            "version>=": "2.7.1"
+            "name": "gsl"
         },
         {
             "name": "fftw3",
-            "features": ["avx2", "threads"],
-            "version>=": "3.3.10#2"
+            "features": ["avx2", "threads"]
+        },
+        {
+            "name" : "aws-sdk-cpp",
+            "features": [ "s3" ]
+        },
+        {
+            "name":"google-cloud-cpp",
+            "features": ["storage"]
+        },
+        {
+            "name": "azure-storage-blobs-cpp"
+        },
+        {
+            "name": "libjxl"
         }
+
+
     ]
 }

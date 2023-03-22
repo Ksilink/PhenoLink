@@ -9,6 +9,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 class ChannelSelectionType;
+#include "phenolinkimage.h"
 
 #include "ImageContainers.h"
 
@@ -82,7 +83,7 @@ class DllPluginManagerExport CheckoutProcessPluginInterface
 {
 public:
 
-    enum State { NotStarted, Running, Finished };
+    enum State { NotStarted, Running, Finished, Crashed };
 
     typedef QMap<int, QColor> Colormap;
 
@@ -92,6 +93,8 @@ public:
     virtual QString plugin_version() const { return "" ; }
     virtual QString buildTime() const { return QString(); };
     virtual QString gitTime() const { return GitPluginDate; };
+    QString getEnv(QString key, QString def);
+
 
     // This function is to be called in plugins constructors to declare to the handler what data is required as input
     // value is the plugin registered parameter
@@ -168,25 +171,80 @@ public:
         return *r;
     }
 
+    QList<Registrable<float>* > produces(QMap<QString, float>* value)
+    {
 
-//    template <>
-//    Registrable<QMap<QString, float> >& produces(QMap<QString, float>* value)
-//    {
-//        static char t = '0';
-//        QString tag = QString("%1").arg(t);
+        QList<Registrable<float>* > l;
 
-//        Registrable<Type>* r = new Registrable<Type>();
+        for (auto it = value->begin(), e = value->end(); it != e; ++it)
+        {
+            Registrable<float>* r = new Registrable<float>();
 
-//        r->setAsProduct();
-//        r->setValuePointer(value);
-//        r->setTag(tag);
-//        r->setComment(comment);
+            r->setAsProduct();
+            r->setValuePointer(&(it.value()));
+            r->setTag(QString(it.key()).replace(" ", "_"));
+            r->setComment("");
+            _results[QString(it.key()).replace(" ", "_")] = r;
+            l << r;
+        }
 
-//        _results[tag] = r;
+        return l;
+    }
 
-//        t++;
-//        return *r;
-//    }
+    QList<Registrable<double>* > produces(QMap<QString, double>* value)
+    {
+
+        QList<Registrable<double>* > l;
+
+        for (auto it = value->begin(), e = value->end(); it != e; ++it)
+        {
+            Registrable<double>* r = new Registrable<double>();
+
+            r->setAsProduct();
+            r->setValuePointer(&(it.value()));
+            r->setTag(QString(it.key()).replace(" ", "_"));
+            r->setComment("");
+            _results[QString(it.key()).replace(" ", "_")] = r;
+
+            l << r;
+        }
+
+        return l;
+    }
+
+
+    QList<Registrable<double>* > produces(QMap<QString, QList<double> >* value, RegistrableParent::DevectorizeType vectorize)
+    {
+
+        QList<Registrable<double>* > l;
+
+        for (auto it = value->begin(), e = value->end(); it != e; ++it)
+        {
+            int p = 0;
+            for (auto it2 = it.value().begin(), ee = it.value().end(); it2 != ee; ++it2)
+            {
+                Registrable<double>* r = new Registrable<double>();
+
+                r->setAsProduct();
+                r->setValuePointer(&(*it2));
+                r->setTag(QString(it.key()).replace(" ", "_"));
+                r->setVectorizeMode(vectorize);
+                r->setVector(p);
+                r->setComment("");
+
+                l << r;
+                p++;
+            }
+
+        }
+
+        return l;
+    }
+
+
+
+
+
 
 
     // This function is to be called in plugins constructor to declare to the handler the name of the processing
@@ -249,6 +307,26 @@ public:
         return _callParams["CommitName"].toString();
     }
 
+
+    QStringList postProcesses()
+    {
+        return _postprocess;
+    }
+
+
+    QStringList postProcessScreen()
+    {
+        return _multi_postprocess;
+    }
+
+
+    CheckoutProcessPluginInterface& addPostProcess(QStringList dep);
+    CheckoutProcessPluginInterface& addPostProcess(QString d);
+
+    CheckoutProcessPluginInterface& addPostProcessScreen(QStringList dep);
+    CheckoutProcessPluginInterface& addPostProcessScreen(QString d);
+
+
 protected:
     QString recurseSearch(QJsonObject ob, QString key)
     {
@@ -306,7 +384,7 @@ public:
 
         QString hash =_meta.first().hash;
 
-        if (i <= _hashtoBias[hash].size())
+        if (i >= _hashtoBias[hash].size())
         {
             _hashtoBias[hash].resize(i+1);
         }
@@ -332,7 +410,7 @@ public:
 
             if (QFileInfo::exists(file))
             {
-                *mat = cv::imread(file.toStdString(), 2);
+                *mat = pl::imread(file, 2);
                 cv::Mat m;
                 mat->convertTo(m, CV_32F, 1. / 10000.);
                 cv::swap(m, *mat);
@@ -373,6 +451,8 @@ public:
         return comments;
     }
 
+
+
     virtual void read(const QJsonObject &json);
 
     virtual void write(QJsonObject &json) const;
@@ -405,6 +485,8 @@ public:
     void started(qint64 time);
     State processState();
 
+    void crashed();
+
     bool isFinished();
 
     virtual bool isPython()  { return false; }
@@ -413,17 +495,22 @@ public:
     void setColormap(void* data, Colormap color);
     QString user();
 
+    QString getDataStorePath();
+
 protected:
     QString path;
     QStringList authors;
     QString comments;
     QStringList _dependencies;
     QJsonObject _callParams;
+    static QString datastore;
 
     QString position;
 
     QMap<QString, RegistrableParent*> _parameters;
     QMap<QString, RegistrableParent*> _results;
+
+    QMap<QString, RegistrableParent*> _dangling;
 
 
     QString _message, _stepMessage;
@@ -442,6 +529,8 @@ protected:
     static QMap<QString, int> _hashtoBiasCount;
 
     QList<InputImageMetaData> _meta;
+
+    QStringList  _postprocess, _multi_postprocess;
 
 };
 

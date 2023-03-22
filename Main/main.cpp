@@ -164,8 +164,13 @@ int main(int argc, char *argv[])
     //qDebug() << server.readAll();
     server.kill();
 
+
+
     foreach (QString file, ScreensHandler::getHandler().getTemporaryFiles())
         QFile::remove(file);
+
+
+    exit(res);
 
     return res;
 }

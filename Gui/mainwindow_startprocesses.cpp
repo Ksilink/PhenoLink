@@ -20,7 +20,6 @@
 #include <ScreensDisplay/graphicsscreensitem.h>
 
 #include <QGraphicsRectItem>
-//#include <QPushButton>
 
 #include <QScrollArea>
 #include <QSlider>
@@ -70,6 +69,7 @@
 #include "ScreensDisplay/screensgraphicsview.h"
 #include <QInputDialog>
 
+#include <networkprocesshandler.h>
 
 
 
@@ -153,6 +153,27 @@ void setData(QJsonObject& obj, QString tag, bool list, ctkPathLineEdit* s)
     }
 }
 
+template <>
+void setData(QJsonObject& obj, QString tag, bool list, QCheckBox* s)
+{
+    if (s)
+    {
+        if (list)
+        {
+            QJsonArray ar = obj[tag].toArray();
+            ar.push_back(s->checkState()==Qt::Unchecked?0:1);
+            obj[tag] = ar;
+        }
+        else
+        {
+            //  qDebug() << s->currentPath();
+            obj[tag] = s->checkState()==Qt::Unchecked?0:1;
+        }
+    }
+}
+
+
+
 void MainWindow::getValue(QWidget* wid, QJsonObject& obj, QString tag, bool list)
 {
     // to handle the case where a single input is dependent on the context :)
@@ -169,6 +190,8 @@ void MainWindow::getValue(QWidget* wid, QJsonObject& obj, QString tag, bool list
     setData(obj, tag, list, dynamic_cast<QComboBox*>(wid));
     setData(obj, tag, list, dynamic_cast<QLineEdit*>(wid));
     setData(obj, tag, list, dynamic_cast<ctkPathLineEdit*>(wid));
+    setData(obj, tag, list, dynamic_cast<QCheckBox*>(wid));
+
 }
 
 
@@ -465,7 +488,7 @@ QJsonArray& MainWindow::adjustParameterFromWidget(SequenceFileModel* sfm, QJsonO
 
 
 void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                         bool started, QRegularExpression siteMatcher)//, QMap<QString, QSet<QString> > tags_map)
+                                         bool started, QRegExp siteMatcher, QString exports)//, QMap<QString, QSet<QString> > tags_map)
 {
     static int WorkID = 1;
 
@@ -484,13 +507,13 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
     handler.setProcessCounter(new int());
     QSettings set;
-    int minProcs = set.value("MinProcs", 2000).toInt();
+    int minProcs = std::numeric_limits<int>::max(); // set.value("MinProcs", 2000).toInt();
 
 
     QJsonArray procArray;
     int count = 0;
     QMap<QString, int > adapt;
-//    bool deb = set.value("UserMode/Debug", false).toBool();
+    //    bool deb = set.value("UserMode/Debug", false).toBool();
 
 
     QSet<QString> xps;
@@ -575,7 +598,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                     adjustParameterFromWidget(sfm, oo, params, bias);
 
                     int channel = -1,
-                        fieldId = recurseField(data, "FieldId");
+                            fieldId = recurseField(data, "FieldId");
 
                     if (channel == -1 && !asVectorImage)
                         channel = recurseField(data, "Channel");
@@ -695,15 +718,31 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
             for (int i = 0; i < tmp.size(); ++i)
                 procArray.append(tmp[i]);
-            if (this->networking && procArray.size() > minProcs)
+            if (exports.isEmpty() && this->networking && procArray.size() > minProcs)
             {
                 handler.startProcess(_preparedProcess, procArray);
                 procArray = QJsonArray();
             }
         }
 
-    if (this->networking &&  procArray.size())
+    if (exports.isEmpty() && this->networking &&  procArray.size())
         handler.startProcess(_preparedProcess, procArray);
+
+
+    if (!exports.isEmpty())
+    {
+        QJsonDocument doc(procArray);
+        QFile saveFile(exports);
+
+        if (!saveFile.open(QIODevice::WriteOnly)) {
+            qWarning("Couldn't open save file.");
+        }
+        else
+            saveFile.write(doc.toJson());
+        saveFile.close();
+        _StatusProgress->setValue(_StatusProgress->maximum());
+        return;
+    }
 
     stored["Experiments"] = QJsonArray::fromStringList(QStringList(xps.begin(), xps.end()));
 
@@ -751,8 +790,13 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
 
     qDebug() <<"Processes: "<< adapt << count;
+    // Nico@DESKTOP-KH3G5D0:Tools/Speed/SpeedTesting(5)
 
+    QString username = set.value("UserName", "").toString(),
+            hostname = QHostInfo::localHostName();
 
+    // Set the cancel name of the object
+    _cancelation->setObjectName(QString("%1@%2:%3(%4)").arg(username,hostname, proc.replace("/", "") ).arg(WorkID));
 
     if (this->networking && handler.errors() > 0)
     {
@@ -768,7 +812,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
 }
 
-void MainWindow::startProcessRun()
+void MainWindow::startProcessRun(QString exp)
 {
     StartId++;
 
@@ -974,7 +1018,6 @@ void MainWindow::startProcessRun()
         lsfm = lsfm2;
     }
 
-
     if (lsfm.isEmpty())
     {
 
@@ -996,6 +1039,32 @@ void MainWindow::startProcessRun()
 
     lsfm = QSet<SequenceFileModel*>(lsfm.begin(), lsfm.end()).values(); // To remove duplicates
 
+    // Let's check if we are in some data reconstruction mode, i.e. we want to complete some of the processings we already performed
+    // if the commit name exists & plate name .fth we compute the missing processings & ask the user if he/she wants to perform the full process
+    // or just continue with the missings data
+
+    if (!_commitName->text().isEmpty())
+    {
+
+        QSet<QString> pls;
+        for (auto& v: lsfm) pls.insert( v->getOwner()->name() );
+
+        QSettings set;
+        QDir dir(set.value("databaseDir").toString());
+
+        for (auto& pl: pls)
+        {
+            QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4.fth")
+                    .arg(dir.absolutePath(),
+                         lsfm[0]->getOwner()->property("project"),
+                    _commitName->text(),
+                    pl);
+            qDebug() << writePath;
+        }
+    }
+
+
+
     process_starttime = QDateTime::currentDateTime();
 
     qDebug() << "Wells to process" << lsfm.size() << " - "<< process_starttime.toString("yyyyMMdd hh:mm:ss.zzz");
@@ -1005,20 +1074,36 @@ void MainWindow::startProcessRun()
     // Start the computation.
     if (!_StatusProgress)
     {
+        auto w = new QWidget();
+        w->setLayout(new QHBoxLayout());
+        w->layout()->setContentsMargins(0,0,0,0);
+        w->layout()->setSpacing(1);
 
         _StatusProgress = new QProgressBar(this);
-        this->statusBar()->addPermanentWidget(_StatusProgress);
         _StatusProgress->setFormat("%v / %m");
+        _cancelation = new QPushButton(QIcon(":/cancel.png"), "", this);
+
+        _cancelation->connect(_cancelation, &QPushButton::clicked,
+                              [this](bool){ auto cancel = this->_cancelation->objectName();
+            NetworkProcessHandler::handler().sendCommand(QString("/Cancel/?proc=%1").arg(cancel));
+        });
+
+
+        w->layout()->addWidget(_StatusProgress);
+        w->layout()->addWidget(_cancelation);
+
+        this->statusBar()->addPermanentWidget(w);
 
     }
+
     _StatusProgress->setRange(0,0);
 
     run_time.start();
-    startProcessOtherStates(selectedChanns, lsfm, started, siteMatcher);
+    startProcessOtherStates(selectedChanns, lsfm, started, siteMatcher, exp);
 
 
     QPushButton* s = ui->processingArea->findChild<QPushButton*>("ProcessStartButton");
-    if (s) s->setDisabled(true);
+    if (s && !exp.isEmpty()) s->setDisabled(true);
 
 }
 
@@ -1030,6 +1115,45 @@ void MainWindow::on_pluginhistory(QString )
     pluginHistory(cb);
 }
 
+bool compare_js(QJsonValue v1, QJsonValue v2)
+{
+    if (v1.type() != v2.type())
+        return false;
+
+    if (v1.isString())
+        return v1.toString()==v2.toString();
+    if (v1.isDouble())
+        return v1.toDouble()==v2.toDouble();
+
+    return true;
+}
+
+bool compare_par(QJsonObject ob1, QJsonObject ob2)
+{
+    bool comp = true;
+    QStringList vs = QStringList() << "Value" << "Value2";
+
+    if (!ob1.contains("Value"))
+        return false;
+
+    for (auto n: vs)
+    {
+
+        if (ob1[n].isString() || ob1[n].isDouble())
+            comp &= compare_js(ob1[n],ob2[n]);
+
+        if (ob1[n].isArray())
+        {
+            auto a1 = ob1[n].toArray(), a2 = ob2[n].toArray();
+
+            for (int i = 0; i < std::min(a1.size(), a2.size()); ++i)
+                comp &= compare_js(a1[i], a2[i]);
+
+        }
+    }
+    return comp;
+}
+
 void MainWindow::pluginHistory(QComboBox * cb)
 {
 
@@ -1037,11 +1161,11 @@ void MainWindow::pluginHistory(QComboBox * cb)
     // Reload the json !
     if (path.isEmpty())
     {
-        QJsonObject params;
-        CheckoutProcess::handler().getParameters(_preparedProcess, params);
+        //        QJsonObject params;
+        CheckoutProcess::handler().getParameters(_preparedProcess, _processParams);
         int idx = cb->currentIndex();
         if (idx >= 0)
-            setupProcessCall(params, idx);
+            setupProcessCall(_processParams, idx);
         return;
     }
 
@@ -1057,11 +1181,10 @@ void MainWindow::pluginHistory(QComboBox * cb)
     // Check file contains Path & that this path is our process :p
     if (!reloaded.contains("Path") || reloaded["Path"] != this->_preparedProcess )
     {
-        QJsonObject params;
-        CheckoutProcess::handler().getParameters(_preparedProcess, params);
+        CheckoutProcess::handler().getParameters(_preparedProcess, _processParams);
         int idx = cb->currentIndex();
         if (idx >= 0)
-            setupProcessCall(params, idx);
+            setupProcessCall(_processParams, idx);
     }
 
     // Quick & dirty check for file content if missing skip history reload
@@ -1069,5 +1192,31 @@ void MainWindow::pluginHistory(QComboBox * cb)
         if (!reloaded.contains(QString(str)))
             return;
 
-    setupProcessCall(reloaded, cb->currentIndex());
+    QJsonArray params = _processParams["Parameters"].toArray(),
+            rel_par = reloaded["Parameters"].toArray();
+    // now we iterate through this params, search in reloaded a diffe
+    for (int i = 0; i < params.size(); ++i)
+    {
+        auto ref_tag = params[i].toObject()["Tag"].toString();
+        for (int j = 0; j < rel_par.size(); ++j)
+        {
+            if (ref_tag == rel_par[j].toObject()["Tag"].toString() &&
+                    !compare_par(params[i].toObject(), rel_par[j].toObject()))
+            {
+                  auto ob=params[i].toObject();
+                  ob["Value"] = rel_par[j].toObject()["Value"];
+                  if (rel_par[j].toObject().contains("Value2"))
+                      ob["Value2"] = rel_par[j].toObject()["Value2"];
+                  ob["NonDefault"]=true;
+                  params.replace(i, ob);
+                  break;
+            }
+        }
+    }
+
+    _processParams["Parameters"] = params;
+
+
+    // We need to adjust the _processParams wrt to reloaded entry, to avoid the value changes effect
+    setupProcessCall(_processParams, cb->currentIndex());
 }

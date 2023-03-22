@@ -26,6 +26,9 @@ extern  QTextStream *hash_logfile;
 #include "qhttp/qhttpclientrequest.hpp"
 #include "qhttp/qhttpclientresponse.hpp"
 
+
+
+
 using namespace qhttp::client;
 
 struct Req
@@ -61,22 +64,23 @@ public:
 
     void setCollapseMode(bool mode) { collapse = mode; }
 
-protected:
-    void timerEvent(QTimerEvent *event) override;
+//protected:
+//    void timerEvent(QTimerEvent *event) override;
 public:
     QQueue<Req> reqs;
     QUrl         iurl;
-    QHttpClient  iclient;
+    QList<QHttpClient *> iclient;
     bool         awaiting;
     int          icpus;
     int          procs_counter;
     bool        collapse;
+            bool    run;
 };
 
 
 // faking :)
 typedef CheckoutHttpClient CheckoutHost;
-
+struct DataFrame;
 
 class DllCoreExport NetworkProcessHandler: public QObject
 {
@@ -88,16 +92,21 @@ public:
     static NetworkProcessHandler& handler();
     void establishNetworkAvailability();
 
+    void setNoProxyMode();
+    void addProxyPort(uint16_t port);
+
     QStringList getProcesses();
     void getParameters(QString process);
     void setParameters(QJsonObject ob);
+
+    void sendCommand(QString par);
 
     void startProcess(QString process, QJsonArray ob);
     void startProcess(CheckoutHttpClient *h, QString process, QJsonArray ob);
 
     void getProcessMessageStatus(QString process, QList<QString> hash);
 
-    void finishedProcess(QString hash, QJsonObject res);
+    void finishedProcess(QString hash, QJsonObject res, bool last_one = false);
 
     void removeHash(QString hash);
     void removeHash(QStringList hashes);
@@ -112,6 +121,16 @@ public:
     QStringList remainingProcess();
     void setProcesses(QJsonArray ar, CheckoutHttpClient* cl);
     void handleHashMapping(QJsonArray Core, QJsonArray Run);
+
+
+     void timerEvent(QTimerEvent *event) override;
+     void storeData(QString plate, bool finished=false);
+//     void setPythonEnvironment(QProcessEnvironment env);
+
+
+protected:
+    QCborArray filterBinary(QString hash, QJsonObject ds);
+    QJsonArray filterObject(QString hash, QJsonObject ds, bool last_one=false);
 
 private slots:
     void displayError(QAbstractSocket::SocketError socketError);
@@ -141,6 +160,16 @@ protected:
 
     int last_serv_pos;
     QFile* data;
+
+    // For datastorage
+
+    QString srv;
+//    QProcessEnvironment python_env;
+
+    QMap<QString, DataFrame*> plateData;
+    QMap<int, QString> storageTimer;
+    QMap<QString, int> rstorageTimer;
+
 };
 
 #endif // NETWORKPROCESSHANDLER_H
