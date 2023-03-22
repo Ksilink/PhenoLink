@@ -678,6 +678,7 @@ void ImageForm::BwdPlayClicked()
 
 #ifdef Checkout_With_VTK
 
+
 #include <QVTKWidget.h>
 #include <vtkAutoInit.h>
 
