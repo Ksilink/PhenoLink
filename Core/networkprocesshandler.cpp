@@ -730,13 +730,30 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
 
     QString plate = ds["XP"].toString(), commit = ds["CommitName"].toString();
 
+
+
+
     if (!commit.isEmpty() && par.contains(QString("SavePath")) && !par.value("SavePath").toString().isEmpty())
     {
         QString pos = par["Meta"].toArray().first().toObject()["Pos"].toString();
 
+        int t = ds["TimePos"].toInt(),
+                f = ds["FieldId"].toInt(),
+                z = ds["zPos"].toInt(),
+                ch = ds["Channel"].toInt();
+
+
+        QString ttag;
+        if (t >= 0) ttag += QString("T%1").arg(t);
+        if (f >= 0) ttag += QString("%F1").arg(f);
+        if (z >= 0) ttag += QString("%Z1").arg(z);
+        if (ch >= 0) ttag += QString("%C1").arg(ch);
+
+        ttag += par.value("Tag").toString();
+
         QString tofile = QString("%1/%2/%3_%5_%4.fth").arg(par.value("SavePath").toString(),
                                                            commit, plate,
-                                                           par.value("Tag").toString(),
+                                                           ttag,
                                                            pos);
         //        qDebug() << "Saving Generated Meta to" << tofile;
         {
