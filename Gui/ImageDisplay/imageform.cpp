@@ -678,7 +678,7 @@ void ImageForm::BwdPlayClicked()
 
 #ifdef Checkout_With_VTK
 
-#include <QVTKWidget.h>
+#include <QVTKOpenGLNativeWidget.h>
 #include <vtkAutoInit.h>
 
 VTK_MODULE_INIT(vtkRenderingOpenGL2);
@@ -710,14 +710,14 @@ VTK_MODULE_INIT(vtkInteractionStyle);
 #include <vtkVolume.h>
 #include <vtkVolumeProperty.h>
 #include <vtkFixedPointVolumeRayCastMapper.h>
-#include <vtkOpenGLGPUVolumeRayCastMapper.h>
+//#include <vtkOpenGLGPUVolumeRayCastMapper.h>
 #include <vtkColorTransferFunction.h>
-#include "vtkSmartVolumeMapper.h"
+//#include "vtkSmartVolumeMapper.h"
 
 void ImageForm::display3DRendering()
 {
 
-    QVTKWidget* vtk = new QVTKWidget(0);
+    QVTKOpenGLNativeWidget* vtk = new QVTKOpenGLNativeWidget();
 
     vtk->resize(120,120);
 
@@ -843,7 +843,8 @@ void ImageForm::display3DRendering()
     renderer->AddViewProp(volume);
     renderer->ResetCamera();
 
-    vtk->SetRenderWindow(renderWindow);
+    //vtk->SetRenderWindow(renderWindow);
+    vtk->setRenderWindow(renderWindow);
     renderWindow->Render();
 
     vtk->show();
