@@ -744,17 +744,10 @@ void exportBinary(QJsonObject& ds, QJsonObject& par, QCborMap& ob) // We'd like 
 
 
         QString ttag;
-<<<<<<< HEAD
-        if (t >= 0) ttag += QString("T%1").arg(t, 3, QLatin1Char('0'));
-        if (f >= 0) ttag += QString("F%1").arg(f, 3, QLatin1Char('0'));
-        if (z >= 0) ttag += QString("Z%1").arg(z, 3, QLatin1Char('0'));
-        if (ch >= 0) ttag += QString("C%1").arg(ch, 3, QLatin1Char('0'));
-=======
         if (t > 0) ttag += QString("T%1").arg(t, 3, QLatin1Char('0'));
         if (f > 0) ttag += QString("F%1").arg(f, 3, QLatin1Char('0'));
         if (z > 0) ttag += QString("Z%1").arg(z, 3, QLatin1Char('0'));
         if (ch > 0) ttag += QString("C%1").arg(ch, 3, QLatin1Char('0'));
->>>>>>> 40249b767bdc4e92efad2170f93ab63e59966e98
 
         ttag += par.value("Tag").toString();
 
