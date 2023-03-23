@@ -55,6 +55,10 @@ endif()
 find_package(bsoncxx   REQUIRED)
 find_package(mongocxx   REQUIRED)
 find_package(Boost 1.56.0 REQUIRED)
+#find_package(Qt6 REQUIRED COMPONENTS Core5Compat)
+#find_package(Qt6 REQUIRED COMPONENTS Xml)
+#find_package(Qt6 REQUIRED COMPONENTS WinExtras)
+
 
 find_package(PkgConfig)
 pkg_check_modules(Jxl REQUIRED IMPORTED_TARGET libjxl)
