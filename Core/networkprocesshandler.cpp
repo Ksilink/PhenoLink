@@ -706,13 +706,14 @@ void exportBinary(QJsonObject &ds, QJsonObject &par, QCborMap &ob) // We'd like 
 
     if (!commit.isEmpty() && par.contains(QString("SavePath")) && !par.value("SavePath").toString().isEmpty())
     {
-        QString pos = par["Meta"].toArray().first().toObject()["Pos"].toString();
+        auto meta = par["Meta"].toArray().first().toObject();
+        QString pos = meta["Pos"].toString();
         
 
-        int t = par["TimePos"].toInt(),
-                f = par["FieldId"].toInt(),
-                z = par["zPos"].toInt(),
-                ch = par["Channel"].toInt();
+        int t = meta["TimePos"].toInt(),
+                f = meta["FieldId"].toInt(),
+                z = meta["zPos"].toInt(),
+                ch = meta["Channel"].toInt();
 
 
         QString ttag;
