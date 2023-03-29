@@ -34,6 +34,7 @@
 #include <opencv2/opencv.hpp>
 //ImageForm* ImageForm::_selectedForm = 0;
 
+#include <Core/phenolinkimage.h>
 
 // Force min size to be 320x270
 ImageForm::ImageForm(QWidget *parent, bool packed) :
