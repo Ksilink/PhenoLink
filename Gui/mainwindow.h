@@ -54,7 +54,7 @@ public:
     void adaptSelection(QTableView* tw, QItemSelectionModel* sm, QSet<QString> &rs);
 
     void startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                 bool started, QRegExp siteMatcher, QString exports);
+                                 bool started, QRegularExpression siteMatcher, QString exports);
 
     void on_actionRe_load_servers_triggered();
 

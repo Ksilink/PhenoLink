@@ -83,7 +83,7 @@ void helper::listParams(QJsonObject ob)
 
 void helper::startProcess(QJsonObject ob, QRegularExpression siteMatcher)
 {
-    QRegExp siteMatcher;
+//    QReguExp siteMatcher;
 
     QJsonArray startParams;
 
@@ -467,7 +467,7 @@ void startProcess(QString proc, QString commitName,  QStringList params, QString
     h->setDump(dumpfile);
 
     qApp->connect(&NetworkProcessHandler::handler(), &NetworkProcessHandler::parametersReady,
-                  [h](QJsonObject o) { h->startProcess(o);  });
+                  [h](QJsonObject o) { h->startProcess(o, QRegularExpression());  });
 
     qApp->exec();
     delete h;

@@ -658,7 +658,7 @@ int main(int argc, char *argv[]) {
 
     if (parser.isSet("older"))
     {
-        QString older = parser.value("older").toLower();
+        QStringView older = parser.value("older").toLower();
 
         auto date = QDateTime::currentDateTime();
         bool conv;
@@ -674,17 +674,17 @@ int main(int argc, char *argv[]) {
             {
                 if (older.at(i) == 'y')
                 {
-                    date=date.addYears(-older.midRef(start, i-start).toInt());
+                    date=date.addYears(-older.sliced(start, i-start).toInt());
                     start = i+1;
                 }
                 if (older.at(i) == 'm')
                 {
-                    date=date.addMonths(-older.midRef(start, i-start).toInt());
+                    date=date.addMonths(-older.sliced(start, i-start).toInt());
                     start = i+1;
                 }
                 if (older.at(i) == 'd')
                 {
-                    date=date.addDays(-older.midRef(start, i-start).toInt());
+                    date=date.addDays(-older.sliced(start, i-start).toInt());
                     start = i+1;
                 }
 

@@ -80,8 +80,10 @@
 #include <time.h>
 
 
-#include <QtWebEngineWidgets/QWebEngineView>
-//#include <QtWebEngineWidgets/QtWebEngineWidgets>
+#include <QtWebEngineWidgets/QtWebEngineWidgets>
+
+#include <QWebEngineView>
+
 
 #include <dashoptions.h>
 
@@ -793,7 +795,7 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
             if (mdl->hasMeasurements(QPoint(r, c)))
             {
 
-                QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+r)
+                QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+QChar(r))
                         + colname + ".jpg";
                 if (QFile::exists(img2Path))
                     hasBirdview2 = true;
@@ -852,14 +854,14 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
                 if (mdl->hasMeasurements(QPoint(r, c)))
                 {
 
-                    QString imgPath = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
+                    QString imgPath = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+QChar(r))
                             + colname + ".jpg";
-                    QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+r)
+                    QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+QChar(r))
                             + colname + ".jpg";
 
 
                     out <<    "<td><img width='100%' src='file://"
-                           <<  (hasBirdview2 ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+r) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'" <<"/></td>";
+                           <<  (hasBirdview2 ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+QChar(r)) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+QChar(r)) << colname << "&json'" <<"/></td>";
                     if (res.isEmpty())
                         res = imgPath;
                 }

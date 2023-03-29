@@ -467,7 +467,7 @@ void addMetadataFile(QString f);
     QList<SequenceFileModel*> getValidSequenceFiles();
     SequenceFileModel &getFirstValidSequenceFiles();
 
-    void Q_DECL_DEPRECATED addToDatabase();
+    Q_DECL_DEPRECATED void  addToDatabase();
 
     QString name() const;
     void setName(const QString &name);

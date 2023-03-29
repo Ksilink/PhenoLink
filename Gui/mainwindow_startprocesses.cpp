@@ -488,7 +488,7 @@ QJsonArray& MainWindow::adjustParameterFromWidget(SequenceFileModel* sfm, QJsonO
 
 
 void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                         bool started, QRegExp siteMatcher, QString exports)//, QMap<QString, QSet<QString> > tags_map)
+                                         bool started, QRegularExpression siteMatcher, QString exports)//, QMap<QString, QSet<QString> > tags_map)
 {
     static int WorkID = 1;
 

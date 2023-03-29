@@ -1193,7 +1193,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
 
         res->setStatusCode(qhttp::ESTATUS_OK);
-        res->addHeaderValue("content-length", message.size());
+        res->addHeader("content-length", QString::number(message.size()).toLatin1());
         res->end(message.toUtf8());
 
         return;
@@ -1410,7 +1410,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
         QString body = QString("Server Query received, with empty content (%1)").arg(urlpath);
         res->addHeader("connection", "close");
-        res->addHeaderValue("content-length", body.length());
+        res->addHeader("content-length", QString::number(body.length()).toLatin1());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body.toLatin1());
     }

@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 
         QWidget window;
         QVBoxLayout* layout = new QVBoxLayout(&window);
-        layout->setMargin(0);
+        layout->setContentsMargins(0,0,0,0);
         window.setLayout(layout);
 
         for (const QString& file : files) {
@@ -77,7 +77,7 @@ AwsFileUploader::AwsFileUploader(const QString &filePath, const QString &bucketN
 
 void AwsFileUploader::start()
 {
-    QFuture<void> future = QtConcurrent::run(this, &AwsFileUploader::upload);
+    auto future = QtConcurrent::run([this]() { this->upload(); } );
 }
 
 void AwsFileUploader::upload()
@@ -122,7 +122,7 @@ GCSFileUploader::GCSFileUploader(const QString &filePath, const QString &bucketN
 
 void GCSFileUploader::start()
 {
-    QFuture<void> future = QtConcurrent::run(this, &GCSFileUploader::upload);
+    auto future = QtConcurrent::run([this](){ this->upload(); } );
 }
 
 void GCSFileUploader::upload()

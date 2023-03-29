@@ -610,8 +610,8 @@ void tagger::on_mapcsv()
                         break;
                     header = hea.contains(',') ? hea.split(',') : (hea.contains(";") ? hea.split(';') : (hea.contains('\t') ? hea.split('\t') : hea.split(",")));
 
-                    QString well = header.at(wells->currentIndex()).toUpper();
-                    int r = (char)(well[0].toLatin1())-'A', c = well.midRef(1).toInt()-1;
+                    QStringView well = header.at(wells->currentIndex()).toUpper();
+                    int r = (char)(well[0].toLatin1())-'A', c = well.sliced(1).toInt()-1;
 
                     for (auto w: this->findChildren<TaggerPlate*>())
                     {
