@@ -65,8 +65,9 @@ set(CheckoutGui_SRC
 
 if(VTK_FOUND)
     link_directories(${VTK_LIB_DIR})
-    include(${VTK_USE_FILE})
+    # include(${VTK_USE_FILE})
     set(CheckoutVTKLib ${VTK_LIBRARIES})
+    
 endif(VTK_FOUND)
 
 if (BUILD_PYTHON_SCRIPTING)
@@ -103,6 +104,8 @@ ELSE()
         target_link_libraries(CheckoutGui PRIVATE  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt6::WebEngineWidgets Qt::Concurrent  ${OpenCV_LIBS}  mongo::mongocxx_static mongo::bsoncxx_static Boost::boost)
 ENDIF(WIN32)
 
-
+if(VTK_FOUND)
+vtk_module_autoinit(TARGETS CheckoutGui MODULES ${VTK_LIBRARIES} )
+endif(VTK_FOUND)
 
 install(TARGETS CheckoutGui COMPONENT applications DESTINATION bin)
