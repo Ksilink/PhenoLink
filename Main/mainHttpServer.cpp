@@ -157,7 +157,7 @@ int main(int ac, char** av)
     QCoreApplication app(ac, av);
 #endif
 
-    app.setApplicationName("Checkout");
+    app.setApplicationName("PhenoLink");
     app.setApplicationVersion(CHECKOUT_VERSION);
     app.setOrganizationDomain("WD");
     app.setOrganizationName("WD");
@@ -179,7 +179,7 @@ int main(int ac, char** av)
 
     if (data.contains("-h") || data.contains("-help"))
     {
-        qDebug() << "CheckoutQueue Serveur Help:";
+        qDebug() << "PhenoLinkQueue Serveur Help:";
         qDebug()      << "\t-p <port>: specify the port to run on";
         qDebug()      << "\t-c <cpu>: Adjust the maximum number of threads";
         qDebug()      << "\t-n <node>: Try to force NUMA node (windows only)";
@@ -753,7 +753,7 @@ Control::Control(Server* serv): QWidget(), _serv(serv), lastNpro(0)
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setContextMenu(trayIconMenu);
     trayIcon->setIcon(QIcon(":/ServerIcon.png"));
-    trayIcon->setToolTip(QString("Checkout Server %2 (%1)").arg(sets.value("ServerPort", 13378).toUInt()).arg(CHECKOUT_VERSION));
+    trayIcon->setToolTip(QString("PhenoLink Server %2 (%1)").arg(sets.value("ServerPort", 13378).toUInt()).arg(CHECKOUT_VERSION));
     trayIcon->show();
 
     startTimer(2000);
@@ -770,9 +770,9 @@ void Control::timerEvent(QTimerEvent * event)
     int npro = procs.numberOfRunningProcess();
     QString tooltip;
     if (npro != 0)
-        tooltip = QString("CheckoutServer %2 (%1 requests").arg(npro).arg(CHECKOUT_VERSION);
+        tooltip = QString("PhenoLinkServer %2 (%1 requests").arg(npro).arg(CHECKOUT_VERSION);
     else
-        tooltip = QString("CheckoutServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
+        tooltip = QString("PhenoLinkServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
 
     QStringList missing_users;
     for (auto& user : procs.users())
@@ -802,7 +802,7 @@ void Control::timerEvent(QTimerEvent * event)
     trayIcon->setToolTip(tooltip);
 
     //    if (lastNpro != npro && npro == 0)
-    //        trayIcon->showMessage("Checkout Server", "Checkout server has finished all his process");
+    //        trayIcon->showMessage("PhenoLink Server", "PhenoLink server has finished all his process");
 
     lastNpro = npro;
 

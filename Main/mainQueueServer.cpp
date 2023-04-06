@@ -119,7 +119,7 @@ int main(int ac, char** av)
     QCoreApplication app(ac, av);
 #endif
 
-    app.setApplicationName("Checkout");
+    app.setApplicationName("PhenoLink");
     app.setApplicationVersion(CHECKOUT_VERSION);
     app.setOrganizationDomain("WD");
     app.setOrganizationName("WD");
@@ -136,7 +136,7 @@ int main(int ac, char** av)
 
     if (data.contains("-h") || data.contains("-help"))
     {
-        qDebug() << "CheckoutQueue Serveur Help:";
+        qDebug() << "PhenoLinkQueue Serveur Help:";
         qDebug() << "\t-p <port>: specify the port to run on";
         qDebug() << "\t-d : Run in debug mode (windows only launches a console)";
         qDebug() << "\t-Crashed: Reports that the process has been restarted after crashing";
@@ -857,7 +857,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                             files << concatenated.split("/").last()+".torm";
                         }
 
-                        QtConcurrent::run(fuseArrow,
+                        auto fut = QtConcurrent::run(fuseArrow,
                                           path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
 
 //                        fuseArrow(path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
@@ -1450,7 +1450,7 @@ Control::Control(Server* serv): QWidget(), _serv(serv), lastNpro(0)
 {
     hide();
 
-    quitAction = new QAction("Quit Checkout Server", this);
+    quitAction = new QAction("Quit PhenoLink Server", this);
     connect(quitAction, SIGNAL(triggered()), this, SLOT(quit()));
     QSettings sets;
 
@@ -1462,7 +1462,7 @@ Control::Control(Server* serv): QWidget(), _serv(serv), lastNpro(0)
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setContextMenu(trayIconMenu);
     trayIcon->setIcon(QIcon(":/ServerIcon.png"));
-    trayIcon->setToolTip(QString("Checkout Proxy %2 (%1)").arg(sets.value("ServerPort", 13378).toUInt()).arg(CHECKOUT_VERSION));
+    trayIcon->setToolTip(QString("PhenoLink Proxy %2 (%1)").arg(sets.value("ServerPort", 13378).toUInt()).arg(CHECKOUT_VERSION));
     trayIcon->show();
 
     startTimer(2000);
@@ -1479,9 +1479,9 @@ void Control::timerEvent(QTimerEvent * event)
     int npro = procs.numberOfRunningProcess();
     QString tooltip;
     if (npro != 0)
-        tooltip = QString("CheckoutQueueServer %2 (%1 requests").arg(npro).arg(CHECKOUT_VERSION);
+        tooltip = QString("PhenoLinkQueueServer %2 (%1 requests").arg(npro).arg(CHECKOUT_VERSION);
     else
-        tooltip = QString("CheckoutQueueServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
+        tooltip = QString("PhenoLinkQueueServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
 
     QStringList missing_users;
     for (auto& user : procs.users())
@@ -1511,7 +1511,7 @@ void Control::timerEvent(QTimerEvent * event)
     trayIcon->setToolTip(tooltip);
 
     if (lastNpro != npro && npro == 0)
-        trayIcon->showMessage("Checkout Server", "Checkout server has finished all his process");
+        trayIcon->showMessage("PhenoLink Server", "PhenoLink server has finished all his process");
 
     lastNpro = npro;
 

@@ -71,7 +71,6 @@
 #include <ImageDisplay/scrollzone.h>
 
 #include "ScreensDisplay/screensgraphicsview.h"
-#include <QtWebView/QtWebView>
 #include <QInputDialog>
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,7 +80,6 @@
 
 
 #include <QtWebEngineWidgets/QtWebEngineWidgets>
-
 #include <QWebEngineView>
 
 

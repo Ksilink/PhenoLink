@@ -46,8 +46,20 @@
         },
         {
             "name": "libjxl"
+        },
+        {
+            "name": "qt"
+        },
+        {
+            "name": "qtwebengine",
+            "features": [  "geolocation","spellchecker","webchannel"]
+        },
+        {
+            "name": "qtwebview"
+        },
+        {
+            "name": "vtk",
+            "features":["qt"]
         }
-
-
     ]
 }

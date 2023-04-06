@@ -677,7 +677,7 @@ void ImageForm::BwdPlayClicked()
 }
 
 
-#ifdef Checkout_With_VTK
+//#ifdef 1 //Checkout_With_VTK
 
 #include <QVTKOpenGLNativeWidget.h>
 #include <vtkAutoInit.h>
@@ -726,6 +726,8 @@ void ImageForm::display3DRendering()
     vtkSmartPointer<vtkImageData> structuredPoints
             = vtkSmartPointer<vtkImageData>::New();
 
+    QPixmap _pix = pixItem->pixmap();
+
     structuredPoints->SetDimensions(_pix.width(), _pix.height() ,
                                     _interactor->getZCount());
 
@@ -746,14 +748,15 @@ void ImageForm::display3DRendering()
 
             }
 
-    SequenceFileModel* model = _interactor->getSequenceFileModel();
+ //   SequenceFileModel* model = _interactor->getSequenceFileModel();
 
     for (int z = 0; z < dims[2]; z++)
     {
-        QMap<int, QString> l = model->getChannelsFiles(_interactor->getTimePoint(), _interactor->getField(), z+1);
-
-        foreach(QString s , l)
+//        QMap<int, QString> l = model->getChannelsFiles(_interactor->getTimePoint(), _interactor->getField(), z+1);
+        auto l = _interactor->getAllChannel();
+        for(QPair<int, QString>& pair:  l)
         {
+            auto s = pair.second;
             //            qDebug() << s;
             cv::Mat im = pl::imread(s,  2);
             ImageInfos* ifo = _interactor->imageInfos(s);
@@ -795,7 +798,6 @@ void ImageForm::display3DRendering()
             }
         }
     }
-    //    ImageInfos* nfo = _interactor->getChannelImageInfos(0);
 
     // Create a transfer function mapping scalar value to opacity
     vtkSmartPointer<vtkPiecewiseFunction> oTFun =
@@ -851,7 +853,7 @@ void ImageForm::display3DRendering()
     vtk->show();
 
 }
-#endif
+//#endif
 
 void ImageForm::imageClick(QPointF pos)
 {

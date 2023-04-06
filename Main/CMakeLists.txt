@@ -14,37 +14,44 @@ IF(WIN32)
     SET(SrvRCFILE "../Gui/SrvIcon.rc" "../Gui/rcs.qrc")
 
 
-    add_executable(Checkout ${GUI_TYPE} main.cpp ${AppRCFILE} )
+    add_executable(PhenoLink ${GUI_TYPE} main.cpp ${AppRCFILE} )
     if (MSVC)
-        target_compile_options(Checkout PRIVATE /WX)
+        target_compile_options(PhenoLink PRIVATE /WX)
     endif()
 
-    target_include_directories(Checkout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(PhenoLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-    target_link_libraries(Checkout CheckoutGui CheckoutCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WebView ${OpenCV_LIBS} )
+#    target_compile_definitions(PhenoLink PUBLIC  -DGitPluginDate=${plugin_date} )
+
+    target_link_libraries(PhenoLink PhenoLinkGui PhenoLinkCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WebView ${OpenCV_LIBS} )
     #install_qt5_executable(Checkout)
-    install(TARGETS Checkout COMPONENT applications DESTINATION bin)
+    install(TARGETS PhenoLink COMPONENT applications DESTINATION bin)
 ELSE()
 
-    add_executable(Checkout ${GUI_TYPE} main.cpp )
+    add_executable(PhenoLink ${GUI_TYPE} main.cpp )
 
-    target_include_directories(Checkout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+ #   target_compile_definitions(PhenoLink PUBLIC  -DGitPluginDate=${plugin_date})
+    target_include_directories(PhenoLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-    target_link_libraries(Checkout CheckoutGui CheckoutCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WebView  Qt::WebEngineWidgets ${OpenCV_LIBS} "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" mongo::mongocxx_static mongo::bsoncxx_static  Boost::boost )
+    target_link_libraries(PhenoLink PhenoLinkGui PhenoLinkCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WebView  Qt::WebEngineWidgets ${OpenCV_LIBS} "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" mongo::mongocxx_static mongo::bsoncxx_static  Boost::boost )
 ENDIF()
 
-add_executable(ckcli  mainCli.cpp mainCli.h ${AppRCFILE} )
+add_dependencies (PhenoLink PhenoLinkGui PhenoLinkCore)
 
-target_include_directories(ckcli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_executable(plcli  mainCli.cpp mainCli.h ${AppRCFILE} )
+
+#target_compile_definitions(plcli PUBLIC  -DGitPluginDate="")
+target_include_directories(plcli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_dependencies (plcli PhenoLinkGui PhenoLinkCore)
 
 if (WIN32)
-    target_link_libraries(ckcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS} )
+    target_link_libraries(plcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS} )
 else()
-    target_link_libraries(ckcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${OpenCV_LIBS} )
+    target_link_libraries(plcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${OpenCV_LIBS} )
 endif(WIN32)
 
-install(TARGETS ckcli COMPONENT applications DESTINATION bin)
+install(TARGETS plcli COMPONENT applications DESTINATION bin)
 
 
 add_executable(PhenoLinkUploader mainUploader.cpp mainUploader.h ${AppRCFile})
@@ -55,6 +62,8 @@ if (WIN32)
 else()
     target_link_libraries(PhenoLinkUploader Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc )
 endif(WIN32)
+
+
 
 install(TARGETS PhenoLinkUploader COMPONENT applications DESTINATION bin)
 
@@ -77,27 +86,33 @@ add_definitions(-DQHTTP_MEMORY_LOG=0)
 add_definitions(-DQHTTP_HAS_CLIENT)
 
 
-add_executable(CheckoutHttpServer mainHttpServer.cpp checkouthttpserver.h checkout_python.h ${SrvRCFILE} )
-target_include_directories(CheckoutHttpServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_executable(PhenoLinkHttpServer mainHttpServer.cpp checkouthttpserver.h checkout_python.h ${SrvRCFILE} )
+
+#target_compile_definitions(PhenoLinkHttpServer PUBLIC  -DGitPluginDate="")
+
+target_include_directories(PhenoLinkHttpServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_dependencies (PhenoLinkHttpServer PhenoLinkGui PhenoLinkCore)
 
 if (WIN32)
-    target_link_libraries( CheckoutHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets  ${OpenCV_LIBS})
+    target_link_libraries( PhenoLinkHttpServer ${CheckoutLibs} QHttp  Qt::Concurrent Qt::Core Qt::Network Qt::Widgets  ${OpenCV_LIBS})
 else()
-        target_link_libraries( CheckoutHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${OpenCV_LIBS}  )
+        target_link_libraries( PhenoLinkHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${OpenCV_LIBS}  )
 endif(WIN32)
 
-install(TARGETS CheckoutHttpServer COMPONENT applications DESTINATION bin)
+install(TARGETS PhenoLinkHttpServer COMPONENT applications DESTINATION bin)
 
-add_executable(CheckoutQueueServer mainQueueServer.cpp checkouqueuserver.h checkout_arrow.h checkout_python.h ${SrvRCFILE} )
-target_include_directories(CheckoutQueueServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_executable(PhenoLinkQueueServer mainQueueServer.cpp checkouqueuserver.h checkout_arrow.h checkout_python.h ${SrvRCFILE} )
+
+target_include_directories(PhenoLinkQueueServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (WIN32)
-    target_link_libraries( CheckoutQueueServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS})
+    target_link_libraries( PhenoLinkQueueServer ${CheckoutLibs} QHttp Qt::Core Qt::Concurrent Qt::Network Qt::Widgets ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS})
 else()
-        target_link_libraries( CheckoutQueueServer PRIVATE ${CheckoutLibs} QHttp Qt::Concurrent Qt::Core Qt::Network Qt::Widgets "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS})
+        target_link_libraries( PhenoLinkQueueServer PRIVATE ${CheckoutLibs} QHttp Qt::Concurrent Qt::Core Qt::Network Qt::Widgets "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS})
 endif(WIN32)
 
-install(TARGETS CheckoutQueueServer COMPONENT applications DESTINATION bin)
+install(TARGETS PhenoLinkQueueServer COMPONENT applications DESTINATION bin)
+add_dependencies (PhenoLinkQueueServer PhenoLinkGui PhenoLinkCore)
 
 
 

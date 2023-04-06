@@ -5,7 +5,7 @@
 #include <QDebug>
 #include <QGraphicsSceneMouseEvent>
 
-#include "wellplatemodel.h"
+#include <Core/wellplatemodel.h>
 #include "wellrepresentationitem.h"
 #include <QApplication>
 
@@ -332,7 +332,7 @@ void WellRepresentationItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 
     QMimeData *mimeData = new QMimeData;
 
-    mimeData->setData("checkout/Wells", QByteArray());
+    mimeData->setData("PhenoLink/Wells", QByteArray());
     drag->setMimeData(mimeData);
 
     Qt::DropAction dropAction = drag->exec(Qt::CopyAction);

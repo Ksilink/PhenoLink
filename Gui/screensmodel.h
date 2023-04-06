@@ -7,7 +7,7 @@
 #include <QStandardItemModel>
 #include <QSet>
 
-#include <Dll.h>
+#include <Core/Dll.h>
 
 
 class QProgressBar;

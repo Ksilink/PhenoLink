@@ -210,7 +210,7 @@ ConfigDialog::ConfigDialog()
     mainLayout->addLayout(buttonsLayout);
     setLayout(mainLayout);
 
-    setWindowTitle(tr("Checkout Configuration options"));
+    setWindowTitle(tr("PhenoLink Configuration options"));
 }
 
 void ConfigDialog::createIcons()

@@ -41,7 +41,7 @@ using namespace qhttp::server;
 
 void help()
 {
-    qDebug() << "Checkout Command Line interface";
+    qDebug() << "PhenoLink Command Line interface";
     qDebug() << "ckcli [options] [commands] [parameters]";
     qDebug() << "ckcli commands:";
     qDebug() << "\tls/list:  List available plugins";
@@ -407,7 +407,7 @@ void startServer(QCoreApplication* a,QProcess& server, QStringList var )
         //        server.setProcessChannelMode(QProcess::MergedChannels);
         server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() +"/CheckoutServer_log.txt");
         server.setWorkingDirectory(a->applicationDirPath());
-        QString r = "CheckoutHttpServer.exe";
+        QString r = "PhenoLinkHttpServer.exe";
 
         server.setProgram(r);
         if (set.value("UserMode/Debug", false).toBool())
@@ -477,9 +477,9 @@ int main(int ac, char** av)
 {
     auto a = new QCoreApplication(ac, av);
     //    QApplication::setStyle(QStyleFactory::create("Plastique"));
-    a->setApplicationName("Checkout");
+    a->setApplicationName("PhenoLink");
     a->setApplicationVersion(CHECKOUT_VERSION);
-    //    a.setApplicationDisplayName(QString("Checkout %1").arg(CHECKOUT_VERSION));
+    //    a.setApplicationDisplayName(QString("PhenoLink %1").arg(CHECKOUT_VERSION));
     a->setOrganizationDomain("WD");
     a->setOrganizationName("WD");
 

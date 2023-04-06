@@ -86,9 +86,9 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
     QApplication::setStyle(QStyleFactory::create("Plastique"));
-    a.setApplicationName("Checkout");
+    a.setApplicationName("PhenoLink");
     a.setApplicationVersion(CHECKOUT_VERSION);
-    a.setApplicationDisplayName(QString("Checkout %1").arg(CHECKOUT_VERSION));
+    a.setApplicationDisplayName(QString("PhenoLink %1").arg(CHECKOUT_VERSION));
     a.setOrganizationDomain("WD");
     a.setOrganizationName("WD");
     QSettings set;
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
          server.setProcessChannelMode(QProcess::MergedChannels);
         server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() +"/CheckoutServer_log.txt");
         server.setWorkingDirectory(a.applicationDirPath());
-        QString r = "CheckoutHttpServer.exe";
+        QString r = "PhenoLinkHttpServer.exe";
 
         server.setProgram(r);
         if (set.value("UserMode/Debug", false).toBool())

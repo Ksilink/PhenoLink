@@ -23,7 +23,7 @@ message("Computing hash for ${PluginFile}: ${plugin_date}")
 
 string(STRIP "${plugin_date}" plugin_date)
 
-add_library(CheckoutCore SHARED
+add_library(PhenoLinkCore SHARED
             sequenceinteractor.cpp sequenceinteractor.h
             imageinfos.cpp imageinfos.h
             wellplatemodel.cpp wellplatemodel.h
@@ -49,7 +49,7 @@ add_library(CheckoutCore SHARED
 
 include_directories(${ARROW_INCLUDE_DIR})
 if (MSVC)
-    target_compile_options(CheckoutCore PRIVATE /WX)
+    target_compile_options(PhenoLinkCore PRIVATE /WX)
 endif()
 
 find_package(bsoncxx   REQUIRED)
@@ -65,18 +65,16 @@ pkg_check_modules(Jxl REQUIRED IMPORTED_TARGET libjxl)
 pkg_check_modules(JxlThreads REQUIRED IMPORTED_TARGET libjxl_threads)
 
 
-target_compile_definitions(CheckoutCore PUBLIC  -DGitPluginDate=${plugin_date})
+target_compile_definitions(PhenoLinkCore PUBLIC  -DGitPluginDate=${plugin_date})
 
 
-target_include_directories(CheckoutCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(PhenoLinkCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(WIN32)
-    target_link_libraries(CheckoutCore  QHttp Qt::Widgets Qt::Core Qt::Network Qt::Xml Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS} arrow_shared mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc Azure::azure-storage-blobs PkgConfig::Jxl PkgConfig::JxlThreads)
+    target_link_libraries(PhenoLinkCore  QHttp Qt::Widgets Qt::Core Qt::Network Qt::Xml Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS} arrow_shared mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc Azure::azure-storage-blobs PkgConfig::Jxl PkgConfig::JxlThreads)
 else()
-        target_link_libraries(CheckoutCore PRIVATE QHttp Qt::Widgets Qt::Core Qt::Network Qt::Xml Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS}  mongo::mongocxx_static mongo::bsoncxx_static Boost::boost  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc Azure::azure-storage-blobs PkgConfig::Jxl PkgConfig::JxlThreads)
+    target_link_libraries(PhenoLinkCore PRIVATE QHttp Qt::Widgets Qt::Core Qt::Network Qt::Xml Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS}  mongo::mongocxx_static mongo::bsoncxx_static Boost::boost  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc Azure::azure-storage-blobs PkgConfig::Jxl PkgConfig::JxlThreads)
 endif(WIN32)
-#add_custom_command(TARGET CheckoutCore   PRE_BUILD
-#    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
-#    )
 
-install(TARGETS CheckoutCore COMPONENT applications DESTINATION bin)
+
+install(TARGETS PhenoLinkCore COMPONENT applications DESTINATION bin)

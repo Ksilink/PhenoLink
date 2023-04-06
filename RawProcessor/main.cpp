@@ -23,9 +23,9 @@ int main(int argc, char *argv[])
   //    qInstallMessageHandler(myMessageOutput);
 
   QApplication a(argc, argv);
-  a.setApplicationName("Checkout");
+  a.setApplicationName("PhenoLink");
   a.setApplicationVersion(CHECKOUT_VERSION);
-  a.setApplicationDisplayName(QString("Checkout %1").arg(CHECKOUT_VERSION));
+  a.setApplicationDisplayName(QString("PhenoLink %1").arg(CHECKOUT_VERSION));
   a.setOrganizationDomain("WD");
   a.setOrganizationName("WD");
 

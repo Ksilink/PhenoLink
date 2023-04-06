@@ -95,7 +95,7 @@ void ScrollZone::removeImageForm(ImageForm* im)
 void ScrollZone::dragEnterEvent(QDragEnterEvent *event)
 {
     //    qDebug() << event->mimeData()->formats();
-    if (event->mimeData()->hasFormat("checkout/Wells"))
+    if (event->mimeData()->hasFormat("PhenoLink/Wells"))
         event->acceptProposedAction();
 }
 
@@ -119,7 +119,7 @@ void ScrollZone::dropEvent(QDropEvent *event)
 
     ImageInfos::key(key);
 
-    if (event->mimeData()->hasFormat("checkout/Wells"))
+    if (event->mimeData()->hasFormat("PhenoLink/Wells"))
     {
         event->acceptProposedAction();
         addSelectedWells();

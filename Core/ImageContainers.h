@@ -1,7 +1,8 @@
 #ifndef IMAGECONTAINERS_H
 #define IMAGECONTAINERS_H
 
-#include <Dll.h>
+#include <QJsonObject>
+#include <Core/Dll.h>
 #include <opencv2/highgui.hpp>
 
 

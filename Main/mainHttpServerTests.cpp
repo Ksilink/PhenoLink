@@ -60,7 +60,7 @@ int main(int ac, char** av)
     QCoreApplication app(ac, av);
 #endif
 
-    app.setApplicationName("Checkout");
+    app.setApplicationName("PhenoLink");
     app.setApplicationVersion(CHECKOUT_VERSION);
     app.setOrganizationDomain("WD");
     app.setOrganizationName("WD");

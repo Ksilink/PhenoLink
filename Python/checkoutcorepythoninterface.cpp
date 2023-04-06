@@ -753,8 +753,8 @@ static PyMethodDef checkout_methods[] =
 static struct PyModuleDef checkoutmodule = {
 
   PyModuleDef_HEAD_INIT,
-  "checkout",   /* name of module */
-  "Checkout module, use this to access internal information of the checkout software exposed in the interface", /* module documentation, may be NULL */
+  "PhenoLink",   /* name of module */
+  "PhenoLink module, use this to access internal information of the checkout software exposed in the interface", /* module documentation, may be NULL */
   -1,       /* size of per-interpreter state of the module,
                   or -1 if the module keeps state in global variables. */
 
@@ -799,21 +799,21 @@ CheckoutCorePythonInterface::CheckoutCorePythonInterface()
 
   py_WinAccess = this;
 
-  QString pname("CheckoutCore");
+  QString pname("PhenoLinkCore");
   wchar_t p[200]; pname.toWCharArray((wchar_t*)&p);
 
-  PyImport_AppendInittab("checkout", PyInit_checkout);
+  PyImport_AppendInittab("PhenoLink", PyInit_checkout);
 
   Py_SetProgramName(p);
 
   Py_Initialize();
-  PyImport_ImportModule("checkout");
+  PyImport_ImportModule("PhenoLink");
   import_theimporter();
 
 
   PyRun_SimpleString("import sys");
-  PyRun_SimpleString(QString("sys.stdout = sys.stderr = open(\"%1\", \"w\")").arg(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/Checkout_Python_Log.txt").toLatin1());
-  PyRun_SimpleString("import checkout");
+  PyRun_SimpleString(QString("sys.stdout = sys.stderr = open(\"%1\", \"w\")").arg(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/PhenoLink_Python_Log.txt").toLatin1());
+  PyRun_SimpleString("import PhenoLink");
   PyRun_SimpleString("__name__='__checkout__'");
   //PyRun_SimpleString("help(checkout)");
 

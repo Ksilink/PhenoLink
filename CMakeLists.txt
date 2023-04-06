@@ -91,7 +91,7 @@ add_definitions(-DCheckout_Git_Hash="${app_hash_short}-${plugin_hash_short}${git
 
 option(BUILD_PLUGINS "Build plugins" ON)
 option(BUILD_PYTHON_SCRIPTING "Build with Core side Python Scripting" OFF)
-option(BUILD_WITH_VTK "Build the VTK optional stuff" OFF)
+option(BUILD_WITH_VTK "Build the VTK optional stuff" ON)
 option(BUILD_RAW_PROCESSOR "Build the Raw data processor (very advanced users - developper feature)" OFF)
 option(PLUGIN_IN_CORE "Shall Core call plugins" OFF)
 option(ONNX_GPU "Use ONNX GPU Version" OFF)
@@ -160,9 +160,11 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Update to CMake
 find_package(Qt6 COMPONENTS  Widgets  Xml
-                OpenGL Concurrent  Network WebEngineWidgets WebView  REQUIRED)
+                OpenGLWidgets Concurrent  Network  WebView  REQUIRED)
 
 find_package(Qt6WebView CONFIG REQUIRED)
+
+find_package(Qt6WebEngineWidgets CONFIG REQUIRED)
 
 find_package(bsoncxx   REQUIRED)
 find_package(mongocxx   REQUIRED)
@@ -198,7 +200,23 @@ find_package(azure-storage-blobs-cpp CONFIG REQUIRED)
 
 
 if(BUILD_WITH_VTK)
-    find_package(VTK)
+    find_package(VTK COMPONENTS
+      CommonColor
+      CommonCore
+      FiltersSources
+      InteractionStyle
+      RenderingContextOpenGL2
+      RenderingCore
+      RenderingFreeType
+      RenderingGL2PSOpenGL2
+      RenderingOpenGL2
+      RenderingContextOpenGL2
+      GUISupportQt
+      RenderingQt
+      RenderingVolume
+      REQUIRED
+  )
+
     if(VTK_FOUND)
         message(STATUS "With VTK ${VTK_INCLUDE_DIRS}")
         add_definitions(-DCheckout_With_VTK)
@@ -206,7 +224,7 @@ if(BUILD_WITH_VTK)
     endif(VTK_FOUND)
 endif(BUILD_WITH_VTK)
 
-set(CheckoutLibs CheckoutCore)
+set(CheckoutLibs PhenoLinkCore)
 
 if(BUILD_PYTHON_SCRIPTING)
 # Need to search for anaconda
