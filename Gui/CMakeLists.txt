@@ -65,8 +65,9 @@ set(PhenoLinkGui_SRC
 
 if(VTK_FOUND)
     link_directories(${VTK_LIB_DIR})
-    include(${VTK_USE_FILE})
+    # include(${VTK_USE_FILE})
     set(CheckoutVTKLib ${VTK_LIBRARIES})
+    
 endif(VTK_FOUND)
 
 if (BUILD_PYTHON_SCRIPTING)

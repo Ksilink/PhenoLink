@@ -1,7 +1,7 @@
 #ifndef PHENOLINKIMAGE_H
 #define PHENOLINKIMAGE_H
 
-
+#include <Dll.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <Core/Dll.h>

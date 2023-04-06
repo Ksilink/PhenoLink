@@ -516,7 +516,7 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
         // To be added workbench Id + selectionModifier
         QString exp = getExperimentName();// +_mdl->Pos();
         int ii = channel < 0 ? getChannelsFromFileName(file) : channel;
-
+        if (ii < 0) return info;
         bool exists = false;
 
 

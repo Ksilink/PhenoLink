@@ -705,7 +705,7 @@ VTK_MODULE_INIT(vtkInteractionStyle);
 #include <vtkPiecewiseFunction.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
-#include <vtkRenderer.h>
+#include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkStructuredPoints.h>
 #include <vtkStructuredPointsReader.h>
 #include <vtkVolume.h>
@@ -714,6 +714,7 @@ VTK_MODULE_INIT(vtkInteractionStyle);
 //#include <vtkOpenGLGPUVolumeRayCastMapper.h>
 #include <vtkColorTransferFunction.h>
 //#include "vtkSmartVolumeMapper.h"
+
 
 void ImageForm::display3DRendering()
 {
@@ -847,7 +848,7 @@ void ImageForm::display3DRendering()
     renderer->ResetCamera();
 
     //vtk->SetRenderWindow(renderWindow);
-    vtk->setRenderWindow(renderWindow);
+    //vtk->setRenderWindow(renderWindow);
     renderWindow->Render();
 
     vtk->show();
