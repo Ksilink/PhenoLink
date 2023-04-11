@@ -692,7 +692,7 @@ VTK_MODULE_INIT(vtkInteractionStyle);
 #include <vtkSphereSource.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkActor.h>
-#include <vtkImageViewer.h>
+//#include <vtkImageViewer.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkInteractorStyleImage.h>
 #include <vtkRenderer.h>
@@ -707,7 +707,7 @@ VTK_MODULE_INIT(vtkInteractionStyle);
 #include <vtkRenderWindowInteractor.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkStructuredPoints.h>
-#include <vtkStructuredPointsReader.h>
+//#include <vtkStructuredPointsReader.h>
 #include <vtkVolume.h>
 #include <vtkVolumeProperty.h>
 #include <vtkFixedPointVolumeRayCastMapper.h>
