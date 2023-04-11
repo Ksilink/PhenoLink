@@ -677,7 +677,8 @@ void ImageForm::BwdPlayClicked()
 }
 
 
-//#ifdef 1 //Checkout_With_VTK
+#ifdef Checkout_With_VTK
+
 
 #include <QVTKOpenGLNativeWidget.h>
 #include <vtkAutoInit.h>

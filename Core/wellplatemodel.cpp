@@ -3111,13 +3111,22 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
                     QSettings set;
                     QString dbP=set.value("databaseDir").toString();
 
+                    QString ttag;
+                    if (t > 0) ttag += QString("T%1").arg(t, 3, QLatin1Char('0'));
+                    if (f > 0) ttag += QString("F%1").arg(f, 3, QLatin1Char('0'));
+                    if (z > 0) ttag += QString("Z%1").arg(z, 3, QLatin1Char('0'));
+                    if (ch > 0) ttag += QString("C%1").arg(ch, 3, QLatin1Char('0'));
+
+                    ttag += tag;
+
+
                     filename = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4_%5_%6.fth")
                             .arg(dbP,
                                  seq.getOwner()->getProjectName(),
                                  ob.value("CommitName").toString(),
                                  seq.getOwner()->name(),
                                  ob.value(QCborValue("Pos")).toString(),
-                                 tag);
+                                 ttag);
 
 
                 }
