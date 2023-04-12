@@ -855,7 +855,7 @@ void ImageForm::display3DRendering()
     vtk->show();
 
 }
-//#endif
+#endif
 
 void ImageForm::imageClick(QPointF pos)
 {
