@@ -552,7 +552,8 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
             for (auto& sfm: kv)
             {
                 // Convert to json...
-                QList<QJsonObject>  images = sfm->toJSON(QString("TimeStackedImage%1").arg(imgType.endsWith("XP") ? "XP" : ""), asVectorImage, selectedChanns, metaData, siteMatcher);
+                QList<QJsonObject>  images = sfm->toJSON(QString("TimeStackedImage%1").arg(imgType.endsWith("XP") ? "XP" : ""),
+                                                        asVectorImage, selectedChanns, metaData, siteMatcher);
 
                 // if asVectorImage is true we just have one data in images.size()
 
@@ -607,9 +608,9 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                     oo["PlateName"] = sfm->getOwner()->name();
                     oo["DataHash"] =  sfm->getOwner()->hash();
                     oo["Pos"]=pos;
-                    oo["FieldId"]= imgType.contains("XP") ? 0 : fieldId;
-                    oo["TimePos"]=0;
-                    oo["zPos"]=0;
+                    oo["FieldId"]= imgType.contains("XP") ? -1 : fieldId;
+                    oo["TimePos"]=-1;
+                    oo["zPos"]=-1;
                     oo["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
 
                     if (!asVectorImage)
@@ -620,9 +621,9 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                         auto oob = params[i].toObject();
                         oob["DataHash"] =  sfm->getOwner()->hash();
                         oob["Pos"]="A01";
-                        oob["FieldId"]= imgType.contains("XP") ? 0 : fieldId;
-                        oob["TimePos"]=0;
-                        oob["zPos"]=0;
+                        oob["FieldId"]= imgType.contains("XP") ? -1 : fieldId;
+                        oob["TimePos"]=-1;
+                        oob["zPos"]=-1;
                         oob["BasePath"] = sfm->getBasePath();
                         oob["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
                         if (!asVectorImage)
