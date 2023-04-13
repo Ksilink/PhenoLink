@@ -81,8 +81,9 @@ int main(int argc, char *argv[])
 {
     //    qInstallMessageHandler(myMessageOutput);
     //  show_console();
-
+#if WIN32
     QtWebView::initialize();
+#endif
 
     QApplication a(argc, argv);
     QApplication::setStyle(QStyleFactory::create("Plastique"));

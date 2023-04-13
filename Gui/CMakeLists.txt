@@ -103,13 +103,14 @@ endif()
 IF(WIN32)
     target_link_libraries(PhenoLinkGui ${CheckoutPythonLib} PhenoLinkCore ${CheckoutVTKLib} QHttp Qt::OpenGLWidgets Qt::Widgets  Qt6::WebEngineWidgets  Qt6::Concurrent ${OpenCV_LIBS}  mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost )
 ELSE()
-        target_link_libraries(PhenoLinkGui PRIVATE  ${CheckoutPythonLib} PhenoLinkCore ${CheckoutVTKLib} QHttp Qt::OpenGLWidgets Qt::Widgets Qt6::WebEngineWidgets Qt::Concurrent  ${OpenCV_LIBS}  mongo::mongocxx_static mongo::bsoncxx_static Boost::boost)
+        target_link_libraries(PhenoLinkGui PRIVATE  ${CheckoutPythonLib} PhenoLinkCore ${CheckoutVTKLib} QHttp Qt::OpenGLWidgets Qt::Widgets Qt::Concurrent  ${OpenCV_LIBS}  mongo::mongocxx_static mongo::bsoncxx_static Boost::boost)
 ENDIF(WIN32)
-
-vtk_module_autoinit(
-  TARGETS PhenoLinkGui
-  MODULES ${CheckoutVTKLib}
-)
+if (WIN32 AND VTK_FOUND )
+    vtk_module_autoinit(
+                TARGETS PhenoLinkGui
+                MODULES ${CheckoutVTKLib}
+                )
+endif()
 
 
 install(TARGETS PhenoLinkGui COMPONENT applications DESTINATION bin)

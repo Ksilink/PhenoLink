@@ -231,7 +231,7 @@ void MainWindow::datasetCustomMenu(const QPoint & pos)
     QMenu menu(this);
 
     QAction* nmic = menu.addAction(tr("&Copy"), this, SLOT(copyDataToClipBoard()));
-    nmic->setShortcut(Qt::CTRL + Qt::Key_C);
+    nmic->setShortcut(Qt::CTRL | Qt::Key_C);
 
     menu.addAction(tr("&Export Data"), this, SLOT(exportData()));
 

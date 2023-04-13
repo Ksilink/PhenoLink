@@ -33,7 +33,7 @@ ELSE()
  #   target_compile_definitions(PhenoLink PUBLIC  -DGitPluginDate=${plugin_date})
     target_include_directories(PhenoLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-    target_link_libraries(PhenoLink PhenoLinkGui PhenoLinkCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WebView  Qt::WebEngineWidgets ${OpenCV_LIBS} "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" mongo::mongocxx_static mongo::bsoncxx_static  Boost::boost )
+    target_link_libraries(PhenoLink PhenoLinkGui PhenoLinkCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent ${OpenCV_LIBS} "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" mongo::mongocxx_static mongo::bsoncxx_static  Boost::boost )
 ENDIF()
 
 add_dependencies (PhenoLink PhenoLinkGui PhenoLinkCore)

@@ -160,12 +160,15 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Update to CMake
 find_package(Qt6 COMPONENTS  Widgets  Xml
-                OpenGLWidgets Concurrent  Network  WebView  REQUIRED)
+                OpenGLWidgets Concurrent  Network  REQUIRED)
 
-find_package(Qt6WebView CONFIG REQUIRED)
+if (WIN32)
+find_package(Qt6 COMPONENTS  WebView  REQUIRED)
 
-find_package(Qt6WebEngineWidgets CONFIG REQUIRED)
+    find_package(Qt6WebView CONFIG REQUIRED)
+    find_package(Qt6WebEngineWidgets CONFIG REQUIRED)
 
+endif(WIN32)
 find_package(bsoncxx   REQUIRED)
 find_package(mongocxx   REQUIRED)
 
@@ -198,8 +201,7 @@ find_package(google_cloud_cpp_storage CONFIG REQUIRED)
 
 find_package(azure-storage-blobs-cpp CONFIG REQUIRED)
 
-
-if(BUILD_WITH_VTK)
+if(WIN32 AND BUILD_WITH_VTK)
     find_package(VTK COMPONENTS
       CommonColor
       CommonCore

@@ -78,10 +78,12 @@
 
 #include <time.h>
 
+#if WIN32
+
 
 #include <QtWebEngineWidgets/QtWebEngineWidgets>
 #include <QWebEngineView>
-
+#endif
 
 #include <dashoptions.h>
 
@@ -233,7 +235,7 @@ void MainWindow::on_notebookDisplay_clicked()
 
 
     // also we can see if we can introduce some "post processing in python..."
-
+#if WIN32
 
 
     //    int tab = ui->tabWidget->addTab(view, "Dash View");
@@ -251,10 +253,13 @@ void MainWindow::on_notebookDisplay_clicked()
     int tab = ui->tabWidget->addTab(view, "Notebook View");
 
     Q_UNUSED(tab);
+#endif
+
 }
 
 void MainWindow::on_dashDisplay_clicked()
 {
+#if WIN32
     ScreensHandler& handler = ScreensHandler::getHandler();
     QStringList checked = mdl->getCheckedDirectories(false);
     handler.loadScreens(checked, false);
@@ -300,6 +305,7 @@ void MainWindow::on_dashDisplay_clicked()
     int tab = ui->tabWidget->addTab(view, "Dash View");
 
     Q_UNUSED(tab);
+#endif
 }
 
 #include <QProgressDialog>
@@ -880,8 +886,8 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
 
 void MainWindow::createBirdView()
 {
+#if WIN32
     // Check if the plate's birdview HTML exists or write it
-
     QString xpName = ui->wellPlateViewTab->tabText(ui->wellPlateViewTab->currentIndex());
     if (xpName.isEmpty())
     {
@@ -916,6 +922,9 @@ void MainWindow::createBirdView()
     QUrl url(fpath);
     view->load(url);
     ui->tabWidget->addTab(view, "Birdview");
+
+
+#endif
 }
 
 
