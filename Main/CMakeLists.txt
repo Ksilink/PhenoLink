@@ -26,6 +26,16 @@ IF(WIN32)
     target_link_libraries(PhenoLink PhenoLinkGui PhenoLinkCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WebView ${OpenCV_LIBS} )
     #install_qt5_executable(Checkout)
     install(TARGETS PhenoLink COMPONENT applications DESTINATION bin)
+
+
+    add_custom_command(
+        TARGET PhenoLink
+            POST_BUILD
+            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:PhenoLink>"
+
+        )
+
+
 ELSE()
 
     add_executable(PhenoLink ${GUI_TYPE} main.cpp )
@@ -47,6 +57,13 @@ add_dependencies (plcli PhenoLinkGui PhenoLinkCore)
 
 if (WIN32)
     target_link_libraries(plcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS} )
+    add_custom_command(
+        TARGET plcli
+            POST_BUILD
+            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:plcli>"
+
+        )
+
 else()
     target_link_libraries(plcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${OpenCV_LIBS} )
 endif(WIN32)
@@ -95,6 +112,12 @@ add_dependencies (PhenoLinkHttpServer PhenoLinkGui PhenoLinkCore)
 
 if (WIN32)
     target_link_libraries( PhenoLinkHttpServer ${CheckoutLibs} QHttp  Qt::Concurrent Qt::Core Qt::Network Qt::Widgets  ${OpenCV_LIBS})
+    add_custom_command(
+        TARGET PhenoLinkHttpServer
+            POST_BUILD
+            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:PhenoLinkHttpServer>"
+
+        )
 else()
         target_link_libraries( PhenoLinkHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${OpenCV_LIBS}  )
 endif(WIN32)
@@ -107,6 +130,13 @@ target_include_directories(PhenoLinkQueueServer PUBLIC ${CMAKE_CURRENT_SOURCE_DI
 
 if (WIN32)
     target_link_libraries( PhenoLinkQueueServer ${CheckoutLibs} QHttp Qt::Core Qt::Concurrent Qt::Network Qt::Widgets ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS})
+    add_custom_command(
+         TARGET PhenoLinkQueueServer
+            POST_BUILD
+            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:PhenoLinkQueueServer>"
+
+        )
+
 else()
         target_link_libraries( PhenoLinkQueueServer PRIVATE ${CheckoutLibs} QHttp Qt::Concurrent Qt::Core Qt::Network Qt::Widgets "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS})
 endif(WIN32)
