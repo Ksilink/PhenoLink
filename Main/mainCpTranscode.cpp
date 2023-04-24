@@ -382,7 +382,7 @@ public:
                                     im.release();
                                     if (data.inplace)
                                     {
-                                        QFile::remove(*infile);
+                                        QFile::remove(file);
                                     }
                                 }
 
