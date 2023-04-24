@@ -277,7 +277,7 @@ public:
         }
         res.close();
 
-        data.readed += q.size();
+        data.writen += q.size();
     }
 
     void run() override {
@@ -324,6 +324,7 @@ public:
                     if (! data.dry_run && reader.open(QIODevice::ReadOnly))
                     {
                         QByteArray q = reader.readAll();
+                        data.readed += q.size();
                         if (q.size() > 0)
                         {
                             if (file.endsWith(".tif") )
