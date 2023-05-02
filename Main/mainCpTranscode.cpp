@@ -286,11 +286,7 @@ public:
         while (data.hasFile())
         {
             auto infile = data.fileQueue.pop();
-            if (!infile)
-            {
-                QThread::msleep(200); // file queue is empty wait
-            }
-            else
+            if (infile)
             {
                 {
                     QMutexLocker lock(&data.mgroup1);

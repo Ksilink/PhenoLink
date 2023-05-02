@@ -458,8 +458,8 @@ public:
     void setPattern(QPoint pos, QString col);
 
 
-void addMetadataFile(QString f);
-
+    void addMetadataFile(QString f);
+    QStringList metadataFile();
 
     QList<SequenceFileModel*> getSelection();
     QList<SequenceFileModel*> getAllSequenceFiles();

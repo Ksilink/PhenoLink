@@ -153,6 +153,9 @@ private slots:
     void on_actionOpen_Single_Image_triggered();
     void addDirectoryName(QString name);
 
+    void cloudUpload();
+
+
     void on_action_Exit_triggered();
     void on_toolButton_clicked();
 

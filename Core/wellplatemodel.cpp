@@ -154,6 +154,11 @@ void ExperimentFileModel::addMetadataFile(QString f)
     _otherfiles << f;
 }
 
+QStringList ExperimentFileModel::metadataFile()
+{
+    return _otherfiles;
+}
+
 
 void ExperimentFileModel::setCurrent(QPoint pos, bool active)
 {
