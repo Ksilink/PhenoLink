@@ -1046,10 +1046,10 @@ RegistrableCont(QList, int)
 RegistrableCont(QList, unsigned)
 
 
-RegistrableCont(QVector, float)
-RegistrableCont(QVector, double)
-RegistrableCont(QVector, int)
-RegistrableCont(QVector, unsigned)
+//RegistrableCont(QVector, float)
+//RegistrableCont(QVector, double)
+//RegistrableCont(QVector, int)
+//RegistrableCont(QVector, unsigned)
 
 
 #include "RegistrableStdContainerTypeSpecial.h"

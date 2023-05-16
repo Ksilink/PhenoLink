@@ -46,8 +46,24 @@
         },
         {
             "name": "libjxl"
+        },
+        {
+            "name": "qt",
+            "platform": "!linux"
+        },
+        {
+            "name": "qtwebengine",
+            "features": [  "geolocation","spellchecker","webchannel"],
+            "platform": "!linux"
+        },
+        {
+            "name": "qtwebview",
+            "platform": "!linux"
+        },
+        {
+            "name": "vtk",
+            "features":["qt"],
+            "platform": "!linux"
         }
-
-
     ]
 }

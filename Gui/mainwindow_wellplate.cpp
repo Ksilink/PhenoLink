@@ -71,7 +71,6 @@
 #include <ImageDisplay/scrollzone.h>
 
 #include "ScreensDisplay/screensgraphicsview.h"
-#include <QtWebView/QtWebView>
 #include <QInputDialog>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,9 +78,12 @@
 
 #include <time.h>
 
+#if WIN32
 
-#include <QtWebEngineWidgets/QWebEngineView>
-//#include <QtWebEngineWidgets/QtWebEngineWidgets>
+
+#include <QtWebEngineWidgets/QtWebEngineWidgets>
+#include <QWebEngineView>
+#endif
 
 #include <dashoptions.h>
 
@@ -233,7 +235,7 @@ void MainWindow::on_notebookDisplay_clicked()
 
 
     // also we can see if we can introduce some "post processing in python..."
-
+#if WIN32
 
 
     //    int tab = ui->tabWidget->addTab(view, "Dash View");
@@ -251,10 +253,13 @@ void MainWindow::on_notebookDisplay_clicked()
     int tab = ui->tabWidget->addTab(view, "Notebook View");
 
     Q_UNUSED(tab);
+#endif
+
 }
 
 void MainWindow::on_dashDisplay_clicked()
 {
+#if WIN32
     ScreensHandler& handler = ScreensHandler::getHandler();
     QStringList checked = mdl->getCheckedDirectories(false);
     handler.loadScreens(checked, false);
@@ -300,6 +305,7 @@ void MainWindow::on_dashDisplay_clicked()
     int tab = ui->tabWidget->addTab(view, "Dash View");
 
     Q_UNUSED(tab);
+#endif
 }
 
 #include <QProgressDialog>
@@ -658,7 +664,7 @@ void MainWindow::addDirectoryName(QString dir)
         l << dir;
     set.setValue("ScreensDirectory", l);
 
-    QtConcurrent::run(mdl, &ScreensModel::addDirectoryTh,  dir);
+    auto fut = QtConcurrent::run(&ScreensModel::addDirectoryTh, mdl,  dir);
 }
 
 #include <QHBoxLayout>
@@ -793,7 +799,7 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
             if (mdl->hasMeasurements(QPoint(r, c)))
             {
 
-                QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+r)
+                QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+QChar(r))
                         + colname + ".jpg";
                 if (QFile::exists(img2Path))
                     hasBirdview2 = true;
@@ -845,21 +851,21 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         out   <<"<tbody>";
         for (unsigned r = 0; r < mdl->getRowCount(); ++r)
         {
-            out << "<tr><td>" << QString(('A'+r)) << "</td>";
+            out << "<tr><td>" << QString((QChar('A'+r))) << "</td>";
             for (unsigned c = 0; c < mdl->getColCount(); ++c)
             {
                 auto colname =  (QString("%1").arg(((int)c+1), 2, 10,QChar('0')));
                 if (mdl->hasMeasurements(QPoint(r, c)))
                 {
 
-                    QString imgPath = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+r)
+                    QString imgPath = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+QChar(r))
                             + colname + ".jpg";
-                    QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+r)
+                    QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+QChar(r))
                             + colname + ".jpg";
 
 
                     out <<    "<td><img width='100%' src='file://"
-                           <<  (hasBirdview2 ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+r) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+r) << colname << "&json'" <<"/></td>";
+                           <<  (hasBirdview2 ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+QChar(r)) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+QChar(r)) << colname << "&json'" <<"/></td>";
                     if (res.isEmpty())
                         res = imgPath;
                 }
@@ -880,8 +886,8 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
 
 void MainWindow::createBirdView()
 {
+#if WIN32
     // Check if the plate's birdview HTML exists or write it
-
     QString xpName = ui->wellPlateViewTab->tabText(ui->wellPlateViewTab->currentIndex());
     if (xpName.isEmpty())
     {
@@ -916,6 +922,9 @@ void MainWindow::createBirdView()
     QUrl url(fpath);
     view->load(url);
     ui->tabWidget->addTab(view, "Birdview");
+
+
+#endif
 }
 
 

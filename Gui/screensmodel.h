@@ -7,7 +7,7 @@
 #include <QStandardItemModel>
 #include <QSet>
 
-#include <Dll.h>
+#include <Core/Dll.h>
 
 
 class QProgressBar;
@@ -30,7 +30,7 @@ public:
     void clearCheckedDirectories();
 
     QStandardItem* addDirectory(QString& dir);
-    void addDirectoryTh(QString& dir);
+    void addDirectoryTh(QString dir);
     QString getGroup(QString name);
 protected:
     //    bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const;

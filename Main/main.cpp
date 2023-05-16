@@ -81,14 +81,15 @@ int main(int argc, char *argv[])
 {
     //    qInstallMessageHandler(myMessageOutput);
     //  show_console();
-
+#if WIN32
     QtWebView::initialize();
+#endif
 
     QApplication a(argc, argv);
     QApplication::setStyle(QStyleFactory::create("Plastique"));
-    a.setApplicationName("Checkout");
+    a.setApplicationName("PhenoLink");
     a.setApplicationVersion(CHECKOUT_VERSION);
-    a.setApplicationDisplayName(QString("Checkout %1").arg(CHECKOUT_VERSION));
+    a.setApplicationDisplayName(QString("PhenoLink %1").arg(CHECKOUT_VERSION));
     a.setOrganizationDomain("WD");
     a.setOrganizationName("WD");
     QSettings set;
@@ -104,16 +105,16 @@ int main(int argc, char *argv[])
     QLocale::setDefault(loc); // set as default
 
 
-    QDir dir( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
+    QDir dir( QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first());
     //QDir dir("P:/DATABASES");
     dir.mkpath(dir.absolutePath() + "/databases/");
     dir.mkpath(dir.absolutePath());
 
-    _logFile.setFileName(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/WD_CheckoutLog.txt");
+    _logFile.setFileName(QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() + "/WD_CheckoutLog.txt");
     _logFile.open(QIODevice::WriteOnly);
 
     if (!set.contains("databaseDir"))
-        set.setValue("databaseDir", QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/databases/");
+        set.setValue("databaseDir", QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() + "/databases/");
 
     QStringList var = set.value("Server", QStringList() << "127.0.0.1").toStringList();
     QProcess server;
@@ -122,9 +123,9 @@ int main(int argc, char *argv[])
     {
         // Start the network worker for processes
          server.setProcessChannelMode(QProcess::MergedChannels);
-        server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() +"/CheckoutServer_log.txt");
+        server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() +"/CheckoutServer_log.txt");
         server.setWorkingDirectory(a.applicationDirPath());
-        QString r = "CheckoutHttpServer.exe";
+        QString r = "PhenoLinkHttpServer.exe";
 
         server.setProgram(r);
         if (set.value("UserMode/Debug", false).toBool())

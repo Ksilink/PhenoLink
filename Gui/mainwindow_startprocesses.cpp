@@ -15,9 +15,6 @@
 #include <QSettings>
 
 #include <QProgressBar>
-#ifdef WIN32
-#include <QtWinExtras/QWinTaskbarProgress>
-#endif
 #include <QScrollBar>
 
 #include <ScreensDisplay/graphicsscreensitem.h>
@@ -208,7 +205,7 @@ bool sortWidgets(QWidget* a, QWidget* b)
 
 
 QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
-                                    QList<bool> selectedChanns, QRegExp siteMatcher )
+                                    QList<bool> selectedChanns, QRegularExpression siteMatcher )
 {
 
     static size_t crypto_offset = 0;
@@ -491,7 +488,7 @@ QJsonArray& MainWindow::adjustParameterFromWidget(SequenceFileModel* sfm, QJsonO
 
 
 void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                         bool started, QRegExp siteMatcher, QString exports)//, QMap<QString, QSet<QString> > tags_map)
+                                         bool started, QRegularExpression siteMatcher, QString exports)//, QMap<QString, QSet<QString> > tags_map)
 {
     static int WorkID = 1;
 
@@ -555,7 +552,8 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
             for (auto& sfm: kv)
             {
                 // Convert to json...
-                QList<QJsonObject>  images = sfm->toJSON(QString("TimeStackedImage%1").arg(imgType.endsWith("XP") ? "XP" : ""), asVectorImage, selectedChanns, metaData, siteMatcher);
+                QList<QJsonObject>  images = sfm->toJSON(QString("TimeStackedImage%1").arg(imgType.endsWith("XP") ? "XP" : ""),
+                                                        asVectorImage, selectedChanns, metaData, siteMatcher);
 
                 // if asVectorImage is true we just have one data in images.size()
 
@@ -610,9 +608,9 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                     oo["PlateName"] = sfm->getOwner()->name();
                     oo["DataHash"] =  sfm->getOwner()->hash();
                     oo["Pos"]=pos;
-                    oo["FieldId"]= imgType.contains("XP") ? 0 : fieldId;
-                    oo["TimePos"]=0;
-                    oo["zPos"]=0;
+                    oo["FieldId"]= imgType.contains("XP") ? -1 : fieldId;
+                    oo["TimePos"]=-1;
+                    oo["zPos"]=-1;
                     oo["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
 
                     if (!asVectorImage)
@@ -623,9 +621,9 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                         auto oob = params[i].toObject();
                         oob["DataHash"] =  sfm->getOwner()->hash();
                         oob["Pos"]="A01";
-                        oob["FieldId"]= imgType.contains("XP") ? 0 : fieldId;
-                        oob["TimePos"]=0;
-                        oob["zPos"]=0;
+                        oob["FieldId"]= imgType.contains("XP") ? -1 : fieldId;
+                        oob["TimePos"]=-1;
+                        oob["zPos"]=-1;
                         oob["BasePath"] = sfm->getBasePath();
                         oob["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
                         if (!asVectorImage)
@@ -952,7 +950,7 @@ void MainWindow::startProcessRun(QString exp)
 
     }
 
-    QRegExp siteMatcher;
+    QRegularExpression siteMatcher;
     if ( _typeOfprocessing->currentText() == "Selected Screens and Filter")
     {
         // Add the filtering part !!!
@@ -967,8 +965,8 @@ void MainWindow::startProcessRun(QString exp)
         QStringList tag_filter = filtertags.isEmpty() ? QStringList() :
                                                         filtertags.split(';');
         QStringList remTags;
-        QRegExp wellMatcher;
-        QList<QRegExp> tagRegexps;
+        QRegularExpression wellMatcher;
+        QList<QRegularExpression> tagRegexps;
 
         for (auto f : tag_filter)
         {
@@ -985,7 +983,7 @@ void MainWindow::startProcessRun(QString exp)
             if (f.startsWith("T:"))
             {
                 remTags << f;
-                QRegExp r;
+                QRegularExpression r;
                 r.setPattern(f.replace("T:", ""));
                 tagRegexps << r;
             }
@@ -1005,10 +1003,10 @@ void MainWindow::startProcessRun(QString exp)
                     matches += t.contains(tf);
 
             auto wPos = sfm->Pos();
-            if (!wellMatcher.isEmpty() && wellMatcher.exactMatch(wPos))
+            if (!wellMatcher.pattern().isEmpty() && wellMatcher.match(wPos).hasMatch())
                 matches ++;
 
-            for (auto r: tagRegexps) for (auto t: tgs) if (r.exactMatch(t))  matches++;
+            for (auto r: tagRegexps) for (auto t: tgs) if (r.match(t).hasMatch())  matches++;
 
             if (matches > 0)
                 lsfm2 << sfm;

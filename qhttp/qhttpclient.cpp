@@ -136,7 +136,6 @@ QHttpClient::request(THttpMethod method, QUrl url,
         if ( d->isocket.isOpen() )
             d->onConnected();
        else
-
             d->isocket.connectTo(url.host(), url.port(80));
 
     }

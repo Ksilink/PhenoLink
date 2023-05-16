@@ -95,7 +95,7 @@ void ScrollZone::removeImageForm(ImageForm* im)
 void ScrollZone::dragEnterEvent(QDragEnterEvent *event)
 {
     //    qDebug() << event->mimeData()->formats();
-    if (event->mimeData()->hasFormat("checkout/Wells"))
+    if (event->mimeData()->hasFormat("PhenoLink/Wells"))
         event->acceptProposedAction();
 }
 
@@ -108,7 +108,7 @@ void ScrollZone::dropEvent(QDropEvent *event)
     //  qDebug() << "Drop event" << this->objectName();
 
     QString key = _mainwin->workbenchKey();
-    if (event->keyboardModifiers() == Qt::ControlModifier)
+    if (event->modifiers() == Qt::ControlModifier)
     {
         key += QString("%1").arg(groupId);
         groupId++;
@@ -119,7 +119,7 @@ void ScrollZone::dropEvent(QDropEvent *event)
 
     ImageInfos::key(key);
 
-    if (event->mimeData()->hasFormat("checkout/Wells"))
+    if (event->mimeData()->hasFormat("PhenoLink/Wells"))
     {
         event->acceptProposedAction();
         addSelectedWells();
@@ -201,6 +201,7 @@ void ScrollZone::addSelectedWells()
     _progDiag->setLabelText("Displaying Wells");
     foreach(SequenceInteractor* m, all)
     {
+        _progDiag->setValue(_progDiag->value()+1);
         insertImage(m->getSequenceFileModel(), m);
         _progDiag->setValue(_progDiag->value()+1);
         qApp->processEvents();

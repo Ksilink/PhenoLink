@@ -119,7 +119,7 @@ int main(int ac, char** av)
     QCoreApplication app(ac, av);
 #endif
 
-    app.setApplicationName("Checkout");
+    app.setApplicationName("PhenoLink");
     app.setApplicationVersion(CHECKOUT_VERSION);
     app.setOrganizationDomain("WD");
     app.setOrganizationName("WD");
@@ -136,7 +136,7 @@ int main(int ac, char** av)
 
     if (data.contains("-h") || data.contains("-help"))
     {
-        qDebug() << "CheckoutQueue Serveur Help:";
+        qDebug() << "PhenoLinkQueue Serveur Help:";
         qDebug() << "\t-p <port>: specify the port to run on";
         qDebug() << "\t-d : Run in debug mode (windows only launches a console)";
         qDebug() << "\t-Crashed: Reports that the process has been restarted after crashing";
@@ -269,7 +269,7 @@ int Server::start(quint16 port)
     }
 
     qDebug() << "Starting monitor thread";
-    QtConcurrent::run(this, &Server::WorkerMonitor);
+    auto res = QtConcurrent::run(&Server::WorkerMonitor, this);
     qDebug() << "Done";
 
     return qApp->exec();
@@ -286,7 +286,7 @@ void Server::setHttpResponse(QJsonObject& ob,  qhttp::server::QHttpResponse* res
     else
         res->addHeader("Content-Type", "application/json");
 
-    res->addHeaderValue("Content-Length", body.length());
+    res->addHeader("Content-Length", QString::number(body.length()).toLatin1());
     res->setStatusCode(qhttp::ESTATUS_OK);
     res->end(body);
 }
@@ -350,7 +350,7 @@ void Server::HTMLstatus(qhttp::server::QHttpResponse* res, QString mesg)
 
 
     res->setStatusCode(qhttp::ESTATUS_OK);
-    res->addHeaderValue("content-length", message.size());
+    res->addHeader("content-length", QString::number(message.size()).toLatin1());
     res->end(message.toUtf8());
 }
 
@@ -491,7 +491,7 @@ void sendByteArray(qhttp::client::QHttpClient& iclient, QUrl& url, QByteArray ob
                     [ob]( qhttp::client::QHttpRequest* req){
         auto body = ob;
         req->addHeader("Content-Type", "application/cbor");
-        req->addHeaderValue("content-length", body.length());
+        req->addHeader("content-length", QString::number(body.length()).toLatin1());
         req->end(body);
     },
 
@@ -586,7 +586,6 @@ QString Server::pickWorker(QString )
 
     if (lastsrv.isEmpty())
     {
-
         auto next_worker = workers.back();
         int p = 1;
         while (rmWorkers.contains(next_worker) && p < workers.size())  next_worker = workers.at(p++);
@@ -669,7 +668,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             res->addHeader("Connection", "close");
             res->addHeader("Content-Type", "image/jpeg");
 
-            res->addHeaderValue("Content-Length", body.length());
+            res->addHeader("Content-Length", QString::number(body.length()).toLatin1());
             res->setStatusCode(qhttp::ESTATUS_OK);
             res->end(body);
         }
@@ -860,13 +859,12 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
                                 files << concatenated.split("/").last()+".torm";
                             }
 
-                            QtConcurrent::run(fuseArrow,
+                            auto fut = QtConcurrent::run(fuseArrow,
                                               path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
 
                             //                        fuseArrow(path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
                         }
 
-                        // qDebug() << agg.keys() << obj.keys();
 
                         if (agg.contains("PostProcesses") && agg["PostProcesses"].toArray().size() > 0)
                         {
@@ -1196,7 +1194,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
 
 
         res->setStatusCode(qhttp::ESTATUS_OK);
-        res->addHeaderValue("content-length", message.size());
+        res->addHeader("content-length", QString::number(message.size()).toLatin1());
         res->end(message.toUtf8());
 
         return;
@@ -1391,7 +1389,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             const static char KMessage[] = "Invalid json format!";
             res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
             res->addHeader("connection", "close");
-            res->addHeaderValue("content-length", strlen(KMessage));
+            res->addHeader("content-length", QString::number(strlen(KMessage)).toLatin1());
             res->end(KMessage);
             return;
         }
@@ -1404,8 +1402,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
         root["args"] = total;
 
         QByteArray body = QJsonDocument(root).toJson();
-        //        res->addHeader("connection", "keep-alive");
-        res->addHeaderValue("content-length", body.length());
+       res->addHeader("connection", "close");
+        res->addHeader("content-length", QString::number(body.length()).toLatin1());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body);
     }
@@ -1413,7 +1411,7 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
     {
         QString body = QString("Server Query received, with empty content (%1)").arg(urlpath);
         res->addHeader("connection", "close");
-        res->addHeaderValue("content-length", body.length());
+        res->addHeader("content-length", QString::number(body.length()).toLatin1());
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(body.toLatin1());
     }
@@ -1453,7 +1451,7 @@ Control::Control(Server* serv): QWidget(), _serv(serv), lastNpro(0)
 {
     hide();
 
-    quitAction = new QAction("Quit Checkout Server", this);
+    quitAction = new QAction("Quit PhenoLink Server", this);
     connect(quitAction, SIGNAL(triggered()), this, SLOT(quit()));
     QSettings sets;
 
@@ -1465,7 +1463,7 @@ Control::Control(Server* serv): QWidget(), _serv(serv), lastNpro(0)
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setContextMenu(trayIconMenu);
     trayIcon->setIcon(QIcon(":/ServerIcon.png"));
-    trayIcon->setToolTip(QString("Checkout Proxy %2 (%1)").arg(sets.value("ServerPort", 13378).toUInt()).arg(CHECKOUT_VERSION));
+    trayIcon->setToolTip(QString("PhenoLink Proxy %2 (%1)").arg(sets.value("ServerPort", 13378).toUInt()).arg(CHECKOUT_VERSION));
     trayIcon->show();
 
     startTimer(2000);
@@ -1482,9 +1480,9 @@ void Control::timerEvent(QTimerEvent * event)
     int npro = procs.numberOfRunningProcess();
     QString tooltip;
     if (npro != 0)
-        tooltip = QString("CheckoutQueueServer %2 (%1 requests").arg(npro).arg(CHECKOUT_VERSION);
+        tooltip = QString("PhenoLinkQueueServer %2 (%1 requests").arg(npro).arg(CHECKOUT_VERSION);
     else
-        tooltip = QString("CheckoutQueueServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
+        tooltip = QString("PhenoLinkQueueServer %2 (%1)").arg(_serv->serverPort()).arg(CHECKOUT_VERSION);
 
     QStringList missing_users;
     for (auto& user : procs.users())
@@ -1514,7 +1512,7 @@ void Control::timerEvent(QTimerEvent * event)
     trayIcon->setToolTip(tooltip);
 
     if (lastNpro != npro && npro == 0)
-        trayIcon->showMessage("Checkout Server", "Checkout server has finished all his process");
+        trayIcon->showMessage("PhenoLink Server", "PhenoLink server has finished all his process");
 
     lastNpro = npro;
 

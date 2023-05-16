@@ -34,6 +34,7 @@
 #include <opencv2/opencv.hpp>
 //ImageForm* ImageForm::_selectedForm = 0;
 
+#include <Core/phenolinkimage.h>
 
 // Force min size to be 320x270
 ImageForm::ImageForm(QWidget *parent, bool packed) :
@@ -290,7 +291,7 @@ void ImageForm::modifiedImage()
 
 void ImageForm::changeFps(double fps)
 {
-    if (video_status!=VideoStop)
+    if (video_status!=VideoStop && _interactor->getTimePointCount() > 1)
     {
         killTimer(timer_id);
         timer_id=startTimer(ceil(1000/fps));
@@ -679,7 +680,7 @@ void ImageForm::BwdPlayClicked()
 #ifdef Checkout_With_VTK
 
 
-#include <QVTKWidget.h>
+#include <QVTKOpenGLNativeWidget.h>
 #include <vtkAutoInit.h>
 
 VTK_MODULE_INIT(vtkRenderingOpenGL2);
@@ -692,7 +693,7 @@ VTK_MODULE_INIT(vtkInteractionStyle);
 #include <vtkSphereSource.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkActor.h>
-#include <vtkImageViewer.h>
+//#include <vtkImageViewer.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkInteractorStyleImage.h>
 #include <vtkRenderer.h>
@@ -705,26 +706,29 @@ VTK_MODULE_INIT(vtkInteractionStyle);
 #include <vtkPiecewiseFunction.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
-#include <vtkRenderer.h>
+#include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkStructuredPoints.h>
-#include <vtkStructuredPointsReader.h>
+//#include <vtkStructuredPointsReader.h>
 #include <vtkVolume.h>
 #include <vtkVolumeProperty.h>
 #include <vtkFixedPointVolumeRayCastMapper.h>
-#include <vtkOpenGLGPUVolumeRayCastMapper.h>
+//#include <vtkOpenGLGPUVolumeRayCastMapper.h>
 #include <vtkColorTransferFunction.h>
-#include "vtkSmartVolumeMapper.h"
+//#include "vtkSmartVolumeMapper.h"
+
 
 void ImageForm::display3DRendering()
 {
 
-    QVTKWidget* vtk = new QVTKWidget(0);
+    QVTKOpenGLNativeWidget* vtk = new QVTKOpenGLNativeWidget();
 
     vtk->resize(120,120);
 
     //  Build vtkStructuredPoints from data
     vtkSmartPointer<vtkImageData> structuredPoints
             = vtkSmartPointer<vtkImageData>::New();
+
+    QPixmap _pix = pixItem->pixmap();
 
     structuredPoints->SetDimensions(_pix.width(), _pix.height() ,
                                     _interactor->getZCount());
@@ -746,14 +750,15 @@ void ImageForm::display3DRendering()
 
             }
 
-    SequenceFileModel* model = _interactor->getSequenceFileModel();
+ //   SequenceFileModel* model = _interactor->getSequenceFileModel();
 
     for (int z = 0; z < dims[2]; z++)
     {
-        QMap<int, QString> l = model->getChannelsFiles(_interactor->getTimePoint(), _interactor->getField(), z+1);
-
-        foreach(QString s , l)
+//        QMap<int, QString> l = model->getChannelsFiles(_interactor->getTimePoint(), _interactor->getField(), z+1);
+        auto l = _interactor->getAllChannel();
+        for(QPair<int, QString>& pair:  l)
         {
+            auto s = pair.second;
             //            qDebug() << s;
             cv::Mat im = pl::imread(s,  2);
             ImageInfos* ifo = _interactor->imageInfos(s);
@@ -795,7 +800,6 @@ void ImageForm::display3DRendering()
             }
         }
     }
-    //    ImageInfos* nfo = _interactor->getChannelImageInfos(0);
 
     // Create a transfer function mapping scalar value to opacity
     vtkSmartPointer<vtkPiecewiseFunction> oTFun =
@@ -844,7 +848,8 @@ void ImageForm::display3DRendering()
     renderer->AddViewProp(volume);
     renderer->ResetCamera();
 
-    vtk->SetRenderWindow(renderWindow);
+    //vtk->SetRenderWindow(renderWindow);
+    //vtk->setRenderWindow(renderWindow);
     renderWindow->Render();
 
     vtk->show();
@@ -1097,7 +1102,7 @@ void ImageForm::on_ImageForm_customContextMenuRequested(const QPoint &pos)
     menu.addAction("Copy Image to clipboard", this, SLOT(copyToClipboard()));
 
     QAction *capture = menu.addAction("Capture Image to clipboard", this, SLOT(captureToClipboard()));
-    capture->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
+    capture->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_C));
 
     menu.addAction("Share on Teams", this, SLOT(sharePicture()));
 
@@ -1430,29 +1435,29 @@ void ImageForm::sharePicture()
         // send through http webhook
         QString webhook("http://192.168.2.127:8122/"); //"https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8");
 
-        iclient->request(qhttp::EHTTP_POST,
-                         webhook,
-                         [json](qhttp::client::QHttpRequest* req)
-        {
-            if (req)
-            {
-                req->addHeader("Content-Type", "application/json");
-                req->addHeaderValue("content-length", json.size());
-                req->end(json.toUtf8());
-                qDebug() << "Sending message" << json;
-            }
-        },
-        [](qhttp::client::QHttpResponse* res ){
-            if (res)
-            {
-                res->collectData();
-                res->onEnd([res]() {
-                    qDebug() << res->statusString();
-                    qDebug() << "Result info" << res->collectedData();
-                });
-            }
-        }
-        );
+iclient->request(qhttp::EHTTP_POST,
+                 webhook,
+                 [json](qhttp::client::QHttpRequest* req)
+{
+    if (req)
+    {
+        req->addHeader("Content-Type", "application/json");
+        req->addHeader("content-length", QString::number(json.size()).toLatin1());
+        req->end(json.toUtf8());
+        qDebug() << "Sending message" << json;
+    }
+},
+[](qhttp::client::QHttpResponse* res ){
+    if (res)
+    {
+        res->collectData();
+        res->onEnd([res]() {
+            qDebug() << res->statusString();
+            qDebug() << "Result info" << res->collectedData();
+        });
+    }
+}
+);
 
 }
 

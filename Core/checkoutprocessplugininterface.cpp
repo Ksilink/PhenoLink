@@ -7,7 +7,7 @@
 
 
 
-QMutex CheckoutProcessPluginInterface::mutex(QMutex::NonRecursive);
+QMutex CheckoutProcessPluginInterface::mutex;
 QMap<QString, QVector<cv::Mat*> > CheckoutProcessPluginInterface::_hashtoBias;
 QMap<QString, int > CheckoutProcessPluginInterface::_hashtoBiasCount;
 
@@ -466,6 +466,7 @@ void CheckoutProcessPluginInterface::read(const QJsonObject &json)
     QJsonArray params = json["Parameters"].toArray();
     for (int i = 0; i < params.size(); ++i)
     {
+        qDebug() << params[i].toObject()["Tag"] << params[i].toObject()["Value"];
         RegistrableParent* regs = _parameters[params[i].toObject()["Tag"].toString()];
         //qDebug() << params[i].toObject();
         if (!regs) qDebug() << "Error getting algorithm parameters" << params[i].toObject()["Tag"];

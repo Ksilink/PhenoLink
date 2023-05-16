@@ -54,7 +54,7 @@ public:
     void adaptSelection(QTableView* tw, QItemSelectionModel* sm, QSet<QString> &rs);
 
     void startProcessOtherStates(QList<bool> selectedChanns, QList<SequenceFileModel*> lsfm,
-                                 bool started, QRegExp siteMatcher, QString exports);
+                                 bool started, QRegularExpression siteMatcher, QString exports);
 
     void on_actionRe_load_servers_triggered();
 
@@ -111,7 +111,7 @@ protected:
     QTableView* getDataTableView(QString hash);
     QString getDataHash(QJsonObject data);
 
-    QJsonArray startProcess(SequenceFileModel *sfm, QJsonObject obj, QList<bool> selectedChanns, QRegExp siteMatcher);
+    QJsonArray startProcess(SequenceFileModel *sfm, QJsonObject obj, QList<bool> selectedChanns, QRegularExpression siteMatcher);
     void refreshExperimentControl(QTreeWidget *l, ExperimentFileModel *mdl);
     QDoubleSpinBox* constructDoubleSpinbox(QHBoxLayout* popupLayout, QWidget *popup, ImageInfos* fo, QString objName, QString text);
 
@@ -152,6 +152,9 @@ private slots:
     void deleteDirPath(QString dir);
     void on_actionOpen_Single_Image_triggered();
     void addDirectoryName(QString name);
+
+    void cloudUpload();
+
 
     void on_action_Exit_triggered();
     void on_toolButton_clicked();

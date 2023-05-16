@@ -20,9 +20,9 @@ InstallDir "$PROGRAMFILES64\Checkout"
 Section -Prerequisites
   SetOutPath $INSTDIR\Prerequisites
 
-  MessageBox MB_YESNO "Install the Microsoft Visual C++ 2015-2019 Redistribual (x64) - 14 ?" /SD IDYES IDNO endNetCF
-    File "C:\Work\GitHub\redist\VC_redist.x64.exe"
-    ExecWait "$INSTDIR\VC_redist.x64.exe"
+  MessageBox MB_YESNO "Install the Microsoft Visual C++ Redistribual (x64) ?" /SD IDYES IDNO endNetCF
+    File "@VCToolsRedistDir@\vc_redist.x64.exe"
+    ExecWait "$INSTDIR\vc_redist.x64.exe"
   endNetCF:
 
 SectionEnd
@@ -52,9 +52,6 @@ File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
 
 SetOutPath $INSTDIR\bin\styles
 File "@CMAKE_BINARY_DIR@\bin\styles\*.dll"
-
-SetOutPath $INSTDIR\bin\bearer
-File "@CMAKE_BINARY_DIR@\bin\bearer\*.dll"
 
 SetOutPath $INSTDIR\bin\iconengines
 File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"

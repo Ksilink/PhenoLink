@@ -28,21 +28,32 @@ int main(int argc, char* argv[])
     QApplication app(argc, argv);
 
     QCommandLineParser parser;
-    parser.addPositionalArgument("bucket-name", "The name of the S3 bucket to upload the files to.");
-    parser.addPositionalArgument("key-name", "The key name to use for the uploaded files.");
-
     parser.addPositionalArgument("files", "The files to upload.", "[files...]");
 
     parser.addOption(QCommandLineOption("threads", "The number of parallel threads to use for uploading.", "threads", "8"));
+    parser.addOption(QCommandLineOption("bucket-name", "The name of the cloud bucket to upload the files to" ));
+    parser.addOption(QCommandLineOption("key-name", "The key name to use for the uploaded files."));
+    parser.addOption(QCommandLineOption("help", "Show help message"));
+
 
     parser.process(app);
-    const QStringList files = parser.positionalArguments().mid(2);
+    if (parser.isSet("help")) parser.showHelp(0);
+
+    const QStringList files = parser.positionalArguments();
     if (files.isEmpty()) {
+        std::cerr << "Mandatory to set the input file list" << std::endl;
         parser.showHelp(1);
     }
 
-    const QString bucketName = parser.positionalArguments().at(0);
-    const QString keyName = parser.positionalArguments().at(1);
+    if (!parser.isSet("bucket-name") || !parser.isSet("key-name"))
+    {
+        std::cerr << "Mandatory bucket name and key name need to be set" << std::endl;
+        parser.showHelp(1);
+    }
+
+
+    const QString bucketName = parser.value("bucket-name");
+    const QString keyName = parser.value("key-name");
     const int threads = parser.value("threads").toInt();
 
     Aws::SDKOptions options;
@@ -52,7 +63,7 @@ int main(int argc, char* argv[])
 
         QWidget window;
         QVBoxLayout* layout = new QVBoxLayout(&window);
-        layout->setMargin(0);
+        layout->setContentsMargins(0,0,0,0);
         window.setLayout(layout);
 
         for (const QString& file : files) {
@@ -77,7 +88,7 @@ AwsFileUploader::AwsFileUploader(const QString &filePath, const QString &bucketN
 
 void AwsFileUploader::start()
 {
-    QFuture<void> future = QtConcurrent::run(this, &AwsFileUploader::upload);
+    auto future = QtConcurrent::run([this]() { this->upload(); } );
 }
 
 void AwsFileUploader::upload()
@@ -122,7 +133,7 @@ GCSFileUploader::GCSFileUploader(const QString &filePath, const QString &bucketN
 
 void GCSFileUploader::start()
 {
-    QFuture<void> future = QtConcurrent::run(this, &GCSFileUploader::upload);
+    auto future = QtConcurrent::run([this](){ this->upload(); } );
 }
 
 void GCSFileUploader::upload()

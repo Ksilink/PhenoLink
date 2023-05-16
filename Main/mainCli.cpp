@@ -41,7 +41,7 @@ using namespace qhttp::server;
 
 void help()
 {
-    qDebug() << "Checkout Command Line interface";
+    qDebug() << "PhenoLink Command Line interface";
     qDebug() << "ckcli [options] [commands] [parameters]";
     qDebug() << "ckcli commands:";
     qDebug() << "\tls/list:  List available plugins";
@@ -81,9 +81,9 @@ void helper::listParams(QJsonObject ob)
         qApp->exit();
 }
 
-void helper::startProcess(QJsonObject ob)
+void helper::startProcess(QJsonObject ob, QRegularExpression siteMatcher)
 {
-    QRegExp siteMatcher;
+//    QReguExp siteMatcher;
 
     QJsonArray startParams;
 
@@ -329,7 +329,7 @@ void helper::setHttpResponse(QJsonObject ob, qhttp::server::QHttpResponse* res, 
     else
         res->addHeader("Content-Type", "application/json");
 
-    res->addHeaderValue("Content-Length", body.length());
+    res->addHeader("Content-Length", QString::number(body.length()).toLatin1());
     res->setStatusCode(qhttp::ESTATUS_OK);
     res->end(body);
 }
@@ -405,9 +405,9 @@ void startServer(QCoreApplication* a,QProcess& server, QStringList var )
     {
         // Start the network worker for processes
         //        server.setProcessChannelMode(QProcess::MergedChannels);
-        server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() +"/CheckoutServer_log.txt");
+        server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() +"/CheckoutServer_log.txt");
         server.setWorkingDirectory(a->applicationDirPath());
-        QString r = "CheckoutHttpServer.exe";
+        QString r = "PhenoLinkHttpServer.exe";
 
         server.setProgram(r);
         if (set.value("UserMode/Debug", false).toBool())
@@ -467,7 +467,7 @@ void startProcess(QString proc, QString commitName,  QStringList params, QString
     h->setDump(dumpfile);
 
     qApp->connect(&NetworkProcessHandler::handler(), &NetworkProcessHandler::parametersReady,
-                  [h](QJsonObject o) { h->startProcess(o);  });
+                  [h](QJsonObject o) { h->startProcess(o, QRegularExpression());  });
 
     qApp->exec();
     delete h;
@@ -477,9 +477,9 @@ int main(int ac, char** av)
 {
     auto a = new QCoreApplication(ac, av);
     //    QApplication::setStyle(QStyleFactory::create("Plastique"));
-    a->setApplicationName("Checkout");
+    a->setApplicationName("PhenoLink");
     a->setApplicationVersion(CHECKOUT_VERSION);
-    //    a.setApplicationDisplayName(QString("Checkout %1").arg(CHECKOUT_VERSION));
+    //    a.setApplicationDisplayName(QString("PhenoLink %1").arg(CHECKOUT_VERSION));
     a->setOrganizationDomain("WD");
     a->setOrganizationName("WD");
 
@@ -489,13 +489,13 @@ int main(int ac, char** av)
 
     QSettings set;
 
-    QDir dir( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
+    QDir dir( QStandardPaths::standardLocations(QStandardPaths::AppDataLocation ).first());
     //QDir dir("P:/DATABASES");
     dir.mkpath(dir.absolutePath() + "/databases/");
     dir.mkpath(dir.absolutePath());
 
     if (!set.contains("databaseDir"))
-        set.setValue("databaseDir", QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/databases/");
+        set.setValue("databaseDir", QStandardPaths::standardLocations(QStandardPaths::AppDataLocation ).first() + "/databases/");
 
     QStringList var = set.value("Server", QStringList() << "127.0.0.1").toStringList();
 

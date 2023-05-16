@@ -5,7 +5,7 @@ add_definitions(-DQHTTP_HAS_CLIENT)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CheckoutGui_SRC
+set(PhenoLinkGui_SRC
                 mainwindow.cpp mainwindow_wellplate.cpp
                 mainwindow_datatables.cpp mainwindow_startprocesses.cpp
                 mainwindow_overlay.cpp
@@ -65,17 +65,20 @@ set(CheckoutGui_SRC
 
 if(VTK_FOUND)
     link_directories(${VTK_LIB_DIR})
-    include(${VTK_USE_FILE})
+    # include(${VTK_USE_FILE})
     set(CheckoutVTKLib ${VTK_LIBRARIES})
+    
 endif(VTK_FOUND)
 
 if (BUILD_PYTHON_SCRIPTING)
     set(CheckoutPythonLib CheckoutPythonCore)
 endif(BUILD_PYTHON_SCRIPTING)
 
-add_library(CheckoutGui SHARED ${CheckoutGui_SRC} )
+add_library(PhenoLinkGui SHARED ${PhenoLinkGui_SRC} )
 
-QT5_WRAP_UI(mainwindow.ui Tags/tagger.ui ctkWidgets/ctkPathListButtonsWidget.ui)
+add_dependencies (PhenoLinkGui PhenoLinkCore)
+
+QT_WRAP_UI(mainwindow.ui Tags/tagger.ui ctkWidgets/ctkPathListButtonsWidget.ui)
 
 
 #add_custom_command(TARGET CheckoutGui   PRE_BUILD
@@ -91,18 +94,23 @@ include_directories( ${LIBBSONCXX_INCLUDE_DIRS})
 include_directories( ${LIBMONGOCXX_INCLUDE_DIRS})
 
 
-target_include_directories(CheckoutGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(PhenoLinkGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if (MSVC)
-    target_compile_options(CheckoutGui PRIVATE /WX)
+    target_compile_options(PhenoLinkGui PRIVATE /WX)
 endif()
 
 
 IF(WIN32)
-    target_link_libraries(CheckoutGui ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt::WinExtras  Qt::WebEngineWidgets  ${OpenCV_LIBS}  mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost )
+    target_link_libraries(PhenoLinkGui ${CheckoutPythonLib} PhenoLinkCore ${CheckoutVTKLib} QHttp Qt::OpenGLWidgets Qt::Widgets  Qt6::WebEngineWidgets  Qt6::Concurrent ${OpenCV_LIBS}  mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost )
 ELSE()
-	target_link_libraries(CheckoutGui PRIVATE  ${CheckoutPythonLib} CheckoutCore ${CheckoutVTKLib} QHttp Qt::OpenGL Qt::Widgets Qt::Concurrent Qt::WebEngineWidgets ${OpenCV_LIBS}  mongo::mongocxx_static mongo::bsoncxx_static Boost::boost)
+        target_link_libraries(PhenoLinkGui PRIVATE  ${CheckoutPythonLib} PhenoLinkCore ${CheckoutVTKLib} QHttp Qt::OpenGLWidgets Qt::Widgets Qt::Concurrent  ${OpenCV_LIBS}  mongo::mongocxx_static mongo::bsoncxx_static Boost::boost)
 ENDIF(WIN32)
+if (WIN32 AND VTK_FOUND )
+    vtk_module_autoinit(
+                TARGETS PhenoLinkGui
+                MODULES ${CheckoutVTKLib}
+                )
+endif()
 
 
-
-install(TARGETS CheckoutGui COMPONENT applications DESTINATION bin)
+install(TARGETS PhenoLinkGui COMPONENT applications DESTINATION bin)

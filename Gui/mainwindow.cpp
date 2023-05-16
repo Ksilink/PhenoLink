@@ -34,10 +34,7 @@
 #include <QComboBox>
 #include <QClipboard>
 #include <QtConcurrent/QtConcurrent>
-
-#ifdef WIN32
-#include <QtWinExtras/QWinTaskbarProgress>
-#endif
+#include <QInputDialog>
 
 
 #include <ctkWidgets/ctkDoubleRangeSlider.h>
@@ -84,6 +81,14 @@
 
 #include <QColorDialog>
 #include <QShortcut>
+
+#include <Tags/tagger.h>
+
+#undef signals
+#include <arrow/api.h>
+#include <arrow/filesystem/filesystem.h>
+#include <arrow/ipc/writer.h>
+#include <arrow/util/iterator.h>
 
 DllGuiExport QFile _logFile;
 
@@ -198,7 +203,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     ui->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
 
 
-    connect(server, SIGNAL(error(QProcess::ProcessError)),
+    connect(server, SIGNAL(errorOccurred(QProcess::ProcessError)),
             this, SLOT(server_processError(QProcess::ProcessError)));
 
     connect(server, SIGNAL(finished(int, QProcess::ExitStatus)),
@@ -259,11 +264,11 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     connect(ui->pickOverlay, SIGNAL(currentTextChanged(QString)), this, SLOT(overlay_selection(QString)));
 
     shrt_startR = new QShortcut(this);
-    shrt_startR->setKey(Qt::CTRL + Qt::Key_Return);
+    shrt_startR->setKey(Qt::CTRL | Qt::Key_Return);
     connect(shrt_startR, SIGNAL(activated()), this, SLOT(startProcess()));
 
     shrt_startEnt = new QShortcut(this);
-    shrt_startEnt->setKey(Qt::CTRL + Qt::Key_Enter);
+    shrt_startEnt->setKey(Qt::CTRL | Qt::Key_Enter);
     connect(shrt_startEnt, SIGNAL(activated()), this, SLOT(startProcess()));
 
     ui->actionNever->setChecked(set.value("AlwaysUnpack", false).toBool());
@@ -613,25 +618,25 @@ QCheckBox *MainWindow::setupOverlayBox(QCheckBox *box, QString itemName, ImageIn
         box->setContextMenuPolicy(Qt::CustomContextMenu);
         connect(box, &QPushButton::customContextMenuRequested,
                 [this, box](QPoint pos){
-            QMenu menu(this);
-            menu.addAction("Show controls");
-            auto res = menu.exec(box->mapToGlobal(pos));
-            if (res)
-            {
-                //qDebug() << "Expose the controls!!!";
-                //this->_sinteractor
-                // Let's add a right click options to the controls
-                // if Scale popup a bar control box
-                // (move (bar + text) left/right/up/down
-                //  move text (left/right/up/down)
-                // font & size options for scale
-                // font color & bar color
+                    QMenu menu(this);
+                    menu.addAction("Show controls");
+                    auto res = menu.exec(box->mapToGlobal(pos));
+                    if (res)
+                    {
+                        //qDebug() << "Expose the controls!!!";
+                        //this->_sinteractor
+                        // Let's add a right click options to the controls
+                        // if Scale popup a bar control box
+                        // (move (bar + text) left/right/up/down
+                        //  move text (left/right/up/down)
+                        // font & size options for scale
+                        // font color & bar color
 
-                // If other overlay:
-                // add a lower bound/upper bound control to handle color shade
+                        // If other overlay:
+                        // add a lower bound/upper bound control to handle color shade
 
-            }
-        });
+                    }
+                });
     }
 
 
@@ -802,10 +807,10 @@ void MainWindow::updateCurrentSelection()
             {
                 //                QCheckBox* b = new QCheckBox(QString("%1").arg(l),wid);
                 QLabel* lbl = new QLabel(QString("<html><head/><body><a href=\"%1,%2\" style='text-decoration:none; color: rgb(%5,%4,%3);'>%2</a></body></html>")
-                                         .arg(i).arg(l)
-                                         .arg(act[l] ? pal[l == 0 ? 0 : ((l + lastPal) % 16)].red() : 128)
-                                         .arg(act[l] ? pal[l == 0 ? 0 : ((l + lastPal) % 16)].green() : 128)
-                                         .arg(act[l] ? pal[l == 0 ? 0 : ((l + lastPal) % 16)].blue() : 128)
+                                             .arg(i).arg(l)
+                                             .arg(act[l] ? pal[l == 0 ? 0 : ((l + lastPal) % 16)].red() : 128)
+                                             .arg(act[l] ? pal[l == 0 ? 0 : ((l + lastPal) % 16)].green() : 128)
+                                             .arg(act[l] ? pal[l == 0 ? 0 : ((l + lastPal) % 16)].blue() : 128)
                                          , wwid);
                 lbl->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
                 connect(lbl, SIGNAL(linkActivated(QString)), this, SLOT(changeColorState(QString)), Qt::UniqueConnection);
@@ -823,14 +828,14 @@ void MainWindow::updateCurrentSelection()
             bvl->addWidget(colorWidgetSetup(new ctkColorPickerButton(wwid), fo, trueChan), i, 4);
 
             shrt_binarize.append(new QShortcut(this));
-            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, (Qt::Key_0+i) + Qt::KeypadModifier));
+            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL | Qt::Key_B, (Qt::Key)(0x30+i) | Qt::KeypadModifier));
             shrt_binarize.last()->setObjectName(QString("%1").arg(trueChan));
             connect(shrt_binarize.last(), &QShortcut::activated, this, [this](){
                 int trueChan = this->sender()->objectName().toInt();
                 this->_sinteractor.current()->getChannelImageInfos(trueChan)->toggleBinarized();
             });
             shrt_binarize.append(new QShortcut(this));
-            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL+Qt::Key_B, (Qt::Key_0+i) ));
+            shrt_binarize.last()->setKey(QKeySequence(Qt::CTRL | Qt::Key_B, (Qt::Key)(0x30+i) | Qt::NoModifier));
             shrt_binarize.last()->setObjectName(QString("%1").arg(trueChan));
             connect(shrt_binarize.last(), &QShortcut::activated, this, [this](){
                 int trueChan = this->sender()->objectName().toInt();
@@ -1017,14 +1022,14 @@ void MainWindow::refreshProcessMenu()
 
 void MainWindow::conditionChanged(QWidget* sen, int val)
 {
-//    qDebug() << "Changed conditionnal display" << sen->objectName() << val;
+    //    qDebug() << "Changed conditionnal display" << sen->objectName() << val;
     if (!_typeOfprocessing) return;
 
     if (_enableIf.contains(sen))
     {
         foreach(QWidget* w, _disable[sen])
         {
-        //    qDebug() << _disable[sen];
+            //    qDebug() << _disable[sen];
             //QWidget* w = _disable[sen];//->hide();
             if (!w) continue;
             if (!w->parentWidget()) continue;
@@ -1167,9 +1172,9 @@ void MainWindow::server_processError(QProcess::ProcessError error)
 
     QMessageBox::information(this, "Processing Server unexpectedly stopped",
                              QString("Error from the process: %1 (%2)")
-                             .arg(errormsg[(int)error])
-            .arg((int)error)
-            );
+                                 .arg(errormsg[(int)error])
+                                 .arg((int)error)
+                             );
 
     on_actionRe_start_Server_triggered();
 
@@ -1190,7 +1195,7 @@ void MainWindow::prepareProcessCall()
 
     if (_preparedProcess.isEmpty()) return;
 
-//    _processParams = QJsonObject();
+    //    _processParams = QJsonObject();
     CheckoutProcess::handler().getParameters(process);
 }
 
@@ -1292,7 +1297,7 @@ Widget* setupProcessParameterInt(Widget* s, QJsonObject& par, QString def)
     }
 
     if ((par.contains("NonDefault") && (par.contains("Value")
-                                       && isdiff(par[ def], par["Default"]))))
+                                        && isdiff(par[ def], par["Default"]))))
     {
         s->setStyleSheet("color: rgb(182,64,18);");
     }
@@ -1320,7 +1325,7 @@ Widget* setupProcessParameterDouble(Widget* s, QJsonObject& par, QString def)
         s->setValue(getValDouble(par,def));
 
     if ((par.contains("NonDefault") && (par.contains("Value")
-                                       && isdiff(par[ def], par["Default"]))))
+                                        && isdiff(par[ def], par["Default"]))))
     {
         s->setStyleSheet("color: rgb(182,64,18);");
     }
@@ -1357,7 +1362,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
             int chan = par["guiChan"].toInt();
 
             auto miname = QString("vMin%1").arg(chan),
-                    maname = QString("vMax%1").arg(chan);
+                maname = QString("vMax%1").arg(chan);
 
 
 
@@ -1391,9 +1396,9 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
                 else
                 {
                     wid = par["isSlider"].toBool() ?
-                                (QWidget*)setupProcessParameterInt(new QSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
-                              :
-                                (QWidget*)setupProcessParameterInt(new QSpinBox(), par,  reloaded ? "Value" : "Default");
+                              (QWidget*)setupProcessParameterInt(new QSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
+                                                   :
+                              (QWidget*)setupProcessParameterInt(new QSpinBox(), par,  reloaded ? "Value" : "Default");
                 }
             }
             else
@@ -1402,9 +1407,9 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
 
 
                 wid = par["isSlider"].toBool() ?
-                            (QWidget*)setupProcessParameterDouble(new ctkDoubleSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
-                          :
-                            (QWidget*)setupProcessParameterDouble(new QDoubleSpinBox(), par,  reloaded ? "Value" : "Default");
+                          (QWidget*)setupProcessParameterDouble(new ctkDoubleSlider(Qt::Horizontal), par,  reloaded ? "Value" : "Default")
+                                               :
+                          (QWidget*)setupProcessParameterDouble(new QDoubleSpinBox(), par,  reloaded ? "Value" : "Default");
 
             }
 
@@ -1507,7 +1512,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
 
 
     if (!(par.contains("NonDefault") && (par.contains("Value")
-                                       && isdiff(par[ reloaded ? "Value" : "Default"], par["Default"]))))
+                                         && isdiff(par[ reloaded ? "Value" : "Default"], par["Default"]))))
     {
         wid->setStyleSheet("color: rgb(182,64,18);");
     }
@@ -1548,7 +1553,7 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
     // L:/{Project}/Checkout_Results/*/{processpath}_date_time.json :)
     // Order data by date/time ,
 
-    QSet<QString> projects;
+        QSet<QString> projects;
     for (auto scr : ScreensHandler::getHandler().getScreens())
         projects.insert(scr->property("project"));
 
@@ -1579,7 +1584,7 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
 
     for (auto it = jsons.rbegin(), e= jsons.rend(); it != e; ++it)
     {
-     //   qDebug() << *it;
+        //   qDebug() << *it;
         for (auto & r: commits)
             if (r.contains(*it))
             {
@@ -1674,7 +1679,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
     QStringList h;
     for (int i = 0; i < _history->count(); ++i) h <<  _history->itemText(i);
- //   qDebug() << h;
+    //   qDebug() << h;
 
     if (idx > 0) _history->setCurrentIndex(idx);
     else if (idx < 0 && _history->count() > 1)
@@ -1923,15 +1928,15 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
             {
                 //            qDebug() << par["Level"];
                 if (par["Level"] == "Advanced" &&
-                        !ui->actionAdvanced_User->isChecked())
+                    !ui->actionAdvanced_User->isChecked())
                     show=false;
 
                 if (par["Level"] == "VeryAdvanced" &&
-                        !ui->actionVery_Advanced->isChecked())
+                    !ui->actionVery_Advanced->isChecked())
                     show=false;
 
                 if (par["Level"] == "Debug" &&
-                        !ui->actionDebug->isChecked())
+                    !ui->actionDebug->isChecked())
                     show=false;
             }
 
@@ -1991,9 +1996,9 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
 #define SetCondition(Type, setter, accessor, change, slt) \
                                 { Type b = dynamic_cast<Type>(ll); \
-    if (b) { \
-    connect(b, SIGNAL(change(int)), this, SLOT(slt(int))); \
-    b->setter(b->accessor()); } }
+                                        if (b) { \
+                                            connect(b, SIGNAL(change(int)), this, SLOT(slt(int))); \
+                                            b->setter(b->accessor()); } }
 
 
                                 SetCondition(QComboBox*, setCurrentIndex, currentIndex, currentIndexChanged,conditionChanged);
@@ -2029,15 +2034,15 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
         {
             //            qDebug() << par["Level"];
             if (par["Level"] == "Advanced" &&
-                    !ui->actionAdvanced_User->isChecked())
+                !ui->actionAdvanced_User->isChecked())
                 continue;
 
             if (par["Level"] == "VeryAdvanced" &&
-                    !ui->actionVery_Advanced->isChecked())
+                !ui->actionVery_Advanced->isChecked())
                 continue;
 
             if (par["Level"] == "Debug" &&
-                    !ui->actionDebug->isChecked())
+                !ui->actionDebug->isChecked())
                 continue;
         }
 
@@ -2120,25 +2125,25 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     connect(button, SIGNAL(pressed()), this, SLOT(startProcess()));
     connect(button, &QPushButton::customContextMenuRequested,
             [this, button](QPoint pos){
-        QMenu menu(this);
-        menu.addAction("Export Run command");
-        auto res = menu.exec(button->mapToGlobal(pos));
-        if (res)
-        {
-            qDebug() << "Do the export!!!";
+                QMenu menu(this);
+                menu.addAction("Export Run command");
+                auto res = menu.exec(button->mapToGlobal(pos));
+                if (res)
+                {
+                    qDebug() << "Do the export!!!";
 
-            QString dir = QFileDialog::getSaveFileName(this, tr("Save File"),
-                                                       QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/process_run.json", tr("JSON file (*.json)"),
-                                                       0, /*QFileDialog::DontUseNativeDialog
+                    QString dir = QFileDialog::getSaveFileName(this, tr("Save File"),
+                                                               QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/process_run.json", tr("JSON file (*.json)"),
+                                                               0, /*QFileDialog::DontUseNativeDialog
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | */QFileDialog::DontUseCustomDirectoryIcons
-                                                       );
-            if (dir.isEmpty()) return;
-            startProcessRun(dir);
+                                                               );
+                    if (dir.isEmpty()) return;
+                    startProcessRun(dir);
 
-        }
+                }
 
 
-    });
+            });
 
 
 
@@ -2460,7 +2465,7 @@ void MainWindow::changeFpsValue(double val)
 void MainWindow::on_actionRe_start_Server_triggered()
 {
     // Avoid being told for error
-    disconnect(server, SIGNAL(error(QProcess::ProcessError)),
+    disconnect(server, SIGNAL(errorOccurred(QProcess::ProcessError)),
                this, SLOT(server_processError(QProcess::ProcessError)));
 
     disconnect(server, SIGNAL(finished(int, QProcess::ExitStatus)),
@@ -2469,7 +2474,7 @@ void MainWindow::on_actionRe_start_Server_triggered()
     server->close();
 
 
-    connect(server, SIGNAL(error(QProcess::ProcessError)),
+    connect(server, SIGNAL(errorOccurred(QProcess::ProcessError)),
             this, SLOT(server_processError(QProcess::ProcessError)));
 
     connect(server, SIGNAL(finished(int, QProcess::ExitStatus)),
@@ -2682,9 +2687,139 @@ int longestMatch(QString a, QString b)
             break;
     return i;
 }
-#include <QInputDialog>
+
+void MainWindow::cloudUpload()
+{
+    namespace fs = arrow::fs;
+
+    // Check Plate selection Load plate if necessary
+    if (mdl->getCheckedDirectories(false).size() == 0)
+        mdl->setData(_icon_model, Qt::Checked, Qt::CheckStateRole);
+
+    on_loadSelection_clicked();
+
+    // Get all selected screens
+    ScreensHandler& h = ScreensHandler::getHandler();
+    Screens& s = h.getScreens();
+
+    // We'll set up a feather file with adjusted columns name
+    // metadata in the feather
+
+    //
+    std::vector<std::shared_ptr<arrow::Field>> fields=
+        {
+            arrow::field("file", arrow::utf8()),
+            // Date is in days since epoch
+            arrow::field("uploaded", arrow::date32())
+        };
 
 
+    arrow::StringBuilder FileList;
+    arrow::Date32Builder uploaded;
+
+    // Here we shall unroll the screen file list + the metadata
+    QString commonBasePath;
+    for (auto xp: s)
+    {
+        QString plate_name = xp->name();
+        QString path = xp->fileName();
+        if (commonBasePath.isEmpty())
+            commonBasePath = path.left(path.indexOf(plate_name)-1);
+        else
+            commonBasePath = commonBasePath.left(longestMatch(commonBasePath, path));
+
+        // First append our files
+        for (auto files: xp->metadataFile())
+        {
+            auto r = FileList.Append(files.toStdString());
+            auto r2 = uploaded.Append(0); // non uploaded data will be 0, otherwise day of upload
+            //                            values[QString("Image_FileName_%1").arg(cname[c].trimmed().replace(" ", "_"))]=fname;
+        }
+
+        for (auto seq: xp->getValidSequenceFiles())
+        {
+            for (unsigned int t = 0; t < seq->getTimePointCount(); ++t)
+                for (unsigned f = 0; f < seq->getFieldCount(); ++f)
+                {
+                    for (unsigned z = 0; z < seq->getZCount(); ++z)
+                    {
+                        for (unsigned c = 0; c < seq->getChannels(); ++c)
+                        {
+                            QString fi = seq->getFile(t+1,f+1, z+1, c+1);
+                            QString fname = fi.split('/').back();
+
+                            if (fname.isEmpty())
+                                continue;
+                            auto r = FileList.Append((seq->getBasePath() + "/" + fname).toStdString());
+                            auto r2 = uploaded.Append(0); // non uploaded data will be 0, otherwise day of upload
+//                            values[QString("Image_FileName_%1").arg(cname[c].trimmed().replace(" ", "_"))]=fname;
+                        }
+                    }
+                }
+        }
+    }
+
+
+
+    std::vector<std::shared_ptr<arrow::Array>> dat(fields.size());
+
+    auto r1 = FileList.Finish(&dat[0]);
+    auto r2 = uploaded.Finish(&dat[1]);
+
+
+
+
+    std::shared_ptr<arrow::KeyValueMetadata> meta =
+        arrow::KeyValueMetadata::Make({"BaseDirectory" // will be used to remove the basepath from the files
+                                      },
+                                      {commonBasePath.toStdString() });
+
+
+    auto schema =
+        arrow::schema(fields, meta);
+    auto table = arrow::Table::Make(schema, dat);
+
+//    QDir::
+    QString upfolder = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
+    std::string uri = upfolder.toStdString() + "/cloud_upload.fth";
+    std::string root_path;
+
+
+    auto r0 = fs::FileSystemFromUriOrPath(uri, &root_path);
+    if (!r0.ok())
+    {
+        qDebug() << "Arrow Error not able to load" << QString::fromStdString(uri);
+        return;
+    }
+
+    auto fst = r0.ValueOrDie();
+
+    auto r3 = fst->OpenOutputStream(uri);
+
+    if (!r3.ok())
+    {
+        qDebug() << "Arrow Error to Open Stream" << QString::fromStdString(uri);
+        return;
+    }
+    auto output = r3.ValueOrDie();
+    arrow::ipc::IpcWriteOptions options = arrow::ipc::IpcWriteOptions::Defaults();
+    // options.codec = arrow::util::Codec::Create(arrow::Compression::LZ4).ValueOrDie(); //std::make_shared<arrow::util::Codec>(codec);
+
+    auto r4 = arrow::ipc::MakeFileWriter(output.get(), table->schema(), options);
+
+    if (!r4.ok())
+    {
+        qDebug() << "Arrow Unable to make file writer";
+        return;
+    }
+
+    auto writer = r4.ValueOrDie();
+
+    auto status = writer->WriteTable(*table.get());
+    status = writer->Close();
+    status = output->Close();
+
+}
 
 
 
@@ -2704,9 +2839,9 @@ void MainWindow::exportToCellProfiler()
     if (!ok) return;
 
     QStringList tag_filter = filtertags.isEmpty() ? QStringList() :
-                                                    filtertags.split(';');
+                                 filtertags.split(';');
     QStringList remTags;
-    QRegExp wellMatcher, siteMatcher;
+    QRegularExpression wellMatcher, siteMatcher;
 
     for (auto f : tag_filter)
     {
@@ -2871,8 +3006,8 @@ void MainWindow::exportToCellProfiler()
             auto wPos = seq->Pos();
 
             bool issame = values.find("Metadata_Well") != values.end()
-                    && !values["Metadata_Well"].isEmpty()
-                    &&  values["Metadata_Well"] != wPos;
+                          && !values["Metadata_Well"].isEmpty()
+                          &&  values["Metadata_Well"] != wPos;
 
 
 
@@ -2881,7 +3016,7 @@ void MainWindow::exportToCellProfiler()
 
 
 
-            if (!wellMatcher.isEmpty() && !wellMatcher.exactMatch(wPos))
+            if (!wellMatcher.pattern().isEmpty() && !wellMatcher.match(wPos).hasMatch())
                 continue;
 
 
@@ -2906,7 +3041,7 @@ void MainWindow::exportToCellProfiler()
             for (unsigned int t = 0; t < seq->getTimePointCount(); ++t)
                 for (unsigned f = 0; f < seq->getFieldCount(); ++f)
                 {
-                    if (!siteMatcher.isEmpty() && !siteMatcher.exactMatch(QString("%1").arg(f)))
+                    if (!siteMatcher.pattern().isEmpty() && !siteMatcher.match(QString("%1").arg(f)).hasMatch())
                         continue;
 
                     for (unsigned z = 0; z < seq->getZCount(); ++z)
@@ -2947,7 +3082,7 @@ bool MainWindow::close()
     for (auto frm : imf)
         inters.insert(frm);
 
-    QDir dir( QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
+    QDir dir( QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first());
 
     QFile cbfile(dir.path() + "/context.cbor");
     if (!cbfile.open(QIODevice::ReadWrite)) {
@@ -3030,6 +3165,8 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
         menu.addAction("export for CP", this, SLOT(exportToCellProfiler()));
         menu.addAction("export for CP (well split)", this, SLOT(exportToCellProfiler()));
         menu.addSeparator();
+        menu.addSeparator();
+        menu.addAction("Upload on the cloud", this, SLOT(cloudUpload()));
         menu.addAction("add Directory", this, SLOT(addDirectory()));
         menu.addAction("remove Directory", this, SLOT(rmDirectory()));
         menu.addSeparator();
@@ -3058,7 +3195,7 @@ void MainWindow::on_treeView_customContextMenuRequested(const QPoint &pos)
             if (path.size() > 3)
             {
                 QString pl = path.at(path.size()-2),
-                        pld = path.at(path.size()-3);
+                    pld = path.at(path.size()-3);
 
                 QGuiApplication::clipboard()->setText(QString("%1/%2").arg(pld,pl));
             }
@@ -3205,13 +3342,13 @@ void MainWindow::on_actionDisplay_Remaining_Processes_triggered()
     auto & hdlr = CheckoutProcess::handler();
     ui->textLog->insertPlainText(    hdlr.dumpProcesses()
 
-                                     );
+                                 );
 
     //    for (Process)
     //    ui->textLog->insertPlainText();
 }
 
-#include <Tags/tagger.h>
+
 
 void MainWindow::plateMap()
 {

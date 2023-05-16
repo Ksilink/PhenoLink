@@ -91,7 +91,7 @@ int forceNumaAll(int node)
     BOOL success = SetProcessAffinityMask(process, processAffinityMask);
 
     qDebug() << success << GetLastError();
-      
+
     return success;
 }
 
@@ -132,7 +132,7 @@ int main(int ac,  char* av[])
 #else
     QCoreApplication app(ac, av);
 #endif
-    app.setApplicationName("Checkout");
+    app.setApplicationName("PhenoLink");
     app.setApplicationVersion(CHECKOUT_VERSION);
     app.setOrganizationDomain("WD");
     app.setOrganizationName("WD");

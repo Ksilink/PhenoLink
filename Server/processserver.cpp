@@ -88,7 +88,7 @@ public:
         trayIcon = new QSystemTrayIcon(this);
         trayIcon->setContextMenu(trayIconMenu);
         trayIcon->setIcon(QIcon(":/ServerIcon.png"));
-        trayIcon->setToolTip(QString("Checkout Server listenning on port %1").arg(sets.value("ServerPort", 13378).toUInt()));
+        trayIcon->setToolTip(QString("PhenoLink Server listenning on port %1").arg(sets.value("ServerPort", 13378).toUInt()));
         trayIcon->show();
 
         startTimer(2000);
@@ -110,9 +110,9 @@ public:
         int npro = procs.numberOfRunningProcess();
         QString tooltip;
         if (npro != 0)
-            tooltip = QString("Checkout Server processing %1 requests").arg(npro);
+            tooltip = QString("PhenoLink Server processing %1 requests").arg(npro);
         else
-            tooltip = QString("Checkout Server listenning on port %1").arg(_serv->serverPort());
+            tooltip = QString("PhenoLink Server listenning on port %1").arg(_serv->serverPort());
 
         QStringList missing_users;
         for (auto user : procs.users())
@@ -142,7 +142,7 @@ public:
         trayIcon->setToolTip(tooltip);
 
         if (lastNpro != npro && npro == 0)
-            trayIcon->showMessage("Checkout Server", "Checkout server has finished all his process");
+            trayIcon->showMessage("PhenoLink Server", "PhenoLink server has finished all his process");
 
         lastNpro = npro;
 
@@ -386,7 +386,7 @@ void ProcessServer::ready()
     }
 
     clients[tcpSocket] = 0;
-    
+
 }
 
 void ProcessServer::replyList(QTcpSocket* tcpSocket)

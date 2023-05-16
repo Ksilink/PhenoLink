@@ -29,6 +29,7 @@
 #include <QDir>
 #include <QFormLayout>
 #include <QDialogButtonBox>
+#include <QHBoxLayout>
 
 
 #include <Core/ck_mongo.h>
@@ -69,7 +70,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
         req->addHeader("X-LC-APP-Auth", key.toLatin1());
         req->addHeader("Accept", "application/json");
         QByteArray body;
-        req->addHeaderValue("content-length", body.length());
+        req->addHeader("content-length", QString::number(body.length()).toLatin1());
         req->end(body);
     },
 
@@ -179,7 +180,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             req->addHeader("X-LC-APP-Auth", key.toLatin1());
             req->addHeader("Accept", "application/json");
             QByteArray body;
-            req->addHeaderValue("content-length", body.length());
+            req->addHeader("content-length", QString::number(body.length()).toLatin1());
             req->end(body);
         }
     },
@@ -377,8 +378,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 platet->updatePlate();
             }
 
-            int p = std::min(1, date.size()-1);
-            ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(p)));
+        int p = std::min(1, (int)(date.size()-1));
+        ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(p)));
 
             if (!proj.isEmpty())
                 this->ui->project->setCurrentText(proj);
@@ -542,6 +543,16 @@ void tagger::on_pushButton_clicked()
     this->close();
 }
 
+QWidget* createPair(QComboBox* left, QComboBox* right)
+{
+    QWidget* res = new QWidget(left->parentWidget());
+    auto lay = new QHBoxLayout();
+    res->setLayout(lay);
+    lay->addWidget(left);
+    lay->addWidget(right);
+
+    return res;
+}
 
 void tagger::on_mapcsv()
 {
@@ -585,12 +596,18 @@ void tagger::on_mapcsv()
             layout->addRow("Pick Well Columns", wells);
             layout->addRow("Pick Plate Columns", plates);
 
-            QList<QComboBox*> features;
+            QList<QComboBox*> features,subfeatures;
             for (int i = 2; i < header.size(); ++i)
             {
                 features.push_back(new QComboBox(&box));
                 features.back()->addItems(h2);
-                layout->addRow(QString("Pick Feature %1").arg(i), features.back());
+
+                subfeatures.push_back(new QComboBox(&box));
+                subfeatures.back()->addItems(h2);
+
+
+                layout->addRow(QString("Pick Feature %1").arg(i),
+                               createPair(features.back(), subfeatures.back()));
             }
             auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
                                                   | QDialogButtonBox::Cancel);
@@ -610,8 +627,8 @@ void tagger::on_mapcsv()
                         break;
                     header = hea.contains(',') ? hea.split(',') : (hea.contains(";") ? hea.split(';') : (hea.contains('\t') ? hea.split('\t') : hea.split(",")));
 
-                    QString well = header.at(wells->currentIndex()).toUpper();
-                    int r = (char)(well[0].toLatin1())-'A', c = well.midRef(1).toInt()-1;
+                    QStringView well = header.at(wells->currentIndex()).toUpper();
+                    int r = (char)(well[0].toLatin1())-'A', c = well.sliced(1).toInt()-1;
 
                     for (auto w: this->findChildren<TaggerPlate*>())
                     {
@@ -622,26 +639,43 @@ void tagger::on_mapcsv()
                             {
                                 if (platet->getPlate() == header.at(plates->currentIndex()-1))
                                 {
+                                    int i = 0;
                                     for (auto& col : features)
+                                    {
                                         if (col->currentIndex()!=0)
                                         {
                                             auto t = header.at(col->currentIndex()-1);
+                                            if (subfeatures.at(i)->currentIndex()!=0)
+                                                t += "#" + header.at(subfeatures.at(i)->currentIndex()-1);
+
                                             if (!categories[col->currentText()].contains(t))
                                                 categories[col->currentText()]<<t;
+
                                             platet->setTag(r,c,t);
                                         }
+                                        i++;
+                                    }
                                 }
                             }
                             else
                             {
+                                int i = 0;
                                 for (auto& col : features)
+                                {
                                     if (col->currentIndex()!=0)
                                     {
                                         auto t = header.at(col->currentIndex()-1);
+
+                                        if (subfeatures.at(i)->currentIndex()!=0)
+                                            t += "#" + header.at(subfeatures.at(i)->currentIndex()-1);
+
+
                                         if (!categories[col->currentText()].contains(t))
                                             categories[col->currentText()]<<t;
                                         platet->setTag(r,c,header.at(col->currentIndex()-1));
                                     }
+                                    i++;
+                                }
                             }
                         }
                     }

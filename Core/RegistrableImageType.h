@@ -8,8 +8,8 @@
 
 typedef QMap<int, QColor> Colormap;
 
-
-
+#include <QJsonObject>
+#include "RegistrableTypes.h"
 
 class RegistrableImageParent : public RegistrableParent
 {

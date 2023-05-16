@@ -50,7 +50,7 @@ CheckoutHttpClient::CheckoutHttpClient(QString host, quint16 port) : awaiting(fa
     iurl.setHost(host);
     iurl.setPort(port);
 
-    QtConcurrent::run(this, &CheckoutHttpClient::sendQueue);
+    auto fut = QtConcurrent::run([this](){ this->sendQueue(); });
 
     //    startTimer(500);
 }
@@ -176,14 +176,14 @@ void CheckoutHttpClient::sendQueue()
                 if (req)
                 {
 
-                    req->addHeader("Content-Type", "application/cbor");
-                    req->addHeaderValue("content-length", body.size());
-                    req->end(body);
-                    //                qDebug() << "Generated request" << body.size();
-                }
-                else
-                    qDebug() << "Queue Request Error...";
-            },
+                req->addHeader("Content-Type", "application/cbor");
+                req->addHeader("content-length", QString::number(body.size()).toLatin1());
+                req->end(body);
+                //                qDebug() << "Generated request" << body.size();
+            }
+            else
+                qDebug() << "Queue Request Error...";
+        },
 
             [this, icli](QHttpResponse *res)
             {
@@ -280,10 +280,9 @@ NetworkProcessHandler::NetworkProcessHandler() : _waiting_Update(false),
                                                  last_serv_pos(0)
 {
 
-    data = new QFile(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first() + "/HashLogs.txt");
-    if (data->open(QFile::WriteOnly | QFile::Truncate))
-    {
-        hash_logfile = new QTextStream(data);
+    data = new QFile( QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() + "/HashLogs.txt");
+    if (data->open(QFile::WriteOnly | QFile::Truncate)) {
+        hash_logfile= new QTextStream(data);
     }
 
     QList<QHostAddress> list = QNetworkInterface::allAddresses();

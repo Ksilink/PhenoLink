@@ -32,8 +32,8 @@ else()
     set(CMAKE_C_FLAGS "-Wno-deprecated")
 endif(WIN32)
 
-set(Checkout_VERSION_MAJOR 22)
-set(Checkout_VERSION_MINOR 11)
+set(Checkout_VERSION_MAJOR 23)
+set(Checkout_VERSION_MINOR 04)
 set(Checkout_VERSION_COMPLEMENT R)
 set(Checkout_VERSION_RELEASE 0)
 
@@ -94,7 +94,7 @@ add_definitions(-DCheckout_Git_Hash="${app_hash_short}-${plugin_hash_short}${git
 
 option(BUILD_PLUGINS "Build plugins" ON)
 option(BUILD_PYTHON_SCRIPTING "Build with Core side Python Scripting" OFF)
-option(BUILD_WITH_VTK "Build the VTK optional stuff" OFF)
+option(BUILD_WITH_VTK "Build the VTK optional stuff" ON)
 option(BUILD_RAW_PROCESSOR "Build the Raw data processor (very advanced users - developper feature)" OFF)
 option(PLUGIN_IN_CORE "Shall Core call plugins" OFF)
 option(ONNX_GPU "Use ONNX GPU Version" OFF)
@@ -103,28 +103,31 @@ if(UNIX AND NOT APPLE)
         set(LINUX TRUE)
 endif()
 
+set(ONNX_VERSION "1.14.0")
+
 if (WIN32) # do the win32 download
-    if (ONNX_GPU)
-        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-win-x64-gpu-1.11.1.zip")
-        set(ONNX_ROOTDIR "onnxruntime-win-x64-gpu-1.11.1")
-        set(ONNX_TARGET "onnxruntime-win-gpu.zip")
+      if (ONNX_GPU)
+        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-win-x64-gpu-${ONNX_VERSION}.zip")
+
+        set(ONNX_ROOTDIR "onnxruntime-win-x64-gpu-${ONNX_VERSION}")
+        set(ONNX_TARGET "onnxruntime-win-gpu-${ONNX_VERSION}.zip")
         add_definitions(-DUSE_CUDA)
     else()
-        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-win-x64-1.11.1.zip")
-        set(ONNX_ROOTDIR "onnxruntime-win-x64-1.11.1")
-        set(ONNX_TARGET "onnxruntime-win.zip")
+        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-win-x64-${ONNX_VERSION}.zip")
+        set(ONNX_ROOTDIR "onnxruntime-win-x64-${ONNX_VERSION}")
+        set(ONNX_TARGET "onnxruntime-win-${ONNX_VERSION}.zip")
     endif(ONNX_GPU)
 
 elseif(LINUX) # do the linux download
     if (ONNX_GPU)
-        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-linux-x64-gpu-1.11.1.tgz")
-         set(ONNX_ROOTDIR "onnxruntime-linux-x64-gpu-1.11.1")
-         set(ONNX_TARGET "onnxruntime-linux-gpu.tgz")
+        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.14.0/onnxruntime-linux-x64-gpu-${ONNX_VERSION}.tgz")
+         set(ONNX_ROOTDIR "onnxruntime-linux-x64-gpu-${ONNX_VERSION}")
+         set(ONNX_TARGET "onnxruntime-linux-gpu-${ONNX_VERSION}.tgz")
          add_definitions(-DUSE_CUDA)
     else()
-        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.11.1/onnxruntime-linux-x64-1.11.1.tgz")
-        set(ONNX_ROOTDIR "onnxruntime-linux-x64-1.11.1")
-        set(ONNX_TARGET "onnxruntime-linux.tgz")
+        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.14.0/onnxruntime-linux-x64-${ONNX_VERSION}.tgz")
+        set(ONNX_ROOTDIR "onnxruntime-linux-x64-${ONNX_VERSION}")
+        set(ONNX_TARGET "onnxruntime-linux-${ONNX_VERSION}.tgz")
     endif(ONNX_GPU)
 
 else() # MacOSX ?
@@ -162,16 +165,16 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Update to CMake
-if (WIN32)
-        find_package(Qt5 5.15 COMPONENTS  Widgets  Xml XmlPatterns
-            OpenGL Concurrent WinExtras  WebView WebEngineWidgets REQUIRED)
-ELSE()
-    find_package(Qt5 5.15 COMPONENTS
-        Widgets Xml XmlPatterns
-        OpenGL Concurrent WebView WebEngineWidgets
-        REQUIRED)
-ENDIF(WIN32)
+find_package(Qt6 COMPONENTS  Widgets  Xml
+                OpenGLWidgets Concurrent  Network  REQUIRED)
 
+if (WIN32)
+find_package(Qt6 COMPONENTS  WebView  REQUIRED)
+
+    find_package(Qt6WebView CONFIG REQUIRED)
+    find_package(Qt6WebEngineWidgets CONFIG REQUIRED)
+
+endif(WIN32)
 find_package(bsoncxx   REQUIRED)
 find_package(mongocxx   REQUIRED)
 
@@ -204,9 +207,24 @@ find_package(google_cloud_cpp_storage CONFIG REQUIRED)
 
 find_package(azure-storage-blobs-cpp CONFIG REQUIRED)
 
+if(WIN32 AND BUILD_WITH_VTK)
+    find_package(VTK COMPONENTS
+      CommonColor
+      CommonCore
+      FiltersSources
+      InteractionStyle
+      RenderingContextOpenGL2
+      RenderingCore
+      RenderingFreeType
+      RenderingGL2PSOpenGL2
+      RenderingOpenGL2
+      RenderingContextOpenGL2
+      GUISupportQt
+      RenderingQt
+      RenderingVolume
+      REQUIRED
+  )
 
-if(BUILD_WITH_VTK)
-    find_package(VTK)
     if(VTK_FOUND)
         message(STATUS "With VTK ${VTK_INCLUDE_DIRS}")
         add_definitions(-DCheckout_With_VTK)
@@ -214,7 +232,7 @@ if(BUILD_WITH_VTK)
     endif(VTK_FOUND)
 endif(BUILD_WITH_VTK)
 
-set(CheckoutLibs CheckoutCore)
+set(CheckoutLibs PhenoLinkCore)
 
 if(BUILD_PYTHON_SCRIPTING)
 # Need to search for anaconda
@@ -244,6 +262,8 @@ set(CheckoutCore_lib_path ${OpenCV_LIB_DIR} )
 link_directories(${OpenCV_LIB_DIR})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(VCToolsRedistDir $ENV{VCToolsRedistDir})
+
 
 include_directories( ${CMAKE_SOURCE_DIR} )
 include_directories( ${CMAKE_SOURCE_DIR}/include)

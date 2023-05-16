@@ -202,7 +202,7 @@ void ScreensModel::recurse(QString dir, QStringList search, QStandardItem* paren
     }
 }
 
-void ScreensModel::addDirectoryTh(QString &dir)
+void ScreensModel::addDirectoryTh(QString dir)
 {
     addDirectory(dir);
 }

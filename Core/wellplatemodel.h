@@ -16,6 +16,7 @@
 
 #include <QSize>
 #include <QPoint>
+#include <QRegularExpression>
 
 #include <QAbstractTableModel>
 #include <QFileInfo>
@@ -66,7 +67,7 @@ public:
 
     virtual void setProperties(QString tag, QString value);
     virtual QString property(QString tag) const;
-    virtual QString property(QRegExp& re) const;
+    virtual QString property(QRegularExpression& re) const;
     virtual QString properties();
     virtual bool hasProperty(QString tag) const;
     DataProperty& merge(DataProperty& other);
@@ -159,7 +160,7 @@ public:
 
     ExperimentFileModel* getOwner() const;
 
-    QList<QJsonObject> toJSON(QString imageType, bool asVectorImage, QList<bool> selectedChanns, QStringList &metaData, QRegExp siteMatcher);
+    QList<QJsonObject> toJSON(QString imageType, bool asVectorImage, QList<bool> selectedChanns, QStringList &metaData, QRegularExpression siteMatcher);
 
     void displayData();
 
@@ -182,7 +183,7 @@ public:
     QList<SequenceFileModel*> getSiblings();
 
     virtual QString property(QString tag) const;
-    virtual QString property(QRegExp& tag) const;
+    virtual QString property(QRegularExpression& tag) const;
 
     void setInvalid();
     bool isValid();
@@ -240,15 +241,15 @@ private:
     };
 
 
-    QMap<int, QList<QJsonObject> > toJSONnonVector(ImageStack stack, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
-    QMap<int, QList<QJsonObject> > toJSONnonVector(TimeLapse times, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
-    QMap<int, QList<QJsonObject> > toJSONnonVector(Channel channels, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
+    QMap<int, QList<QJsonObject> > toJSONnonVector(ImageStack stack, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegularExpression siteMatcher);
+    QMap<int, QList<QJsonObject> > toJSONnonVector(TimeLapse times, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegularExpression siteMatcher);
+    QMap<int, QList<QJsonObject> > toJSONnonVector(Channel channels, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegularExpression siteMatcher);
 
 
 
-    QList<QJsonObject> toJSONvector(ImageStack stack, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
-    QList<QJsonObject> toJSONvector(TimeLapse times, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
-    QList<QJsonObject> toJSONvector(Channel channels, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegExp siteMatcher);
+    QList<QJsonObject> toJSONvector(ImageStack stack, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegularExpression siteMatcher);
+    QList<QJsonObject> toJSONvector(TimeLapse times, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegularExpression siteMatcher);
+    QList<QJsonObject> toJSONvector(Channel channels, QString imageType, QList<bool> selectedChanns, MetaDataHandler& h, QRegularExpression siteMatcher);
 
 
     QJsonObject getMeta(MetaDataHandler& h);
@@ -431,7 +432,7 @@ public:
 
     void setProperties(QString tag, QString value);
     virtual QString property(QString tag) const;
-    virtual QString property(QRegExp tag) const;
+    virtual QString property(QRegularExpression tag) const;
 
     QSize getSize();
 
@@ -457,8 +458,8 @@ public:
     void setPattern(QPoint pos, QString col);
 
 
-void addMetadataFile(QString f);
-
+    void addMetadataFile(QString f);
+    QStringList metadataFile();
 
     QList<SequenceFileModel*> getSelection();
     QList<SequenceFileModel*> getAllSequenceFiles();
@@ -466,7 +467,7 @@ void addMetadataFile(QString f);
     QList<SequenceFileModel*> getValidSequenceFiles();
     SequenceFileModel &getFirstValidSequenceFiles();
 
-    void Q_DECL_DEPRECATED addToDatabase();
+    Q_DECL_DEPRECATED void  addToDatabase();
 
     QString name() const;
     void setName(const QString &name);

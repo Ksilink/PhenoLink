@@ -25,7 +25,7 @@ private:
 public slots:
    void listParams(QJsonObject ob);
 
-   void startProcess(QJsonObject ob);
+   void startProcess(QJsonObject ob, QRegularExpression siteMatcher);
 
    void setParams(QString proc, QString commit, QStringList params, QStringList plates);
    void setDump(QString dumpfile);
