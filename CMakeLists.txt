@@ -10,8 +10,11 @@
 
 
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+
 set(VCPKG_FEATURE_FLAGS versions)
-project(Checkout)
+set(VCPKG_DISABLE_COMPILER_TRACKING 1)
+
+project(PhenoLink)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
