@@ -39,8 +39,8 @@ IF(WIN32)
 
 ELSE()
 
-    add_executable(PhenoLink ${GUI_TYPE} main.cpp )
-
+    add_executable(PhenoLink ${GUI_TYPE} main.cpp "../Gui/rcs.qrc")
+    set_property(TARGET PhenoLink PROPERTY AUTORCC_OPTIONS "--compress-algo;none")
  #   target_compile_definitions(PhenoLink PUBLIC  -DGitPluginDate=${plugin_date})
     target_include_directories(PhenoLink PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

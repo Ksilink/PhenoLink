@@ -22,9 +22,10 @@
 
     #include <windows.h>
     #include <wincon.h>
+    #include <QtWebView/QtWebView>
+    
 #endif
 
-#include <QtWebView/QtWebView>
 #include <QStyleFactory>
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)

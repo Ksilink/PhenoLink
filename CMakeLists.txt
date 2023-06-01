@@ -228,7 +228,7 @@ if(WIN32 AND BUILD_WITH_VTK)
     if(VTK_FOUND)
         message(STATUS "With VTK ${VTK_INCLUDE_DIRS}")
         add_definitions(-DCheckout_With_VTK)
-        include_directories( ${VTK_INCLUDE_DIRS})
+        include_directories( ${VTK_INCLUDE_DIRS} )
     endif(VTK_FOUND)
 
 endif(WIN32 AND BUILD_WITH_VTK)
