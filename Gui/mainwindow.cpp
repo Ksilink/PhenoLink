@@ -48,6 +48,8 @@
 
 #include <QCheckBox>
 
+#include <QProcess>
+
 #include <QMessageBox>
 #include <QTableWidget>
 #include <QLabel>
@@ -96,7 +98,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     QMainWindow(parent),
     server(serverProc),
     networking(true),
-    ui(new Ui::MainWindow),
+    ui(new Ui::PhenoLink),
     _typeOfprocessing(0),
     _history(0),
     //    _numberOfChannels(0),
@@ -2769,10 +2771,25 @@ void MainWindow::cloudUpload()
 
 
 
+    std::vector<std::string> k ={"BaseDirectory"}, v = {commonBasePath.toStdString() };
+
+    QSettings sets;
+    QStringList items = { "CloudStorage/provider", "CloudStorage/accessKey",
+                          "CloudStorage/secretKey", "CloudStorage/bucket",
+                          "CloudStorage/key", "CloudStorage/connectionString",
+                          "CloudStorage/container", "CloudStorage/blob" };
+
+    for (auto i : items)
+    {
+        qDebug() << i << sets.value(i).toString();
+        k.push_back(i.toStdString());
+        v.push_back(sets.value(i).toString().toStdString());
+    }
+
+
     std::shared_ptr<arrow::KeyValueMetadata> meta =
-        arrow::KeyValueMetadata::Make({"BaseDirectory" // will be used to remove the basepath from the files
-                                      },
-                                      {commonBasePath.toStdString() });
+        arrow::KeyValueMetadata::Make(k,  // will be used to remove the basepath from the files
+                                      v);
 
 
     auto schema =
@@ -2819,6 +2836,11 @@ void MainWindow::cloudUpload()
     status = writer->Close();
     status = output->Close();
 
+    QProcess upload_process;
+
+    upload_process.setProgram("PhenoLinkUploader.exe");
+    upload_process.setArguments(QStringList() << upfolder + "/cloud_upload.fth");
+    upload_process.startDetached();
 }
 
 

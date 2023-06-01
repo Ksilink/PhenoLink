@@ -54,6 +54,8 @@ void loadPlugins(bool isServer)
     if (isRelease) pluginsDir.cd("Release");
     if (isRelDeb) pluginsDir.cd("RelWithDebInfo");
 
+    QCoreApplication::instance()->addLibraryPath(pluginsDir.path());
+
     CheckoutDataLoader& loader = CheckoutDataLoader::handler();
     CheckoutProcess & process = CheckoutProcess::handler();
     QMutex mutex;

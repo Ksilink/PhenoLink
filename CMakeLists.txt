@@ -230,7 +230,8 @@ if(WIN32 AND BUILD_WITH_VTK)
         add_definitions(-DCheckout_With_VTK)
         include_directories( ${VTK_INCLUDE_DIRS})
     endif(VTK_FOUND)
-endif(BUILD_WITH_VTK)
+
+endif(WIN32 AND BUILD_WITH_VTK)
 
 set(CheckoutLibs PhenoLinkCore)
 

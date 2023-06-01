@@ -14,44 +14,6 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="6">
-    <widget class="QPushButton" name="setTags">
-     <property name="text">
-      <string>&lt;&lt;</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="4">
-    <widget class="QPushButton" name="pushButton">
-     <property name="text">
-      <string>Find Template</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="5">
-    <widget class="QPushButton" name="pushButton_2">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="text">
-      <string>Export Template</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="7">
-    <widget class="QPushButton" name="unsetTags">
-     <property name="text">
-      <string>&gt;&gt;</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="label_12">
-     <property name="text">
-      <string>Table design</string>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="1">
     <widget class="QComboBox" name="plates_design">
      <property name="enabled">
@@ -74,7 +36,51 @@
      </item>
     </widget>
    </item>
-   <item row="2" column="6" colspan="2">
+   <item row="0" column="6">
+    <widget class="QPushButton" name="setTags">
+     <property name="text">
+      <string>&lt;&lt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="7">
+    <widget class="QLineEdit" name="lineEdit">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>130</width>
+       <height>0</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="7">
+    <widget class="QPushButton" name="unsetTags">
+     <property name="text">
+      <string>&gt;&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="4">
+    <widget class="QPushButton" name="pushButton">
+     <property name="text">
+      <string>Find Template</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="6">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Filter:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="6" colspan="2">
     <widget class="QTreeView" name="treeView">
      <property name="contextMenuPolicy">
       <enum>Qt::CustomContextMenu</enum>
@@ -84,14 +90,24 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="6">
-    <widget class="QLabel" name="label">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label_12">
      <property name="text">
-      <string>Filter:</string>
+      <string>Table design</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="0" rowspan="3" colspan="6">
+   <item row="0" column="5">
+    <widget class="QPushButton" name="pushButton_2">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Export Template</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" rowspan="4" colspan="6">
     <widget class="QTableWidget" name="plateMaps">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -188,19 +204,13 @@
      <column/>
     </widget>
    </item>
-   <item row="1" column="7">
-    <widget class="QLineEdit" name="lineEdit">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+   <item row="1" column="6" colspan="2">
+    <widget class="QCheckBox" name="checkBox">
+     <property name="text">
+      <string>Show only Project's infos</string>
      </property>
-     <property name="minimumSize">
-      <size>
-       <width>130</width>
-       <height>0</height>
-      </size>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>

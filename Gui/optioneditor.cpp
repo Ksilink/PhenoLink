@@ -949,10 +949,6 @@ CloudOptionEditor::CloudOptionEditor(QWidget *parent)
     containerEdit_ = new QLineEdit;
     blobEdit_ = new QLineEdit;
 
-    connects << accessKeyEdit_<<secretKeyEdit_<<bucketEdit_<<keyEdit_<<connectionStringEdit_<<containerEdit_<<blobEdit_;
-
-    for (auto item : connects)
-        connect(item, SIGNAL(textChanged(QString)), this, SLOT(saveSettings()));
 
 
     // Add the form fields to the layout
@@ -981,6 +977,11 @@ CloudOptionEditor::CloudOptionEditor(QWidget *parent)
 
     // Update the form fields to show the fields for the selected provider
     updateFormFields();
+    connects << accessKeyEdit_<<secretKeyEdit_<<bucketEdit_<<keyEdit_<<connectionStringEdit_<<containerEdit_<<blobEdit_;
+
+    for (auto item : connects)
+        connect(item, SIGNAL(textChanged(QString)), this, SLOT(saveSettings()));
+
 }
 
 QWidget *CloudOptionEditor::searchPath()
@@ -992,6 +993,16 @@ void CloudOptionEditor::loadSettings()
 {
     QSettings settings;
 
+    qDebug() << "Load"
+             << settings.value("CloudStorage/provider", "AWS")
+             << settings.value("CloudStorage/accessKey")
+             << settings.value("CloudStorage/secretKey")
+             << settings.value("CloudStorage/bucket")
+             << settings.value("CloudStorage/key")
+             << settings.value("CloudStorage/connectionString")
+             << settings.value("CloudStorage/container")
+             << settings.value("CloudStorage/blob")
+        ;
 
     providerComboBox_->setCurrentText(settings.value("CloudStorage/provider", "AWS").toString());
     accessKeyEdit_->setText(settings.value("CloudStorage/accessKey").toString());
@@ -1017,6 +1028,17 @@ void CloudOptionEditor::saveSettings()
     settings.setValue("container", containerEdit_->text());
     settings.setValue("blob", blobEdit_->text());
     settings.endGroup();
+
+    qDebug() << "Save" << settings.value("CloudStorage/provider", "AWS")
+             << settings.value("CloudStorage/accessKey")
+             << settings.value("CloudStorage/secretKey")
+             << settings.value("CloudStorage/bucket")
+             << settings.value("CloudStorage/key")
+             << settings.value("CloudStorage/connectionString")
+             << settings.value("CloudStorage/container")
+             << settings.value("CloudStorage/blob")
+        ;
+
 }
 
 void CloudOptionEditor::updateFormFields()

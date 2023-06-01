@@ -121,6 +121,7 @@ public:
 
 protected:
     QWidget *searchPath();
+public slots:
     void loadSettings();
     void saveSettings();
 signals:

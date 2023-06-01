@@ -326,16 +326,17 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
 
     if (!ml)
     {
-        model = new QStandardItemModel(0, 2);
+        model = new QStandardItemModel(0, 3);
         mdl = new QSortFilterProxyModel(this);
 
         mdl->setRecursiveFilteringEnabled(true);
         mdl->setFilterCaseSensitivity(Qt::CaseInsensitive);
         //        mdl->setSortRole():
-
+// Cascade with the "project" entry
         mdl->setSourceModel(model);
         ui->treeView->setModel(mdl);
-        model->setHorizontalHeaderLabels(QStringList() << "Label" << "Amount");
+        model->setHorizontalHeaderLabels(QStringList() << "Label" << "Amount" << "Project");
+//        model->set
     }
     else
         model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
@@ -416,7 +417,12 @@ void TaggerPlate::setTag(int r, int c, QString tags)
 //    qDebug() << "Set Tag" << r << c << tags;
     tags = tags.replace("::", ".");
     if (!ui->plateMaps->item(r,c))
-        ui->plateMaps->setItem(r,c, new QTableWidgetItem(tags));
+    {
+        auto item = new QTableWidgetItem(tags);
+        item->setToolTip(tags.replace(";","\r\n"));
+        ui->plateMaps->setItem(r,c, item);
+
+    }
     else
     {
         QStringList lst = ui->plateMaps->item(r,c)->text().split(';');
@@ -431,6 +437,7 @@ void TaggerPlate::setTag(int r, int c, QString tags)
         lst.sort();
 
         ui->plateMaps->item(r,c)->setText(lst.join(";"));
+        ui->plateMaps->item(r,c)->setToolTip(lst.join("\r\n"));
     }
 
     ui->plateMaps->resizeColumnsToContents();
@@ -831,5 +838,11 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
 
         return;
     }
+}
+
+
+void TaggerPlate::on_checkBox_toggled(bool checked)
+{
+
 }
 

@@ -51,6 +51,9 @@ public:
     void apply_template(QString script);
 
 private slots:
+    void on_checkBox_toggled(bool checked);
+
+private slots:
     void on_setTags_clicked();
     void on_unsetTags_clicked();
 
@@ -72,7 +75,7 @@ private:
 
 
     QString plateDate, plate, path;
-    QSortFilterProxyModel* mdl;
+    QSortFilterProxyModel* mdl, *projmdl;
 
     QJsonObject tagger;
 

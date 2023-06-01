@@ -11,7 +11,7 @@
 #include <guiserver.h>
 
 namespace Ui {
-class MainWindow;
+class PhenoLink;
 }
 
 extern DllGuiExport QFile _logFile;
@@ -332,7 +332,7 @@ private:
 
     QMap<QString, int> mapValues;
 
-    Ui::MainWindow *ui;
+    Ui::PhenoLink *ui;
 
     ScrollZone* _scrollArea;
 
