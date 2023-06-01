@@ -1,7 +1,7 @@
 Unicode True
 !include MUI2.nsh
 # name the installer
-OutFile "Checkout_InstallerV@Checkout_VERSION_MAJOR@.@Checkout_VERSION_MINOR@.@Checkout_VERSION_COMPLEMENT@@Checkout_VERSION_RELEASE@.exe"
+OutFile "Phenolink_InstallerV@Checkout_VERSION_MAJOR@.@Checkout_VERSION_MINOR@.@Checkout_VERSION_COMPLEMENT@@Checkout_VERSION_RELEASE@.exe"
 
 SetCompressor /FINAL /SOLID lzma
 SetCompressorDictSize 4
@@ -14,7 +14,7 @@ SetCompressorDictSize 4
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 
-InstallDir "$PROGRAMFILES64\Checkout"
+InstallDir "$PROGRAMFILES64\Phenolink"
 
 ; These are the programs that are needed by ACME Suite.
 Section -Prerequisites
@@ -37,30 +37,30 @@ RMDir /r $INSTDIR
 SetOutPath $INSTDIR\bin
 
 # specify file to go in output path
-File "@CMAKE_BINARY_DIR@\bin\Release\Checkout.exe"
-File "@CMAKE_BINARY_DIR@\bin\Release\CheckoutHttpServer.exe"
+File "@CMAKE_BINARY_DIR@\bin\Release\Phenolink.exe"
+File "@CMAKE_BINARY_DIR@\bin\Release\PhenolinkHttpServer.exe"
 File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
 #File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll" # Grrr hack for DLL to be imported by the loader
 File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 
 File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
-File "@CMAKE_BINARY_DIR@\bin\*.dll"
+#File "@CMAKE_BINARY_DIR@\bin\*.dll"
 
-SetOutPath $INSTDIR\bin\resources
-File "@CMAKE_BINARY_DIR@\bin\resources\*.pak"
-File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
+#SetOutPath $INSTDIR\bin\resources
+#File "@CMAKE_BINARY_DIR@\bin\resources\*.pak"
+#File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
 
 SetOutPath $INSTDIR\bin\styles
-File "@CMAKE_BINARY_DIR@\bin\styles\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\styles\*.dll"
 
 SetOutPath $INSTDIR\bin\iconengines
-File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
 
 SetOutPath $INSTDIR\bin\translations
-File "@CMAKE_BINARY_DIR@\bin\translations\*.qm"
+File "@CMAKE_BINARY_DIR@\bin\Release\translations\*.qm"
 
-SetOutPath $INSTDIR\bin\qtwebengine_locales
-File "@CMAKE_BINARY_DIR@\bin\translations\qtwebengine_locales\*.pak"
+#SetOutPath $INSTDIR\bin\qtwebengine_locales
+#File "@CMAKE_BINARY_DIR@\bin\Release\translations\qtwebengine_locales\*.pak"
 
 
 CreateDirectory $INSTDIR\bin\Cache
@@ -82,13 +82,13 @@ File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll" # Grrr hack for DLL to be im
 ;File "@CMAKE_BINARY_DIR@\bin\accessible\*.dll"
 
 SetOutPath $INSTDIR\bin\platforms
-File "@CMAKE_BINARY_DIR@\bin\platforms\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\platforms\*.dll"
 
 SetOutPath $INSTDIR\bin\iconengines
-File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
 
 SetOutPath $INSTDIR\bin\imageformats
-File "@CMAKE_BINARY_DIR@\bin\imageformats\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\imageformats\*.dll"
 
 SectionEnd
 
@@ -98,26 +98,8 @@ Section "Uninstall"
 
 # Always delete uninstaller first
 Delete $INSTDIR\uninstaller.exe
-Delete "$INSTDIR\bin\Checkout.exe"
-Delete "$INSTDIR\bin\CheckoutProcessServer.exe"
-Delete "$INSTDIR\bin\CheckoutCore.dll"
-Delete "$INSTDIR\bin\CheckoutGui.dll"
-Delete "$INSTDIR\bin\CheckoutPluginManager.dll"
-Delete "$INSTDIR\bin\CheckoutServer.dll"
-Delete "$INSTDIR\bin\icudt52.dll"
-Delete "$INSTDIR\bin\icuin52.dll"
-Delete "$INSTDIR\bin\icuuc52.dll"
-Delete "$INSTDIR\bin\opencv_ffmpeg300_64.dll"
-Delete "$INSTDIR\bin\opencv_world300.dll"
-Delete "$INSTDIR\bin\Qt5Core.dll"
-Delete "$INSTDIR\bin\Qt5Gui.dll"
-Delete "$INSTDIR\bin\Qt5Network.dll"
-Delete "$INSTDIR\bin\Qt5OpenGL.dll"
-Delete "$INSTDIR\bin\Qt5Sql.dll"
-Delete "$INSTDIR\bin\Qt5Widgets.dll"
-Delete "$INSTDIR\bin\Qt5Xml.dll"
-Delete "$INSTDIR\bin\Qt5XmlPatterns.dll"
-Delete "$INSTDIR\bin\Qt5Concurrent.dll"
+Delete "$INSTDIR\bin\*.exe"
+Delete "$INSTDIR\bin\*.dll"
 
 Delete "$INSTDIR\bin\plugins\*.dll"
 
