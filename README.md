@@ -35,16 +35,26 @@ src ="./docs/FIGS/Checkout_MP.png">
 * ### Data Management
 
 
-
-
-
 ## Getting Started
 ## Installation
+
+First you need a fully working C++ compiler suite (On windows Visual Studio 2017 up to 2022 where tested and ubuntu 18.04 / 20.04 with gcc)
+
+We use Vcpkg for easier package integration, this builds all the needed dependencies for you
+
+
 **[VCPKG](https://vcpkg.io/en/getting-started.html) based installation**:  
 
             git clone https://github.com/Microsoft/vcpkg.git  
+            # if you have issue with vcpkg updates we tested with commit 0a3bc3d25 
+            # git checkout 0a3bc3d25 # successfull vcpkg we are able to build against
 
+On Windows:
             .\vcpkg\bootstrap-vcpkg.bat  
+
+.\bootstrap-vcpkg.bat
+.\vcpkg.exe integrate install
+.\vcpkg.exe upgrade --no-dry-run # if you want to update existing vcpkg #
 
 
 
@@ -65,34 +75,49 @@ Some libraries are needed to get started usually downloaded automatically during
 
 ### From Sources
 * #### Windows
-      git clone https://github.com/WiestDaessleImageProcessing/CheckoutApp.git
+      git clone https://github.com/Ksilink/PhenoLink.git      
 
-      mkdir  CheckoutBuild
-      cd CheckoutBuild
+      mkdir  PhenoLinkBuild
+      cd PhenoLinkBuild
 
 	
-      cmake ..\CheckoutApp -DCMAKE_TOOLCHAIN_FILE=%Path_to_vcpkg%\vcpkg\scripts\buildsystems\vcpkg.cmake  -DVCPKG_TARGET_TRIPLET=x64-windows -G"Ninja Multi-Config"
+      cmake ..\PhenoLink -DCMAKE_TOOLCHAIN_FILE=%Path_to_vcpkg%\vcpkg\scripts\buildsystems\vcpkg.cmake  -DVCPKG_TARGET_TRIPLET=x64-windows -G"Ninja Multi-Config" -DVCPKG_INSTALL_OPTIONS=--x-buildtrees-root=d:/bt -DCMAKE_BUILD_TYPE=Release
+
 	or 
 	
-      cmake ..\CheckoutApp -DCMAKE_TOOLCHAIN_FILE=%Path_to_vcpkg%\vcpkg\scripts\buildsystems\vcpkg.cmake  -DVCPKG_TARGET_TRIPLET=x64-windows -G"Visual Studio 17 2022"
+      cmake ..\PhenoLink -DCMAKE_TOOLCHAIN_FILE=%Path_to_vcpkg%\vcpkg\scripts\buildsystems\vcpkg.cmake  -DVCPKG_TARGET_TRIPLET=x64-windows -G"Visual Studio 17 2022" -DVCPKG_INSTALL_OPTIONS=--x-buildtrees-root=d:/bt -DCMAKE_BUILD_TYPE=Release
+
+# Then perform the build:
+      cmake  --build . -j 12 --config Release
+
+You can pass *--clean-first* to the build command line to be sure to have a clear new build
 
 
 * #### Linux
-      git clone https://github.com/WiestDaessleImageProcessing/CheckoutApp.git
       export Qt5_DIR= %Path_to_QT%/Qt/5.15.2/gcc_64/
 
-      cd CheckoutApp && git pull
+      git clone https://github.com/Ksilink/PhenoLink.git      
+
+
+      cd PhenoLink && git pull
       
 
-      cd ../Checkout
+      cd ../PhenoLink
 
 
-      cmake ../CheckoutApp/ -DCMAKE_TOOLCHAIN_FILE=/home/checkout/Code/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release || exit 1
+      cmake ../PhenoLink/ -DCMAKE_TOOLCHAIN_FILE=${HOME}/Code/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release || exit 1
 
       cmake  --build . -j 72 --config Release --clean-first || exit 1
 
+### GPU Version
+
+if you want to build with the ONNX library using GPU add to the cmake configuration command line:
+
+      -DONNX_GPU:BOOL=ON 
+
+
 ### Releases  
-A signed release for Windows:x64 can be downloaded from here : [Checkout](https://github.com/WiestDaessle/CheckoutBin)
+A  release versuib for Windows:x64 can be downloaded from here : [PhenoLink](https://github.com/Ksilink/PhenoLink/releases)
   
   
 
