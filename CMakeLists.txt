@@ -280,10 +280,6 @@ configure_file(
 )
 
 configure_file(
-    Installer.nsi.in
-    Installer.nsi
-)
-configure_file(
     Installer_vs2015.nsi.in
     Installer_vs2015.nsi
 )
