@@ -34,7 +34,7 @@ Section "Main Installer Section"
 RMDir /r $INSTDIR
 
 # define output path
-SetOutPath $INSTDIR\bin
+SetOutPath $INSTDIR\bin\Release
 
 # specify file to go in output path
 File "@CMAKE_BINARY_DIR@\bin\Release\Phenolink.exe"
@@ -46,17 +46,17 @@ File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
 #File "@CMAKE_BINARY_DIR@\bin\*.dll"
 
-#SetOutPath $INSTDIR\bin\resources
+#SetOutPath $INSTDIR\bin\Release\resources
 #File "@CMAKE_BINARY_DIR@\bin\resources\*.pak"
 #File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
 
-SetOutPath $INSTDIR\bin\styles
+SetOutPath $INSTDIR\bin\Release\styles
 File "@CMAKE_BINARY_DIR@\bin\Release\styles\*.dll"
 
-SetOutPath $INSTDIR\bin\iconengines
+SetOutPath $INSTDIR\bin\Release\iconengines
 File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
 
-SetOutPath $INSTDIR\bin\translations
+SetOutPath $INSTDIR\bin\Release\translations
 File "@CMAKE_BINARY_DIR@\bin\Release\translations\*.qm"
 
 #SetOutPath $INSTDIR\bin\qtwebengine_locales
@@ -69,25 +69,32 @@ CreateDirectory $INSTDIR\bin\Cache
 # define uninstaller name
 WriteUninstaller $INSTDIR\uninstaller.exe
 
+
+# Start Menu
+        createDirectory "$SMPROGRAMS\PhenoLink"
+        createShortCut "$SMPROGRAMS\PhenoLink\PhenoLink.lnk" "$INSTDIR\PhenoLink.exe" "" "$INSTDIR\PhenoLink.exe"
+
+
+
 # default section end
 SectionEnd
 
 Section "Plugin Installer Section"
 
 # define output path
-SetOutPath $INSTDIR\bin\plugins
+SetOutPath $INSTDIR\bin\Release\plugins
 File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
 File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll" # Grrr hack for DLL to be imported by the loader
 ;SetOutPath $INSTDIR\bin\Release\accessible
 ;File "@CMAKE_BINARY_DIR@\bin\accessible\*.dll"
 
-SetOutPath $INSTDIR\bin\platforms
+SetOutPath $INSTDIR\bin\Release\platforms
 File "@CMAKE_BINARY_DIR@\bin\Release\platforms\*.dll"
 
-SetOutPath $INSTDIR\bin\iconengines
+SetOutPath $INSTDIR\bin\Release\iconengines
 File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
 
-SetOutPath $INSTDIR\bin\imageformats
+SetOutPath $INSTDIR\bin\Release\imageformats
 File "@CMAKE_BINARY_DIR@\bin\Release\imageformats\*.dll"
 
 SectionEnd
@@ -96,11 +103,17 @@ SectionEnd
 # the section will always be named "Uninstall"
 Section "Uninstall"
 
+# Remove Start Menu launcher
+delete "$SMPROGRAMS\PhenoLink\PhenoLink.lnk"
+# Try to remove the Start Menu folder - this will only happen if it is empty
+rmDir "$SMPROGRAMS\PhenoLink"
+
 # Always delete uninstaller first
 Delete $INSTDIR\uninstaller.exe
 Delete "$INSTDIR\bin\*.exe"
 Delete "$INSTDIR\bin\*.dll"
 
 Delete "$INSTDIR\bin\plugins\*.dll"
+rmDir $INSTDIR
 
 SectionEnd
