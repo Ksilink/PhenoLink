@@ -72,7 +72,7 @@ WriteUninstaller $INSTDIR\uninstaller.exe
 
 # Start Menu
         createDirectory "$SMPROGRAMS\PhenoLink"
-        createShortCut "$SMPROGRAMS\PhenoLink\PhenoLink.lnk" "$INSTDIR\PhenoLink.exe" "" "$INSTDIR\PhenoLink.exe"
+        createShortCut "$SMPROGRAMS\PhenoLink\PhenoLink.lnk" "$INSTDIR\bin\Release\PhenoLink.exe" "" "$INSTDIR\bin\Release\PhenoLink.exe"
 
 
 
@@ -82,9 +82,8 @@ SectionEnd
 Section "Plugin Installer Section"
 
 # define output path
-SetOutPath $INSTDIR\bin\Release\plugins
-File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
-File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll" # Grrr hack for DLL to be imported by the loader
+SetOutPath $INSTDIR\bin\plugins\Release
+File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll"
 ;SetOutPath $INSTDIR\bin\Release\accessible
 ;File "@CMAKE_BINARY_DIR@\bin\accessible\*.dll"
 
