@@ -68,7 +68,7 @@ CreateDirectory $INSTDIR\bin\Cache
 
 # define uninstaller name
 WriteUninstaller $INSTDIR\uninstaller.exe
-
+SetOutPath $INSTDIR\bin\plugins\Release
 
 # Start Menu
         createDirectory "$SMPROGRAMS\PhenoLink"

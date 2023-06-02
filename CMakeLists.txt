@@ -33,7 +33,7 @@ else()
 endif(WIN32)
 
 set(Checkout_VERSION_MAJOR 23)
-set(Checkout_VERSION_MINOR 04)
+set(Checkout_VERSION_MINOR 06)
 set(Checkout_VERSION_COMPLEMENT R)
 set(Checkout_VERSION_RELEASE 0)
 
