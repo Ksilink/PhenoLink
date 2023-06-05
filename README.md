@@ -65,13 +65,14 @@ Some libraries are needed to get started usually downloaded automatically during
 - MongoDB : Metadata management
 - ONNX : Deep Learning inference (Conversion Python model to Onnx)
 - ARROW (Apache) : Data efficient and fast storage (feather output file, pandas:pd.read_feather())
-- QT : GUI
+- Qt : GUI
 - WNDCharm : Multiple C++ basic image processing features (similar to cellpainting features)
 - Boost : WndCharm needs it.  
+
 #### Optional
 - VTK : 3D Visualization
 - Python3 : Data Post processing, analysis and vizualisation
-- CellProfiler : If cellpainting protocol necessary, checkout handle all the mess for you
+- CellProfiler : If cellpainting protocol necessary, PhenoLink handles all the data mapping for you and can launch a Pipeline of CellProfiler within it's plugin framework
 
 ### From Sources
 * #### Windows
