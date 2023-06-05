@@ -13,7 +13,7 @@
 #include <aws/core/Aws.h>
 #include <aws/s3/S3Client.h>
 #include <aws/s3/model/PutObjectRequest.h>
-
+#include <aws/core/auth/AWSCredentials.h>
 
 #include <google/cloud/storage/client.h>
 
@@ -150,20 +150,31 @@ void AwsFileUploader::start()
     auto future = QtConcurrent::run([this]() { this->upload(); } );
 }
 
+static const char * ALLOCATION_TAG = "PhenoLink"; // your allocation tag
+
 void AwsFileUploader::upload()
 {
+
+    using namespace Aws::Auth;
+    using namespace Aws::Http;
+    using namespace Aws::Client;
+    using namespace Aws::S3;
+    using namespace Aws::S3::Model;
+    using namespace Aws::Utils;
+//    using namespace Aws::Transfer;
+
     QFile file(m_filePath);
     if (!file.open(QIODevice::ReadOnly)) {
         emit finished();
         return;
     }
 
-    Aws::S3::ClientConfiguration config;
+    Aws::Client::ClientConfiguration config;
 
-    std::shared_ptr<Aws::S3::S3Client> s3Client = Aws::MakeShared<Aws::S3::S3Client>(
+    std::shared_ptr<S3Client> s3Client = Aws::MakeShared<S3Client>(
         ALLOCATION_TAG,
-        AWSCredentials(Aws::String(m_keyName.toStdString()), Aws::String(m_secretKey.toStdString())),
-        config
+        AWSCredentials(Aws::String(m_keyName.toStdString()), Aws::String(m_secretKey.toStdString()))
+//        , config
     );
 
     Aws::S3::Model::PutObjectRequest objectRequest;

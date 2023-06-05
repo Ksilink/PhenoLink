@@ -57,7 +57,7 @@ private slots:
     void on_setTags_clicked();
     void on_unsetTags_clicked();
 
-    void on_plates_design_currentIndexChanged(const QString &arg1);
+//    void on_plates_design_currentIndexChanged(const QString &arg1);
 
     void on_pushButton_clicked();
 

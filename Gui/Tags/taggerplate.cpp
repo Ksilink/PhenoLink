@@ -35,7 +35,7 @@ TaggerPlate::TaggerPlate(QString _plate,QWidget *parent) :
     QStringList header;
 
     for (int i = 0; i < 'Q'; ++i)
-        header << QString('A'+QChar((char)i));
+        header << QString(QChar('A'+(char)i));
 
     ui->plateMaps->setVerticalHeaderLabels(header);
 
@@ -168,9 +168,9 @@ void TaggerPlate::on_unsetTags_clicked()
 
 
 // Plate Layout changed (384 / 96 / 1536)
-void TaggerPlate::on_plates_design_currentIndexChanged(const QString &)
-{
-}
+//void TaggerPlate::on_plates_design_currentIndexChanged(const QString &)
+//{
+//}
 
 
 // Find Template

@@ -449,7 +449,7 @@ void tagger::removeTag()
 
 
 
-void tagger::on_project_currentIndexChanged(const QString &arg1)
+void tagger::project_changed(const QString &arg1)
 {
     //  qDebug() << "Setting project" << arg1;
     if (arg1.isEmpty())
@@ -746,6 +746,11 @@ void tagger::on_populate()
 void tagger::on_Plates_currentChanged(int index)
 {
     // When changing plate fuse the inputs with next one
+}
 
+
+void tagger::on_project_currentIndexChanged(int index)
+{
+    project_changed(ui->project->itemText(index));
 }
 
