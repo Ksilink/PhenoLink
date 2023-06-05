@@ -7,13 +7,13 @@ PhenoLink, former "Checkout" is a multipurpose open source high content image an
 Dedicated to biological images produced with automated microscopes, Checkout has a ability to display and analyze all types of images (2D, 3D, 2D+t, 3D+t, Multichannels, etc.) in a speedy and efficient manner due to different level of multi-processing granularities. 
 
 ## Features
-<!-- ![alt text](./docs/FIGS/Checkout_MP.png) -->
+<!-- ![alt text](./docs/FIGS/PhenoLink_MP.png) -->
 <img 
  style="display: block; 
            margin-left: auto;
            margin-right: auto;
            width: 70%;"
-src ="./docs/FIGS/Checkout_MP.png">
+src ="./docs/FIGS/PhenoLink_MP.png">
 * ### Multi Readers
   Mainly developed for Yokogawa (CV7000/CV8000), Checkout also handles InCell and Zeiss readers. More readers can be of course implemented. 
 * ### Image Processing
