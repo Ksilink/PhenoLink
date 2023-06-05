@@ -1,0 +1,69 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+
+    "name": "checkout",
+
+    "version": "2.0",
+
+
+
+    "dependencies": [{
+            "name": "opencv",
+            "default-features": false,
+            "features": ["contrib", "dnn", "jpeg", "tiff", "nonfree"]
+        },
+        {
+            "name": "arrow",
+            "default-features": true,
+            "features": ["filesystem", "dataset"]
+        },
+        {
+            "name": "dlib"
+        },
+        {
+            "name": "mongo-cxx-driver"
+        },
+        {
+            "name": "eigen3"
+        },
+        {
+            "name": "gsl"
+        },
+        {
+            "name": "fftw3",
+            "features": ["avx2", "threads"]
+        },
+        {
+            "name" : "aws-sdk-cpp",
+            "features": [ "s3" ]
+        },
+        {
+            "name":"google-cloud-cpp",
+            "features": ["storage"]
+        },
+        {
+            "name": "azure-storage-blobs-cpp"
+        },
+        {
+            "name": "libjxl"
+        },
+        {
+            "name": "qt",
+            "platform": "!linux"
+        },
+        {
+            "name": "qtwebengine",
+            "features": [  "geolocation","spellchecker","webchannel"],
+            "platform": "!linux"
+        },
+        {
+            "name": "qtwebview",
+            "platform": "!linux"
+        },
+        {
+            "name": "vtk",
+            "features":["qt"],
+            "platform": "!linux"
+        }
+    ]
+}

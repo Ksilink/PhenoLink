@@ -1,0 +1,24 @@
+
+This material is proprietary to Wiest-Daessle Nicolas. All Rights reserved.
+The method and techniques described herein are considered trade secret and/or confidential.
+Reproduction or distribution, in whole or in part, is forbidden except by express written permission.
+
+Usage is hereby granted to KSILINK and all there representative.
+This software can be modified for any purpose, but the copyright holder reserves the right to review and check the code,
+for inclusion into the main framework.
+Other enhancements, using the intended plugin framework can be performed without restrictions or peer reviews,
+assuming that any failure of the software inherent to this plugin can not take Wiest-Daessle Nicolas for responsible.
+
+In no event shall Nicolas Wiest-Daessle or KSILINK
+be liable to the other or its affiliates for special, indirect, incidental,
+consequential or punitive damages, whether in contract, warranty, tort, negligence,
+strict liability or otherwise including, but not limited to, loss of profits or revenue,
+business or goodwill, in connection with any injury, loss or damage arising out of the Services.
+
+This software is research grade software, and though, the results it can provide are inherently uncertain and,
+accordingly, there can be no assurance, representation or warranty by Wiest-Daessle Nicolas,
+with respect to the usefullness, functionality, or operability of this tool.
+Mr Wiest-Daessle hereby disclaims all other warranties, express or implied,
+regarding the services provided hereunder, including any implied warranties
+of merchantability or fitness for a particular purpose or any warranties.
+

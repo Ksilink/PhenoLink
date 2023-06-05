@@ -30,3 +30,14 @@
 *.exe
 *.out
 *.app
+
+.vs/*
+.vscode/*
+*.user
+CMakeSettings.json
+CMakeLists.txt.user
+CMakeLists.txt.user
+*.pyc
+out/
+*.autosave
+*.TMP

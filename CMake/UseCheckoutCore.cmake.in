@@ -1,0 +1,12 @@
+#
+# CheckoutCore.cmake.in #-- Configuration file for CheckoutCore
+#
+
+
+
+set(CHECKOUTCORE_INCLUDE_DIRS "@PROJECT_SOURCE_DIR@" "@PROJECT_SOURCE_DIR@/Core" "@PROJECT_BINARY_DIR@" "@PROJECT_BINARY_DIR@/Core")
+set(CHECKOUTCORE_PLUGIN_DIR "@CMAKE_BINARY_DIR@/bin/plugins")
+set(CHECKOUTCORE_LIB_DIR @CheckoutCore_lib_path@)
+set(CHECKOUTCORE_LIBRARIES CheckoutCore Qt5::Core)
+set(CHECKOUTCORE_FOUND TRUE)
+set(CHECKOUT_CORE_LIB_DIR "@PROJECT_BINARY_DIR@/Core")

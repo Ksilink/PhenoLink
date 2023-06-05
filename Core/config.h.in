@@ -1,0 +1,9 @@
+
+
+#define Checkout_VERSION_MAJOR @Checkout_VERSION_MAJOR@
+#define Checkout_VERSION_MINOR @Checkout_VERSION_MINOR@
+#define Checkout_VERSION_COMPLEMENT @Checkout_VERSION_COMPLEMENT@
+
+#define Checkout_VERSION_RELEASE @Checkout_VERSION_RELEASE@
+
+#define CHECKOUT_VERSION "@Checkout_VERSION_MAJOR@.@Checkout_VERSION_MINOR@.@Checkout_VERSION_COMPLEMENT@@Checkout_VERSION_RELEASE@"
