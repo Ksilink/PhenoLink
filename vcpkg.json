@@ -64,6 +64,9 @@
             "name": "vtk",
             "features":["qt"],
             "platform": "!linux"
+        },
+        {
+            "name": "cppzmq"
         }
     ]
 }

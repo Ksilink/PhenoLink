@@ -85,8 +85,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
 QStringList _getImageFile(QJsonArray data, int im, QString base_path = QString())
 {
     QStringList res;
-
-    if (data.size() > 1)
+    if (data.size() >= 1)
     {
         for (size_t i = 0; i < (size_t)data.size(); ++i)
         {
@@ -444,7 +443,6 @@ cv::Mat ImageXP::getImage(int i, int c, QString bp)
     QJsonArray chans = ob["Data"].toArray();
 
     return loadImage(chans,c, bp);
-
 }
 
 QStringList ImageXP::getImageFile(int i, int c, QString bp)

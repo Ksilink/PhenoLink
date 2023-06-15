@@ -5,7 +5,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(PkgConfig)
 pkg_check_modules(Jxl REQUIRED IMPORTED_TARGET libjxl)
 pkg_check_modules(JxlThreads REQUIRED IMPORTED_TARGET libjxl_threads)
-
+#find_package(ZeroMQ REQUIRED)
+find_package(cppzmq CONFIG REQUIRED)
 
 IF(WIN32)
 
@@ -27,15 +28,15 @@ IF(WIN32)
     #install_qt5_executable(Checkout)
     install(TARGETS PhenoLink COMPONENT applications DESTINATION bin)
 
-    if ($<CONFIG:Debug>)
-    else()
-    add_custom_command(
-        TARGET PhenoLink
-            POST_BUILD
-            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:PhenoLink>"
+#    if ($<CONFIG:Debug>)
+#    else()
+#    add_custom_command(
+#        TARGET PhenoLink
+#            POST_BUILD
+#            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:PhenoLink>"
 
-        )
-    endif()
+#        )
+#    endif()
 
 ELSE()
 
@@ -59,15 +60,15 @@ add_dependencies (plcli PhenoLinkGui PhenoLinkCore)
 if (WIN32)
     target_link_libraries(plcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS} )
 
-    if ($<CONFIG:Debug>)
-    else()
-    add_custom_command(
-        TARGET PhenoLink
-            POST_BUILD
-            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:plcli>"
+#    if ($<CONFIG:Debug>)
+#    else()
+#    add_custom_command(
+#        TARGET PhenoLink
+#            POST_BUILD
+#            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:plcli>"
 
-        )
-    endif()
+#        )
+#    endif()
 
 else()
     target_link_libraries(plcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${OpenCV_LIBS} )
@@ -118,15 +119,15 @@ add_dependencies (PhenoLinkHttpServer PhenoLinkGui PhenoLinkCore)
 if (WIN32)
     target_link_libraries( PhenoLinkHttpServer ${CheckoutLibs} QHttp  Qt::Concurrent Qt::Core Qt::Network Qt::Widgets  ${OpenCV_LIBS})
 
-    if ($<CONFIG:Debug>)
-    else()
-    add_custom_command(
-        TARGET PhenoLink
-            POST_BUILD
-            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:PhenoLinkHttpServer>"
+#    if ($<CONFIG:Debug>)
+#    else()
+#    add_custom_command(
+#        TARGET PhenoLink
+#            POST_BUILD
+#            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:PhenoLinkHttpServer>"
 
-        )
-    endif()
+#        )
+#    endif()
 else()
         target_link_libraries( PhenoLinkHttpServer ${CheckoutLibs} QHttp Qt::Core Qt::Network Qt::Widgets Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${OpenCV_LIBS}  )
 endif(WIN32)
@@ -156,6 +157,34 @@ endif(WIN32)
 
 install(TARGETS PhenoLinkQueueServer COMPONENT applications DESTINATION bin)
 add_dependencies (PhenoLinkQueueServer PhenoLinkGui PhenoLinkCore)
+
+
+
+add_executable(PhenoLinkZMQServer mainZMQ_QueueServer.cpp checkouqueuserver.h checkout_arrow.h checkout_python.h ${SrvRCFILE} )
+
+target_include_directories(PhenoLinkZMQServer PUBLIC ${ZeroMQ_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+# target_link_libraries(main PRIVATE cppzmq cppzmq-static)
+if (WIN32)
+    target_link_libraries( PhenoLinkZMQServer ${CheckoutLibs} QHttp Qt::Core Qt::Concurrent Qt::Network Qt::Widgets ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS} cppzmq cppzmq-static)
+
+#    if ($<CONFIG:Debug>)
+#    else()
+#    add_custom_command(
+#         TARGET PhenoLinkZMQServer
+#            POST_BUILD
+#            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:PhenoLinkQueueServer>"
+
+#        )
+#    endif()
+
+else()
+        target_link_libraries( PhenoLinkZMQServer PRIVATE ${CheckoutLibs} QHttp Qt::Concurrent Qt::Core Qt::Network Qt::Widgets "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS} cppzmq cppzmq-static)
+endif(WIN32)
+
+install(TARGETS PhenoLinkZMQServer COMPONENT applications DESTINATION bin)
+add_dependencies (PhenoLinkZMQServer PhenoLinkGui PhenoLinkCore)
+
+
 
 
 
