@@ -427,7 +427,7 @@ QString si(size_t value)
     return QString("%1").arg(value);
 }
 
-QDateTime parseDate(QStringView older)
+QDateTime parseDate(QString older)
 {
     QDateTime date = QDateTime::currentDateTime();
     bool conv;
@@ -445,16 +445,19 @@ QDateTime parseDate(QStringView older)
             if (older.at(i) == 'y')
             {
                 date=date.addYears(-older.sliced(start, i-start).toInt());
+                qDebug() << "Year" << date << older.sliced(start, i-start);
                 start = i+1;
             }
             if (older.at(i) == 'm')
             {
                 date=date.addMonths(-older.sliced(start, i-start).toInt());
+                qDebug() << "Month" << date << older.sliced(start, i-start);
                 start = i+1;
             }
             if (older.at(i) == 'd')
             {
                 date=date.addDays(-older.sliced(start, i-start).toInt());
+                qDebug() << "Day" << date << older.sliced(start, i-start);
                 start = i+1;
             }
 
@@ -539,7 +542,7 @@ int main(int argc, char *argv[]) {
 
     if (parser.isSet("older"))
     {
-        QStringView older = parser.value("older").toLower();
+        QString older = parser.value("older").toLower();
 
         data.older = parseDate(older);
         qDebug() << "Only taking folder into accont if they are older than " << data.older.toString();
