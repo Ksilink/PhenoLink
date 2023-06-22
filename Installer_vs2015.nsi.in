@@ -46,9 +46,9 @@ File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
 #File "@CMAKE_BINARY_DIR@\bin\*.dll"
 
-#SetOutPath $INSTDIR\bin\Release\resources
-#File "@CMAKE_BINARY_DIR@\bin\resources\*.pak"
-#File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
+SetOutPath $INSTDIR\bin\Release\resources
+File "@CMAKE_BINARY_DIR@\bin\Release\resources\*.pak"
+File "@CMAKE_BINARY_DIR@\bin\Release\resources\*.dat"
 
 SetOutPath $INSTDIR\bin\Release\styles
 File "@CMAKE_BINARY_DIR@\bin\Release\styles\*.dll"
@@ -57,7 +57,7 @@ SetOutPath $INSTDIR\bin\Release\iconengines
 File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
 
 SetOutPath $INSTDIR\bin\Release\translations\Qt6\qtwebengine_locales
-File "@CMAKE_BINARY_DIR@\bin\Release\translations\Qt6\qtwebengine_locales*"
+File "@CMAKE_BINARY_DIR@\bin\Release\translations\Qt6\qtwebengine_locales\*"
 
 #SetOutPath $INSTDIR\bin\qtwebengine_locales
 #File "@CMAKE_BINARY_DIR@\bin\Release\translations\qtwebengine_locales\*.pak"
