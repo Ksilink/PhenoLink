@@ -56,8 +56,8 @@ File "@CMAKE_BINARY_DIR@\bin\Release\styles\*.dll"
 SetOutPath $INSTDIR\bin\Release\iconengines
 File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
 
-SetOutPath $INSTDIR\bin\Release\translations
-File "@CMAKE_BINARY_DIR@\bin\Release\translations\*.qm"
+SetOutPath $INSTDIR\bin\Release\translations\Qt6\qtwebengine_locales
+File "@CMAKE_BINARY_DIR@\bin\Release\translations\Qt6\qtwebengine_locales*"
 
 #SetOutPath $INSTDIR\bin\qtwebengine_locales
 #File "@CMAKE_BINARY_DIR@\bin\Release\translations\qtwebengine_locales\*.pak"
