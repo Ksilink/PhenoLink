@@ -36,10 +36,12 @@ using namespace qhttp::server;
 #include "checkouqueuserver.h"
 #include <Core/networkprocesshandler.h>
 
+extern int DllCoreExport read_semaphore;
+
 #define ZMQ_STATIC
 
 #include "mdwrkapi.hpp"
-#include "mdbroker.hpp"
+//#include "mdbroker.hpp"
 
 QString storage_path;
 
@@ -78,6 +80,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &, const QString &
 
 #if WIN32
 
+
 void show_console() {
     AllocConsole();
 
@@ -90,6 +93,30 @@ void show_console() {
     freopen_s(&newstderr, "conout$", "w", stderr);
 }
 
+
+
+int forceNumaAll(int node)
+{
+
+    HANDLE process = GetCurrentProcess();
+
+    DWORD_PTR processAffinityMask;
+    DWORD_PTR systemAffinityMask;
+    ULONGLONG  processorMask;
+
+    if (!GetProcessAffinityMask(process, &processAffinityMask, &systemAffinityMask))
+        return -1;
+
+    GetNumaNodeProcessorMask(node, &processorMask);
+
+    processAffinityMask = processAffinityMask & processorMask;
+
+    BOOL success = SetProcessAffinityMask(process, processAffinityMask);
+
+    qDebug() << success << GetLastError();
+
+    return success;
+}
 
 #endif
 
@@ -111,6 +138,18 @@ void startup_execute(QString file)
 
 }
 
+
+int PhenoLinkOpenCVErrorCallback( int status, const char* func_name,
+                                const char* err_msg, const char* file_name,
+                                int line, void* )
+{
+
+    qDebug() << "OpenCV issued error";
+    qDebug() << "Status" << status << "Function" << func_name << "file: " << file_name << "@" << line;
+    qDebug() << "Error message" << err_msg;
+    throw cv::Exception(status, err_msg, func_name, file_name, line);
+    return 1;
+}
 QProcessEnvironment python_config;
 
 #include <checkout_python.h>
@@ -128,30 +167,43 @@ int main(int ac, char** av)
     app.setOrganizationDomain("WD");
     app.setOrganizationName("WD");
 
+    cv::setBreakOnError(true);
+    cv::redirectError(&PhenoLinkOpenCVErrorCallback);
 
+
+    //    qDebug() << "Runtime PATH" << QString("%1").arg(getenv("PATH"));
 
     QSettings sets;
-    uint port = sets.value("ZMQServerPort", 13555).toUInt();
-    if (!sets.contains("ZMQServerPort")) sets.setValue("ZMQServerPort", 13555);
-
+    uint port = sets.value("ServerPort", 13555).toUInt();
+    if (!sets.contains("ServerPort") || sets.value("ServerPort", 13555) != port ) sets.setValue("ServerPort", port);
 
     QStringList data;
     for (int i = 1; i < ac; ++i) { data << av[i];  }
 
+
+
     if (data.contains("-h") || data.contains("-help"))
     {
-        qDebug() << "PhenoLink ZeroMQ Queue Serveur Help:";
-        qDebug() << "\t-p <port>: specify the port to run on";
-        qDebug() << "\t-d : Run in debug mode (windows only launches a console)";
-        qDebug() << "\t-Crashed: Reports that the process has been restarted after crashing";
-        qDebug() << "\t-c <config>: Specify a config file for python env setting json dict";
-        qDebug() << "\t-t <path> :  Set the storage path for plugins postprocesses";
-        qDebug() << "\t\t shall contain env. variable with list of values,";
-        qDebug()<< "$NAME will be substituted by current env value called 'NAME'";
+        qDebug() << "PhenoLinkQueue Serveur Help:";
+        qDebug()      << "\t-p <port>: specify the port to run on";
+        qDebug()      << "\t-c <cpu>: Adjust the maximum number of threads";
+        qDebug()      << "\t-n <node>: Try to force NUMA node (windows only)";
+        qDebug()      << "\t-s <commands> :  List of commands executed at start time";
+        qDebug()      << "\t-m <path> :  Mapping of windows drive to linux drives";
+        qDebug()      << "\t-rs <value> :  Maximum concurrent disk access by this instance";
+        qDebug()      << "\t-proxy <host> :  Set the queue proxy process computer:port";
+
+        qDebug()      << "\t-t <path> :  Set the storage path for plugins infos";
+        qDebug()      << "\t-d : Run in debug mode (windows only launches a console)";
+        qDebug()      << "\t-Crashed: Reports that the process has been restarted after crashing" ;
+        qDebug()      << "\t-conf <config>: Specify a config file for python env setting json dict";
+        qDebug()      << "\t\t shall contain env. variable with list of values,";
+        qDebug()      << "\t\t $NAME will be substituted by current env value called 'NAME'";
         ;
 
         exit(0);
     }
+
 
     if (data.contains("-p"))
     {
@@ -159,44 +211,36 @@ int main(int ac, char** av)
         if (data.size() > idx) port = data.at(idx).toInt();
         qDebug() << "Changing server port to :" << port;
     }
-    else
-        qDebug() << "Server port :" << port;
 
 
-    if (data.contains("-Crashed"))
-    { // recovering from crashed session, how to tell the user the queue crashed???
-
-    }
-
+    int nb_Threads = QThreadPool::globalInstance()->maxThreadCount() - 1;
 
     if (data.contains("-c"))
     {
-        QString config;
         int idx = data.indexOf("-c")+1;
-        if (data.size() > idx) config = data.at(idx);
-        qDebug() << "Using server config:" << config;
-
-        QFile loadFile(config);
-
-        parse_python_conf(loadFile, python_config);
-
+        if (data.size() > idx) nb_Threads = data.at(idx).toInt();
+        qDebug() << "Changing max threads :" << nb_Threads;
     }
 
-    if (data.contains("-t"))
-    {
-        int idx = data.indexOf("-t")+1;
-        QString file;
-        if (data.size() > idx) storage_path = data.at(idx);
-        qDebug() << "Setting Storage path :" << storage_path;
-    }
-    else
-    {
+    if (nb_Threads < 2) nb_Threads = 2;
+
+    qDebug() << "Max number of threads : " << nb_Threads;
+    QThreadPool::globalInstance()->setMaxThreadCount(nb_Threads);
+
+
 #if WIN32
-        storage_path = "L:/";
-#else
-        storage_path = "/mnt/shares/L/";
-#endif
+    if (data.contains("-n"))
+    {
+        int idx = data.indexOf("-n")+1;
+        int node = 0;
+        if (data.size() > idx) node = data.at(idx).toInt();
+        qDebug() << "Forcing node :" << node;
+        forceNumaAll(node);
+
     }
+
+#endif
+
 
     int verbose = 0; //(ac > 1 && strcmp (av [1], "-v") == 0);
 
@@ -209,19 +253,157 @@ int main(int ac, char** av)
     }
 
 
+    if (data.contains("-s"))
+    {
+        int idx = data.indexOf("-s")+1;
+        QString file;
+        if (data.size() > idx) file = data.at(idx);
+        qDebug() << "Loading startup script :" << file;
+        startup_execute(file);
+    }
+
+
+    if (data.contains("-t"))
+    {
+        int idx = data.indexOf("-t")+1;
+        QString file;
+        if (data.size() > idx) file = data.at(idx);
+        qDebug() << "Setting Storage path :" << file;
+        CheckoutProcess::handler().setStoragePath(file);
+    }
+    else
+    {
+        QString file;
+#if WIN32
+        file = "L:/";
+#else
+        file = "/mnt/shares/L/";
+#endif
+        qDebug() << "Setting Storage path :" << file;
+        CheckoutProcess::handler().setStoragePath(file);
+    }
+
+    PluginManager::loadPlugins(true);
+
+    Server server;
+    server.setPort(port);
+
+    if (data.contains("-conf"))
+    {
+        QString config;
+        int idx = data.indexOf("-conf")+1;
+        if (data.size() > idx) config = data.at(idx);
+        qDebug() << "Using server config:" << config;
+
+        QFile loadFile(config);
+
+        QProcessEnvironment python_config;
+        parse_python_conf(loadFile, python_config);
+        CheckoutProcess::handler().setEnvironment(python_config);
+    }
+
+#ifndef WIN32
+    if (data.contains("-m")) // to override the default path mapping !
+    {
+        int idx = data.indexOf("-m")+1;
+        QString map_path = data.at(idx);
+        server.setDriveMap(map_path);
+    }
+    else
+    { // We ain't on a windows system, so let's default the mapping to a default value
+        server.setDriveMap("/mnt/shares/");
+    }
+#endif
+
+//    if (data.contains("-a"))
+//    {
+//        int idx = data.indexOf("-a")+1;
+//        QString affinity;
+//        if (data.size() > idx) affinity = data.at(idx);
+//        server.affinity(affinity)        ;
+//    }
+
+    if (data.contains("-rs"))
+    {
+        int idx = data.indexOf("-rs")+1;
+        if (data.size() > idx) {
+            bool ok = true;
+            int rs = data.at(idx).toInt(&ok);
+            if (ok) read_semaphore = rs;
+        }
+    }
+
+    QString  proxy;
+
+    if (data.contains("-proxy"))
+    {
+        int idx = data.indexOf("-proxy")+1;
+
+        if (data.size() > idx) proxy = data.at(idx);
+        QStringList ps = proxy.split(":");
+        if (ps.size() > 2)
+        {
+            qDebug() << "Error parsing proxy string, should be server:port or server (if port assumed to be 13378)"
+                     << proxy;
+            exit(-1);
+        }
+        else
+            qDebug() << "Proxy server :" << proxy;
+
+        //if (data.contains("-Crashed"))
+
+//        server.proxyAdvert(ps[0], ps.size() == 2 ? ps[1].toInt() : 13378);
+//        NetworkProcessHandler::handler().addProxyPort(port);
+    }
+    else
+    {
+        qDebug() << "Proxy server is mandatory";
+        return -1;
+            }
+//        NetworkProcessHandler::handler().setNoProxyMode();
+    CheckoutProcess& procs = CheckoutProcess::handler();
+
+    // If not using cbor outputs the version also
+    QStringList prcs = procs.pluginPaths();
+    qDebug() << "Plugin List" << prcs;
+    // Add session worker to tell
+    mdwrk session (QString("tcp://%1").arg(proxy).toStdString(), "processes", verbose);
+
+
+//    procs
+
+
+    qDebug() << "Starting Session";
+    zmsg* processlist = new zmsg();
+
+    for (auto& item: prcs)
+    {
+        QJsonObject params;
+        procs.getParameters(item, params);
+        qDebug() << params;
+
+//        QCborMap map = QCborMap::fromJsonObject(params);
+        auto arr = QJsonDocument(params).toJson();//map.toCborValue().toByteArray().toBase64();
+
+//        qDebug() << arr.size();
+        processlist->push_back(arr.data());//item.toLatin1().data());
+    }
+
+    session.send_to_broker((char*)MDPW_PROCESSLIST, "", processlist);
+    delete processlist;
 
 
 
-    s_version_assert (4, 0);
-    s_catch_signals ();
-    broker brk(verbose);
-    brk.bind (QString("tcp://*:%1").arg(port).toStdString());
-
-    brk.start_brokering();
-
-    if (s_interrupted)
-        printf ("W: interrupt received, shutting down...\n");
-
+    zmsg *reply = 0;
+    while (1) {
+        zmsg *request = session.recv (reply);
+        if (request == 0) {
+            qDebug() << "Broken answer";
+            break;              //  Worker was interrupted
+        }
+        reply = request;        //  Echo is complex... :-)
+        qDebug() << "srv ok";
+    }
     return 0;
 
     /*
@@ -459,15 +641,8 @@ void Server::timerEvent(QTimerEvent *event)
             qDebug() << "Timer check for" << item.key() << "Finished";
             killTimer(id);
 
-
-
-
-
         }
 }
-
-
-
 
 
 QQueue<QJsonObject>& Server::getHighestPriorityJob(QString server)
