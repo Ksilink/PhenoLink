@@ -556,15 +556,21 @@ QWidget* createPair(QComboBox* left, QComboBox* right)
 
 void tagger::on_mapcsv()
 {
+
+    QSettings set;
+
+
     qDebug() << "Query for CSV & Map CSV file to the plate names";
     QString script = QFileDialog::getOpenFileName(this, "Choose Template storage path",
-                                                  QDir::home().path(), "CSV file (*.csv)",
-                                                  0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
-
+                                                  set.value("LastTagsCSV", QDir::home().path()).toString(), "CSV file (*.csv)",
+                                                  0, /*QFileDialog::DontUseNativeDialog | */
+                                                  QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
     {
+        QStringList sc = script.split("/"); sc.pop_back();   set.setValue("LastTagsCSV", sc.join("/"));
+
         QFile io(script);
         if (io.open(QFile::ReadOnly))
         {
@@ -709,13 +715,17 @@ void tagger::on_mapcsv()
 
 void tagger::on_maptemplate()
 {
+    QSettings set;
+
     QString script = QFileDialog::getOpenFileName(this, "Choose Template storage path",
-                                                  QDir::home().path(), "Tags json file (*.json)",
+                                                  set.value( "LastTagsJSON", QDir::home().path()).toString(), "Tags json file (*.json)",
                                                   0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
     {
+        QStringList sc = script.split("/"); sc.pop_back(); set.setValue("LastTagsJSON", sc.join("/"));
+
         for (auto w: this->findChildren<TaggerPlate*>())
         {
             if (qobject_cast<TaggerPlate*>(w))

@@ -8,6 +8,8 @@
 #include <stdarg.h>
 
 #include <QByteArray>
+#include <QString>
+
 
 
 class zmsg {
@@ -122,6 +124,14 @@ public:
         push_back((char*)body);
     }
 
+    void body_set(QByteArray body) {
+        if (m_part_data.size() > 0) {
+            m_part_data.erase(m_part_data.end()-1);
+        }
+        push_back(body);
+    }
+
+
     void
     body_fmt (const char *format, ...)
     {
@@ -151,6 +161,17 @@ public:
     // zmsg_append
     void push_back(char *part) {
         m_part_data.push_back(QByteArray(part, std::strlen(part)));
+    }
+
+
+    // zmsg_push
+    void push_front(QByteArray part) {
+        m_part_data.insert(m_part_data.begin(), part);
+    }
+
+    // zmsg_append
+    void push_back(QByteArray part) {
+        m_part_data.push_back(part);
     }
 
     //  --------------------------------------------------------------------------
@@ -217,17 +238,25 @@ public:
         return part;
     }
 
+    void append (QByteArray part)
+    {
+        assert (!part.isNull());
+        assert (!part.isEmpty());
+
+        push_back(part);
+    }
+
     void append (const char *part)
     {
         assert (part);
         push_back((char*)part);
     }
 
-    char *address() {
+    QString address() {
         if (m_part_data.size()>0) {
-            return (char*)m_part_data[0].data();
+            return m_part_data[0];
         } else {
-            return 0;
+            return QString();
         }
     }
 
@@ -238,12 +267,20 @@ public:
         push_front((char*)address);
     }
 
-    std::string unwrap() {
-        if (m_part_data.size() == 0) {
-            return NULL;
+
+    void wrap(QString address, QString delim = QString("")) {
+        if (!delim.isNull()) {
+            push_front(delim.toLatin1());
         }
-        std::string addr = (char*)pop_front().data();
-        if (address() && *address() == 0) {
+        push_front(address.toLatin1());
+    }
+
+    QString unwrap() {
+        if (m_part_data.size() == 0) {
+            return QString();
+        }
+        QString addr = pop_front();
+        if (address().isEmpty()) {
             pop_front();
         }
         return addr;

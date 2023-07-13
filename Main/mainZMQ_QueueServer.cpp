@@ -36,6 +36,14 @@ using namespace qhttp::server;
 #include "checkouqueuserver.h"
 #include <Core/networkprocesshandler.h>
 
+static struct GlobParams
+{
+    int running_threads = 0;
+    int max_threads = 0;
+} global_parameters;
+
+
+
 #define ZMQ_STATIC
 
 #include "mdwrkapi.hpp"
@@ -214,8 +222,10 @@ int main(int ac, char** av)
 
     s_version_assert (4, 0);
     s_catch_signals ();
+
     broker brk(verbose);
-    brk.bind (QString("tcp://*:%1").arg(port).toStdString());
+
+    brk.bind (QString("tcp://*:%1").arg(port));
 
     brk.start_brokering();
 

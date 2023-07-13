@@ -33,11 +33,11 @@ struct service;
 //  This defines one worker, idle or active
 struct worker
 {
-    std::string m_identity;   //  Address of worker
+    QString m_identity;   //  Address of worker
     service * m_service;      //  Owning service, if known
     int64_t m_expiry;         //  Expires at unless heartbeat
 
-    worker(std::string identity, service * service = 0, int64_t expiry = 0) {
+    worker(QString identity, service * service = 0, int64_t expiry = 0) {
         m_identity = identity;
         m_service = service;
         m_expiry = expiry;
@@ -54,12 +54,12 @@ struct service
         }
     }
 
-    std::string m_name;             //  Service name
+    QString m_name;             //  Service name
     std::deque<zmsg*> m_requests;   //  List of client requests
     std::list<worker*> m_waiting;  //  List of waiting workers
     size_t m_workers;               //  How many workers we have
 
-    service(std::string name)
+    service(QString name)
     {
         m_name = name;
     }
@@ -88,12 +88,12 @@ public:
     {
         while (! m_services.empty())
         {
-            delete m_services.begin()->second;
+            delete m_services.begin().value();
             m_services.erase(m_services.begin());
         }
         while (! m_workers.empty())
         {
-            delete m_workers.begin()->second;
+            delete m_workers.begin().value();
             m_workers.erase(m_workers.begin());
         }
     }
@@ -103,11 +103,11 @@ public:
     //  We use a single socket for both clients and workers.
 
     void
-    bind (std::string endpoint)
+    bind (QString endpoint)
     {
         m_endpoint = endpoint;
-        m_socket->bind(m_endpoint.c_str());
-        s_console ("I: MDP broker/0.1.1 is active at %s", endpoint.c_str());
+        m_socket->bind(m_endpoint.toLatin1().data());
+        qDebug() << "I: MDP broker/0.1.1 is active at " << endpoint;
     }
 
 private:
@@ -128,8 +128,7 @@ private:
         for (std::deque<worker*>::iterator wrk = toCull.begin(); wrk != toCull.end(); ++wrk)
         {
             if (m_verbose) {
-                s_console ("I: deleting expired worker: %s",
-                          (*wrk)->m_identity.c_str());
+                qDebug() << "I: deleting expired worker:" << (*wrk)->m_identity;
             }
             worker_delete(*wrk, 0);
         }
@@ -139,14 +138,14 @@ private:
     //  Locate or create new service entry
 
     service *
-    service_require (std::string name)
+    service_require (QString name)
     {
-        assert (name.size()>0);
+        assert (!name.isEmpty());
         if (m_services.count(name)) {
-            return m_services.at(name);
+            return m_services[name];
         } else {
             service * srv = new service(name);
-            m_services.insert(std::make_pair(name, srv));
+            m_services[name] = srv;
             if (m_verbose) {
                 s_console ("I: received message:");
             }
@@ -192,10 +191,10 @@ private:
     //  Handle internal service according to 8/MMI specification
 
     void
-    service_internal (std::string service_name, zmsg *msg)
+    service_internal (QString service_name, zmsg *msg)
     {
-        if (service_name.compare("mmi.service") == 0) {
-            service * srv = m_services.at(msg->body());
+        if (service_name == "mmi.service") {
+            service * srv = m_services[msg->body()];
             if (srv && srv->m_workers) {
                 msg->body_set("200");
             } else {
@@ -207,9 +206,9 @@ private:
 
         //  Remove & save client return envelope and insert the
         //  protocol header and service name, then rewrap envelope.
-        std::string client = msg->unwrap();
-        msg->wrap(MDPC_CLIENT, service_name.c_str());
-        msg->wrap(client.c_str(), "");
+        QString client = msg->unwrap();
+        msg->wrap(MDPC_CLIENT, service_name);
+        msg->wrap(client, "");
         msg->send (*m_socket);
         delete msg;
     }
@@ -218,18 +217,18 @@ private:
     //  Creates worker if necessary
 
     worker *
-    worker_require (std::string identity)
+    worker_require (QString identity)
     {
         assert (identity.length()!=0);
 
         //  self->workers is keyed off worker identity
         if (m_workers.count(identity)) {
-            return m_workers.at(identity);
+            return m_workers[identity];
         } else {
             worker *wrk = new worker(identity);
-            m_workers.insert(std::make_pair(identity, wrk));
+            m_workers[identity] = wrk;
             if (m_verbose) {
-                s_console ("I: registering new worker: %s", identity.c_str());
+                qDebug() << "I: registering new worker:" << identity;
             }
             return wrk;
         }
@@ -260,7 +259,7 @@ private:
         }
         m_waiting.erase(wrk);
         //  This implicitly calls the worker destructor
-        m_workers.erase(wrk->m_identity);
+        m_workers.remove(wrk->m_identity);
         delete wrk;
     }
 
@@ -270,7 +269,7 @@ private:
     //  Process message sent to us by a worker
 
     void
-    worker_process (std::string sender, zmsg *msg)
+    worker_process (QString sender, zmsg *msg)
     {
         assert (msg && msg->parts() >= 1);     //  At least, command
 
@@ -284,12 +283,12 @@ private:
             }
             else {
                 if (sender.size() >= 4  //  Reserved service name
-                    &&  sender.find_first_of("mmi.") == 0) {
+                    &&  sender.startsWith("mmi.")) {
                     worker_delete (wrk, 1);
                 } else {
                     //  Attach worker to service and mark as idle
                     auto service_name = msg->pop_front ();
-                    wrk->m_service = service_require (service_name.toStdString());
+                    wrk->m_service = service_require (service_name);
                     wrk->m_service->m_workers++;
                     worker_waiting (wrk);
                 }
@@ -299,9 +298,9 @@ private:
                 if (worker_ready) {
                     //  Remove & save client return envelope and insert the
                     //  protocol header and service name, then rewrap envelope.
-                    std::string client = msg->unwrap ();
-                    msg->wrap (MDPC_CLIENT, wrk->m_service->m_name.c_str());
-                    msg->wrap (client.c_str(), "");
+                    QString client = msg->unwrap ();
+                    msg->wrap (QString(MDPC_CLIENT), wrk->m_service->m_name);
+                    msg->wrap (client);
                     msg->send (*m_socket);
                     worker_waiting (wrk);
                 }
@@ -311,7 +310,9 @@ private:
             } else {
                 if (command.compare (MDPW_HEARTBEAT) == 0) {
                     if (worker_ready) {
+                        auto nbThreads = msg->pop_front();
                         wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
+                        m_workers_threads[wrk] = nbThreads.toInt();
                     } else {
                         worker_delete (wrk, 1);
                     }
@@ -322,6 +323,8 @@ private:
                         if (command.compare(MDPW_PROCESSLIST) == 0)
                     {
                         // Keep track of processes
+                        m_workers_threads[wrk] = msg->pop_front().toInt();
+                        // Nb workers avail for this
                         auto data = msg->pop_front();
                         while (data.size())
                         {
@@ -329,6 +332,8 @@ private:
 //                            auto dat = QByteArray((const char*)data.c_str(), data.size());
                             auto json = QJsonDocument::fromJson(data).object();
                             qDebug() << json["Path"] << json["PluginVersion"];
+// a plugin version is "hash" "date" "time"
+// Se we'll have to store the plugin info, store the
                             data = msg->pop_front();
                         }
 
@@ -354,25 +359,22 @@ private:
 
     void
     worker_send (worker *worker,
-                char *command, std::string option, zmsg *msg)
+                QByteArray command, QString option = QString(), zmsg *msg = NULL)
     {
         msg = (msg ? new zmsg(*msg) : new zmsg ());
 
         //  Stack protocol envelope to start of message
-        if (option.size()>0) {                 //  Optional frame after command
-            msg->push_front ((char*)option.c_str());
+        if (!option.isEmpty()) {                 //  Optional frame after command
+            msg->push_front (option.toLatin1());
         }
         msg->push_front (command);
-        msg->push_front ((char*)MDPW_WORKER);
-        //  Stack routing envelope to start of message
-        msg->wrap(worker->m_identity.c_str(), "");
+        msg->push_front (MDPW_WORKER);
 
-        if (m_verbose) {
-            s_console ("I: sending %s to worker",
-                      mdps_commands [(int) *command]);
-            msg->dump ();
-        }
+        msg->wrap(worker->m_identity);
+
         msg->send (*m_socket);
+
+
         delete msg;
     }
 
@@ -397,17 +399,17 @@ private:
     //  Process a request coming from a client
 
     void
-    client_process (std::string sender, zmsg *msg)
+    client_process (QString sender, zmsg *msg)
     {
         assert (msg && msg->parts () >= 2);     //  Service name + body
 
         auto service_name = msg->pop_front();
-        service *srv = service_require (service_name.toStdString());
+        service *srv = service_require (service_name);
         //  Set reply return address to client sender
-        msg->wrap (sender.c_str(), "");
+        msg->wrap (sender);
         if (service_name.length() >= 4
             &&  service_name.startsWith("mmi.") ) {
-            service_internal (service_name.toStdString(), msg);
+            service_internal (service_name, msg);
         } else {
             service_dispatch (srv, msg);
         }
@@ -444,10 +446,10 @@ public:
                 //              std::cout << "msg size: " << msg->parts() << std::endl;
                 //              msg->dump();
                 if (header.compare(MDPC_CLIENT) == 0) {
-                    client_process (sender.toStdString(), msg);
+                    client_process (sender, msg);
                 }
                 else if (header.compare(MDPW_WORKER) == 0) {
-                    worker_process (sender.toStdString(), msg);
+                    worker_process (sender, msg);
                 }
                 else {
                     s_console ("E: invalid message:");
@@ -462,7 +464,7 @@ public:
                 purge_workers ();
                 for (std::set<worker*>::iterator it = m_waiting.begin();
                      it != m_waiting.end() && (*it)!=0; it++) {
-                    worker_send (*it, (char*)MDPW_HEARTBEAT, "", NULL);
+                    worker_send (*it, MDPW_HEARTBEAT);
                 }
                 heartbeat_at += HEARTBEAT_INTERVAL;
                 now = s_clock();
@@ -473,10 +475,18 @@ public:
 private:
     zmq::context_t * m_context;                  //  0MQ context
     zmq::socket_t * m_socket;                    //  Socket for clients & workers
+
     int m_verbose;                               //  Print activity to stdout
-    std::string m_endpoint;                      //  Broker binds to this endpoint
-    std::map<std::string, service*> m_services;  //  Hash of known services
-    std::map<std::string, worker*> m_workers;    //  Hash of known workers
+
+    QString m_endpoint;                      //  Broker binds to this endpoint
+
+    QMap<QString, service*> m_services;  //  Hash of known services
+
+    QMap<QString, worker*> m_workers;    //  Hash of known workers
+
+    QMap<worker*, int> m_workers_threads;
+    QMap<worker*, QMap<QString, QJsonObject> > m_workers_plugins;
+
     std::set<worker*> m_waiting;              //  List of waiting workers
 };
 

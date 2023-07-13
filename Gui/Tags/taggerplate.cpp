@@ -213,13 +213,16 @@ void TaggerPlate::apply_template(QString script)
 void TaggerPlate::on_pushButton_clicked()
 {
 
+    QSettings set;
+
     QString script = QFileDialog::getOpenFileName(this, "Choose Template storage path",
-                                                  QDir::home().path(), "Tags json file (*.json)",
+                                                  set.value( "LastTagsJSON", QDir::home().path()).toString(), "Tags json file (*.json)",
                                                   0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
     {
+        QStringList sc = script.split("/"); sc.pop_back(); set.setValue("LastTagsJSON", sc.join("/"));
         apply_template(script);
     }
 

@@ -17,7 +17,7 @@ public:
     //  ---------------------------------------------------------------------
     //  Constructor
 
-    mdwrk (std::string broker, std::string service, int verbose)
+    mdwrk (QString broker, QString service, int verbose)
     {
         s_version_assert (4, 0);
 
@@ -48,7 +48,7 @@ public:
     //  ---------------------------------------------------------------------
     //  Send message to broker
     //  If no _msg is provided, creates one internally
-    void send_to_broker(char *command, std::string option, zmsg *_msg)
+    void send_to_broker(char *command, std::string option = "", zmsg *_msg = NULL)
     {
         zmsg *msg = _msg? new zmsg(*_msg): new zmsg ();
 
@@ -80,12 +80,12 @@ public:
         m_worker = new zmq::socket_t (*m_context, ZMQ_DEALER);
         m_worker->set(zmq::sockopt::linger, 0);
         s_set_id(*m_worker);
-        m_worker->connect (m_broker.c_str());
+        m_worker->connect (m_broker.toLatin1().data());
         if (m_verbose)
-            s_console ("I: connecting to broker at %s...", m_broker.c_str());
+            qDebug() << "I: connecting to broker at" << m_broker;
 
         //  Register service with broker
-        send_to_broker ((char*)MDPW_READY, m_service, NULL);
+        send_to_broker ((char*)MDPW_READY, m_service.toStdString());
 
         //  If liveness hits zero, queue is considered disconnected
         m_liveness = HEARTBEAT_LIVENESS;
@@ -125,7 +125,7 @@ public:
         assert (reply || !m_expect_reply);
         if (reply) {
             assert (m_reply_to.size()!=0);
-            reply->wrap (m_reply_to.c_str(), "");
+            reply->wrap (m_reply_to, "");
             m_reply_to = "";
             send_to_broker ((char*)MDPW_REPLY, "", reply);
             delete reply_p;
@@ -140,7 +140,8 @@ public:
 
             if (items[0].revents & ZMQ_POLLIN) {
                 zmsg *msg = new zmsg(*m_worker);
-                if (m_verbose) {
+                if (m_verbose)
+                {
                     s_console ("I: received message from broker:");
                     msg->dump ();
                 }
@@ -188,7 +189,9 @@ public:
                 }
             //  Send HEARTBEAT if it's time
             if (s_clock () >= m_heartbeat_at) {
-                send_to_broker ((char*)MDPW_HEARTBEAT, "", NULL);
+                auto nbThreads = QString("%1").arg(global_parameters.max_threads-global_parameters.running_threads).toStdString();
+
+                send_to_broker ((char*)MDPW_HEARTBEAT, nbThreads);
                 m_heartbeat_at += m_heartbeat;
             }
         }
@@ -198,8 +201,8 @@ public:
     }
 
 private:
-    std::string m_broker;
-    std::string m_service;
+    QString m_broker;
+    QString m_service;
     zmq::context_t *m_context;
     zmq::socket_t  *m_worker;     //  Socket to broker
     int m_verbose;                //  Print activity to stdout
@@ -214,7 +217,7 @@ private:
     bool m_expect_reply;           //  Zero only at start
 
     //  Return address, if any
-    std::string m_reply_to;
+    QString m_reply_to;
 };
 
 

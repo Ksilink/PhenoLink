@@ -38,6 +38,15 @@ using namespace qhttp::server;
 
 extern int DllCoreExport read_semaphore;
 
+static struct GlobParams
+{
+    int running_threads = 0;
+    int max_threads = 0;
+} global_parameters;
+
+
+
+
 #define ZMQ_STATIC
 
 #include "mdwrkapi.hpp"
@@ -220,11 +229,13 @@ int main(int ac, char** av)
         int idx = data.indexOf("-c")+1;
         if (data.size() > idx) nb_Threads = data.at(idx).toInt();
         qDebug() << "Changing max threads :" << nb_Threads;
+
     }
 
     if (nb_Threads < 2) nb_Threads = 2;
 
     qDebug() << "Max number of threads : " << nb_Threads;
+    global_parameters.max_threads = nb_Threads;
     QThreadPool::globalInstance()->setMaxThreadCount(nb_Threads);
 
 
@@ -367,7 +378,7 @@ int main(int ac, char** av)
     QStringList prcs = procs.pluginPaths();
     qDebug() << "Plugin List" << prcs;
     // Add session worker to tell
-    mdwrk session (QString("tcp://%1").arg(proxy).toStdString(), "processes", verbose);
+    mdwrk session (QString("tcp://%1").arg(proxy), "processes", verbose);
 
 
 //    procs
@@ -380,16 +391,15 @@ int main(int ac, char** av)
     {
         QJsonObject params;
         procs.getParameters(item, params);
-        qDebug() << params;
-
-//        QCborMap map = QCborMap::fromJsonObject(params);
         auto arr = QJsonDocument(params).toJson();//map.toCborValue().toByteArray().toBase64();
 
-//        qDebug() << arr.size();
         processlist->push_back(arr.data());//item.toLatin1().data());
     }
 
-    session.send_to_broker((char*)MDPW_PROCESSLIST, "", processlist);
+
+    auto nbTh = QString("%1").arg(global_parameters.max_threads).toStdString();
+
+    session.send_to_broker((char*)MDPW_PROCESSLIST, nbTh, processlist);
     delete processlist;
 
 
@@ -401,6 +411,7 @@ int main(int ac, char** av)
             qDebug() << "Broken answer";
             break;              //  Worker was interrupted
         }
+        //
         reply = request;        //  Echo is complex... :-)
         qDebug() << "srv ok";
     }
