@@ -846,13 +846,13 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
 
 
         // Need to check that all the objects are constructed in the main thread
-        QList<QPair<int, QImage> > toStitch = QtConcurrent::blockingMapped(perf, StitchStruct(this, bias_correction, scale));
+        QList<QPair<int, QImage> > toStitch;// = QtConcurrent::blockingMapped(perf, StitchStruct(this, bias_correction, scale));
 
-        //        for (auto pr: perf)
-        //        {
-        //            StitchStruct s(this, bias_correction, scale);
-        //            toStitch.append(s(pr));
-        //        }
+                for (auto pr: perf)
+                {
+                    StitchStruct s(this, bias_correction, scale);
+                    toStitch.append(s(pr));
+                }
 
         auto li = _mdl->getOwner()->getFieldPosition();
 

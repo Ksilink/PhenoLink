@@ -2462,7 +2462,7 @@ QString ScreensHandler::findPlate(QString plate, QStringList projects, QString d
     for (int i = std::max((int)(platesplit.size() - 2), 1); i < platesplit.size(); i++)    platesplit.pop_back();
     QString searchplate = platesplit.join("_");
 
-    qDebug() << "Will search" << searchPaths << "for plate" << searchplate << plate << "searching for files" << raw << "and if not found with widlcards" << wildcards;
+    qDebug() << "Will search" << searchPaths << "for plate" << searchplate << plate << "searching for files" << raw << "and if not found with wildcards" << wildcards;
 
 
     QString res = exactMatchFinder(searchPaths, searchplate, plate, raw);
