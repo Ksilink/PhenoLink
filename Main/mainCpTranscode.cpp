@@ -320,6 +320,7 @@ public:
                     if (! data.dry_run && reader.open(QIODevice::ReadOnly))
                     {
                         QByteArray q = reader.readAll();
+                        reader.close();
                         data.readed += q.size();
                         if (q.size() > 0)
                         {
@@ -379,7 +380,9 @@ public:
                                     im.release();
                                     if (data.inplace)
                                     {
-                                        QFile::remove(file);
+                                        auto res = QFile::remove(file);
+                                        if (!res)
+                                            qDebug() << "File not removed" << file;
                                     }
                                 }
 
@@ -392,7 +395,6 @@ public:
                                 writeFile(*infile, q);
                             }
                         }
-                        reader.close();
 
                     }
 
@@ -531,11 +533,7 @@ int main(int argc, char *argv[]) {
 
     data.inplace = (data.indir == data.outdir);
 
-    if (data.inplace)
-        qDebug() << "In place processing";
-
-
-
+    if (data.inplace) qDebug() << "In place processing";
 
     int scanThreads = parser.value("scan-threads").toInt();
     int inputThreads = parser.value("input-threads").toInt();
@@ -552,12 +550,8 @@ int main(int argc, char *argv[]) {
     else
         data.older = QDateTime::currentDateTime();
 
-    //    data.inputSemaphore.acquire(inputThreads);
-    //    data.compressSemaphore.acquire(compressThreads);
-    //    data.writeSemaphore.acquire(writeThreads);
-
     data.dry_run = parser.isSet("dry-run");
-    qDebug() << data.indir << data.outdir;// << "Max mem" << data.max_data;
+    qDebug() << data.indir << data.outdir;
 
     QThreadPool::globalInstance()->setMaxThreadCount(scanThreads + inputThreads );
 
