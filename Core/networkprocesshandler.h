@@ -94,6 +94,8 @@ public:
 
     void setNoProxyMode();
     void addProxyPort(uint16_t port);
+    void setServerAddress(QString srv);
+
 
     QStringList getProcesses();
     void getParameters(QString process);
@@ -128,9 +130,10 @@ public:
 //     void setPythonEnvironment(QProcessEnvironment env);
 
 
-protected:
     QCborArray filterBinary(QString hash, QJsonObject ds);
     QJsonArray filterObject(QString hash, QJsonObject ds, bool last_one=false);
+
+
 
 private slots:
     void displayError(QAbstractSocket::SocketError socketError);

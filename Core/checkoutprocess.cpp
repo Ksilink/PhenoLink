@@ -833,6 +833,7 @@ void CheckoutProcess::watcher_finished()
 
 
         emit finishedJob(hash, ob);
+//        delete wa;
     }
     else
         qDebug() << "Error Retrieving watcher for QFuture of processes";

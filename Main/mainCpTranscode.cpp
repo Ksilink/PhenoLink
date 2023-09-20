@@ -35,12 +35,28 @@
 #include "jxl/resizable_parallel_runner_cxx.h"
 
 
+
+#include <archive.h>
+#include <archive_entry.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+
 struct Data {
 
     QString outdir;
     QString indir;
     bool dry_run = false, inplace = false;
     int effort;
+    int tar = -1;
+
+
+    mutable std::mutex queue_mut;
+    QMap<QString, QStringList> fileFolderQueue;
+    QSet<QString> ongoingfolder;
 
     //    std::queue<QString> folderQueue;
 
@@ -51,7 +67,7 @@ struct Data {
     // First x threads will recursively seek folders and dig into them
 
 
-    ThreadsafeQueue<QString> fileQueue;
+    //    ThreadsafeQueue<QString> fileQueue;
     std::atomic<long long> copy_count=0, write_count=0;
     QMutex console;
 
@@ -64,13 +80,19 @@ struct Data {
     QMutex mgroup0, mgroup1;
 
 
+    QMap<QString, QMap<QString, struct archive *> > tarobjects; // Folder + Tar file name
+    QMap<QString,  QStringList > tar_remove; // Folder + Tar file name + List of objects
+    QMutex tar_lock;
+    QMap<struct archive*, int > tar_close;
+
 
 
 
     bool isrunning(){
         return (folderOver != 0
                 ||  folderQueue.size() != 0
-                || fileQueue.size() != 0
+                //                || fileQueue.size() != 0
+                ||  fileFolderQueue.size() != 0
                 ||  group0 > 0
                 ||  group1 > 0
                 );
@@ -86,7 +108,14 @@ struct Data {
 
     bool hasFile()
     {
-        return (scanFolder() || fileQueue.size() != 0 );
+        folder_mut.lock();
+        //          data.folder_mut.lock();
+        auto res = (scanFolder() ||
+                    fileFolderQueue.size() != 0);
+
+        folder_mut.unlock();
+        return res;
+            //fileQueue.size() != 0 );
 
     }
 
@@ -117,6 +146,10 @@ public:
                     if (file.endsWith(".") || file.endsWith(".."))
                         continue;
 
+                    data.folder_mut.lock();
+                    data.ongoingfolder.insert(*rec);
+                    data.folder_mut.unlock();
+
                     auto finfo = it.fileInfo();
                     if (finfo.isDir() && (!data.older.isNull() && finfo.lastModified() < data.older))
                     {
@@ -125,10 +158,17 @@ public:
                     }
                     else if (finfo.isFile() && finfo.lastModified() > data.ts)
                     {
-                        data.fileQueue.push(finfo.absoluteFilePath().mid(data.indir.length()));
+                        data.folder_mut.lock();
+                        data.fileFolderQueue[*rec].push_back(finfo.absoluteFilePath().mid(data.indir.length()));
+                        data.folder_mut.unlock();
+
+                        //                        data.fileQueue.push(finfo.absoluteFilePath().mid(data.indir.length()));
                     }
                     add++;
                 }
+                data.folder_mut.lock();
+                data.ongoingfolder.remove(*rec);
+                data.folder_mut.unlock();
 
                 data.prepared+=add;
                 {
@@ -138,10 +178,6 @@ public:
                 }
 
             }
-//            else
-//            {
-//                QThread::msleep(200); // to release the mutex burden if too many access
-//            }
         }
 
     }
@@ -285,15 +321,33 @@ public:
 
         while (data.hasFile())
         {
-            auto infile = data.fileQueue.pop();
-            if (infile)
+            data.folder_mut.lock();
+            if (data.fileFolderQueue.size() == 0) { data.folder_mut.unlock(); QThread::msleep(50); continue; }
+            auto folder = data.fileFolderQueue.firstKey();
+            if (data.fileFolderQueue.first().size() == 0) { data.folder_mut.unlock(); QThread::msleep(50); continue; }
+            auto infile = data.fileFolderQueue.first().takeFirst();
+            bool finished_folder = data.fileFolderQueue.first().empty() && ! data.ongoingfolder.contains(folder);
+            if (finished_folder) data.fileFolderQueue.remove(folder);
+            data.folder_mut.unlock();
+
+            if (finished_folder)
+            {
+                data.console.lock();
+                qDebug() << "Finished Folder" << folder;
+                data.console.unlock();
+            }
+
+            //            auto infile = data.fileQueue.pop();
+            if (!infile.isEmpty())
             {
                 {
                     QMutexLocker lock(&data.mgroup1);
                     data.group1 ++;
                 }
                 // check if the file is absent from destination !!!
-                QString jxl = *infile;
+                QString jxl = infile;
+                QString subname = infile.split("/").last();
+
 
                 if (jxl.endsWith(".tif"))
                 {
@@ -301,16 +355,133 @@ public:
                     jxl += ".jxl";
                 }
                 //            qDebug()  << "jxl" << QString("%1/%2").arg(data.outdir, jxl);
-                if (!QFileInfo::exists(QString("%1/%2").arg(data.outdir, jxl)))
+
+                if (data.tar  > 0 && data.tar < subname.size() && infile.endsWith(".tif")) // handling tar file for transcoded data
+                { // We will only put transcoded images in the tar archive
+                    auto tarfile = data.outdir + infile.mid(0, infile.size() - data.tar - 4 ) + ".tar";
+                    struct archive *ar = nullptr;
+                    data.tar_lock.lock();
+                    if (data.tarobjects[folder].contains(tarfile))
+                        ar = data.tarobjects[folder][tarfile];
+                    else
+                    {
+//                        qDebug() << "Creating tar: " << tarfile << "(" << infile << ")";
+                        ar = archive_write_new();
+                        archive_write_set_format(ar, ARCHIVE_FORMAT_TAR);
+                        int r = archive_write_open_filename(ar, tarfile.toLatin1().data());
+                        if (r != ARCHIVE_OK)
+                        {
+                            qDebug()  << archive_error_string(ar);
+                        }
+                        data.tarobjects[folder][tarfile] = ar;
+                    }
+                    data.tar_close[ar]++;
+                    data.tar_lock.unlock();
+
+                    // now do our stuff with the data
+                    QString file(QString("%1/%2").arg(data.indir, infile));
+                    QFile reader(file);
+                    if (reader.open(QIODevice::ReadOnly))
+                    {
+                        QByteArray q = reader.readAll();
+                        reader.close();
+                        data.readed += q.size();
+                        if (q.size() > 0)
+                        {
+                            unsigned char* png;
+                            unsigned w, h;
+                            size_t nb_chans = 1, bitdepth = 16;
+
+                            auto parallel_runner = [](void* , void* opaque,
+                                                      void fun(void*, size_t), size_t count){
+                                for (size_t i = 0; i < count; ++i)
+                                    fun(opaque, i);
+                            };
+
+                            cv::Mat m(q.length(), 1, CV_8U, q.data());
+
+                            auto im =  cv::imdecode(m, -1);
+                            m.release();
+
+                            if (im.cols != 0 || im.rows != 0)
+                            {
+                                w = im.cols;
+                                h = im.rows;
+                                png = (unsigned char*)im.ptr();
+                                size_t stride = w * nb_chans * (bitdepth > 8 ? 2 : 1);
+
+                                size_t num_threads=1;
+                                int encoded_size = 0;
+                                QByteArray compressed;
+                                if (data.effort <= 0)
+                                {
+                                    unsigned char * encoded = nullptr;
+
+                                    encoded_size = JxlFastLosslessEncode(png,
+                                                                         w, stride, h,
+                                                                         nb_chans,
+                                                                         bitdepth, /*big_endian=*/false,
+                                                                         32, &encoded, &num_threads, +parallel_runner);
+
+                                    compressed = QByteArray((const char*)encoded, encoded_size);
+                                    free(encoded);
+                                }
+                                else
+                                {
+                                    if (0 != compress(im, compressed))
+                                    {
+                                        qDebug() << "Compression error" << (infile) << jxl;
+                                        exit(-1);
+                                    }
+                                }
+                                jxl = jxl.split("/").last();
+
+                                struct archive_entry *entry = archive_entry_new();
+                                int r;
+                                archive_entry_set_pathname(entry, jxl.toLatin1().data());
+                                archive_entry_set_size(entry, compressed.size());
+                                archive_entry_set_filetype(entry, AE_IFREG);
+
+                                data.tar_lock.lock();
+
+                                data.tar_remove[folder] << infile;
+
+                                r = archive_write_header(ar, entry);
+                                if (r != ARCHIVE_OK)
+                                {
+                                    qDebug()  <<  archive_error_string(ar);
+                                }
+
+                                r = archive_write_data(ar, compressed.data(), compressed.size());
+                                if (r != compressed.size())
+                                {
+                                    qDebug() << archive_error_string(ar);
+                                }
+
+
+                                data.tar_close[ar]--;
+
+                                data.tar_lock.unlock();
+                                data.writen += compressed.size();
+
+                                archive_entry_free(entry);
+                            }
+                        }
+                    }
+
+
+                }
+                else if (!QFileInfo::exists(QString("%1/%2").arg(data.outdir, jxl)) || data.effort > 0)
                 {
-                    QString file(QString("%1/%2").arg(data.indir, *infile));
+                    QString file(QString("%1/%2").arg(data.indir, infile));
                     //                qDebug() << "Loading file for copy" << file;
                     data.copy_count++;
                     data.console.lock();
 
                     //                std::cout << "\r" << "read" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " <<data.fileQueue.size() << " " << data.write_count / (float)data.copy_count << " " << data.memusage << "                                         \n";
 
-                    std::cout << "\r" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " << data.write_count / (float)data.copy_count << "                                         ";
+                    std::cout << "\r" << data.prepared << "=>"<< data.write_count << "/" << data.copy_count << " " << data.write_count / (float)data.copy_count
+                              << "                                         ";
                     std::flush(std::cout);
                     data.console.unlock();
 
@@ -326,7 +497,7 @@ public:
                         {
                             if (file.endsWith(".tif") )
                             {
-                                QString jxl=(*infile); jxl.replace(".tif", ".jxl");
+                                QString jxl=(infile); jxl.replace(".tif", ".jxl");
 
 
                                 unsigned char* png;
@@ -371,7 +542,7 @@ public:
                                     {
                                         if (0 != compress(im, compressed))
                                         {
-                                            qDebug() << "Compression error" << (*infile) << jxl;
+                                            qDebug() << "Compression error" << (infile) << jxl;
                                             exit(-1);
                                         }
                                     }
@@ -385,14 +556,10 @@ public:
                                             qDebug() << "File not removed" << file;
                                     }
                                 }
-
-
-
-
                             }
                             else
                             {
-                                writeFile(*infile, q);
+                                writeFile(infile, q);
                             }
                         }
 
@@ -403,6 +570,27 @@ public:
                         data.group1 --;
                     }
                 }
+            }
+
+
+            if (finished_folder && data.tar > 0)
+            { // close all the open archives
+//                qDebug() << "Closing tars";
+                for (auto& tarf: data.tarobjects[folder])
+                {
+                    while (data.tar_close[tarf] !=0)
+                        QThread::msleep(10);
+
+                    archive_write_close(tarf);
+                    archive_write_free(tarf);
+                }
+                data.tarobjects.remove(folder);
+                if (data.inplace)
+                    for (auto rm_file: data.tar_remove[folder])
+                        if (!QFile::remove(rm_file))
+                            qDebug() << "File not removed" << rm_file;
+
+                data.tar_remove.remove(folder);
             }
         }
     }
@@ -490,6 +678,9 @@ int main(int argc, char *argv[]) {
     parser.addOption(QCommandLineOption("rescan", "force a full rescan of the folder"));
     parser.addOption(QCommandLineOption("dry-run", "Skip the writing at the end"));
     parser.addOption(QCommandLineOption("effort", "Set the compression effort (default: -1)", "effort", "-1"));
+
+    parser.addOption(QCommandLineOption("tar", "Generate tar files after removing n char from original file name", "tar", "22"));
+
     parser.addOption(QCommandLineOption("help", "Display the usage help"));
 
 
@@ -501,6 +692,8 @@ int main(int argc, char *argv[]) {
         std::cerr <<   parser.helpText().toStdString();
         return 0;
     }
+
+
 
     QStringList positionalArguments = parser.positionalArguments();
 
@@ -526,6 +719,14 @@ int main(int argc, char *argv[]) {
         data.indir = positionalArguments.at(0);
         data.outdir = positionalArguments.at(0);
     }
+
+
+    if (parser.isSet("tar"))
+    {
+        std::cout << "Tar mode on, will remove " << parser.value("tar").toInt() << " character after extension to create tar file";
+        data.tar =  parser.value("tar").toInt() ;
+    }
+
 
     data.indir.replace("\\", "/");
     data.outdir.replace("\\", "/");
@@ -596,7 +797,8 @@ int main(int argc, char *argv[]) {
     t = t.addMSecs(timer.elapsed());
 
     qDebug() << "\nSynchronisation of" << si(data.readed) << "in" << t.toString("hh:mm:ss.zzz");
-    qDebug() << "End file compression " << si(data.writen);
+    if (data.readed != 0)
+        qDebug() << "End file compression " << si(data.writen) << QString("%1%").arg(100.*(data.writen/(float)data.readed),5,'f',2,'0');
 
     return 0;
 }

@@ -268,6 +268,9 @@ QPointF getFieldPos(SequenceFileModel* seq, int field, int /*z*/, int /*t*/, int
 
 void ExperimentFileModel::setFieldPosition()
 {
+
+    bool found_metadata = false;
+
     // get first Well
     SequenceFileModel* mdl = 0, * bmdl = 0;
 
@@ -293,6 +296,7 @@ void ExperimentFileModel::setFieldPosition()
                     QRegularExpression k(QString("^f%1s.*X$").arg(field));
                     QString prop = mdl->property(k);
                     if (prop.isEmpty()) continue;
+                    found_metadata = true;
                     x.insert(prop.toDouble());
                     k.setPattern(QString("^f%1s.*Y$").arg(field));
                     prop = mdl->property(k);
@@ -302,24 +306,41 @@ void ExperimentFileModel::setFieldPosition()
             }
 
 
-    QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
-    std::sort(xl.begin(), xl.end());// , std::greater<double>());
-    std::sort(yl.begin(), yl.end(), std::greater<double>());
-    //    qDebug() << "Unpack well pos sorted" << xl << yl;
-
-
-    fields_pos = qMakePair(xl, yl);
-
-    for (unsigned i = 0; i < nb_fields; ++i)
+    if (found_metadata)
     {
-        QPointF p = getFieldPos(bmdl, i + 1, 1, 1, 1);
+        QList<double> xl(x.begin(), x.end()), yl(y.begin(), y.end());
+        std::sort(xl.begin(), xl.end());// , std::greater<double>());
+        std::sort(yl.begin(), yl.end(), std::greater<double>());
+        //    qDebug() << "Unpack well pos sorted" << xl << yl;
 
-        int x = xl.indexOf(p.x());
-        int y = yl.indexOf(p.y());
 
-        //qDebug() << i + 1 << x << y << p.x() << p.y();
+        fields_pos = qMakePair(xl, yl);
 
-        toField[x][y] = i + 1;
+        for (unsigned i = 0; i < nb_fields; ++i)
+        {
+            QPointF p = getFieldPos(bmdl, i + 1, 1, 1, 1);
+
+            int x = xl.indexOf(p.x());
+            int y = yl.indexOf(p.y());
+
+            //qDebug() << i + 1 << x << y << p.x() << p.y();
+
+            toField[x][y] = i + 1;
+        }
+    }
+    else
+    {
+
+        int mod = rint(sqrt(nb_fields));
+
+        for (unsigned i = 0; i < nb_fields; ++i)
+        {
+            int x = rint(i/mod);
+            int y = i % mod;
+            toField[x][y] = i + 1;
+
+        }
+
     }
 }
 
@@ -528,6 +549,11 @@ void ExperimentFileModel::addSiblings(QString map, ExperimentFileModel* efm)
 
 bool ExperimentFileModel::getState(QPoint pos, ExperimentFileModel::WellState state)
 {
+    if (!_state.contains(pos.x())) // to avoid overloading memory if empty
+        return false;
+    if (!_state[pos.x()].contains(pos.y())) // to avoid overloading memory if empty
+        return false;
+
     return _state[pos.x()][pos.y()] & (1 << state);
 }
 QString ExperimentFileModel::fileName() const
@@ -1019,7 +1045,7 @@ void SequenceFileModel::addFile(int timePoint, int fieldIdx, int Zindex, int cha
 
     if (!file.isEmpty())
         _channelsIds.insert(channel);
-    //  qDebug() << "Adding: "<< timePoint << fieldIdx << Zindex << channel;
+//    qDebug() << "Adding: "<< timePoint << fieldIdx << Zindex << channel << file;
     _data[fieldIdx][Zindex][timePoint][channel] = file;
 }
 
@@ -1057,18 +1083,18 @@ QStringList SequenceFileModel::getAllFiles()
 
 void SequenceFileModel::toJxl()
 {
-    for (auto f = _data.begin(), fe = _data.end(); f != fe; ++f)
-        for (auto z = f.value().begin(), ze = f.value().end(); z != ze; ++z)
-            for (auto t = z.value().begin(), te = z.value().end(); t != te; ++t)
-                for (auto c = t.value().begin(), ce = t.value().end(); c != ce; c++)
-                {
-                    if (!c.value().isEmpty())
-                         {
-                        c.value().chop(4);
-                        c.value() = c.value() +".jxl";
-                        //qDebug() << c;
-                    }
-                }
+//    for (auto f = _data.begin(), fe = _data.end(); f != fe; ++f)
+//        for (auto z = f.value().begin(), ze = f.value().end(); z != ze; ++z)
+//            for (auto t = z.value().begin(), te = z.value().end(); t != te; ++t)
+//                for (auto c = t.value().begin(), ce = t.value().end(); c != ce; c++)
+//                {
+//                    if (!c.value().isEmpty())
+//                         {
+//                        c.value().chop(4);
+//                        c.value() = c.value() +".jxl";
+//                        qDebug() << c.value();
+//                    }
+//                }
 }
 
 StructuredMetaData& SequenceFileModel::getMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name)
@@ -1386,6 +1412,9 @@ QString SequenceFileModel::getFile(int timePoint, int fieldIdx, int Zindex, int 
     }
 
     // if (ti->value().contains(channel))
+
+//    qDebug() << "File" << timePoint << fieldIdx << Zindex << channel<<ti->value(channel);
+
     return ti->value(channel);
     /*
     std::advance(ci, channel-1);

@@ -48,6 +48,12 @@ public:
     void removeProcess(QString name);
     void removeProcess(CheckoutProcessPluginInterface* proc);
 
+
+    QMap<QString, CheckoutProcessPluginInterface*> getPlugins()
+    {
+        return _plugins;
+    }
+
     QStringList paths();
     QStringList pluginPaths(bool withVersion=false);
     QStringList networkPaths();

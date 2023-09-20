@@ -356,6 +356,13 @@ void NetworkProcessHandler::addProxyPort(uint16_t port)
     srv = QString("%1%2").arg(srv).arg(port);
 }
 
+void NetworkProcessHandler::setServerAddress(QString srv_)
+{
+    srv=srv_;
+}
+
+
+
 void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient *cl)
 {
     //    qDebug() << "Settings Processes";
@@ -707,7 +714,7 @@ void exportBinary(QJsonObject &ds, QJsonObject &par, QCborMap &ob) // We'd like 
     {
         auto meta = par["Meta"].toArray().first().toObject();
         QString pos = meta["Pos"].toString();
-        
+
 
         int t = meta["TimePos"].toInt(),
                 f = meta["FieldId"].toInt(),

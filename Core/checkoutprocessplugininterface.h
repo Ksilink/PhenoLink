@@ -408,9 +408,9 @@ public:
             }
 
 
-            if (QFileInfo::exists(file))
+            *mat = pl::imread(file, 2);
+            if (!mat->empty())
             {
-                *mat = pl::imread(file, 2);
                 cv::Mat m;
                 mat->convertTo(m, CV_32F, 1. / 10000.);
                 cv::swap(m, *mat);

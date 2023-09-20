@@ -79,6 +79,34 @@ endif(WIN32)
 install(TARGETS plcli COMPONENT applications DESTINATION bin)
 
 
+
+add_executable(plzcli  mainzCli.cpp   zmsg.cpp mainzCli.h ${AppRCFILE}
+    mdcliapi.hpp )
+
+#target_compile_definitions(plcli PUBLIC  -DGitPluginDate="")
+target_include_directories(plzcli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_dependencies (plzcli PhenoLinkGui PhenoLinkCore)
+
+if (WIN32)
+    target_link_libraries(plzcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static )
+
+#    if ($<CONFIG:Debug>)
+#    else()
+#    add_custom_command(
+#        TARGET PhenoLink
+#            POST_BUILD
+#            COMMAND "${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt.exe" "$<TARGET_FILE:plcli>"
+
+#        )
+#    endif()
+
+else()
+    target_link_libraries(plzcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static )
+endif(WIN32)
+
+install(TARGETS plzcli COMPONENT applications DESTINATION bin)
+
+
 add_executable(PhenoLinkUploader mainUploader.cpp mainUploader.h ${AppRCFile})
 
 target_include_directories(PhenoLinkUploader PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -93,12 +121,14 @@ endif(WIN32)
 install(TARGETS PhenoLinkUploader COMPONENT applications DESTINATION bin)
 
 
+find_package(LibArchive REQUIRED)
+
 add_executable(CpTranscode mainCpTranscode.cpp ${AppRCFile} enc_fast_lossless.cc)
 target_include_directories(CpTranscode PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if (WIN32)
-    target_link_libraries(CpTranscode Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS}   arrow_shared ${ARROW_LIBRARIES}  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc PkgConfig::Jxl PkgConfig::JxlThreads)
+    target_link_libraries(CpTranscode Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS}   arrow_shared ${ARROW_LIBRARIES}  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc PkgConfig::Jxl PkgConfig::JxlThreads LibArchive::LibArchive)
 else()
-    target_link_libraries(CpTranscode Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS}  "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc PkgConfig::Jxl PkgConfig::JxlThreads)
+    target_link_libraries(CpTranscode Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS}  "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc PkgConfig::Jxl PkgConfig::JxlThreads LibArchive::LibArchive)
 endif(WIN32)
 
 install(TARGETS CpTranscode COMPONENT applications DESTINATION bin)
@@ -162,12 +192,13 @@ add_dependencies (PhenoLinkQueueServer PhenoLinkGui PhenoLinkCore)
 
 
 
-add_executable(PhenoLinkZMQServer mainZMQ_QueueServer.cpp mdbroker.hpp mdwrkapi.hpp mdp.hpp zmsg.hpp zhelpers.hpp checkouqueuserver.h checkout_arrow.h checkout_python.h ${SrvRCFILE} )
+add_executable(PhenoLinkZMQServer mainZMQ_QueueServer.cpp mdbroker.hpp mdwrkapi.hpp mdp.hpp zmsg.hpp zhelpers.hpp checkout_arrow.h checkout_python.h ${SrvRCFILE}
+    zmsg.cpp )
 
 target_include_directories(PhenoLinkZMQServer PUBLIC ${ZeroMQ_INCLUDE_DIR} ${cppzmq_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 # target_link_libraries(main PRIVATE cppzmq cppzmq-static)
 if (WIN32)
-    target_link_libraries( PhenoLinkZMQServer ${CheckoutLibs} QHttp Qt::Core Qt::Concurrent Qt::Network Qt::Widgets ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static)
+    target_link_libraries( PhenoLinkZMQServer ${CheckoutLibs} Qt::Core Qt::Concurrent Qt::Network Qt::Widgets ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static)
 
 #    if ($<CONFIG:Debug>)
 #    else()
@@ -180,7 +211,7 @@ if (WIN32)
 #    endif()
 
 else()
-        target_link_libraries( PhenoLinkZMQServer PRIVATE ${CheckoutLibs} QHttp Qt::Concurrent Qt::Core Qt::Network Qt::Widgets "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS} cppzmq cppzmq-static)
+        target_link_libraries( PhenoLinkZMQServer PRIVATE ${CheckoutLibs}  Qt::Concurrent Qt::Core Qt::Network Qt::Widgets "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS} cppzmq cppzmq-static)
 endif(WIN32)
 
 install(TARGETS PhenoLinkZMQServer COMPONENT applications DESTINATION bin)
@@ -189,18 +220,23 @@ add_dependencies (PhenoLinkZMQServer PhenoLinkGui PhenoLinkCore)
 
 
 
-add_executable(PhenoLinkZMQWorker mainZMQ_WorkerServer.cpp mdbroker.hpp mdwrkapi.hpp mdp.hpp zmsg.hpp zhelpers.hpp checkouqueuserver.h checkout_arrow.h checkout_python.h ${SrvRCFILE} )
+add_executable(PhenoLinkZMQWorker mainZMQ_WorkerServer.cpp mdbroker.hpp  mdp.hpp zmsg.hpp   zmsg.cpp zhelpers.hpp checkout_arrow.h checkout_python.h ${SrvRCFILE}
+    ZMQThread.h
+    mdwrkapi.hpp
+    mdwrkapi.cpp )
 
 target_include_directories(PhenoLinkZMQWorker PUBLIC ${ZeroMQ_INCLUDE_DIR} ${cppzmq_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 # target_link_libraries(main PRIVATE cppzmq cppzmq-static)
 if (WIN32)
-    target_link_libraries( PhenoLinkZMQWorker ${CheckoutLibs} QHttp Qt::Core Qt::Concurrent Qt::Network Qt::Widgets ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static)
+    target_link_libraries( PhenoLinkZMQWorker ${CheckoutLibs} Qt::Core Qt::Concurrent Qt::Network Qt::Widgets ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static)
 else()
-        target_link_libraries( PhenoLinkZMQWorker PRIVATE ${CheckoutLibs} QHttp Qt::Concurrent Qt::Core Qt::Network Qt::Widgets "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS} cppzmq cppzmq-static)
+        target_link_libraries( PhenoLinkZMQWorker PRIVATE ${CheckoutLibs} Qt::Concurrent Qt::Core Qt::Network Qt::Widgets "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS} cppzmq cppzmq-static)
 endif(WIN32)
 
 install(TARGETS PhenoLinkZMQWorker COMPONENT applications DESTINATION bin)
 add_dependencies (PhenoLinkZMQWorker PhenoLinkGui PhenoLinkCore)
+
+
 
 
 

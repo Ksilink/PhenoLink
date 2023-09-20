@@ -525,8 +525,8 @@ ctkDoubleRangeSlider* MainWindow::RangeWidgetSetup(ctkDoubleRangeSlider* w, Imag
         w->setMinMax(fo->getDispMin() - dv,
                      fo->getDispMax() + dv);
 
-        w->setMinimumValue(fo->getDispMin());
         w->setMaximumValue(fo->getDispMax());
+        w->setMinimumValue(fo->getDispMin());
 
     }
 

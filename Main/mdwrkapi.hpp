@@ -9,26 +9,32 @@
 //  Reliability parameters
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 
+
+struct GlobParams
+{
+    int running_threads = 0;
+    int max_threads = 0;
+};
+
+
+
 //  Structure of our class
 //  We access these properties only via class methods
 class mdwrk {
+    GlobParams& global_parameters;
 public:
 
     //  ---------------------------------------------------------------------
     //  Constructor
 
-    mdwrk (QString broker, QString service, int verbose)
+    mdwrk (QString broker, QString service, GlobParams& gp, int verbose):
+        global_parameters(gp),
+        m_broker(broker), m_service(service), m_context(new zmq::context_t (1)), m_worker(0),
+        m_verbose(verbose), m_heartbeat(5000), m_reconnect(2500), m_expect_reply(false)
+
     {
         s_version_assert (4, 0);
 
-        m_broker = broker;
-        m_service = service;
-        m_context = new zmq::context_t (1);
-        m_worker = 0;
-        m_expect_reply = false;
-        m_verbose = verbose;
-        m_heartbeat = 2500;     //  msecs
-        m_reconnect = 2500;     //  msecs
 
         s_catch_signals ();
         connect_to_broker ();
@@ -42,6 +48,16 @@ public:
     {
         delete m_worker;
         delete m_context;
+    }
+
+
+
+    void set_worker_preamble(std::string nbTh, zmsg* msg)
+    {
+        m_nbThreads = nbTh;
+        m_preamble = msg;
+
+        send_to_broker((char*)MDPW_PROCESSLIST, nbTh, msg);
     }
 
 
@@ -117,88 +133,7 @@ public:
     //  ---------------------------------------------------------------------
     //  Send reply, if any, to broker and wait for next request.
 
-    zmsg *
-    recv (zmsg *&reply_p)
-    {
-        //  Format and send the reply if we were provided one
-        zmsg *reply = reply_p;
-        assert (reply || !m_expect_reply);
-        if (reply) {
-            assert (m_reply_to.size()!=0);
-            reply->wrap (m_reply_to, "");
-            m_reply_to = "";
-            send_to_broker ((char*)MDPW_REPLY, "", reply);
-            delete reply_p;
-            reply_p = 0;
-        }
-        m_expect_reply = true;
-
-        while (!s_interrupted) {
-            zmq::pollitem_t items[] = {
-                                       { *m_worker,  0, ZMQ_POLLIN, 0 } };
-            zmq::poll (items, 1, std::chrono::milliseconds(m_heartbeat));
-
-            if (items[0].revents & ZMQ_POLLIN) {
-                zmsg *msg = new zmsg(*m_worker);
-                if (m_verbose)
-                {
-                    s_console ("I: received message from broker:");
-                    msg->dump ();
-                }
-                m_liveness = HEARTBEAT_LIVENESS;
-
-                //  Don't try to handle errors, just assert noisily
-                assert (msg->parts () >= 3);
-
-                auto empty = msg->pop_front ();
-                assert (empty.compare((unsigned char *)"") == 0);
-                //assert (strcmp (empty, "") == 0);
-                //free (empty);
-
-                auto header = msg->pop_front ();
-                assert (header.compare((unsigned char *)MDPW_WORKER) == 0);
-                //free (header);
-
-                auto command = msg->pop_front ();
-                if (command.compare (MDPW_REQUEST) == 0) {
-                    //  We should pop and save as many addresses as there are
-                    //  up to a null part, but for now, just save one...
-                    m_reply_to = msg->unwrap ();
-                    return msg;     //  We have a request to process
-                }
-                else if (command.compare (MDPW_HEARTBEAT) == 0) {
-                    //  Do nothing for heartbeats
-                }
-                else if (command.compare (MDPW_DISCONNECT) == 0) {
-                    connect_to_broker ();
-                }
-                else {
-                    s_console ("E: invalid input message (%d)",
-                              (int) *(command.data()));
-                    msg->dump ();
-                }
-                delete msg;
-            }
-            else
-                if (--m_liveness == 0) {
-                    if (m_verbose) {
-                        s_console ("W: disconnected from broker - retrying...");
-                    }
-                    s_sleep (m_reconnect);
-                    connect_to_broker ();
-                }
-            //  Send HEARTBEAT if it's time
-            if (s_clock () >= m_heartbeat_at) {
-                auto nbThreads = QString("%1").arg(global_parameters.max_threads-global_parameters.running_threads).toStdString();
-
-                send_to_broker ((char*)MDPW_HEARTBEAT, nbThreads);
-                m_heartbeat_at += m_heartbeat;
-            }
-        }
-        if (s_interrupted)
-            printf ("W: interrupt received, killing worker...\n");
-        return NULL;
-    }
+    zmsg *recv (zmsg *&reply_p);
 
 private:
     QString m_broker;
@@ -218,6 +153,10 @@ private:
 
     //  Return address, if any
     QString m_reply_to;
+
+    zmsg* m_preamble;
+    std::string m_nbThreads;
+
 };
 
 

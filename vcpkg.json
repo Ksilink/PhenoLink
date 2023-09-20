@@ -67,6 +67,9 @@
         },
         {
             "name": "cppzmq"
+        },
+        {
+            "name": "libarchive"
         }
     ]
 }

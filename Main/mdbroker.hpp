@@ -20,6 +20,13 @@
 #include <QJsonDocument>
 #include <QMap>
 #include <QString>
+#include <QCborMap>
+#include <QCborArray>
+#include <QCborValue>
+#include <QMutex>
+
+
+QMutex access_mutex;
 
 
 //  We'd normally pull these from config data
@@ -30,19 +37,60 @@
 
 struct service;
 
+
+struct service_call
+{
+    QString path; // The called service
+    QString project; // The project involved for priority mapping
+    QString client; // id of the calling client
+
+    int calls; // Number of process involved by this call
+
+    QCborMap callMap; // Mapping names from parameters
+    QCborMap parameters; // parameters (with encoded parameters)
+
+    int priority; // if we have computed priority for this service call :)
+
+    int thread_id;
+
+};
+
+
 //  This defines one worker, idle or active
 struct worker
 {
     QString m_identity;   //  Address of worker
+    QString m_name; // name of the worker
     service * m_service;      //  Owning service, if known
     int64_t m_expiry;         //  Expires at unless heartbeat
+    int available;
+
+    QStringList priority_plugins; // List of plugins that shall be processed with high priority
+
 
     worker(QString identity, service * service = 0, int64_t expiry = 0) {
         m_identity = identity;
         m_service = service;
         m_expiry = expiry;
     }
+
+    QMap<QString, QJsonObject> m_plugins;
 };
+
+
+// this define a computing entity
+struct worker_threads
+{
+    worker_threads(worker* wrk, int id): m_worker(wrk), m_id(id), parameters(0)
+    {
+
+    }
+
+    worker * m_worker; // Owner of this thread
+    int m_id;
+    service_call* parameters; // if this one was called, we have parameters associated
+};
+
 
 //  This defines a single service
 struct service
@@ -56,14 +104,22 @@ struct service
 
     QString m_name;             //  Service name
     std::deque<zmsg*> m_requests;   //  List of client requests
-    std::list<worker*> m_waiting;  //  List of waiting workers
-    size_t m_workers;               //  How many workers we have
+    QList<worker*> m_process;  //  List of workers containing the service
+    QList<worker*> m_pending; // List of worker with pending process
+
+    //    size_t m_workers;               //  How many workers we have
 
     service(QString name)
     {
         m_name = name;
     }
+
+    bool add_worker(worker* wrk);
+
+
 };
+
+
 
 //  This defines a single broker
 class broker {
@@ -118,19 +174,33 @@ private:
     void
     purge_workers ()
     {
-        std::deque<worker*> toCull;
+        QSet<worker*> toCull;
         int64_t now = s_clock();
-        for (std::set<worker*>::iterator wrk = m_waiting.begin(); wrk != m_waiting.end(); ++wrk)
+        for (QSet<worker_threads*>::iterator wrk = m_waiting_threads.begin(), ewrk = m_waiting_threads.end();
+             wrk != ewrk; ++wrk)
         {
-            if ((*wrk)->m_expiry <= now)
-                toCull.push_back(*wrk);
+            if ((*wrk)->m_worker->m_expiry <= now)
+            {
+                toCull.insert(  (*wrk)->m_worker);
+                if ((*wrk)->parameters) // recovering lost jobs
+                {
+                    for (auto& job: m_ongoing_jobs)
+                        if (job == (*wrk)->parameters)
+                        {
+                            m_requests.push_front(job); // push back in front lost jobs
+                        }
+                }
+
+            }
         }
-        for (std::deque<worker*>::iterator wrk = toCull.begin(); wrk != toCull.end(); ++wrk)
+
+
+        for (QSet<worker*>::iterator wrk = toCull.begin(); wrk != toCull.end(); ++wrk)
         {
             if (m_verbose) {
                 qDebug() << "I: deleting expired worker:" << (*wrk)->m_identity;
             }
-            worker_delete(*wrk, 0);
+            worker_delete((*wrk), 0);
         }
     }
 
@@ -161,30 +231,127 @@ private:
     void
     service_dispatch (service *srv, zmsg *msg)
     {
-        assert (srv);
+        //        assert (srv);
+
+        if (!srv) return;
+
+
         if (msg) {                    //  Queue message if any
+
+            auto client  = msg->pop_front(),
+                empty = msg->pop_front();
+
+            qDebug() << "Client" << client << "-" << empty;
+
+            //            QCborMap
+            auto map = QCborValue::fromCbor(msg->pop_front()).toMap();
+            // New service call
+            //
+            //            << msg->pop_front();
+            //                       qDebug() << msg->pop_front()
+            int nbCalls = msg->parts();
+            qDebug() << "Service Call" << nbCalls;
+            while (msg->parts())
+            {
+                service_call* call = new service_call;
+
+                call->path = srv->m_name;
+                //                call->project;
+                call->client = client;
+
+                call->callMap = map;
+                call->calls = nbCalls;
+                call->parameters = QCborValue::fromCbor(msg->pop_front()).toMap();
+                call->priority = 0;
+
+                m_requests.push_back(call);
+            }
+
+
             srv->m_requests.push_back(msg);
         }
 
         purge_workers ();
-        while (! srv->m_waiting.empty() && ! srv->m_requests.empty())
-        {
-            // Choose the most recently seen idle worker; others might be about to expire
-            std::list<worker*>::iterator wrk = srv->m_waiting.begin();
-            std::list<worker*>::iterator next = wrk;
-            for (++next; next != srv->m_waiting.end(); ++next)
+        // FIXME
+
+        while (!m_waiting_threads.empty() && ! m_requests.empty())
+        { // we have threads & we have requests !!!
+
+            worker* wrk = nullptr; // Search first worker most recently seen
+            for (auto w = m_workers.begin(), e = m_workers.end(); w != e; ++w)
             {
-                if ((*next)->m_expiry > (*wrk)->m_expiry)
-                    wrk = next;
+                if (wrk == nullptr)
+                {
+                    if (w.value()->available > 0)
+                        wrk = *w;
+                }
+                else
+                    if (w.value()->m_expiry > wrk->m_expiry && w.value()->available > 0)
+                        wrk = *w;
             }
 
-            zmsg *msg = srv->m_requests.front();
-            srv->m_requests.pop_front();
-            worker_send (*wrk, (char*)MDPW_REQUEST, "", msg);
-            m_waiting.erase(*wrk);
-            srv->m_waiting.erase(wrk);
-            delete msg;
+            // Assign thread
+            worker_threads* th = nullptr;
+            for (auto thi: m_waiting_threads)
+                if (thi->m_worker == wrk)
+                {
+                    th = thi;
+                        break;
+                }
+
+            if (th != nullptr)
+            {
+                service_call* job = nullptr;
+                int priority = 0;
+
+                if (!wrk->priority_plugins.isEmpty())
+                { // if the worker has no priority list
+
+                    // first search for plugin priority list if any job was subscribed
+                    for (auto &plugin: qAsConst(wrk->priority_plugins))
+                        for (auto jbs: m_requests)
+                            if (plugin == jbs->path && jbs->calls < low_job_number && jbs->priority > priority)
+                            {
+                                job = jbs;
+                                priority = jbs->priority;
+                            }
+
+                    // If no low count priority jobs check if we have long
+                    if (job == nullptr)
+                        for (auto & plugin: qAsConst(wrk->priority_plugins))
+                            for (auto jbs: m_requests)
+                                if (plugin == jbs->path && jbs->priority > priority)
+                                {
+                                    job = jbs;
+                                    priority = jbs->priority;
+                                }
+                }
+
+                if (job == nullptr)
+                    for (auto jbs: m_requests) // Handle low number of jobs first
+                        if (jbs->calls < low_job_number && jbs->priority > priority)
+                        {
+                            job = jbs;
+                            priority = jbs->priority;
+                        }
+
+                if (job == nullptr)
+                    job = m_requests.front();
+
+                // We have a job !
+                // We have a worker !
+                // Let's send some work
+                start_job(wrk, th, job);
+
+            }
+//            else
+//                qDebug() << "No worker threads found for worker";
+
         }
+
+
+
+
     }
 
     //  ---------------------------------------------------------------------
@@ -193,20 +360,105 @@ private:
     void
     service_internal (QString service_name, zmsg *msg)
     {
-        if (service_name == "mmi.service") {
-            service * srv = m_services[msg->body()];
-            if (srv && srv->m_workers) {
-                msg->body_set("200");
-            } else {
-                msg->body_set("404");
-            }
-        } else {
-            msg->body_set("501");
-        }
+        qDebug() << "Broker service call" << service_name << msg->parts();
 
         //  Remove & save client return envelope and insert the
         //  protocol header and service name, then rewrap envelope.
         QString client = msg->unwrap();
+
+
+        if (service_name == "mmi.service") {
+            service * srv = m_services[msg->body()];
+            if (srv && !srv->m_process.isEmpty()) {
+                msg->body_set("200");
+            } else {
+                msg->body_set("404");
+            }
+        }
+        if (service_name == "mmi.list")
+            {
+                if (msg->parts())
+                {
+                    auto item = msg->pop_front();
+                    if (item.isEmpty())
+                    {
+                        //                        qDebug() << "Sending list";
+
+                        for (auto procs = m_services.keyBegin(), end = m_services.keyEnd(); procs != end; ++procs)
+                        {
+                            qDebug() << (*procs);
+                            if (!procs->startsWith("mmi."))
+                                msg->push_back((*procs).toLatin1());
+                        }
+                    }
+                    else
+                    {
+                        qDebug() << "Searching Parameters info for" << client << item;
+                        if (m_services.contains(item))
+                        {
+                            if (m_services[item]->m_process.size() > 0)
+                            {
+                                if (m_services[item]->m_process.first()->m_plugins.contains(item))
+                                {
+                                    //                                    qDebug() << "Found item" << item;
+                                    qDebug() << m_services[item]->m_process.first()->m_plugins[item];
+                                    auto data = QCborValue::fromJsonValue(m_services[item]->m_process.first()->m_plugins[item]).toCbor();
+                                    msg->push_back(data);
+
+                                }
+                                else
+                                    qDebug() << "Badly registered plugin" << item << "No workers...";
+                            }
+                            else
+                            {
+                                qDebug() << "No workers for" << item;
+                            }
+
+                        }
+                        else
+                            qDebug() << "Service not found" << item;
+
+                    }
+                }
+                else
+                {
+                    //                    qDebug() << "Sending list";
+
+                    for (auto procs = m_services.keyBegin(), end = m_services.keyEnd(); procs != end; ++procs)
+                    {
+                        //                        qDebug() << (*procs);
+                        if (!procs->startsWith("mmi."))
+                            msg->push_back((*procs).toLatin1());
+                    }
+                }
+            }
+        if (service_name == "mmi.status")
+            {
+                // Count the number of finished process for this client & clean the list
+                int nb_finished_jobs = 0;
+                QList<service_call*> toCull;
+
+                for (auto& job: m_finished_jobs)
+                    if (job->client == client)
+                    {
+                        nb_finished_jobs++;
+                        toCull << job;
+                    }
+                for (auto& rm: toCull) m_finished_jobs.removeOne(rm);
+
+                msg->push_back(QString::number(nb_finished_jobs).toLatin1());
+
+                qDebug() << "Job Status: " << nb_finished_jobs << m_finished_jobs.size() << m_ongoing_jobs.size();
+            }
+
+
+
+        /*else
+            {
+                msg->body_set("501");
+            }*/
+
+
         msg->wrap(MDPC_CLIENT, service_name);
         msg->wrap(client, "");
         msg->send (*m_socket);
@@ -238,27 +490,59 @@ private:
     //  Deletes worker from all data structures, and destroys worker
 
     void
-    worker_delete (worker *&wrk, int disconnect)
+    worker_delete (worker *wrk, int disconnect)
     {
         assert (wrk);
         if (disconnect) {
+            qDebug() << "Explicit destruction";
             worker_send (wrk, (char*)MDPW_DISCONNECT, "", NULL);
         }
 
-        if (wrk->m_service) {
-            for(std::list<worker*>::iterator it = wrk->m_service->m_waiting.begin();
-                 it != wrk->m_service->m_waiting.end();) {
-                if (*it == wrk) {
-                    it = wrk->m_service->m_waiting.erase(it);
-                }
-                else {
-                    ++it;
-                }
-            }
-            wrk->m_service->m_workers--;
+
+        QList<service*> toCull;
+        for (auto srv : m_services)
+        {
+            if (srv->m_process.contains(wrk))
+                srv->m_process.removeAll(wrk);
+            if (srv->m_process.isEmpty())
+                toCull.append(srv);
         }
-        m_waiting.erase(wrk);
-        //  This implicitly calls the worker destructor
+
+
+        for (auto srv: toCull)
+        {
+            qDebug() << "Warning service" << srv->m_name << " has no more workers handling it";
+        }
+        if (toCull.size()!=0)
+              qDebug() << "We'll keep track of pending job to the missing services";
+
+        for (auto wt = m_waiting_threads.begin(), end = m_waiting_threads.end(); end != wt; )
+        {
+            if ((*wt)->m_worker == wrk)
+                wt = m_waiting_threads.erase(wt);
+            else
+                ++wt;
+        }
+
+        for (auto wt = m_workers_threads.begin(), end = m_workers_threads.end(); end != wt; )
+        {
+            if ((*wt)->m_worker == wrk)
+            {
+                delete (*wt);
+                wt = m_workers_threads.erase(wt);
+            }
+            else
+                ++wt;
+        }
+
+
+
+
+        qDebug() << "Cleaning Worker"
+                 << wrk;
+
+        //        m_workers_threads.remove(wrk);
+
         m_workers.remove(wrk->m_identity);
         delete wrk;
     }
@@ -274,83 +558,125 @@ private:
         assert (msg && msg->parts() >= 1);     //  At least, command
 
         auto command = msg->pop_front();
-        bool worker_ready = m_workers.count(sender)>0;
-        worker *wrk = worker_require (sender);
+        bool exists = m_workers.count(sender);
+       worker *wrk = worker_require (sender);
 
         if (command.compare (MDPW_READY) == 0) {
-            if (worker_ready)  {              //  Not first command in session
-                worker_delete (wrk, 1);
-            }
-            else {
+
+            {
                 if (sender.size() >= 4  //  Reserved service name
                     &&  sender.startsWith("mmi.")) {
                     worker_delete (wrk, 1);
                 } else {
                     //  Attach worker to service and mark as idle
-                    auto service_name = msg->pop_front ();
-                    wrk->m_service = service_require (service_name);
-                    wrk->m_service->m_workers++;
-                    worker_waiting (wrk);
+                    auto client  = msg->pop_front ();
+
+                    auto thread_id = msg->pop_front().toInt();
+
+                    worker_threads* th = nullptr;
+                    for (auto wt: m_workers_threads)
+                      if (wt->m_id == thread_id && wt->m_worker == wrk)
+                            {
+                                th = wt;
+                                break;
+                      }
+
+                    QList<service_call*> toCull;
+                    for (auto &job : m_ongoing_jobs)
+                      if (job->client == client && job->thread_id == thread_id)
+                      {
+                                toCull << job;
+                                th->parameters = nullptr;
+                                m_finished_jobs << job;
+                      }
+                    for (auto& j : toCull) m_ongoing_jobs.removeOne(j);
+
+
+                    wrk->available++;
+
+                    wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
+
+                    if (th)
+                    {
+                        m_waiting_threads.insert(th);
+                        if (!m_requests.empty())
+                          service_dispatch (service_require(m_requests.front()->path),  nullptr);
+                    }
                 }
             }
+            wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
         } else {
             if (command.compare (MDPW_REPLY) == 0) {
-                if (worker_ready) {
+//                if (worker_ready) {
                     //  Remove & save client return envelope and insert the
                     //  protocol header and service name, then rewrap envelope.
                     QString client = msg->unwrap ();
-                    msg->wrap (QString(MDPC_CLIENT), wrk->m_service->m_name);
+                    msg->wrap (QString(MDPC_CLIENT));//, wrk->m_service->m_name);
                     msg->wrap (client);
                     msg->send (*m_socket);
                     worker_waiting (wrk);
-                }
-                else {
-                    worker_delete (wrk, 1);
-                }
+                 wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
             } else {
                 if (command.compare (MDPW_HEARTBEAT) == 0) {
-                    if (worker_ready) {
-                        auto nbThreads = msg->pop_front();
                         wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
-                        m_workers_threads[wrk] = nbThreads.toInt();
-                    } else {
-                        worker_delete (wrk, 1);
+                    if (!exists)
+                    {
+                        worker_send(wrk, (char*)MDPW_PROCESSLIST, 0, 0);
                     }
+
+
                 } else {
                     if (command.compare (MDPW_DISCONNECT) == 0) {
                         worker_delete (wrk, 0);
                     } else
                         if (command.compare(MDPW_PROCESSLIST) == 0)
-                    {
-                        // Keep track of processes
-                        m_workers_threads[wrk] = msg->pop_front().toInt();
-                        // Nb workers avail for this
-                        auto data = msg->pop_front();
-                        while (data.size())
                         {
+                            // Keep track of processes
+                            auto nbThreads = msg->pop_front().toInt();
 
-//                            auto dat = QByteArray((const char*)data.c_str(), data.size());
-                            auto json = QJsonDocument::fromJson(data).object();
-                            qDebug() << json["Path"] << json["PluginVersion"];
-// a plugin version is "hash" "date" "time"
-// Se we'll have to store the plugin info, store the
-                            data = msg->pop_front();
+
+                            qDebug() << "Available Workers" << nbThreads;
+
+                            // Nb workers avail for this
+                            auto data = msg->pop_front();
+                            while (data.size())
+                            {
+                                //                            auto dat = QByteArray((const char*)data.c_str(), data.size());
+                                auto json = QJsonDocument::fromJson(data).object();
+                                auto path = json["Path"].toString();
+
+                                qDebug() << path << json["PluginVersion"];
+                                wrk->m_plugins[path] = json;
+
+                                data = msg->pop_front();
+
+                                auto srv = service_require(path);
+
+                                if (!srv->add_worker(wrk))
+                                    qDebug() << "Not adding worker to service";
+
+                                //                          QDateTime::fromString(json["PluginVersion"].toString().mid(8,19), "yyyy-MM-dd hh:mm:ss");
+                            }
+                            wrk->available = nbThreads;
+                            for (int i = 0; i < nbThreads; ++i)
+                            {
+                                auto w = new worker_threads(wrk, i);
+                                m_workers_threads.insert(w);
+                                m_waiting_threads.insert(w);
+                            }
+                            wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
+
+                            if (!m_requests.empty()) // we have requests and a server is back from the dead
+                                service_dispatch (service_require(m_requests.front()->path),  nullptr);
                         }
-
-
-
-
-
-                    }
-                    else
-                    {
-                        s_console ("E: invalid input message (%d)", (int) *command.data());
-                        msg->dump ();
-                    }
+                        else
+                        {
+                            s_console ("E: invalid input message (%d)", (int) *command.data());
+                            msg->dump ();
+                        }
                 }
             }
         }
-        delete msg;
     }
 
     //  ---------------------------------------------------------------------
@@ -385,11 +711,7 @@ private:
     worker_waiting (worker *worker)
     {
         assert (worker);
-        //  Queue to broker and service waiting lists
-        m_waiting.insert(worker);
-        worker->m_service->m_waiting.push_back(worker);
-        worker->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
-        // Attempt to process outstanding requests
+
         service_dispatch (worker->m_service, 0);
     }
 
@@ -401,7 +723,7 @@ private:
     void
     client_process (QString sender, zmsg *msg)
     {
-        assert (msg && msg->parts () >= 2);     //  Service name + body
+        assert (msg);     //  Service name + body
 
         auto service_name = msg->pop_front();
         service *srv = service_require (service_name);
@@ -452,6 +774,7 @@ public:
                     worker_process (sender, msg);
                 }
                 else {
+                    qDebug() << sender << header;
                     s_console ("E: invalid message:");
                     msg->dump ();
                     delete msg;
@@ -462,15 +785,74 @@ public:
             now = s_clock();
             if (now >= heartbeat_at) {
                 purge_workers ();
-                for (std::set<worker*>::iterator it = m_waiting.begin();
-                     it != m_waiting.end() && (*it)!=0; it++) {
-                    worker_send (*it, MDPW_HEARTBEAT);
-                }
+                for (auto wrk: m_workers)
+                    worker_send (wrk, MDPW_HEARTBEAT);
+
                 heartbeat_at += HEARTBEAT_INTERVAL;
                 now = s_clock();
             }
         }
     }
+
+
+    QCborMap recurseExpandParameters(QCborMap ob, QCborMap map)
+    {
+        QCborMap res;
+
+        for (auto kv = ob.begin(), ekv = ob.end(); kv != ekv; ++kv)
+        {
+            assert(map.contains(kv.key()));
+            QString id = map[kv.key()].toString();
+
+
+            if (kv.value().isMap())
+                res[id] = recurseExpandParameters(kv.value().toMap(), map);
+            else if (kv.value().isArray())
+            {
+                QCborArray r;
+                auto aa = kv.value().toArray();
+                for (auto ii: aa)
+                {
+                    if (ii.isMap())
+                        r.push_back(recurseExpandParameters(ii.toMap(),  map));
+                    else
+                        r.push_back(ii);
+                }
+                res[id] = r;
+            } else
+                res[id] = kv.value();
+        }
+        return res;
+    }
+
+    void start_job(worker* wrk, worker_threads* thread, service_call* job)
+    {
+
+        // Perform the parameter adjust
+
+        job->parameters = recurseExpandParameters(job->parameters, job->callMap);
+
+        job->parameters.insert(QString("ThreadID"), thread->m_id);
+        job->parameters.insert(QString("Client"), job->client);
+        job->thread_id = thread->m_id;
+
+//        qDebug() << job->parameters;
+        thread->parameters = job;
+
+        zmsg* msg = new zmsg();
+        msg->push_back(job->parameters.toCborValue().toCbor());
+        worker_send(wrk, (CHAR*)MDPW_REQUEST, job->path, msg);
+
+
+        m_requests.removeAll(job); // Remove the job from the requests
+        m_ongoing_jobs.append(job); // Append to the ongoing list
+
+        m_waiting_threads.remove(thread); // remove the thread from waiting list
+        wrk->available--; // adjust the work thread avail for this worker instance
+        delete msg;
+    }
+
+
 
 private:
     zmq::context_t * m_context;                  //  0MQ context
@@ -480,17 +862,59 @@ private:
 
     QString m_endpoint;                      //  Broker binds to this endpoint
 
-    QMap<QString, service*> m_services;  //  Hash of known services
 
+    QMap<QString, service*> m_services;  //  Hash of known services
     QMap<QString, worker*> m_workers;    //  Hash of known workers
 
-    QMap<worker*, int> m_workers_threads;
-    QMap<worker*, QMap<QString, QJsonObject> > m_workers_plugins;
+    QList<service_call* > m_requests; // List of pending requests
+    QList<service_call*> m_ongoing_jobs; // jobs that are running
+    QList<service_call*> m_finished_jobs;
 
-    std::set<worker*> m_waiting;              //  List of waiting workers
+    QSet<worker_threads*> m_workers_threads;
+    QSet<worker_threads*> m_waiting_threads;
+
+    // Behavior variables:
+    int low_job_number; // Defines what a low number of jobs is for the queue (to priorize)
+
+    //    std::set<worker*> m_waiting;              //  List of waiting workers
+
+    // We need to track the process to rewake it
 };
 
 
+// With this one we can have non homogeneous servers
+// e.g: not loading some plugin (like a plugin requiring GPU, which may not be available on the computer
+// so this worker will not try to call the plugin
 
+inline bool service::add_worker(worker *wrk)
+{
+
+    auto pl_time = QDateTime::fromString(wrk->m_plugins[m_name]["PluginVersion"].toString().mid(8,19), "yyyy-MM-dd hh:mm:ss");
+
+    //    qDebug() << m_name << "plugin_time" << pl_time;
+
+    bool added = false;
+
+    if (m_process.isEmpty())
+    {
+        m_process.push_back(wrk);
+        added = true;
+    }
+    else
+        for (auto w : m_process)
+        {
+            auto newtime = QDateTime::fromString(w->m_plugins[m_name]["PluginVersion"].toString().mid(8,19), "yyyy-MM-dd hh:mm:ss");
+            if (pl_time < newtime) // if all plugins in the list are older than the new clear
+                m_process.clear();
+
+            if ( pl_time <= newtime) // if the plugin time older or equal add new :D (since older would already have been cleared by previous stage
+            {
+                m_process.push_back(wrk);
+                added = true;
+            }
+        }
+
+    return added;
+}
 
 #endif // MDBROKER_HPP

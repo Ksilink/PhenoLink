@@ -435,8 +435,9 @@ QJsonObject CheckoutProcessPluginInterface::gatherData(qint64 time)
     ob["ProcessStartId"] = processStartId;
     auto d = QStringList() << "XP" << "DataHash" << "CommitName" << "ReplyTo"
                            << "Parameters" << "StartTime" << "TaskID" << "WorkID"
-                           <<"WellTags" << "PostProcesses" << "PostProcessesScreen"
-                          << "Process_hash" << "Project" << "Computer" << "Username";
+                           << "WellTags" << "PostProcesses" << "PostProcessesScreen"
+                           << "Process_hash" << "Project" << "Computer" << "Username"
+                           << "ThreadID" << "Client";
     for (auto & s: d)
         ob[s] = _callParams[s];
 
@@ -451,7 +452,7 @@ void CheckoutProcessPluginInterface::read(const QJsonObject &json)
 {
     _callParams = json;
     if (path != json["Path"].toString())
-    {
+   {
         qDebug() << "Warning algorithm is not properly called, wrong parameters"
                  << path << "vs" << json["Path"].toString();
         return;
@@ -466,7 +467,8 @@ void CheckoutProcessPluginInterface::read(const QJsonObject &json)
     QJsonArray params = json["Parameters"].toArray();
     for (int i = 0; i < params.size(); ++i)
     {
-        qDebug() << params[i].toObject()["Tag"] << params[i].toObject()["Value"];
+
+//        qDebug() << params[i].toObject()["Tag"] << params[i].toObject()["Value"];
         RegistrableParent* regs = _parameters[params[i].toObject()["Tag"].toString()];
         //qDebug() << params[i].toObject();
         if (!regs) qDebug() << "Error getting algorithm parameters" << params[i].toObject()["Tag"];
@@ -539,8 +541,6 @@ void CheckoutProcessPluginInterface::read(const QJsonObject &json)
 
     }
     json["ReturnData"] = rra;
-
-
 
 
 }
