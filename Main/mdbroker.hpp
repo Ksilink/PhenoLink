@@ -26,12 +26,18 @@
 #include <QMutex>
 
 
+
+
 QMutex access_mutex;
 
 
 //  We'd normally pull these from config data
 
-#define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
+#ifdef HEARTBEAT_LIVENESS
+#undef HEARTBEAT_LIVENESS
+#endif
+
+#define HEARTBEAT_LIVENESS  5       //  3-5 is reasonable
 #define HEARTBEAT_INTERVAL  2500    //  msecs
 #define HEARTBEAT_EXPIRY    HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
 
