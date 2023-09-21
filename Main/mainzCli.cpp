@@ -472,8 +472,12 @@ void startProcess(QString server, QString proc, QString commitName,  QStringList
     // Query the process list
     zmsg* req = new zmsg(proc.toLatin1());
     session.send("mmi.list", req);
+
     zmsg* reply = session.recv();
 
+    qDebug() << reply->parts();
+
+    assert(reply->pop_front() == "mmi.list");
 
     helper h;
 
@@ -483,7 +487,13 @@ void startProcess(QString server, QString proc, QString commitName,  QStringList
     h.setParams(proc, commitName, params, plates);
     h.setDump(dumpfile);
 
-    auto response =     reply->pop_front();
+    reply->pop_front();
+    auto response =    reply->pop_front();
+
+    qDebug() << "Response" << response;
+
+
+
 
     auto array = h.setupProcess(QCborValue::fromCbor(response).toMap().toJsonObject(),   QRegularExpression());
 
@@ -532,6 +542,7 @@ void startProcess(QString server, QString proc, QString commitName,  QStringList
             session.send("mmi.status", req);
             reply = session.recv();
             // analyze the reply
+            reply->pop_front();
             QString msg = reply->pop_front();
             int count = msg.toInt();
             finished += count;

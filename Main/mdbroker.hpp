@@ -392,9 +392,11 @@ private:
 
                         for (auto procs = m_services.keyBegin(), end = m_services.keyEnd(); procs != end; ++procs)
                         {
-                            qDebug() << (*procs);
                             if (!procs->startsWith("mmi."))
-                                msg->push_back((*procs).toLatin1());
+                                {
+                                    qDebug() << (*procs);
+                                    msg->push_back((*procs).toLatin1());
+                                }
                         }
                     }
                     else
