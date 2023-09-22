@@ -91,27 +91,39 @@ void show_console() {
 
 
 
-int forceNumaAll(int node)
+int forceNumaAll(int nodeindex)
 {
 
     HANDLE process = GetCurrentProcess();
 
-    DWORD_PTR processAffinityMask;
-    DWORD_PTR systemAffinityMask;
-    ULONGLONG  processorMask;
+    ULONG highestNode = -1;
 
-    if (!GetProcessAffinityMask(process, &processAffinityMask, &systemAffinityMask))
+    if (!GetNumaHighestNodeNumber(&highestNode))
+    {
+        qDebug() << "No NUMA node available";
+        qDebug() << GetLastError();
         return -1;
+    }
 
-    GetNumaNodeProcessorMask(node, &processorMask);
+    qDebug() << "Available NUMA node" << highestNode ;
+    if ((ULONG)nodeindex > highestNode)
+    {
+        qDebug() << "Requested Node above available nodes";
+        return -1;
+    }
 
-    processAffinityMask = processAffinityMask & processorMask;
 
-    BOOL success = SetProcessAffinityMask(process, processAffinityMask);
+    GROUP_AFFINITY node;
+    GetNumaNodeProcessorMaskEx(nodeindex, &node);
 
+
+    BOOL success = SetProcessAffinityMask(process, node.Mask);
+    qDebug() << success << GetLastError();
+    success = SetThreadGroupAffinity(GetCurrentThread(), &node, nullptr);
     qDebug() << success << GetLastError();
 
     return success;
+
 }
 
 #endif
