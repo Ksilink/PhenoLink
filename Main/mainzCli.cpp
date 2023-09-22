@@ -555,7 +555,7 @@ void startProcess(QString server, QString proc, QString commitName,  QStringList
             }
         }
         auto end = QDateTime::currentDateTime();
-        qDebug() << "\r\n" << "Runtime" << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms";
+        qDebug() << "\r\n" << "Runtime" << end.toMSecsSinceEpoch() - start.toMSecsSinceEpoch() << "ms";
 
     }
 

@@ -631,7 +631,7 @@ int main(int ac, char** av)
     }
     else
     { // We ain't on a windows system, so let's default the mapping to a default value
-        drive_map = "/mnt/shares/");
+        drive_map = "/mnt/shares/";
     }
 #endif
 
@@ -680,7 +680,7 @@ int main(int ac, char** av)
     ZMQThread thread(global_parameters, QThread::currentThread(), proxy, drive_map, verbose);
     thread.start();
 
-    return QApplication::exec();
+    return QCoreApplication::exec();
 }
 
 
