@@ -849,7 +849,7 @@ public:
 
         zmsg* msg = new zmsg();
         msg->push_back(job->parameters.toCborValue().toCbor());
-        worker_send(wrk, (CHAR*)MDPW_REQUEST, job->path, msg);
+        worker_send(wrk, (char*)MDPW_REQUEST, job->path, msg);
 
 
         m_requests.removeAll(job); // Remove the job from the requests
