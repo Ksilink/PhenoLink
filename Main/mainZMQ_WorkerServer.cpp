@@ -187,8 +187,14 @@ QJsonValue remap(QJsonValue v, QString map)
         return res;
     }
     else if (v.isObject())
-        return remap(v.toObject(), map);
-
+    {
+        QJsonObject res;
+        for (QJsonObject::iterator it = v.toObject().begin(); it != v.toObject().end(); ++it)
+        {
+            res[it.key()]=remap(it.value(), map);
+        }
+        return res;
+    }
     return v;
 }
 
