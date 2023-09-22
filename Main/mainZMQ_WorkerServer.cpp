@@ -29,7 +29,7 @@
 #include <Core/networkprocesshandler.h>
 
 #include "mdwrkapi.hpp"
-
+#include <system_error>
 
 extern int DllCoreExport read_semaphore;
 
@@ -98,10 +98,11 @@ int forceNumaAll(int nodeindex)
 
     ULONG highestNode = -1;
 
+
     if (!GetNumaHighestNodeNumber(&highestNode))
     {
         qDebug() << "No NUMA node available";
-        qDebug() << GetLastError();
+        qDebug() << QString::fromStdString(std::system_category().message(GetLastError()));
         return -1;
     }
 
@@ -118,9 +119,9 @@ int forceNumaAll(int nodeindex)
 
 
     BOOL success = SetProcessAffinityMask(process, node.Mask);
-    qDebug() << success << GetLastError();
+    qDebug() << success << QString::fromStdString(std::system_category().message(GetLastError()));
     success = SetThreadGroupAffinity(GetCurrentThread(), &node, nullptr);
-    qDebug() << success << GetLastError();
+    qDebug() << success << QString::fromStdString(std::system_category().message(GetLastError()));
 
     return success;
 
