@@ -164,6 +164,21 @@ QProcessEnvironment python_config;
 #include <checkout_python.h>
 #include <ZMQThread.h>
 
+QJsonValue remap(QJsonValue v, QString map);
+
+QJsonObject remap(QJsonObject ob, QString map)
+{
+    QJsonObject res;
+
+    for (QJsonObject::iterator it = ob.begin(); it != ob.end(); ++it)
+    {
+        res[it.key()]=remap(it.value(), map);
+    }
+
+    return res;
+}
+
+
 QJsonValue remap(QJsonValue v, QString map)
 {
 
@@ -180,7 +195,7 @@ QJsonValue remap(QJsonValue v, QString map)
     else if (v.isArray())
     {
         QJsonArray res;
-        for (auto item: v.toArray())
+        for (const auto & item: v.toArray())
         {
             res.append(remap(item, map));
         }
@@ -188,28 +203,12 @@ QJsonValue remap(QJsonValue v, QString map)
     }
     else if (v.isObject())
     {
-        QJsonObject res;
-        for (QJsonObject::iterator it = v.toObject().begin(); it != v.toObject().end(); ++it)
-        {
-            res[it.key()]=remap(it.value(), map);
-        }
-        return res;
+       v=remap(v.toObject(), map);
     }
     return v;
 }
 
 
-QJsonObject remap(QJsonObject ob, QString map)
-{
-    QJsonObject res;
-
-    for (QJsonObject::iterator it = ob.begin(); it != ob.end(); ++it)
-    {
-        res[it.key()]=remap(it.value(), map);
-    }
-
-    return res;
-}
 
 
 QJsonObject run_plugin(CheckoutProcessPluginInterface* plugin)
