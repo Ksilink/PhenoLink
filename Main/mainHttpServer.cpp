@@ -40,7 +40,7 @@ using namespace qhttp::server;
 extern int DllCoreExport read_semaphore;
 
 #include <opencv2/core/utility.hpp>
-
+#include <system_error>
 
 std::ofstream outfile("c:/temp/CheckoutServer_log.txt");
 
@@ -91,29 +91,41 @@ void show_console() {
 
 
 
-int forceNumaAll(int node)
+int forceNumaAll(int nodeindex)
 {
 
     HANDLE process = GetCurrentProcess();
 
-    DWORD_PTR processAffinityMask;
-    DWORD_PTR systemAffinityMask;
-    ULONGLONG  processorMask;
+    ULONG highestNode = -1;
 
-    if (!GetProcessAffinityMask(process, &processAffinityMask, &systemAffinityMask))
+
+    if (!GetNumaHighestNodeNumber(&highestNode))
+    {
+        qDebug() << "No NUMA node available";
+        qDebug() << QString::fromStdString(std::system_category().message(GetLastError()));
         return -1;
+    }
 
-    GetNumaNodeProcessorMask(node, &processorMask);
+    qDebug() << "Available NUMA node" << highestNode ;
+    if ((ULONG)nodeindex > highestNode)
+    {
+        qDebug() << "Requested Node above available nodes";
+        return -1;
+    }
 
-    processAffinityMask = processAffinityMask & processorMask;
 
-    BOOL success = SetProcessAffinityMask(process, processAffinityMask);
+    GROUP_AFFINITY node;
+    GetNumaNodeProcessorMaskEx(nodeindex, &node);
 
-    qDebug() << success << GetLastError();
+
+    BOOL success = SetProcessAffinityMask(process, node.Mask);
+    qDebug() << success << QString::fromStdString(std::system_category().message(GetLastError()));
+    success = SetThreadGroupAffinity(GetCurrentThread(), &node, nullptr);
+    qDebug() << success << QString::fromStdString(std::system_category().message(GetLastError()));
 
     return success;
-}
 
+}
 #endif
 
 void startup_execute(QString file)
