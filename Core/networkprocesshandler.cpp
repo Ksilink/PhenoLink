@@ -520,6 +520,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
     QJsonObject ob;
     ob["hash"] = hash;
 
+
     auto l = QStringList() << "TaskID"
                            << "DataHash"
                            << "WorkID";
@@ -545,6 +546,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
     {
         QSettings set;
         QString dbP = set.value("databaseDir", "L:").toString();
+
 #ifndef WIN32
         if (dbP.contains(":"))
             dbP = QString("/mnt/shares/") + dbP.replace(":", "");

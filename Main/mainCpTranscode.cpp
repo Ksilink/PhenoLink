@@ -159,7 +159,13 @@ public:
                     else if (finfo.isFile() && finfo.lastModified() > data.ts)
                     {
                         data.folder_mut.lock();
-                        data.fileFolderQueue[*rec].push_back(finfo.absoluteFilePath().mid(data.indir.length()));
+                        QString filepath = finfo.absoluteFilePath();
+                        if (filepath.endsWith(".tif") && data.tar > 0)
+                        { // advanced mode for tif / tar handling consider the tar as a folder
+                            data.fileFolderQueue[filepath.mid(0, filepath.size() -data.tar - 4)].push_back(filepath.mid(data.indir.length()));
+                        }
+                        else // basic mode process folder by folder
+                            data.fileFolderQueue[*rec].push_back(filepath.mid(data.indir.length()));
                         data.folder_mut.unlock();
 
                         //                        data.fileQueue.push(finfo.absoluteFilePath().mid(data.indir.length()));

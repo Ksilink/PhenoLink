@@ -908,9 +908,20 @@ void CheckoutProcess::finishedProcess(QString hash, QJsonObject result)
     //    qDebug() << "Removing" << hash;
 }
 
+
+
+
 unsigned CheckoutProcess::numberOfRunningProcess()
 {
     return  _status.size();
+}
+
+void CheckoutProcess::setNumberOfProcess(int nb)
+{
+
+    _status.clear();
+    for (int i = 0; i < nb; ++i)
+        _status[QString::number(i)]=nullptr;
 }
 
 void CheckoutProcess::exitServer()

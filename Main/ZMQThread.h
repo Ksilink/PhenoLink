@@ -13,6 +13,7 @@
 
 
 class CheckoutProcessPluginInterface;
+class CheckoutHttpClient;
 
 class ZMQThread : public QThread
 {
@@ -28,8 +29,9 @@ class ZMQThread : public QThread
     QMap<QString, CheckoutProcessPluginInterface*> _plugins;
 public:
 
-    ZMQThread(GlobParams& gp, QThread* parentThread, QString prx, QString dmap, bool ver): verbose(ver),
+    ZMQThread(GlobParams& gp, QThread* parentThread, QString prx, QString dmap, bool ver):
         global_parameters(gp),
+        verbose(ver),
         proxy(prx), drive_map(dmap),
         mainThread(parentThread), session(QString("tcp://%1").arg(proxy), "processes", gp, verbose)
     {
@@ -41,6 +43,9 @@ public:
     void startProcessServer(QString process, QJsonArray array);
 
     void thread_finished();
+
+protected:
+    QList<CheckoutHttpClient*> alive_replies;
 
 };
 

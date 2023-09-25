@@ -149,8 +149,8 @@ void startup_execute(QString file)
 
 
 int PhenoLinkOpenCVErrorCallback( int status, const char* func_name,
-                                const char* err_msg, const char* file_name,
-                                int line, void* )
+                                 const char* err_msg, const char* file_name,
+                                 int line, void* )
 {
 
     qDebug() << "OpenCV issued error";
@@ -203,7 +203,7 @@ QJsonValue remap(QJsonValue v, QString map)
     }
     else if (v.isObject())
     {
-       v=remap(v.toObject(), map);
+        v=remap(v.toObject(), map);
     }
     return v;
 }
@@ -253,17 +253,17 @@ QJsonObject run_plugin(CheckoutProcessPluginInterface* plugin)
 void ZMQThread::run()
 {
     QString srv;
-//    QList<QHostAddress> list = QNetworkInterface::allAddresses();
+    //    QList<QHostAddress> list = QNetworkInterface::allAddresses();
 
-//    for (QHostAddress &addr : list)
-//    {
-//        if (!addr.isLoopback())
-//            if (addr.protocol() == QAbstractSocket::IPv4Protocol)
-//                srv = QString("_%1").arg(addr.toString().replace(".", ""));
-//        if (!srv.isEmpty())
-//            break; // stop on non empty
-//    }
-//    NetworkProcessHandler::handler().setServerAddress(srv);
+    //    for (QHostAddress &addr : list)
+    //    {
+    //        if (!addr.isLoopback())
+    //            if (addr.protocol() == QAbstractSocket::IPv4Protocol)
+    //                srv = QString("_%1").arg(addr.toString().replace(".", ""));
+    //        if (!srv.isEmpty())
+    //            break; // stop on non empty
+    //    }
+    //    NetworkProcessHandler::handler().setServerAddress(srv);
 
 
     CheckoutProcess& procs = CheckoutProcess::handler();
@@ -307,7 +307,7 @@ void ZMQThread::run()
         //        reply = request;        //  Echo is complex... :-)
         qDebug() << "srv ok" <<  request->parts();
         auto obj = QCborValue::fromCbor(request->pop_front()).toJsonValue().toObject();
-//        qDebug() << obj["ThreadID"] << obj["Client"];
+        //        qDebug() << obj["ThreadID"] << obj["Client"];
         QJsonArray ob; ob.push_back(obj);
 
         startProcessServer(obj["Path"].toString(), ob);
@@ -317,7 +317,7 @@ void ZMQThread::run()
         delete request;
         reply = new zmsg("OK");
         reply->push_back(QString("%1").arg(procs.numberOfRunningProcess()).toLatin1());
-//        qDebug() << "Sending OK reply";
+        //        qDebug() << "Sending OK reply";
     }
 
     delete processlist;
@@ -380,6 +380,9 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
                                    params["XP"].toString());
 
             qDebug() << "Adding Process" << key;
+            CheckoutProcess::handler().setNumberOfProcess(CheckoutProcess::handler().numberOfRunningProcess()
+                                                          +1);
+
 
             QFuture<QJsonObject> fut = QtConcurrent::run(run_plugin, plugin);
             wa->setFuture(fut);
@@ -399,68 +402,62 @@ void ZMQThread::thread_finished()
     QFutureWatcher<QJsonObject>* wa = dynamic_cast<QFutureWatcher<QJsonObject>* >(sender());
     if (wa)
     {
+        CheckoutProcess::handler().setNumberOfProcess(CheckoutProcess::handler().numberOfRunningProcess()
+                                                      - 1);
+
+
         QJsonObject ob = wa->result();
         QString hash = ob["Process_hash"].toString();
 
-        //        CheckoutProcess::handler().finishedProcess(hash, ob);
-//        QMutexLocker locker(&process_mutex);
-
-//        //CheckoutProcessPluginInterface* intf = _status[hash];
-
-//        _status.remove(hash);
-//        _finished[hash] = ob;
-
-//        qDebug() << ob.keys();
-//        qDebug() << ob["ThreadID"] << ob["Client"];
 
         QString key = QString("%1@%2#%3#%4!%5")
                           .arg(ob["Username"].toString(), ob["Computer"].toString(),
                                ob["Path"].toString(), ob["WorkID"].toString(),
                                ob["XP"].toString());
 
-//        _peruser_futures[key].removeAll(wa) ;
 
-//        qDebug() << "Process" << key << "Remaining jobs" ;//<< _peruser_futures[key].size();
+        // TODO: Uncomment the bellow mentionned entries
+        // For debug removed the call to avoid writing useless data
 
-// TODO: Uncomment the bellow mentionned entries
-// For debug removed the call to avoid writing useless data
-//        QJsonArray data = NetworkProcessHandler::handler().filterObject(hash, ob, false);
-//        QCborArray bin = NetworkProcessHandler::handler().filterBinary(hash, ob);
+        // Assume the last thread is over if no more process is ongoing
+        QJsonArray data = NetworkProcessHandler::handler().filterObject(hash, ob,
+                                                                        (QThreadPool::globalInstance()->maxThreadCount()-QThreadPool::globalInstance()->activeThreadCount()) == 0);
+        QCborArray bin = NetworkProcessHandler::handler().filterBinary(hash, ob);
 
 
-// consider the storage over here
+        // consider the storage over here
         auto msg = new zmsg(ob["Client"].toString().toLatin1().data());
         msg->push_back(QString("%1").arg(ob["ThreadID"].toInt()).toLatin1());
         session.send_to_broker((char*)MDPW_READY, "", msg);
 
-// Handle the image transfers
-//        if (bin.size()!=0)
-//        {
-//            QString address = ob["ReplyTo"].toString();
-//            ///    qDebug() << hash << res << address;
-//            CheckoutHttpClient *client = NULL;
+        // Handle the image transfers
+        if (bin.size()!=0)
+        {
+            QString address = ob["ReplyTo"].toString();
+            ///    qDebug() << hash << res << address;
+            CheckoutHttpClient *client = NULL;
 
-//            for (CheckoutHttpClient *cl : alive_replies)
-//                if (address == cl->iurl.host())
-//                {
-//                    client = cl;
-//                }
+            for (CheckoutHttpClient *cl : alive_replies)
+                if (address == cl->iurl.host())
+                {
+                    client = cl;
+                }
 
-//            if (!client)
-//            {
-//                client = new CheckoutHttpClient(address, 8020);
-//                alive_replies << client;
-//            }
+            if (!client)
+            {
+                client = new CheckoutHttpClient(address, 8020);
+                alive_replies << client;
+            }
 
-//            //        for (auto b : bin)
-//            //        {
-//            //            // FIXME
-//            //            // Need to put back image on client
-//            ////            client->send(QString("/addImage/"), QString(), b.toCbor());
-//            //        }
-        // client->sendQueue(); // force the emission of data let's be synchronous need to wait
+            for (auto b : bin)
+            {
+                // FIXME
+                // Need to put back image on client
+                client->send(QString("/addImage/"), QString(), b.toCbor());
+            }
+            client->sendQueue(); // force the emission of data let's be synchronous need to wait
 
-//        }
+        }
 
 
 
@@ -609,8 +606,8 @@ int main(int ac, char** av)
 
     PluginManager::loadPlugins(true);
 
-//    Server server;
-//    server.setPort(port);
+    //    Server server;
+    //    server.setPort(port);
 
     if (data.contains("-conf"))
     {
@@ -640,13 +637,13 @@ int main(int ac, char** av)
     }
 #endif
 
-//    if (data.contains("-a"))
-//    {
-//        int idx = data.indexOf("-a")+1;
-//        QString affinity;
-//        if (data.size() > idx) affinity = data.at(idx);
-//        server.affinity(affinity)        ;
-//    }
+    //    if (data.contains("-a"))
+    //    {
+    //        int idx = data.indexOf("-a")+1;
+    //        QString affinity;
+    //        if (data.size() > idx) affinity = data.at(idx);
+    //        server.affinity(affinity)        ;
+    //    }
 
     if (data.contains("-rs"))
     {

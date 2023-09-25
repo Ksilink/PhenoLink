@@ -85,6 +85,9 @@ public:
 
     unsigned numberOfRunningProcess();
 
+    void setNumberOfProcess(int nb);
+
+
     void exitServer();
 
 
