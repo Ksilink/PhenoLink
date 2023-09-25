@@ -185,8 +185,9 @@ QJsonValue remap(QJsonValue v, QString map)
     if (v.isString())
     {
         QString value = v.toString();
-        if (value[1]==':')
+        if (value.size() > 2 && value[1]==':')
         {
+            qDebug() << map << value;
             QJsonValue res = map + value.remove(1,1);
             //            qDebug() << "Remap" << v << res;
             return res;
