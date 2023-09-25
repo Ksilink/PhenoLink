@@ -160,7 +160,7 @@ public:
                     {
                         data.folder_mut.lock();
                         QString filepath = finfo.absoluteFilePath();
-                        if (filepath.endsWith(".tif") && data.tar > 0)
+                        if (filepath.endsWith(".tif") && data.tar > 0  && filepath.split("/").last().size() > data.tar)
                         { // advanced mode for tif / tar handling consider the tar as a folder
                             data.fileFolderQueue[filepath.mid(0, filepath.size() -data.tar - 4)].push_back(filepath.mid(data.indir.length()));
                         }
