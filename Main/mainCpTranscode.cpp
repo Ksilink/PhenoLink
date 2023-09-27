@@ -140,6 +140,7 @@ public:
 
                 QDirIterator it(*rec);
                 int add = 0;
+                QSet<QString> tar_name;
                 while (it.hasNext())
                 {
                     QString file = it.next();
@@ -162,7 +163,9 @@ public:
                         QString filepath = finfo.absoluteFilePath();
                         if (filepath.endsWith(".tif") && data.tar > 0  && filepath.split("/").last().size() > data.tar)
                         { // advanced mode for tif / tar handling consider the tar as a folder
-                            data.fileFolderQueue[filepath.mid(0, filepath.size() -data.tar - 4)].push_back(filepath.mid(data.indir.length()));
+                            auto name = filepath.mid(0, filepath.size() -data.tar - 4);
+                            tar_name << name;
+                            data.fileFolderQueue[name].push_back(filepath.mid(data.indir.length()));
                         }
                         else // basic mode process folder by folder
                         {
@@ -175,7 +178,12 @@ public:
                     add++;
                 }
                 data.folder_mut.lock();
+
+                for (auto& tar: tar_name) data.ongoingfolder.remove(tar);
+
                 data.ongoingfolder.remove(*rec);
+
+
                 data.folder_mut.unlock();
 
                 data.prepared+=add;
@@ -331,10 +339,16 @@ public:
         {
             data.folder_mut.lock();
             if (data.fileFolderQueue.size() == 0) { data.folder_mut.unlock(); QThread::msleep(50); continue; }
-            auto folder = data.fileFolderQueue.firstKey();
-            if (data.fileFolderQueue.first().size() == 0) { data.folder_mut.unlock(); QThread::msleep(50); continue; }
-            auto infile = data.fileFolderQueue.first().takeFirst();
-            bool finished_folder = data.fileFolderQueue.first().empty() && ! data.ongoingfolder.contains(folder);
+            auto itfolder = data.fileFolderQueue.begin();
+            while (itfolder != data.fileFolderQueue.end() && itfolder.value().size() == 0)
+                ++itfolder;
+            if (itfolder == data.fileFolderQueue.end()) { data.folder_mut.unlock(); QThread::msleep(50); continue; }
+
+            auto folder = itfolder.key();
+            auto infile = itfolder.value().takeFirst();
+
+            bool finished_folder = itfolder.value().empty() && ! data.ongoingfolder.contains(folder);
+
             if (finished_folder) data.fileFolderQueue.remove(folder);
 
             data.folder_mut.unlock();
@@ -384,6 +398,7 @@ public:
                         if (r != ARCHIVE_OK)
                         {
                             qDebug()  << archive_error_string(ar);
+                            qApp->exit(-1);
                         }
                         data.tarobjects[folder] = ar;
                     }
@@ -462,12 +477,14 @@ public:
                                 if (r != ARCHIVE_OK)
                                 {
                                     qDebug()  <<  archive_error_string(ar);
+                                    qApp->exit(-1);
                                 }
 
                                 r = archive_write_data(ar, compressed.data(), compressed.size());
                                 if (r != compressed.size())
                                 {
                                     qDebug() << archive_error_string(ar);
+                                    qApp->exit(-1);
                                 }
 
 
@@ -590,20 +607,38 @@ public:
 //                qDebug() << "Closing tars";
                 if (data.tarobjects.contains(folder))
                 {
+
                     auto& tarf = data.tarobjects[folder];
                     while (data.tar_close[tarf]  > 0)
                         QThread::msleep(5);
 
-                    archive_write_close(tarf);
-                    archive_write_free(tarf);
+                    data.tar_lock.lock();
+                    int r = archive_write_close(tarf);
+                    if (r != ARCHIVE_OK)
+                    {
+                        qDebug()  <<  archive_error_string(tarf);
+                        qApp->exit(-1);
+                    }
+                    r =archive_write_free(tarf);
+
+                    if (r != ARCHIVE_OK)
+                    {
+                        qDebug()  <<  archive_error_string(tarf);
+                        qApp->exit(-1);
+                    }
 
                     data.tarobjects.remove(folder);
+                    data.tar_lock.unlock();
+
                     if (data.inplace)
                         for (auto& rm_file: data.tar_remove[folder])
                             if (!QFile::remove(rm_file))
                                 qDebug() << "File not removed" << rm_file;
                 }
+                data.tar_lock.lock();
                 data.tar_remove.remove(folder);
+                data.tar_lock.unlock();
+
             }
         }
     }
