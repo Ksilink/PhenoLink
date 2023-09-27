@@ -80,13 +80,13 @@ struct Data {
     QMutex mgroup0, mgroup1;
 
 
-    QMap<QString, QMap<QString, struct archive *> > tarobjects; // Folder + Tar file name
+    QMap<QString, struct archive *>  tarobjects; // Folder + Tar file name
     QMap<QString,  QStringList > tar_remove; // Folder + Tar file name + List of objects
     QMutex tar_lock;
     QMap<struct archive*, int > tar_close;
 
 
-
+    QSemaphore folderset;
 
     bool isrunning(){
         return (folderOver != 0
@@ -165,7 +165,9 @@ public:
                             data.fileFolderQueue[filepath.mid(0, filepath.size() -data.tar - 4)].push_back(filepath.mid(data.indir.length()));
                         }
                         else // basic mode process folder by folder
+                        {
                             data.fileFolderQueue[*rec].push_back(filepath.mid(data.indir.length()));
+                        }
                         data.folder_mut.unlock();
 
                         //                        data.fileQueue.push(finfo.absoluteFilePath().mid(data.indir.length()));
@@ -334,6 +336,7 @@ public:
             auto infile = data.fileFolderQueue.first().takeFirst();
             bool finished_folder = data.fileFolderQueue.first().empty() && ! data.ongoingfolder.contains(folder);
             if (finished_folder) data.fileFolderQueue.remove(folder);
+
             data.folder_mut.unlock();
 
             if (finished_folder)
@@ -367,11 +370,14 @@ public:
                     auto tarfile = data.outdir + infile.mid(0, infile.size() - data.tar - 4 ) + ".tar";
                     struct archive *ar = nullptr;
                     data.tar_lock.lock();
-                    if (data.tarobjects[folder].contains(tarfile))
-                        ar = data.tarobjects[folder][tarfile];
+                    if (data.tarobjects.contains(folder))
+                    {
+                        ar = data.tarobjects[folder];
+//                        qDebug() << "Using tar from" << folder;
+                    }
                     else
                     {
-//                        qDebug() << "Creating tar: " << tarfile << "(" << infile << ")";
+//                        qDebug() << "Creating tar: " << tarfile;// << "(" << infile << ")";
                         ar = archive_write_new();
                         archive_write_set_format(ar, ARCHIVE_FORMAT_TAR);
                         int r = archive_write_open_filename(ar, tarfile.toLatin1().data());
@@ -379,7 +385,7 @@ public:
                         {
                             qDebug()  << archive_error_string(ar);
                         }
-                        data.tarobjects[folder][tarfile] = ar;
+                        data.tarobjects[folder] = ar;
                     }
                     data.tar_close[ar]++;
                     data.tar_lock.unlock();
@@ -582,20 +588,21 @@ public:
             if (finished_folder && data.tar > 0)
             { // close all the open archives
 //                qDebug() << "Closing tars";
-                for (auto& tarf: data.tarobjects[folder])
+                if (data.tarobjects.contains(folder))
                 {
-                    while (data.tar_close[tarf] !=0)
-                        QThread::msleep(10);
+                    auto& tarf = data.tarobjects[folder];
+                    while (data.tar_close[tarf]  > 0)
+                        QThread::msleep(5);
 
                     archive_write_close(tarf);
                     archive_write_free(tarf);
-                }
-                data.tarobjects.remove(folder);
-                if (data.inplace)
-                    for (auto rm_file: data.tar_remove[folder])
-                        if (!QFile::remove(rm_file))
-                            qDebug() << "File not removed" << rm_file;
 
+                    data.tarobjects.remove(folder);
+                    if (data.inplace)
+                        for (auto& rm_file: data.tar_remove[folder])
+                            if (!QFile::remove(rm_file))
+                                qDebug() << "File not removed" << rm_file;
+                }
                 data.tar_remove.remove(folder);
             }
         }
