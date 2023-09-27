@@ -180,8 +180,9 @@ public:
                 data.folder_mut.lock();
 
                 for (auto& tar: tar_name) data.ongoingfolder.remove(tar);
-
                 data.ongoingfolder.remove(*rec);
+                if (data.fileFolderQueue[*rec].empty())
+                    data.fileFolderQueue.remove(*rec);
 
 
                 data.folder_mut.unlock();
@@ -641,6 +642,9 @@ public:
 
             }
         }
+
+
+    
     }
 
 private:
