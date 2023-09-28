@@ -260,6 +260,10 @@ QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher)
             ob["CommitName"] = commitName;
             if (sfm->getOwner())
                 ob["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
+
+            ob["Project"] = sfm->getOwner()->property("project");
+
+
             ob["WellTags"] = sfm->getTags().join(";");
 
 
@@ -281,7 +285,7 @@ QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher)
 
     if (!dump.isEmpty())
     {
-        qDebug() << procArray;
+//        qDebug() << procArray;
         // Save Json to file
         QFile saveFile(dump);
 

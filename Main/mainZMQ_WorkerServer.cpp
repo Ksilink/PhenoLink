@@ -306,7 +306,7 @@ void ZMQThread::run()
         //
 
         //        reply = request;        //  Echo is complex... :-)
-        qDebug() << "srv ok" <<  request->parts();
+//        qDebug() << "srv ok" <<  request->parts();
         auto obj = QCborValue::fromCbor(request->pop_front()).toJsonValue().toObject();
         //        qDebug() << obj["ThreadID"] << obj["Client"];
         QJsonArray ob; ob.push_back(obj);

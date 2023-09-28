@@ -534,7 +534,10 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
         return res;
     }
 
-    QString plate = ds["XP"].toString().replace("\\", "/").replace("/", ""), commit = ds["CommitName"].toString();
+    QString plate = ds["XP"].toString().replace("\\", "/"), commit = ds["CommitName"].toString();
+
+    if (plate.contains("/")) plate=plate.split("/").last();
+
     QString plateID = plate + commit;
 
     if (!plateData.contains(plateID))
