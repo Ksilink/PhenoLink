@@ -9,6 +9,7 @@
 //  Reliability parameters
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 
+#include <Dll.h>
 
 struct GlobParams
 {
@@ -20,7 +21,7 @@ struct GlobParams
 
 //  Structure of our class
 //  We access these properties only via class methods
-class mdwrk {
+class DllCoreExport mdwrk {
     GlobParams& global_parameters;
 public:
 

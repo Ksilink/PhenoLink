@@ -291,6 +291,7 @@ if(PLUGIN_IN_CORE)
 endif(PLUGIN_IN_CORE)
 
 #add_subdirectory(PluginManager)
+
 add_subdirectory(Core)
 add_subdirectory(qhttp)
 #add_subdirectory(Tags)

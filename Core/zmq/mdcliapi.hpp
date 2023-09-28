@@ -1,13 +1,14 @@
 #ifndef MDCLIAPI_HPP
 #define MDCLIAPI_HPP
 
+#include <Dll.h>
 #include "zmsg.hpp"
 #include "mdp.hpp"
 
 //  Structure of our class
 //  We access these properties only via class methods
 
-class mdcli {
+class  mdcli {
 public:
 
     //  ---------------------------------------------------------------------
@@ -52,8 +53,8 @@ public:
         m_client->setsockopt (ZMQ_LINGER, &linger, sizeof (linger));
         s_set_id(*m_client);
         m_client->connect (m_broker.toStdString());
-        if (m_verbose)
-            s_console ("I: connecting to broker at %s...", m_broker.toStdString());
+//        if (m_verbose)
+//            /*s_console*/ ("I: connecting to broker at %s...", m_broker.toStdString());
     }
 
 

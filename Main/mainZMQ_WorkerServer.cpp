@@ -28,7 +28,7 @@
 
 #include <Core/networkprocesshandler.h>
 
-#include "mdwrkapi.hpp"
+#include <zmq/mdwrkapi.hpp>
 #include <system_error>
 
 extern int DllCoreExport read_semaphore;
@@ -41,37 +41,27 @@ extern int DllCoreExport read_semaphore;
 
 QString storage_path;
 
-std::ofstream outfile("c:/temp/CheckoutServer_log.txt");
-
 void myMessageOutput(QtMsgType type, const QMessageLogContext &, const QString &msg)
 {
     QByteArray localMsg = msg.toLocal8Bit();
     QByteArray date = QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz").toLocal8Bit();
     switch (type) {
     case QtInfoMsg:
-        outfile << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         break;
     case QtDebugMsg:
-        outfile << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         break;
     case QtWarningMsg:
-        outfile  << date.constData() << " Warning  : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr  << date.constData() << " Warning  : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         break;
     case QtCriticalMsg:
-        outfile   << date.constData()  << " Critical : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr   << date.constData()  << " Critical : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         break;
     case QtFatalMsg:
-        outfile  << date.constData() << " Fatal    : "<< localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr  << date.constData() << " Fatal    : "<< localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         abort();
-
     }
-
-    outfile.flush();
 }
 
 #if WIN32
@@ -162,7 +152,7 @@ int PhenoLinkOpenCVErrorCallback( int status, const char* func_name,
 QProcessEnvironment python_config;
 
 #include <checkout_python.h>
-#include <ZMQThread.h>
+#include "ZMQThread.h"
 
 QJsonValue remap(QJsonValue v, QString map);
 
@@ -327,6 +317,14 @@ void ZMQThread::run()
 
 
 
+inline ZMQThread::ZMQThread(GlobParams &gp, QThread *parentThread, QString prx, QString dmap, bool ver):
+    global_parameters(gp),
+    verbose(ver),
+    proxy(prx), drive_map(dmap),
+    mainThread(parentThread), session(QString("tcp://%1").arg(proxy), "processes", gp, verbose)
+{
+
+}
 
 void ZMQThread::startProcessServer(QString process, QJsonArray array)
 {

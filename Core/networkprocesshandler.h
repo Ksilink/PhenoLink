@@ -18,6 +18,8 @@ extern  QTextStream *hash_logfile;
 //    quint16      port;
 //};
 
+#include <zmq/mdcliapi.hpp>
+
 #include "qhttp/qhttpserver.hpp"
 #include "qhttp/qhttpserverconnection.hpp"
 #include "qhttp/qhttpserverrequest.hpp"
@@ -101,7 +103,7 @@ public:
     void getParameters(QString process);
     void setParameters(QJsonObject ob);
 
-    void sendCommand(QString par);
+    QString sendCommand(QString par);
 
     void startProcess(QString process, QJsonArray ob);
     void startProcess(CheckoutHttpClient *h, QString process, QJsonArray ob);
@@ -133,7 +135,9 @@ public:
     QCborArray filterBinary(QString hash, QJsonObject ds);
     QJsonArray filterObject(QString hash, QJsonObject ds, bool last_one=false);
 
+    mdcli& getSession();
 
+    int FinishedJobCount();
 
 private slots:
     void displayError(QAbstractSocket::SocketError socketError);
@@ -148,6 +152,11 @@ signals:
     void finishedJob(int nb);
 
 protected:
+    // ZMQ Session object
+    mdcli* session;
+
+
+
     // Allows to link a process with a network connection
     QList<CheckoutHttpClient*> activeHosts;
 
@@ -162,7 +171,7 @@ protected:
     bool _waiting_Update;
 
     int last_serv_pos;
-    QFile* data;
+//    QFile* data;
 
     // For datastorage
 

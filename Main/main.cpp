@@ -23,7 +23,7 @@
     #include <windows.h>
     #include <wincon.h>
     #include <QtWebView/QtWebView>
-    
+
 #endif
 
 #include <QStyleFactory>
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
     }
 
 
-    NetworkProcessHandler::handler().establishNetworkAvailability();
+//    NetworkProcessHandler::handler().establishNetworkAvailability();
 
     PluginManager::loadPlugins();
     // Start the network based process plugins

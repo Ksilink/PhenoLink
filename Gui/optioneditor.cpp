@@ -298,12 +298,8 @@ GlobalOptions::GlobalOptions(QWidget *parent): QWidget(parent)
 
 
 
-void GlobalOptions::ServGui(QStringList var, int i,
-                            QList<QVariant> ports, QGridLayout* serv_layout,
-                            bool isServ)
+void GlobalOptions::ServGui(QString serv,  int port, QGridLayout* serv_layout)
 {
-    QString serv = var.at(i);
-    int port = ports.at(i).toInt();
 
     serverhost = new QLineEdit(serv);
     serverhost->setToolTip("Default: 127.0.0.1");
@@ -313,32 +309,13 @@ void GlobalOptions::ServGui(QStringList var, int i,
     serverPort->setMinimum(0);
     serverPort->setMaximum(std::numeric_limits<unsigned short>::max());
     serverPort->setValue(port);
-    serverPort->setToolTip("Default: 13378");
+    serverPort->setToolTip("Default: 13555");
     connect(serverPort, SIGNAL(valueChanged(int)), this, SLOT(updatePaths()));
 
-    serv_layout->addWidget(new QLabel("Server Host"), i, 0);
-    serv_layout->addWidget(serverhost, i, 1);
-    serv_layout->addWidget(new QLabel("Server Port"), i, 2);
-    serv_layout->addWidget(serverPort, i, 3);
-
-    if (i > 0)
-    {
-        QToolButton* but = new QToolButton;
-        but->setText("-");
-        but->setObjectName(QString("%1").arg(i));
-        connect(but, SIGNAL(clicked(bool)), this, SLOT(delServer()));
-        serv_layout->addWidget(but, i, 4);
-    }
-
-    if (isServ)
-    {
-        QToolButton* but = new QToolButton;
-        but->setText("+");
-        but->setObjectName(QString("%1").arg(i));
-        connect(but, SIGNAL(clicked(bool)), this, SLOT(addServer()));
-
-        serv_layout->addWidget(but, i, 5);
-    }
+    serv_layout->addWidget(new QLabel("Server Host"), 0, 0);
+    serv_layout->addWidget(serverhost, 0, 1);
+    serv_layout->addWidget(new QLabel("Server Port"), 0, 2);
+    serv_layout->addWidget(serverPort, 0, 3);
 }
 
 QWidget *GlobalOptions::features()
@@ -451,13 +428,10 @@ QWidget *GlobalOptions::networkOptions()
     QGridLayout* serv_layout = new QGridLayout;
     serv_layout->setObjectName("ServLayout");
 
-    QStringList var = set.value("Server", QStringList() << "127.0.0.1").toStringList();
-    QList<QVariant> ports = set.value("ServerP", QList<QVariant>() << QVariant((int)13378)).toList();
+    QString var = set.value("ZMQServer",  "127.0.0.1").toString();
+    int ports = set.value("ZMQServerPort", 13555).toInt();
 
-    for (int i = 0; i < var.size(); ++i)
-    {
-        ServGui(var, i, ports, serv_layout, i == (var.size()-1));
-    }
+    ServGui(var, ports, serv_layout);
 
     //    QWidget* wid = new QWidget;
     //    wid->setLayout(serv_layout);
@@ -676,19 +650,19 @@ void GlobalOptions::updatePaths()
     //    this->parentWidget()->startTimer(refreshRate->value());
 
 
-    QStringList var;
-    QList<QVariant> ports;
+    QString var;
+    int ports;
     QGridLayout* lay = findChild<QGridLayout*>("ServLayout");
     for (int i = 0; i < lay->rowCount(); ++i)
     {
         QLineEdit* ed = qobject_cast<QLineEdit*>(lay->itemAtPosition(i, 1)->widget());
         QSpinBox* sp = qobject_cast<QSpinBox*>(lay->itemAtPosition(i, 3)->widget());
 
-        if (ed) var << ed->text();
-        if (sp) ports << sp->value();
+        if (ed) var = ed->text();
+        if (sp) ports = sp->value();
     }
-    set.setValue("Server", var);
-    set.setValue("ServerP", ports);
+    set.setValue("ZMQServer", var);
+    set.setValue("ZMQServerPort", ports);
 
 
     if (dashhost)
@@ -735,71 +709,6 @@ void printParent(QObject* ob, int pos = 0)
     //    qDebug() << pos << ob->objectName();
     if (ob->parent())
         printParent(ob->parent(), pos + 1);
-}
-
-
-void GlobalOptions::addServer()
-{
-    QSettings set;
-
-    int send = sender()->objectName().toInt();
-    QStringList var = set.value("Server", QStringList() << "127.0.0.1").toStringList();
-    QList<QVariant> ports = set.value("ServerP", QList<QVariant>() << QVariant((int)13378)).toList();
-
-    var.insert(send, "127.0.0.1");
-    ports.insert(send, 13378);
-
-    set.setValue("Server", var);
-    set.setValue("ServerP", ports);
-
-    QGridLayout* servl =  qobject_cast<QWidget*>(sender()->parent())->findChild<QGridLayout*>("ServLayout");
-    servl->itemAtPosition(send, 5)->widget()->hide();
-
-    ServGui(var, send+1, ports, servl, true);    return;
-
-    send = sender()->objectName().toInt();
-    var = set.value("Server", QStringList() << "127.0.0.1").toStringList();
-    ports = set.value("ServerP", QList<QVariant>() << QVariant((int)13378)).toList();
-
-    var.removeAt(send);
-    ports.removeAt(send);
-
-    set.setValue("Server", var);
-    set.setValue("ServerP", ports);
-}
-
-void GlobalOptions::delServer()
-{
-    QSettings set;
-
-    int send = sender()->objectName().toInt();
-    QStringList var = set.value("Server", QStringList() << "127.0.0.1").toStringList();
-    QList<QVariant> ports = set.value("ServerP", QList<QVariant>() << QVariant((int)13378)).toList();
-
-    var.removeAt(send);
-    ports.removeAt(send);
-
-    set.setValue("Server", var);
-    set.setValue("ServerP", ports);
-
-    // Need to check if on the right object... may be wrong right now
-    QGridLayout* servl =  qobject_cast<QWidget*>(sender()->parent())->findChild<QGridLayout*>("ServLayout");
-
-    for (int i = 0; i < 6; ++i)
-        if (servl->itemAtPosition(send, i) &&
-                servl->itemAtPosition(send, i)->widget())
-            servl->itemAtPosition(send, i)->widget()->hide();
-    return;
-
-    send = sender()->objectName().toInt();
-    var = set.value("Server", QStringList() << "127.0.0.1").toStringList();
-    ports = set.value("ServerP", QList<QVariant>() << QVariant((int)13378)).toList();
-
-    var.removeAt(send);
-    ports.removeAt(send);
-
-    set.setValue("Server", var);
-    set.setValue("ServerP", ports);
 }
 
 

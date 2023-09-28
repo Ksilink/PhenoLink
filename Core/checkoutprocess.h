@@ -11,6 +11,9 @@
 #include "checkoutprocessplugininterface.h"
 
 
+
+
+
 inline bool isVectorImageAndImageType(QJsonObject obj,  QString& imgType, QStringList& metaData)
 {
     bool asVectorImage = false;
@@ -179,6 +182,63 @@ protected:
 
 };
 
+inline QCborMap recurseSimplify(QJsonObject ob, QMap<QString, int>& mapName, QCborMap& map)
+{
+    QCborMap factorized;
 
+    for (auto kv = ob.begin(), ekv = ob.end(); kv != ekv; ++kv)
+    {
+
+        if (!mapName.contains(kv.key()))
+        {
+            mapName[kv.key()] = mapName.size();
+            map[mapName[kv.key()]] = kv.key();
+        }
+
+        int id = mapName[kv.key()];
+
+        if (kv.value().isObject())
+            factorized[id] = recurseSimplify(kv.value().toObject(), mapName, map);
+        else if (kv.value().isArray())
+        {
+            QCborArray r;
+            auto aa = kv.value().toArray();
+            for (auto ii: aa)
+            {
+                if (ii.isObject())
+                    r.push_back(recurseSimplify(ii.toObject(), mapName, map));
+                else
+                    r.push_back(QCborValue::fromJsonValue(ii));
+            }
+            factorized[id] = r;
+        }
+
+        else
+            factorized[id] = QCborValue::fromJsonValue(kv.value());
+    }
+
+    return factorized;
+
+}
+
+
+inline QCborArray simplifyArray(QJsonArray& in)
+{
+    QCborArray res;
+
+    QMap<QString, int> mapName;
+    QCborMap map;
+
+    for (auto item: in)
+    {
+        QJsonObject ob = item.toObject();
+
+        res.push_back(recurseSimplify(ob, mapName, map));
+    }
+    res.push_front(map);
+
+    return res;
+
+}
 
 #endif // CHECKOUTPROCESS_H

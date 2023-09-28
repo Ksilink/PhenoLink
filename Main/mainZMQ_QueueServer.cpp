@@ -28,12 +28,10 @@
 
 #define ZMQ_STATIC
 
-#include "mdwrkapi.hpp"
-#include "mdbroker.hpp"
+#include <zmq/mdwrkapi.hpp>
+#include <zmq/mdbroker.hpp>
 
 QString storage_path;
-
-std::ofstream outfile("c:/temp/CheckoutServer_log.txt");
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &, const QString &msg)
 {
@@ -41,29 +39,22 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &, const QString &
     QByteArray date = QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz").toLocal8Bit();
     switch (type) {
     case QtInfoMsg:
-        outfile << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         break;
     case QtDebugMsg:
-        outfile << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr << date.constData() << " Debug    : " <<  localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         break;
     case QtWarningMsg:
-        outfile  << date.constData() << " Warning  : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr  << date.constData() << " Warning  : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         break;
     case QtCriticalMsg:
-        outfile   << date.constData()  << " Critical : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr   << date.constData()  << " Critical : " << localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         break;
     case QtFatalMsg:
-        outfile  << date.constData() << " Fatal    : "<< localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         std::cerr  << date.constData() << " Fatal    : "<< localMsg.constData() << std::endl;//, context.file, context.line, context.function);
         abort();
 
     }
-
-    outfile.flush();
 }
 
 #if WIN32

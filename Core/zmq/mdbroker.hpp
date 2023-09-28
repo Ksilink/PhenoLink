@@ -27,6 +27,7 @@
 
 
 
+#include <Dll.h>
 
 QMutex access_mutex;
 
@@ -44,7 +45,7 @@ QMutex access_mutex;
 struct service;
 
 
-struct service_call
+struct  service_call
 {
     QString path; // The called service
     QString project; // The project involved for priority mapping
@@ -63,7 +64,7 @@ struct service_call
 
 
 //  This defines one worker, idle or active
-struct worker
+struct  worker
 {
     QString m_identity;   //  Address of worker
     QString m_name; // name of the worker
@@ -85,7 +86,7 @@ struct worker
 
 
 // this define a computing entity
-struct worker_threads
+struct  worker_threads
 {
     worker_threads(worker* wrk, int id): m_worker(wrk), m_id(id), parameters(0)
     {
@@ -99,14 +100,9 @@ struct worker_threads
 
 
 //  This defines a single service
-struct service
+struct DllCoreExport service
 {
-    ~service ()
-    {
-        for(size_t i = 0; i < m_requests.size(); i++) {
-            delete m_requests[i];
-        }
-    }
+    ~service ();
 
     QString m_name;             //  Service name
     std::deque<zmsg*> m_requests;   //  List of client requests
@@ -443,20 +439,22 @@ private:
         if (service_name == "mmi.status")
             {
                 // Count the number of finished process for this client & clean the list
-                int nb_finished_jobs = 0;
-                QList<service_call*> toCull;
-
-                for (auto& job: m_finished_jobs)
-                    if (job->client == client)
-                    {
-                        nb_finished_jobs++;
-                        toCull << job;
-                    }
-                for (auto& rm: toCull) m_finished_jobs.removeOne(rm);
+                int nb_finished_jobs =  clear_list(m_finished_jobs, client);
 
                 msg->push_back(QString::number(nb_finished_jobs).toLatin1());
 
-                qDebug() << "Job Status: " << nb_finished_jobs << m_finished_jobs.size() << m_ongoing_jobs.size();
+//                qDebug() << "Job Status: " << nb_finished_jobs << m_finished_jobs.size() << m_ongoing_jobs.size();
+            }
+
+        if (service_name == "mmi.cancel")
+            {
+                // Cancel all the jobs for this client
+                int nb_canceled = clear_list(m_requests, client);
+
+                clear_list(m_ongoing_jobs, client);
+                clear_list(m_finished_jobs, client);
+
+                msg->push_back(QString::number(nb_canceled).toLatin1());
             }
 
 
@@ -860,6 +858,22 @@ public:
         delete msg;
     }
 
+    int clear_list(QList<service_call*>& list, QString client)
+    {
+
+        QList<service_call*> toCull;
+        int nb_culled = 0;
+        for (auto& job: list)
+            if (job->client == client)
+            {
+                nb_culled++;
+                toCull << job;
+            }
+        for (auto& rm: toCull) list.removeOne(rm);
+
+        return nb_culled;
+    }
+
 
 
 private:
@@ -890,39 +904,5 @@ private:
 };
 
 
-// With this one we can have non homogeneous servers
-// e.g: not loading some plugin (like a plugin requiring GPU, which may not be available on the computer
-// so this worker will not try to call the plugin
-
-inline bool service::add_worker(worker *wrk)
-{
-
-    auto pl_time = QDateTime::fromString(wrk->m_plugins[m_name]["PluginVersion"].toString().mid(8,19), "yyyy-MM-dd hh:mm:ss");
-
-    //    qDebug() << m_name << "plugin_time" << pl_time;
-
-    bool added = false;
-
-    if (m_process.isEmpty())
-    {
-        m_process.push_back(wrk);
-        added = true;
-    }
-    else
-        for (auto w : m_process)
-        {
-            auto newtime = QDateTime::fromString(w->m_plugins[m_name]["PluginVersion"].toString().mid(8,19), "yyyy-MM-dd hh:mm:ss");
-            if (pl_time < newtime) // if all plugins in the list are older than the new clear
-                m_process.clear();
-
-            if ( pl_time <= newtime) // if the plugin time older or equal add new :D (since older would already have been cleared by previous stage
-            {
-                m_process.push_back(wrk);
-                added = true;
-            }
-        }
-
-    return added;
-}
 
 #endif // MDBROKER_HPP

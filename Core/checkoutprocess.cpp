@@ -574,7 +574,7 @@ void CheckoutProcess::updatePath()
 
 void CheckoutProcess::receivedParameters(QJsonObject obj)
 {
-    //  qDebug() << obj;
+//      qDebug() << obj;
     QString process = obj["Path"].toString();
     _params[process] = obj;
     emit parametersReady(obj);

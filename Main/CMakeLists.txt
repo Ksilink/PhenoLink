@@ -80,15 +80,14 @@ install(TARGETS plcli COMPONENT applications DESTINATION bin)
 
 
 
-add_executable(plzcli  mainzCli.cpp   zmsg.cpp mainzCli.h ${AppRCFILE}
-    mdcliapi.hpp )
+add_executable(plzcli  mainzCli.cpp   mainzCli.h ${AppRCFILE} )
 
 #target_compile_definitions(plcli PUBLIC  -DGitPluginDate="")
 target_include_directories(plzcli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 add_dependencies (plzcli PhenoLinkGui PhenoLinkCore)
 
 if (WIN32)
-    target_link_libraries(plzcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static )
+    target_link_libraries(plzcli ${CheckoutLibs} PhenoLinkCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static )
 
 #    if ($<CONFIG:Debug>)
 #    else()
@@ -101,7 +100,7 @@ if (WIN32)
 #    endif()
 
 else()
-    target_link_libraries(plzcli ${CheckoutLibs} QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static )
+    target_link_libraries(plzcli ${CheckoutLibs} PhenoLinkCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static )
 endif(WIN32)
 
 install(TARGETS plzcli COMPONENT applications DESTINATION bin)
@@ -188,12 +187,11 @@ else()
 endif(WIN32)
 
 install(TARGETS PhenoLinkQueueServer COMPONENT applications DESTINATION bin)
-add_dependencies (PhenoLinkQueueServer PhenoLinkGui PhenoLinkCore)
+add_dependencies (PhenoLinkQueueServer  PhenoLinkCore)
 
 
 
-add_executable(PhenoLinkZMQServer mainZMQ_QueueServer.cpp mdbroker.hpp mdwrkapi.hpp mdp.hpp zmsg.hpp zhelpers.hpp checkout_arrow.h checkout_python.h ${SrvRCFILE}
-    zmsg.cpp )
+add_executable(PhenoLinkZMQServer mainZMQ_QueueServer.cpp  checkout_arrow.h checkout_python.h ${SrvRCFILE} )
 
 target_include_directories(PhenoLinkZMQServer PUBLIC ${ZeroMQ_INCLUDE_DIR} ${cppzmq_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 # target_link_libraries(main PRIVATE cppzmq cppzmq-static)
@@ -215,15 +213,12 @@ else()
 endif(WIN32)
 
 install(TARGETS PhenoLinkZMQServer COMPONENT applications DESTINATION bin)
-add_dependencies (PhenoLinkZMQServer PhenoLinkGui PhenoLinkCore)
+add_dependencies (PhenoLinkZMQServer PhenoLinkCore)
 
 
 
 
-add_executable(PhenoLinkZMQWorker mainZMQ_WorkerServer.cpp mdbroker.hpp  mdp.hpp zmsg.hpp   zmsg.cpp zhelpers.hpp checkout_arrow.h checkout_python.h ${SrvRCFILE}
-    ZMQThread.h
-    mdwrkapi.hpp
-    mdwrkapi.cpp )
+add_executable(PhenoLinkZMQWorker mainZMQ_WorkerServer.cpp ZMQThread.h  checkout_arrow.h checkout_python.h ${SrvRCFILE} )
 
 target_include_directories(PhenoLinkZMQWorker PUBLIC ${ZeroMQ_INCLUDE_DIR} ${cppzmq_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 # target_link_libraries(main PRIVATE cppzmq cppzmq-static)

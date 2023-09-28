@@ -28,14 +28,7 @@
 /* In Header */
 #include <QLoggingCategory>
 
-
-//#include "qhttp/qhttpserver.hpp"
-//#include "qhttp/qhttpserverconnection.hpp"
-//#include "qhttp/qhttpserverrequest.hpp"
-//#include "qhttp/qhttpserverresponse.hpp"
-
-
-#include "mdcliapi.hpp"
+#include <zmq/mdcliapi.hpp>
 
 
 #include "checkout_arrow.h"
@@ -329,9 +322,9 @@ void dumpProcess(QString server, QString proc = QString())
     zmsg* req = proc.isEmpty() ? new zmsg() : new zmsg(proc.toLatin1());
     session.send("mmi.list", req);
     zmsg* reply = session.recv();
-
     if (reply)
     {
+        reply->pop_front();
         if (proc.isEmpty())
             while (reply->parts())
                 qDebug() << reply->pop_front();
@@ -408,64 +401,7 @@ void showPlate(ExperimentFileModel* efm)
     std::cout << "Plate contains " << wells << "wells" << std::endl;
 }
 
-QCborMap recurseSimplify(QJsonObject ob, QMap<QString, int>& mapName, QCborMap& map)
-{
-    QCborMap factorized;
 
-    for (auto kv = ob.begin(), ekv = ob.end(); kv != ekv; ++kv)
-    {
-
-        if (!mapName.contains(kv.key()))
-        {
-            mapName[kv.key()] = mapName.size();
-            map[mapName[kv.key()]] = kv.key();
-        }
-
-        int id = mapName[kv.key()];
-
-        if (kv.value().isObject())
-            factorized[id] = recurseSimplify(kv.value().toObject(), mapName, map);
-        else if (kv.value().isArray())
-        {
-            QCborArray r;
-            auto aa = kv.value().toArray();
-            for (auto ii: aa)
-            {
-                if (ii.isObject())
-                    r.push_back(recurseSimplify(ii.toObject(), mapName, map));
-                else
-                    r.push_back(QCborValue::fromJsonValue(ii));
-            }
-            factorized[id] = r;
-        }
-
-        else
-            factorized[id] = QCborValue::fromJsonValue(kv.value());
-    }
-
-    return factorized;
-
-}
-
-
-QCborArray simplifyArray(QJsonArray& in)
-{
-    QCborArray res;
-
-    QMap<QString, int> mapName;
-    QCborMap map;
-
-    for (auto item: in)
-    {
-        QJsonObject ob = item.toObject();
-
-        res.push_back(recurseSimplify(ob, mapName, map));
-    }
-    res.push_front(map);
-
-    return res;
-
-}
 
 void startProcess(QString server, QString proc, QString commitName,  QStringList params, QStringList plates, QString dumpfile, bool wait)
 {

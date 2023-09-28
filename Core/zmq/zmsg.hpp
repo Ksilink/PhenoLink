@@ -15,10 +15,11 @@
 
 #include <QMutex>
 
+#include <Dll.h>
 
 
 
-class zmsg {
+class DllCoreExport zmsg {
 public:
 //    typedef std::basic_string<unsigned char> ustring;
     typedef QByteArray ustring;
