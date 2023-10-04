@@ -166,7 +166,6 @@ int main(int ac, char** av)
     if (data.contains("-t"))
     {
         int idx = data.indexOf("-t")+1;
-        QString file;
         if (data.size() > idx) storage_path = data.at(idx);
         qDebug() << "Setting Storage path :" << storage_path;
     }
@@ -197,6 +196,7 @@ int main(int ac, char** av)
     s_catch_signals ();
 
     broker brk(verbose);
+    brk.setpython_env(python_config);
 
     brk.bind (QString("tcp://*:%1").arg(port));
 

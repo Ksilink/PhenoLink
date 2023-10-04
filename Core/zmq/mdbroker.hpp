@@ -24,10 +24,15 @@
 #include <QCborArray>
 #include <QCborValue>
 #include <QMutex>
+#include <QProcess>
+#include <QtConcurrent>
+#include <QSettings>
 
 
 
 #include <Dll.h>
+#include <Main/checkout_arrow.h>
+#include <Main/checkout_python.h>
 
 QMutex access_mutex;
 
@@ -335,7 +340,7 @@ private:
                 if (thi->m_worker == wrk)
                 {
                     th = thi;
-                        break;
+                    break;
                 }
 
             if (th != nullptr)
@@ -382,11 +387,11 @@ private:
                 // Let's send some work
                 start_job(wrk, th, job)
 
-                ;
+                    ;
 
             }
-//            else
-//                qDebug() << "No worker threads found for worker";
+            //            else
+            //                qDebug() << "No worker threads found for worker";
 
         }
 
@@ -427,28 +432,28 @@ private:
             auto item = msg->pop_front();
             if (item.isEmpty())
             {
-//                qDebug() << "Sending list";
+                //                qDebug() << "Sending list";
 
                 for (auto procs = m_services.keyBegin(), end = m_services.keyEnd(); procs != end; ++procs)
                 {
                     if (!procs->startsWith("mmi."))
                     {
-//                        qDebug() << (*procs);
+                        //                        qDebug() << (*procs);
                         msg->push_back((*procs).toLatin1());
                     }
                 }
             }
             else
             {
-//                qDebug() << "Searching Parameters info for" << client << item;
+                //                qDebug() << "Searching Parameters info for" << client << item;
                 if (m_services.contains(item))
                 {
                     if (m_services[item]->m_process.size() > 0)
                     {
                         if (m_services[item]->m_process.first()->m_plugins.contains(item))
                         {
-//                            qDebug() << "Found item" << item;
-//                            qDebug() << m_services[item]->m_process.first()->m_plugins[item];
+                            //                            qDebug() << "Found item" << item;
+                            //                            qDebug() << m_services[item]->m_process.first()->m_plugins[item];
                             auto data = QCborValue::fromJsonValue(m_services[item]->m_process.first()->m_plugins[item]).toCbor();
                             msg->push_back(data);
 
@@ -473,14 +478,14 @@ private:
 
             for (auto procs = m_services.keyBegin(), end = m_services.keyEnd(); procs != end; ++procs)
             {
-//                qDebug() << (*procs);
+                //                qDebug() << (*procs);
                 if (!procs->startsWith("mmi."))
                     msg->push_back((*procs).toLatin1());
             }
         }
     }
 
-   // Count the number of finished process for this client & clean the list
+    // Count the number of finished process for this client & clean the list
     void jobStatus(zmsg *msg, QString client)
     {
         int nb_finished_jobs =  clear_list(m_finished_jobs, client);
@@ -507,7 +512,7 @@ private:
     {
         Q_UNUSED(client);
 
-//        qDebug() << "List plugins & Version";
+        //        qDebug() << "List plugins & Version";
 
         for (auto& wrk: m_workers)
         {
@@ -516,7 +521,7 @@ private:
             {
                 res += QString("#%1|%2").arg(plg["Path"].toString(), plg["PluginVersion"].toString());
             }
-//            qDebug() << res;
+            //            qDebug() << res;
             msg->push_back(res);
         }
     }
@@ -524,16 +529,16 @@ private:
     void list_workers_activity(zmsg* msg, QString client)
     {
         Q_UNUSED(client);
-//        qDebug() << "Worker activity";
+        //        qDebug() << "Worker activity";
         // First message contains the request list
         for (auto& wrk: m_requests)
         { // Here we have cancellable jobs
             auto req =
                 QString("Pending: %1|%2|%3|%4|%5").arg(wrk->path, wrk->client, wrk->project)
-                           .arg(wrk->calls)
-                           .arg(wrk->priority);
+                    .arg(wrk->calls)
+                    .arg(wrk->priority);
             // "Pending: Tools/Speed/Speed Testing 000001EA0453FFE0  239 0"
-//            qDebug() << req;
+            //            qDebug() << req;
             msg->push_back(req);
         }
         // second message contains the on_going ones
@@ -541,13 +546,13 @@ private:
         { // this ones are non cancellable
             auto req =
                 QString("Running: %1|%2|%3|%5").arg(srv->path, srv->client, srv->project)
-                                      .arg(srv->priority);
-//            qDebug() << req;
+                    .arg(srv->priority);
+            //            qDebug() << req;
             msg->push_back(req);
         }
         for (auto& thds: m_workers_threads)
         { // active processes
-//            qDebug() << thds->m_id  << thds->m_worker->m_identity << thds->m_worker->m_name;
+            //            qDebug() << thds->m_id  << thds->m_worker->m_identity << thds->m_worker->m_name;
             msg->push_back(QString("Workers: %1|%2|%3")
                                .arg(thds->m_id)
                                .arg( thds->m_worker->m_identity, thds->m_worker->m_name));
@@ -556,7 +561,7 @@ private:
 
         for (auto& thds: m_waiting_threads)
         { // process that are ongoing
-//            qDebug() << thds->m_id  << thds->m_worker->m_identity << thds->m_worker->m_name;
+            //            qDebug() << thds->m_id  << thds->m_worker->m_identity << thds->m_worker->m_name;
             msg->push_back(QString("Waiting: %1|%2|%3")
                                .arg(thds->m_id)
                                .arg( thds->m_worker->m_identity, thds->m_worker->m_name));
@@ -568,7 +573,7 @@ private:
     void
     service_internal (QString service_name, zmsg *msg)
     {
-//        qDebug() << "Broker service call" << service_name << msg->parts();
+        //        qDebug() << "Broker service call" << service_name << msg->parts();
 
         //  Remove & save client return envelope and insert the
         //  protocol header and service name, then rewrap envelope.
@@ -587,7 +592,7 @@ private:
 
             };
 
-//        qDebug() << service_name << client << funcMap.keys() << funcMap.contains(service_name);
+        //        qDebug() << service_name << client << funcMap.keys() << funcMap.contains(service_name);
 
         if (funcMap.contains(service_name))
             funcMap[service_name](*this, msg, client);
@@ -647,7 +652,7 @@ private:
             qDebug() << "Warning service" << srv->m_name << " has no more workers handling it";
         }
         if (toCull.size()!=0)
-              qDebug() << "We'll keep track of pending job to the missing services";
+            qDebug() << "We'll keep track of pending job to the missing services";
 
         for (auto wt = m_waiting_threads.begin(), end = m_waiting_threads.end(); end != wt; )
         {
@@ -680,6 +685,158 @@ private:
         delete wrk;
     }
 
+    QString adjust(QString storage_path, QString script) const
+    {
+#ifdef WIN32
+        return storage_path + script;
+#else
+        return storage_path + script.replace(":", "");
+#endif
+    }
+
+    void finalize_process(const QJsonObject& agg)
+    {
+        QSettings set;
+        QString dbP = set.value("databaseDir", "L:/").toString();
+
+#ifndef  WIN32
+        if (dbP.contains(":"))
+            dbP = QString("/mnt/shares/") + dbP.replace(":","");
+#endif
+
+        dbP.replace("\\", "/").replace("//", "/");
+//        auto agg = running[obj["TaskID"].toString()];
+        if (!agg["CommitName"].toString().isEmpty())
+        {
+
+            QString path = QString("%1/PROJECTS/%2/Checkout_Results/%3").arg(dbP,
+                                                                             agg["Project"].toString(),
+                                                                             agg["CommitName"].toString()).replace("\\", "/").replace("//", "/");;
+
+            QThread::sleep(5); // Let time to sync
+
+            QDir dir(path);
+
+            QStringList files = dir.entryList(QStringList() << QString("%1_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
+            QString concatenated = QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/",""));
+            if (files.isEmpty())
+            {
+                qDebug() << "Error fusing the data to generate" << concatenated;
+                qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", ""));
+            }
+            else
+            {
+
+                if (QFile::exists(concatenated)) // In case the feather exists already add this for fusion at the end of the process since arrow fuse handles duplicates if will skip value if recomputed and keep non computed ones (for instance when redoing a well computation)
+                {
+                    dir.rename(concatenated, concatenated + ".torm");
+                    files << concatenated.split("/").last()+".torm";
+                }
+
+                auto fut = QtConcurrent::run(fuseArrow,
+                                             path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+
+                //                        fuseArrow(path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+            }
+
+
+            if (agg.contains("PostProcesses") && agg["PostProcesses"].toArray().size() > 0)
+            {
+                qDebug() << "We need to run the post processes:" << agg["PostProcesses"].toArray();
+                // Set our python env first
+                // Setup the call to python
+                // Also change working directory to the "concatenated" folder
+                auto arr = agg["PostProcesses"].toArray();
+
+//                QFuture<void> future = QtConcurrent::run([this, arr, concatenated, dbP, path]
+                                                         {
+
+                    for (int i = 0; i < arr.size(); ++i )
+                    { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
+                        QString script = arr[i].toString().replace("\\", "/");
+                        auto args = QStringList() << adjust(dbP, script)  << concatenated;
+                        QProcess* python = new QProcess();
+
+
+                        this->postproc << python;
+
+                        python->setProcessEnvironment(python_config);
+                        qDebug() << python_config.value("PATH");
+                        qDebug() << args;
+
+                        this->postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
+                        this->postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".log");
+                        this->postproc.last()->setWorkingDirectory(path);
+
+                        this->postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
+                        this->postproc.last()->setArguments(args);
+
+                        this->postproc.last()->start();
+                    }
+
+                }
+//);
+
+
+
+            }
+            else
+                qDebug() << "No Postprocesses";
+
+
+
+            if (   agg.contains("PostProcessesScreen")&& agg["PostProcessesScreen"].toArray().size() > 0)
+            {
+                qDebug() << "We need to run the post processes:" << agg["PostProcessesScreen"].toArray();
+                // Set our python env first
+                // Setup the call to python
+                // Also change working directory to the "concatenated" folder
+                auto data = agg["Experiments"].toArray();
+                QStringList xps;
+                for (auto d: data) xps << d.toString().replace("\\", "/").replace("/", "")+".fth";
+
+                auto arr = agg["PostProcessesScreen"].toArray();
+
+//                QFuture<void> future = QtConcurrent::run([this, arr, xps, concatenated, dbP, path]
+                                                         {
+                    for (int i = 0; i < arr.size(); ++i )
+                    { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
+                        QString script = arr[i].toString().replace("\\", "/");
+                        //                            QDir dir(path);
+
+                        auto args = QStringList() << adjust(dbP, script);
+                        //<< concatenated;
+                        for (auto & d: xps) if (QFile::exists(path+"/"+d))  args << d;
+                        QProcess* python = new QProcess();
+
+                        this->postproc << python;
+
+                        python->setProcessEnvironment(python_config);
+                        qDebug() << python_config.value("PATH");
+                        qDebug() << args;
+
+                        postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
+                        postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".screen_log");
+                        postproc.last()->setWorkingDirectory(path);
+
+                        postproc.last()->setProgram(python_config.value("CHECKOUT_PYTHON", "python"));
+                        postproc.last()->setArguments(args);
+
+                        postproc.last()->start();
+                    }
+
+                }
+//);
+
+
+
+            }
+            else
+                qDebug() << "No Screen Post-processes";
+        }
+
+
+    }
 
 
     //  ---------------------------------------------------------------------
@@ -692,7 +849,7 @@ private:
 
         auto command = msg->pop_front();
         bool exists = m_workers.count(sender);
-       worker *wrk = worker_require (sender);
+        worker *wrk = worker_require (sender);
 
         if (command.compare (MDPW_READY) == 0) {
 
@@ -708,50 +865,64 @@ private:
 
                     worker_threads* th = nullptr;
                     for (auto wt: m_workers_threads)
-                      if (wt->m_id == thread_id && wt->m_worker == wrk)
-                            {
-                                th = wt;
-                                break;
-                      }
-
+                        if (wt->m_id == thread_id && wt->m_worker == wrk)
+                        {
+                            th = wt;
+                            break;
+                        }
+                    QList<service_call*> finished;
                     QList<service_call*> toCull;
                     for (auto &job : m_ongoing_jobs)
-                      if (job->client == client && job->thread_id == thread_id)
-                      {
-                                toCull << job;
-                                th->parameters = nullptr;
-                                m_finished_jobs << job;
-                      }
+                        if (job->client == client && job->thread_id == thread_id)
+                        {
+                            toCull << job;
+                            th->parameters->calls--;
+                            if (th->parameters->calls==0)
+                                finished << th->parameters;
+                            th->parameters = nullptr;
+                            m_finished_jobs << job;
+                        }
                     for (auto& j : toCull) m_ongoing_jobs.removeOne(j);
 
 
-                    wrk->available++;
+                    // now we shall apply the finishing stage (fth fusion / python call)
 
+                    //                    QtConcurrent::map()
+                    //                    auto agg = th->parameters->parameters
+                    for (auto& final: finished)
+                    {
+                        auto params = final->parameters.toJsonObject();
+                        auto fut = QtConcurrent::run([this, params](){
+                            this->finalize_process(params);
+                                    }
+                                          );
+                    }
+                    wrk->available++;
                     wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
 
                     if (th)
                     {
                         m_waiting_threads.insert(th);
                         if (!m_requests.empty())
-                          service_dispatch (service_require(m_requests.front()->path),  nullptr);
+                            service_dispatch (service_require(m_requests.front()->path),  nullptr);
                     }
                 }
             }
             wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
         } else {
             if (command.compare (MDPW_REPLY) == 0) {
-//                if (worker_ready) {
-                    //  Remove & save client return envelope and insert the
-                    //  protocol header and service name, then rewrap envelope.
-                    QString client = msg->unwrap ();
-                    msg->wrap (QString(MDPC_CLIENT));//, wrk->m_service->m_name);
-                    msg->wrap (client);
-                    msg->send (*m_socket);
-                    worker_waiting (wrk);
-                 wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
+                //                if (worker_ready) {
+                //  Remove & save client return envelope and insert the
+                //  protocol header and service name, then rewrap envelope.
+                QString client = msg->unwrap ();
+                msg->wrap (QString(MDPC_CLIENT));//, wrk->m_service->m_name);
+                msg->wrap (client);
+                msg->send (*m_socket);
+                worker_waiting (wrk);
+                wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
             } else {
                 if (command.compare (MDPW_HEARTBEAT) == 0) {
-                        wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
+                    wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
                     if (!exists)
                     {
                         worker_send(wrk, (char*)MDPW_PROCESSLIST, 0, 0);
@@ -771,7 +942,7 @@ private:
 
 
                             qDebug() << "Available Workers" << nbThreads;
-                // Server IP Addr
+                            // Server IP Addr
                             wrk->m_name = msg->pop_front();
 
                             qDebug() << wrk->m_name;
@@ -973,7 +1144,7 @@ public:
         job->parameters.insert(QString("Client"), job->client);
         job->thread_id = thread->m_id;
 
-//        qDebug() << job->parameters;
+        //        qDebug() << job->parameters;
         thread->parameters = job;
 
         zmsg* msg = new zmsg();
@@ -1005,7 +1176,13 @@ public:
         return nb_culled;
     }
 
+    void setpython_env(
+        QProcessEnvironment pyc
+)
+    {
 
+        python_config=pyc;
+    }
 
 private:
     zmq::context_t * m_context;                  //  0MQ context
@@ -1029,9 +1206,9 @@ private:
     // Behavior variables:
     int low_job_number; // Defines what a low number of jobs is for the queue (to priorize)
 
-    //    std::set<worker*> m_waiting;              //  List of waiting workers
+    QList<QProcess*> postproc;
+    QProcessEnvironment python_config;
 
-    // We need to track the process to rewake it
 };
 
 
