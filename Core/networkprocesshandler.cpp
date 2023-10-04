@@ -360,6 +360,8 @@ void NetworkProcessHandler::setServerAddress(QString srv_)
     srv=srv_;
 }
 
+QString NetworkProcessHandler::getServer() {return srv; }
+
 
 
 void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient *cl)

@@ -243,19 +243,6 @@ QJsonObject run_plugin(CheckoutProcessPluginInterface* plugin)
 
 void ZMQThread::run()
 {
-    QString srv;
-    //    QList<QHostAddress> list = QNetworkInterface::allAddresses();
-
-    //    for (QHostAddress &addr : list)
-    //    {
-    //        if (!addr.isLoopback())
-    //            if (addr.protocol() == QAbstractSocket::IPv4Protocol)
-    //                srv = QString("_%1").arg(addr.toString().replace(".", ""));
-    //        if (!srv.isEmpty())
-    //            break; // stop on non empty
-    //    }
-    //    NetworkProcessHandler::handler().setServerAddress(srv);
-
 
     CheckoutProcess& procs = CheckoutProcess::handler();
 
@@ -268,6 +255,9 @@ void ZMQThread::run()
     // Handle the non QT threading zmq here
     qDebug() << "Starting Session";
     zmsg* processlist = new zmsg();
+
+    processlist->push_back(NetworkProcessHandler::handler().getServer());
+
 
     for (auto& item: prcs)
     {

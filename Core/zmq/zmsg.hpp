@@ -135,6 +135,16 @@ public:
         m_part_data.push_back(part);
     }
 
+    // zmsg_push
+    void push_front(QString part) {
+        m_part_data.insert(m_part_data.begin(), part.toLatin1());
+    }
+
+    // zmsg_append
+    void push_back(QString part) {
+        m_part_data.push_back(part.toLatin1());
+    }
+
     //  --------------------------------------------------------------------------
     //  Formats 17-byte UUID as 33-char string starting with '@'
     //  Lets us print UUIDs as C strings and use them as addresses

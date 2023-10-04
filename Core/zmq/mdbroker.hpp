@@ -225,8 +225,6 @@ private:
         }
     }
 
-
-
     //  ---------------------------------------------------------------------
     //  Dispatch requests to waiting workers as possible
 
@@ -264,7 +262,10 @@ private:
                 call->callMap = map;
                 call->calls = nbCalls;
                 call->parameters = QCborValue::fromCbor(msg->pop_front()).toMap();
+                call->project = call->parameters.value("Project").toString();
+
                 call->priority = 0;
+
 
                 m_requests.push_back(call);
             }
@@ -343,7 +344,9 @@ private:
                 // We have a job !
                 // We have a worker !
                 // Let's send some work
-                start_job(wrk, th, job);
+                start_job(wrk, th, job)
+
+                ;
 
             }
 //            else
@@ -359,111 +362,193 @@ private:
     //  ---------------------------------------------------------------------
     //  Handle internal service according to 8/MMI specification
 
+
+    // Cancel all the jobs for this client
+    void cancelJob(zmsg *msg, QString client)
+    {
+
+        // check msg parts to see if we have a specific client cancellation :)
+
+        int nb_canceled = clear_list(m_requests, client);
+
+        clear_list(m_ongoing_jobs, client);
+        clear_list(m_finished_jobs, client);
+
+        msg->push_back(QString::number(nb_canceled).toLatin1());
+    }
+
+
+    inline void listProcess(zmsg *msg, QString client)
+    {
+        if (msg->parts())
+        {
+            auto item = msg->pop_front();
+            if (item.isEmpty())
+            {
+//                qDebug() << "Sending list";
+
+                for (auto procs = m_services.keyBegin(), end = m_services.keyEnd(); procs != end; ++procs)
+                {
+                    if (!procs->startsWith("mmi."))
+                    {
+//                        qDebug() << (*procs);
+                        msg->push_back((*procs).toLatin1());
+                    }
+                }
+            }
+            else
+            {
+//                qDebug() << "Searching Parameters info for" << client << item;
+                if (m_services.contains(item))
+                {
+                    if (m_services[item]->m_process.size() > 0)
+                    {
+                        if (m_services[item]->m_process.first()->m_plugins.contains(item))
+                        {
+//                            qDebug() << "Found item" << item;
+//                            qDebug() << m_services[item]->m_process.first()->m_plugins[item];
+                            auto data = QCborValue::fromJsonValue(m_services[item]->m_process.first()->m_plugins[item]).toCbor();
+                            msg->push_back(data);
+
+                        }
+                        else
+                            qDebug() << "Badly registered plugin" << item << "No workers...";
+                    }
+                    else
+                    {
+                        qDebug() << "No workers for" << item;
+                    }
+
+                }
+                else
+                    qDebug() << "Service not found" << item;
+
+            }
+        }
+        else
+        {
+            qDebug() << "Sending list";
+
+            for (auto procs = m_services.keyBegin(), end = m_services.keyEnd(); procs != end; ++procs)
+            {
+//                qDebug() << (*procs);
+                if (!procs->startsWith("mmi."))
+                    msg->push_back((*procs).toLatin1());
+            }
+        }
+    }
+
+   // Count the number of finished process for this client & clean the list
+    void jobStatus(zmsg *msg, QString client)
+    {
+        int nb_finished_jobs =  clear_list(m_finished_jobs, client);
+
+        msg->push_back(QString::number(nb_finished_jobs).toLatin1());
+        //                qDebug() << "Job Status: " << nb_finished_jobs << m_finished_jobs.size() << m_ongoing_jobs.size();
+
+    }
+
+    void serviceAccess(zmsg *msg, QString client)
+    {
+        Q_UNUSED(client);
+        service * srv = m_services[msg->body()];
+        if (srv && !srv->m_process.isEmpty()) {
+            msg->body_set("200");
+        } else {
+            msg->body_set("404");
+        }
+    }
+
+
+    // To build a matrix of plugins / version with coloring of the matching / un matching status etc.
+    void listServicesandVersions(zmsg* msg, QString client)
+    {
+        Q_UNUSED(client);
+
+//        qDebug() << "List plugins & Version";
+
+        for (auto& wrk: m_workers)
+        {
+            QString res = QString("%1|%2").arg( wrk->m_identity, wrk->m_name);
+            for (auto& plg:  wrk->m_plugins)
+            {
+                res += QString("#%1|%2").arg(plg["Path"].toString(), plg["PluginVersion"].toString());
+            }
+//            qDebug() << res;
+            msg->push_back(res);
+        }
+    }
+
+    void list_workers_activity(zmsg* msg, QString client)
+    {
+        Q_UNUSED(client);
+//        qDebug() << "Worker activity";
+        // First message contains the request list
+        for (auto& wrk: m_requests)
+        { // Here we have cancellable jobs
+            auto req =
+                QString("Pending: %1 %2 %3 %4 %5").arg(wrk->path, wrk->client, wrk->project)
+                           .arg(wrk->calls)
+                           .arg(wrk->priority);
+            // "Pending: Tools/Speed/Speed Testing 000001EA0453FFE0  239 0"
+//            qDebug() << req;
+            msg->push_back(req);
+        }
+        // second message contains the on_going ones
+        for (auto& srv: m_ongoing_jobs)
+        { // this ones are non cancellable
+            auto req =
+                QString("Running: %1 %2 %3 %5").arg(srv->path, srv->client, srv->project)
+                                      .arg(srv->priority);
+//            qDebug() << req;
+            msg->push_back(req);
+        }
+        for (auto& thds: m_workers_threads)
+        { // active processes
+//            qDebug() << thds->m_id  << thds->m_worker->m_identity << thds->m_worker->m_name;
+            msg->push_back(QString("Workers: %1 %2 %3")
+                               .arg(thds->m_id)
+                               .arg( thds->m_worker->m_identity, thds->m_worker->m_name));
+
+        }
+
+        for (auto& thds: m_waiting_threads)
+        { // process that are ongoing
+//            qDebug() << thds->m_id  << thds->m_worker->m_identity << thds->m_worker->m_name;
+            msg->push_back(QString("Waiting: %1 %2 %3")
+                               .arg(thds->m_id)
+                               .arg( thds->m_worker->m_identity, thds->m_worker->m_name));
+        }
+
+    }
+
+
     void
     service_internal (QString service_name, zmsg *msg)
     {
-        qDebug() << "Broker service call" << service_name << msg->parts();
+//        qDebug() << "Broker service call" << service_name << msg->parts();
 
         //  Remove & save client return envelope and insert the
         //  protocol header and service name, then rewrap envelope.
         QString client = msg->unwrap();
 
 
-        if (service_name == "mmi.service") {
-            service * srv = m_services[msg->body()];
-            if (srv && !srv->m_process.isEmpty()) {
-                msg->body_set("200");
-            } else {
-                msg->body_set("404");
-            }
-        }
-        if (service_name == "mmi.list")
+        QMap<QString, std::function<void (broker&, zmsg*, QString)> > funcMap =
             {
-                if (msg->parts())
-                {
-                    auto item = msg->pop_front();
-                    if (item.isEmpty())
-                    {
-                        //                        qDebug() << "Sending list";
+                { "mmi.service", &broker::serviceAccess } ,
+                { "mmi.list", &broker::listProcess },
+                { "mmi.status", &broker::jobStatus},
+                { "mmi.cancel", &broker::cancelJob},
+                { "mmi.list_services", &broker::listServicesandVersions },
+                { "mmi.workers", &broker::list_workers_activity},
+                //                        { "mmi.process", nullptr}
 
-                        for (auto procs = m_services.keyBegin(), end = m_services.keyEnd(); procs != end; ++procs)
-                        {
-                            if (!procs->startsWith("mmi."))
-                                {
-                                    qDebug() << (*procs);
-                                    msg->push_back((*procs).toLatin1());
-                                }
-                        }
-                    }
-                    else
-                    {
-                        qDebug() << "Searching Parameters info for" << client << item;
-                        if (m_services.contains(item))
-                        {
-                            if (m_services[item]->m_process.size() > 0)
-                            {
-                                if (m_services[item]->m_process.first()->m_plugins.contains(item))
-                                {
-                                    //                                    qDebug() << "Found item" << item;
-                                    qDebug() << m_services[item]->m_process.first()->m_plugins[item];
-                                    auto data = QCborValue::fromJsonValue(m_services[item]->m_process.first()->m_plugins[item]).toCbor();
-                                    msg->push_back(data);
+            };
 
-                                }
-                                else
-                                    qDebug() << "Badly registered plugin" << item << "No workers...";
-                            }
-                            else
-                            {
-                                qDebug() << "No workers for" << item;
-                            }
+//        qDebug() << service_name << client << funcMap.keys() << funcMap.contains(service_name);
 
-                        }
-                        else
-                            qDebug() << "Service not found" << item;
-
-                    }
-                }
-                else
-                {
-                    //                    qDebug() << "Sending list";
-
-                    for (auto procs = m_services.keyBegin(), end = m_services.keyEnd(); procs != end; ++procs)
-                    {
-                        //                        qDebug() << (*procs);
-                        if (!procs->startsWith("mmi."))
-                            msg->push_back((*procs).toLatin1());
-                    }
-                }
-            }
-        if (service_name == "mmi.status")
-            {
-                // Count the number of finished process for this client & clean the list
-                int nb_finished_jobs =  clear_list(m_finished_jobs, client);
-
-                msg->push_back(QString::number(nb_finished_jobs).toLatin1());
-
-//                qDebug() << "Job Status: " << nb_finished_jobs << m_finished_jobs.size() << m_ongoing_jobs.size();
-            }
-
-        if (service_name == "mmi.cancel")
-            {
-                // Cancel all the jobs for this client
-                int nb_canceled = clear_list(m_requests, client);
-
-                clear_list(m_ongoing_jobs, client);
-                clear_list(m_finished_jobs, client);
-
-                msg->push_back(QString::number(nb_canceled).toLatin1());
-            }
-
-
-
-        /*else
-            {
-                msg->body_set("501");
-            }*/
-
+        if (funcMap.contains(service_name))
+            funcMap[service_name](*this, msg, client);
 
         msg->wrap(MDPC_CLIENT, service_name);
         msg->wrap(client, "");
@@ -638,12 +723,16 @@ private:
                         if (command.compare(MDPW_PROCESSLIST) == 0)
                         {
                             // Keep track of processes
+
+                            // Nb workers avail for this
                             auto nbThreads = msg->pop_front().toInt();
 
 
                             qDebug() << "Available Workers" << nbThreads;
+                // Server IP Addr
+                            wrk->m_name = msg->pop_front();
 
-                            // Nb workers avail for this
+                            qDebug() << wrk->m_name;
                             auto data = msg->pop_front();
                             while (data.size())
                             {

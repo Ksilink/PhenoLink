@@ -1087,6 +1087,7 @@ void MainWindow::startProcessRun(QString exp)
         _cancelation->connect(_cancelation, &QPushButton::clicked,
                               [this](bool){ auto cancel = this->_cancelation->objectName();
             NetworkProcessHandler::handler().sendCommand("mmi.cancel");
+            _StatusProgress->setValue(_StatusProgress->maximum());
 
         });
 

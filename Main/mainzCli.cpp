@@ -91,7 +91,7 @@ void listParams(QJsonObject ob)
 //        qApp->exit();
 }
 
-QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher)
+QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher, QString& project)
 {
 //    QReguExp siteMatcher;
 
@@ -254,7 +254,7 @@ QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher)
             if (sfm->getOwner())
                 ob["XP"] = sfm->getOwner()->groupName() +"/"+sfm->getOwner()->name();
 
-            ob["Project"] = sfm->getOwner()->property("project");
+            ob["Project"] = project.isEmpty() ? sfm->getOwner()->property("project") : project;
 
 
             ob["WellTags"] = sfm->getTags().join(";");
@@ -298,12 +298,13 @@ QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher)
 }
 
 
-void helper::setParams(QString proc, QString commit, QStringList params, QStringList plates)
+void helper::setParams(QString proc, QString commit, QStringList params, QStringList plates, QString project)
 {
     this->proc = proc;
     this->commitName = commit;
     this->params = params;
     this->plates = plates;
+    this->project = project;
 }
 
 void helper::setDump(QString dumpfile)
@@ -403,7 +404,7 @@ void showPlate(ExperimentFileModel* efm)
 
 
 
-void startProcess(QString server, QString proc, QString commitName,  QStringList params, QStringList plates, QString dumpfile, bool wait)
+void startProcess(QString server, QString proc, QString project, QString commitName,  QStringList params, QStringList plates, QString dumpfile, bool wait)
 {
 
     qDebug() << "Connecting to" << server << "sending" << proc;
@@ -424,7 +425,7 @@ void startProcess(QString server, QString proc, QString commitName,  QStringList
     if (proc.endsWith("BirdView"))
         commitName = "BirdView";
 
-    h.setParams(proc, commitName, params, plates);
+    h.setParams(proc, commitName, params, plates, project);
     h.setDump(dumpfile);
 
     reply->pop_front();
@@ -435,7 +436,8 @@ void startProcess(QString server, QString proc, QString commitName,  QStringList
 
 
 
-    auto array = h.setupProcess(QCborValue::fromCbor(response).toMap().toJsonObject(),   QRegularExpression());
+    auto array = h.setupProcess(QCborValue::fromCbor(response).toMap().toJsonObject(),
+                                QRegularExpression(), project);
 
     // Unroll the array to start the process
     delete req;
@@ -638,7 +640,7 @@ int main(int ac, char** av)
                 }
             }
             if (!process.isEmpty() && !plates.isEmpty())
-                startProcess(QString("tcp://%1").arg(var.first()), process, commit, pluginParams, plates, dumpfile, wait);
+                startProcess(QString("tcp://%1").arg(var.first()), process, project, commit, pluginParams, plates, dumpfile, wait);
         }
 
 

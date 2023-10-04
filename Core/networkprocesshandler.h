@@ -97,6 +97,7 @@ public:
     void setNoProxyMode();
     void addProxyPort(uint16_t port);
     void setServerAddress(QString srv);
+    QString getServer();;
 
 
     QStringList getProcesses();

@@ -19,20 +19,18 @@ struct helper : public QObject //: public QHttpServer
     Q_OBJECT
 
 public:
-   QJsonArray setupProcess(QJsonObject ob, QRegularExpression siteMatcher);
+   QJsonArray setupProcess(QJsonObject ob, QRegularExpression siteMatcher,  QString& project);
 
-   void setParams(QString proc, QString commit, QStringList params, QStringList plates);
+   void setParams(QString proc, QString commit, QStringList params, QStringList plates, QString project);
    void setDump(QString dumpfile);
 
 
 protected:
 
-   QString dump;
 
-   QString proc, commitName;
+   QString dump, proc, commitName, project;
 
-   QStringList params;
-   QStringList plates;
+   QStringList params, plates;
 };
 
 
