@@ -487,7 +487,7 @@ private:
         for (auto& wrk: m_requests)
         { // Here we have cancellable jobs
             auto req =
-                QString("Pending: %1 %2 %3 %4 %5").arg(wrk->path, wrk->client, wrk->project)
+                QString("Pending: %1|%2|%3|%4|%5").arg(wrk->path, wrk->client, wrk->project)
                            .arg(wrk->calls)
                            .arg(wrk->priority);
             // "Pending: Tools/Speed/Speed Testing 000001EA0453FFE0  239 0"
@@ -498,7 +498,7 @@ private:
         for (auto& srv: m_ongoing_jobs)
         { // this ones are non cancellable
             auto req =
-                QString("Running: %1 %2 %3 %5").arg(srv->path, srv->client, srv->project)
+                QString("Running: %1|%2|%3|%5").arg(srv->path, srv->client, srv->project)
                                       .arg(srv->priority);
 //            qDebug() << req;
             msg->push_back(req);
@@ -506,7 +506,7 @@ private:
         for (auto& thds: m_workers_threads)
         { // active processes
 //            qDebug() << thds->m_id  << thds->m_worker->m_identity << thds->m_worker->m_name;
-            msg->push_back(QString("Workers: %1 %2 %3")
+            msg->push_back(QString("Workers: %1|%2|%3")
                                .arg(thds->m_id)
                                .arg( thds->m_worker->m_identity, thds->m_worker->m_name));
 
@@ -515,7 +515,7 @@ private:
         for (auto& thds: m_waiting_threads)
         { // process that are ongoing
 //            qDebug() << thds->m_id  << thds->m_worker->m_identity << thds->m_worker->m_name;
-            msg->push_back(QString("Waiting: %1 %2 %3")
+            msg->push_back(QString("Waiting: %1|%2|%3")
                                .arg(thds->m_id)
                                .arg( thds->m_worker->m_identity, thds->m_worker->m_name));
         }
