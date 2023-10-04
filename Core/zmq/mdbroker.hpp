@@ -369,6 +369,12 @@ private:
 
         // check msg parts to see if we have a specific client cancellation :)
 
+        if (msg->parts() != 0)
+        { // to allow cancelation from control panel
+            client = msg->pop_front();
+        }
+
+
         int nb_canceled = clear_list(m_requests, client);
 
         clear_list(m_ongoing_jobs, client);
