@@ -102,7 +102,13 @@ struct  worker_threads
 //  This defines a single service
 struct DllCoreExport service
 {
-    ~service ();
+    inline ~service()
+    {
+        for(size_t i = 0; i < m_requests.size(); i++) {
+            delete m_requests[i];
+        }
+    }
+
 
     QString m_name;             //  Service name
     std::deque<zmsg*> m_requests;   //  List of client requests
@@ -116,8 +122,38 @@ struct DllCoreExport service
         m_name = name;
     }
 
-    bool add_worker(worker* wrk);
 
+
+    inline bool add_worker(worker *wrk)
+    {
+
+        auto pl_time = QDateTime::fromString(wrk->m_plugins[m_name]["PluginVersion"].toString().mid(8,19), "yyyy-MM-dd hh:mm:ss");
+
+        //    qDebug() << m_name << "plugin_time" << pl_time;
+
+        bool added = false;
+
+        if (m_process.isEmpty())
+        {
+            m_process.push_back(wrk);
+            added = true;
+        }
+        else
+            for (auto w : m_process)
+            {
+                auto newtime = QDateTime::fromString(w->m_plugins[m_name]["PluginVersion"].toString().mid(8,19), "yyyy-MM-dd hh:mm:ss");
+                if (pl_time < newtime) // if all plugins in the list are older than the new clear
+                    m_process.clear();
+
+                if ( pl_time <= newtime) // if the plugin time older or equal add new :D (since older would already have been cleared by previous stage
+                {
+                    m_process.push_back(wrk);
+                    added = true;
+                }
+            }
+
+        return added;
+    }
 
 };
 
@@ -147,12 +183,12 @@ public:
         while (! m_services.empty())
         {
             delete m_services.begin().value();
-            m_services.erase(m_services.begin());
+            m_services.erase(m_services.cbegin());
         }
         while (! m_workers.empty())
         {
             delete m_workers.begin().value();
-            m_workers.erase(m_workers.begin());
+            m_workers.erase(m_workers.cbegin());
         }
     }
 
