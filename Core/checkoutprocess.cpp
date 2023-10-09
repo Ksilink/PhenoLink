@@ -17,6 +17,8 @@ CheckoutProcess::CheckoutProcess():
     _counter(0)
 {
     startTimer(100);
+    worker_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount());
+
 }
 
 CheckoutProcess& CheckoutProcess::handler()
@@ -477,8 +479,8 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray array)
 {
 
     qDebug() << "Remaining unstarted processes" << _process_to_start.size()
-             << QThreadPool::globalInstance()->activeThreadCount()
-             << QThreadPool::globalInstance()->maxThreadCount();
+             << worker_threadpool.activeThreadCount()
+             << worker_threadpool.maxThreadCount();
 
     CheckoutProcessPluginInterface* plugin = _plugins[process];
     if (plugin)
@@ -555,7 +557,7 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray array)
             _peruser_futures[key].push_back(wa);
             status_protect.unlock();
 
-            QFuture<QJsonObject> fut = QtConcurrent::run(run_plugin, plugin);
+            QFuture<QJsonObject> fut = QtConcurrent::run(&worker_threadpool, run_plugin, plugin);
             wa->setFuture(fut);
 #endif
         }

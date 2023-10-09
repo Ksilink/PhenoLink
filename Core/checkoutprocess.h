@@ -174,6 +174,8 @@ protected:
 
     QMap<QString, QList<QFutureWatcher<QJsonObject>* > > _peruser_futures;
 
+    QThreadPool worker_threadpool;
+
     int* _counter;
     QMutex mutex_dataupdate;
     QString drive_map;
