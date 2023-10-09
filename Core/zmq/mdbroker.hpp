@@ -880,9 +880,12 @@ private:
                         if (job->client == client && job->thread_id == thread_id)
                         {
                             toCull << job;
-                            th->parameters->calls--;
-                            if (th->parameters->calls==0)
-                                finished << th->parameters;
+                            if (th->parameters)
+                            {
+                                th->parameters->calls--;
+                                if (th->parameters->calls == 0)
+                                    finished << th->parameters;
+                            }
                             th->parameters = nullptr;
                             m_finished_jobs << job;
                         }
