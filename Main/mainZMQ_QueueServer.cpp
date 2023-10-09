@@ -189,6 +189,29 @@ int main(int ac, char** av)
     }
 
 
+    QProcess worker;
+
+    if (data.contains("-stda"))
+    {
+
+        worker.setProcessChannelMode(QProcess::MergedChannels);
+        worker.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() +"/CheckoutServer_log.txt");
+        worker.setWorkingDirectory(app.applicationDirPath());
+        QString r = "PhenoLinkZMQWorker.exe";
+        worker.setProgram(r);
+        if (sets.value("UserMode/Debug", false).toBool())
+            worker.setArguments(QStringList() << "-proxy" << "localhost:13555" << "-d");
+        else
+            worker.setArguments(QStringList() << "-proxy" << "localhost:13555"  );
+
+
+        worker.start();
+
+        if (!worker.waitForStarted())
+            qDebug() << "Server not properly started" << worker.errorString() << r;
+
+
+    }
 
 
 
@@ -204,6 +227,7 @@ int main(int ac, char** av)
 
     if (s_interrupted)
         printf ("W: interrupt received, shutting down...\n");
+    worker.kill();
 
     return 0;
 
