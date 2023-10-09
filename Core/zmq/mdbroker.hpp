@@ -646,7 +646,7 @@ private:
         {
             if (srv->m_process.contains(wrk))
                 srv->m_process.removeAll(wrk);
-            if (srv->m_process.isEmpty())
+            if (!srv->m_name.startsWith("mmi.") && srv->m_process.isEmpty())
                 toCull.append(srv);
         }
 
