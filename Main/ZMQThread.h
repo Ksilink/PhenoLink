@@ -6,6 +6,7 @@
 #include <QString>
 #include <QMap>
 
+#include <QThreadPool>
 #include <QDebug>
 
 #include <zmq/mdwrkapi.hpp>
@@ -20,6 +21,7 @@ class  ZMQThread : public QThread
     Q_OBJECT
 
     GlobParams& global_parameters;
+    QThreadPool worker_threadpool;
     bool verbose;
     QString proxy;
     QString drive_map;

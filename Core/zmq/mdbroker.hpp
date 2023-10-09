@@ -544,8 +544,12 @@ private:
         // second message contains the on_going ones
         for (auto& srv: m_ongoing_jobs)
         { // this ones are non cancellable
+            worker_threads* thread;
+            for (auto& wk: m_waiting_threads)
+                if (wk->parameters == srv)
+                    thread = wk;
             auto req =
-                QString("Running: %1|%2|%3|%5").arg(srv->path, srv->client, srv->project)
+                QString("Running: %1|%2|%3|%4|%5").arg(srv->path, srv->client, srv->project, thread->m_worker->m_name)
                     .arg(srv->priority);
             //            qDebug() << req;
             msg->push_back(req);

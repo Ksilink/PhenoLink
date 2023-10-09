@@ -286,7 +286,7 @@ void ZMQThread::run()
         //
 
         //        reply = request;        //  Echo is complex... :-)
-//        qDebug() << "srv ok" <<  request->parts();
+        //        qDebug() << "srv ok" <<  request->parts();
         auto obj = QCborValue::fromCbor(request->pop_front()).toJsonValue().toObject();
         //        qDebug() << obj["ThreadID"] << obj["Client"];
         QJsonArray ob; ob.push_back(obj);
@@ -314,14 +314,15 @@ inline ZMQThread::ZMQThread(GlobParams &gp, QThread *parentThread, QString prx, 
     mainThread(parentThread), session(QString("tcp://%1").arg(proxy), "processes", gp, verbose)
 {
 
+    worker_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount());
 }
 
 void ZMQThread::startProcessServer(QString process, QJsonArray array)
 {
 
     qDebug() << "Remaining unstarted processes" //<< _process_to_start.size()
-             << QThreadPool::globalInstance()->activeThreadCount()
-             << QThreadPool::globalInstance()->maxThreadCount();
+             << worker_threadpool.activeThreadCount()
+             << worker_threadpool.maxThreadCount();
 
     CheckoutProcessPluginInterface* plugin = _plugins[process];
 
@@ -373,7 +374,7 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
                                                           +1);
 
 
-            QFuture<QJsonObject> fut = QtConcurrent::run(run_plugin, plugin);
+            QFuture<QJsonObject> fut = QtConcurrent::run(&worker_threadpool, run_plugin, plugin);
             wa->setFuture(fut);
             wa->moveToThread(mainThread);
         }
@@ -424,31 +425,31 @@ void ZMQThread::thread_finished()
         {
             QString address = ob["ReplyTo"].toString();
             ///    qDebug() << hash << res << address;
-            CheckoutHttpClient *client = NULL;
+            if (!address.isEmpty())
+            {
+                CheckoutHttpClient *client = NULL;
 
-            for (CheckoutHttpClient *cl : alive_replies)
-                if (address == cl->iurl.host())
+                for (CheckoutHttpClient *cl : alive_replies)
+                    if (address == cl->iurl.host())
+                    {
+                        client = cl;
+                    }
+
+                if (!client)
                 {
-                    client = cl;
+                    client = new CheckoutHttpClient(address, 8020);
+                    alive_replies << client;
                 }
 
-            if (!client)
-            {
-                client = new CheckoutHttpClient(address, 8020);
-                alive_replies << client;
+                for (auto b : bin)
+                {
+                    // FIXME
+                    // Need to put back image on client
+                    client->send(QString("/addImage/"), QString(), b.toCbor());
+                }
+                client->sendQueue(); // force the emission of data let's be synchronous need to wait
             }
-
-            for (auto b : bin)
-            {
-                // FIXME
-                // Need to put back image on client
-                client->send(QString("/addImage/"), QString(), b.toCbor());
-            }
-            client->sendQueue(); // force the emission of data let's be synchronous need to wait
-
         }
-
-
 
 
     }
