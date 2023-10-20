@@ -146,6 +146,11 @@ struct DllCoreExport service
         else
             for (auto w : m_process)
             {
+                if (!w->m_plugins.contains(m_name))
+                {
+                    continue;
+                }
+
                 auto newtime = QDateTime::fromString(w->m_plugins[m_name]["PluginVersion"].toString().mid(8,19), "yyyy-MM-dd hh:mm:ss");
                 if (pl_time < newtime) // if all plugins in the list are older than the new clear
                     m_process.clear();
@@ -544,10 +549,11 @@ private:
         // second message contains the on_going ones
         for (auto& srv: m_ongoing_jobs)
         { // this ones are non cancellable
-            worker_threads* thread;
+            worker_threads* thread = nullptr;
             for (auto& wk: m_waiting_threads)
                 if (wk->parameters == srv)
                     thread = wk;
+            if (!thread) continue;
             auto req =
                 QString("Running: %1|%2|%3|%4|%5").arg(srv->path, srv->client, srv->project, thread->m_worker->m_name)
                     .arg(srv->priority);
