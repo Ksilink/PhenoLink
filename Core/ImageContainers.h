@@ -183,6 +183,7 @@ public:
     virtual void storeJson(QJsonObject json);
 
     TimeStackedImage getImage(size_t i, QString base_path = QString() );
+    QStringList getImageFiles();
 
     virtual void  deallocate();
     inline TimeStackedImage& addOne(){

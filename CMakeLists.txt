@@ -103,7 +103,7 @@ if(UNIX AND NOT APPLE)
         set(LINUX TRUE)
 endif()
 
-set(ONNX_VERSION "1.14.0")
+set(ONNX_VERSION "1.16.1")
 
 if (WIN32) # do the win32 download
       if (ONNX_GPU)

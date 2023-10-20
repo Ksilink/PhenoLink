@@ -680,6 +680,52 @@ TimeStackedImage TimeStackedImageXP::getImage(size_t i, QString bp)
 
 }
 
+
+
+
+QStringList recurseData(QJsonValue ob, QString& bp)
+{
+    QStringList res;
+    if (ob.isObject() && ob.toObject().contains("Data"))
+    {
+        if (bp.isEmpty() && ob.toObject().contains("BasePath"))
+            bp = ob.toObject()["BasePath"].toString();
+
+        res += recurseData(ob.toObject()["Data"], bp);
+    }
+
+    if (ob.isArray())
+    {
+        auto arr = ob.toArray();
+        for (int i = 0; i < arr.size(); ++i)
+        {
+            recurseData(arr[i], bp);
+        }
+    }
+    if (ob.isString())
+        res += bp + "/" + ob.toString();
+
+    return res;
+}
+
+QStringList TimeStackedImageXP::getImageFiles()
+{
+    // need to
+    // We'd need to go through this
+    QString bp;
+    if (_data.contains("BasePath"))
+        bp = _data["BasePath"].toString();
+
+//    if (ob.contains("BasePath") && bp.isEmpty())
+//        bp = ob["BasePath"].toString();
+
+    qDebug() << _data["Data"].toArray();
+
+    auto res = recurseData(_data, bp);
+    qDebug() << res;
+    return res;
+}
+
 void TimeStackedImageXP::deallocate()
 {
     for(size_t i = 0; i < _xp.size(); ++i)

@@ -55,10 +55,16 @@ void loadPlugins(bool isServer)
 
     pluginsDir.cd("plugins");
 
-    if (isDebug) pluginsDir.cd("Debug");
-    if (isRelease) pluginsDir.cd("Release");
-    if (isRelDeb) pluginsDir.cd("RelWithDebInfo");
-
+    if (qApp->property("LoadMode").isValid())
+    {
+        pluginsDir.cd(qApp->property("LoadMode").toString());
+    }
+    else
+    {
+        if (isDebug) pluginsDir.cd("Debug");
+        if (isRelease) pluginsDir.cd("Release");
+        if (isRelDeb) pluginsDir.cd("RelWithDebInfo");
+    }
     QCoreApplication::instance()->addLibraryPath(pluginsDir.path());
 
     CheckoutDataLoader& loader = CheckoutDataLoader::handler();

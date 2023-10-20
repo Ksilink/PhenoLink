@@ -550,6 +550,15 @@ int main(int ac, char** av)
 
 #endif
 
+    if (data.contains("-pg"))
+    {
+        int idx = data.indexOf("-pg")+1;
+        QString loadMode;
+        if (data.size() > idx) loadMode = data.at(idx);
+
+        qApp->setProperty("LoadMode", loadMode);
+    }
+
 
     int verbose = 0; //(ac > 1 && strcmp (av [1], "-v") == 0);
 
