@@ -699,11 +699,11 @@ QStringList recurseData(QJsonValue ob, QString& bp)
         auto arr = ob.toArray();
         for (int i = 0; i < arr.size(); ++i)
         {
-            recurseData(arr[i], bp);
+            res += recurseData(arr[i], bp);
         }
     }
     if (ob.isString())
-        res += bp + "/" + ob.toString();
+        res += bp + ob.toString();
 
     return res;
 }

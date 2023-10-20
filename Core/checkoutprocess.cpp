@@ -920,10 +920,11 @@ unsigned CheckoutProcess::numberOfRunningProcess()
 
 void CheckoutProcess::setNumberOfProcess(int nb)
 {
-
+    process_mutex.lock();
     _status.clear();
     for (int i = 0; i < nb; ++i)
         _status[QString::number(i)]=nullptr;
+    process_mutex.unlock();
 }
 
 void CheckoutProcess::exitServer()

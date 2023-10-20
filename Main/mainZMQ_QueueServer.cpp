@@ -221,6 +221,7 @@ int main(int ac, char** av)
     broker brk(verbose);
     brk.setpython_env(python_config);
 
+    try {
     brk.bind (QString("tcp://*:%1").arg(port));
 
     brk.start_brokering();
@@ -229,6 +230,10 @@ int main(int ac, char** av)
         printf ("W: interrupt received, shutting down...\n");
     worker.kill();
 
+    } catch(...)
+    {
+        qDebug() << "Binding not available (another process???)";
+    }
     return 0;
 
 
