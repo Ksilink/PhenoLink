@@ -331,6 +331,18 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
         for (int i = 0; i < array.size(); ++i)
         {
             QJsonObject params = array.at(i).toObject();
+
+
+            QJsonDocument doc(params);
+            QByteArray arr = doc.toBinaryData();
+            arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
+            QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
+
+            QString sHash = hash.toHex();
+            params["Process_hash"] = sHash;
+
+
+
             if (!drive_map.isEmpty())
             { // Iterate in each params data to remap drives !
                 params = remap(params, drive_map);
@@ -349,7 +361,7 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
 
             //params["StartTime"] = QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz");
 
-            QString hash = params["Process_hash"].toString();
+//            QString hash = params["Process_hash"].toString();
             // qDebug() << "Process hash" << hash;
             // - 2) Set parameters
             // - 2.a) load json prepared data
