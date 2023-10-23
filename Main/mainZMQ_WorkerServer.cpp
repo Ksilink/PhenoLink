@@ -334,7 +334,7 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
 
 
             QJsonDocument doc(params);
-            QByteArray arr = doc.toBinaryData();
+            QByteArray arr = doc.toJson();
             arr += QDateTime::currentDateTime().toMSecsSinceEpoch();
             QByteArray hash = QCryptographicHash::hash(arr, QCryptographicHash::Md5);
 

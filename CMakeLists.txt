@@ -120,12 +120,12 @@ if (WIN32) # do the win32 download
 
 elseif(LINUX) # do the linux download
     if (ONNX_GPU)
-        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.14.0/onnxruntime-linux-x64-gpu-${ONNX_VERSION}.tgz")
+	    set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-linux-x64-gpu-${ONNX_VERSION}.tgz")
          set(ONNX_ROOTDIR "onnxruntime-linux-x64-gpu-${ONNX_VERSION}")
          set(ONNX_TARGET "onnxruntime-linux-gpu-${ONNX_VERSION}.tgz")
          add_definitions(-DUSE_CUDA)
     else()
-        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.14.0/onnxruntime-linux-x64-${ONNX_VERSION}.tgz")
+	    set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-linux-x64-${ONNX_VERSION}.tgz")
         set(ONNX_ROOTDIR "onnxruntime-linux-x64-${ONNX_VERSION}")
         set(ONNX_TARGET "onnxruntime-linux-${ONNX_VERSION}.tgz")
     endif(ONNX_GPU)
