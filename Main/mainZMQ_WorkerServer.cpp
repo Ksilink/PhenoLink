@@ -277,27 +277,51 @@ void ZMQThread::run()
 
     zmsg *reply = nullptr;
     while (1) {
-        zmsg *request = session.recv (reply);
+        QString req_type;
+        zmsg *request = nullptr;
+        std::tie(req_type, request) =
+            session.recv (reply);
 
-        if (request == 0) {
-            qDebug() << "Broken answer";
-            break;              //  Worker was interrupted
+        if (req_type == "Request")
+        {
+
+            if (request == 0) {
+                qDebug() << "Broken answer";
+                break;              //  Worker was interrupted
+            }
+            //
+
+            //        reply = request;        //  Echo is complex... :-)
+            //        qDebug() << "srv ok" <<  request->parts();
+            auto obj = QCborValue::fromCbor(request->pop_front()).toJsonValue().toObject();
+            //        qDebug() << obj["ThreadID"] << obj["Client"];
+            QJsonArray ob; ob.push_back(obj);
+
+            startProcessServer(obj["Path"].toString(), ob);
+            // See tj
+
+
         }
-        //
+        else if (req_type == "Finished")
+        {
+            qDebug() << "Command Finished from broker";
+            request->dump();
+        }
+        else if (req_type == "Canceled")
+        {
+            delete request;
+            qDebug() << "Canceled process";
+            break;
+        }
 
-        //        reply = request;        //  Echo is complex... :-)
-        //        qDebug() << "srv ok" <<  request->parts();
-        auto obj = QCborValue::fromCbor(request->pop_front()).toJsonValue().toObject();
-        //        qDebug() << obj["ThreadID"] << obj["Client"];
-        QJsonArray ob; ob.push_back(obj);
-
-        startProcessServer(obj["Path"].toString(), ob);
-        // See tj
-
+        if (!reply)
+            reply = new zmsg(request->address().toLatin1());
 
         delete request;
-        reply = new zmsg("OK");
+
+        reply->push_back(QByteArray("OK"));
         reply->push_back(QString("%1").arg(procs.numberOfRunningProcess()).toLatin1());
+
         //        qDebug() << "Sending OK reply";
     }
 
@@ -315,6 +339,7 @@ inline ZMQThread::ZMQThread(GlobParams &gp, QThread *parentThread, QString prx, 
 {
 
     worker_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount());
+    worker_threadpool.setExpiryTimeout(-1);
 }
 
 void ZMQThread::startProcessServer(QString process, QJsonArray array)
@@ -361,7 +386,7 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
 
             //params["StartTime"] = QDateTime::currentDateTime().toString("yyyyMMdd:hhmmss.zzz");
 
-//            QString hash = params["Process_hash"].toString();
+            //            QString hash = params["Process_hash"].toString();
             // qDebug() << "Process hash" << hash;
             // - 2) Set parameters
             // - 2.a) load json prepared data

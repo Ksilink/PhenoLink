@@ -21,12 +21,14 @@
 #define MDPW_HEARTBEAT      (char*)"\004"
 #define MDPW_DISCONNECT     (char*)"\005"
 #define MDPW_PROCESSLIST    (char*)"\006"
+#define MDPW_FINISHED       (char*)"\007"
 
 static char *mdps_commands [] = {
     NULL,
     (char*)"READY", (char*)"REQUEST",
-          (char*)"REPLY", (char*)"HEARTBEAT",
-          (char*)"DISCONNECT", (char*)"PROCESSES"
+    (char*)"REPLY", (char*)"HEARTBEAT",
+    (char*)"DISCONNECT", (char*)"PROCESSES",
+    (char*)"FINISHED"
 };
 
 

@@ -12,7 +12,7 @@
 extern struct GlobParams global_parameters;
 
 
-zmsg* mdwrk::recv(zmsg *&reply_p)
+std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
 {
     //  Format and send the reply if we were provided one
     zmsg *reply = reply_p;
@@ -58,7 +58,7 @@ zmsg* mdwrk::recv(zmsg *&reply_p)
                 //  We should pop and save as many addresses as there are
                 //  up to a null part, but for now, just save one...
                 m_reply_to = msg->unwrap ();
-                return msg;     //  We have a request to process
+                return std::make_pair(QString("Request"), msg);     //  We have a request to process
             }
             else if (command.compare (MDPW_HEARTBEAT) == 0) {
                 //  Do nothing for heartbeats
@@ -68,6 +68,12 @@ zmsg* mdwrk::recv(zmsg *&reply_p)
             }
             else if (command.compare(MDPW_PROCESSLIST)==0){
                 send_to_broker((char*)MDPW_PROCESSLIST, m_nbThreads, m_preamble);
+            }
+            else if (command.compare(MDPW_FINISHED) == 0)
+            {
+                qDebug() << "Finished received";
+                m_reply_to = msg->unwrap ();
+                return std::make_pair(QString("Finished"), msg);
             }
             else {
                 s_console ("E: invalid input message (%d)",
@@ -99,5 +105,5 @@ zmsg* mdwrk::recv(zmsg *&reply_p)
     }
     if (s_interrupted)
         printf ("W: interrupt received, killing worker...\n");
-    return NULL;
+    return std::make_pair(QString("Canceled"), nullptr);
 }

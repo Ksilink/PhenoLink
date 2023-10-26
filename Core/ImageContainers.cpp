@@ -41,8 +41,15 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
 
             //            qDebug() << "bp:" << base_path << "file: "<<  data.at((int)i).toString();
             semaphore.acquire();
+            cv::Mat m;
             QString fname = base_path + data.at((int)i).toString();
-            cv::Mat m = pl::imread(fname, 2);
+            try {
+            m = pl::imread(fname, 2);
+            } catch (...)
+            {
+                qDebug() << "Imread error" << fname;
+            }
+
             semaphore.release();
 
             if (m.type() != CV_16U)
@@ -65,7 +72,13 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
         //        qDebug() << "bp:" << base_path << "file: "<<  data.first().toString();
         semaphore.acquire();
         QString fn = base_path + data.first().toString();
-        mat = pl::imread(fn, 2);
+        try {
+                mat = pl::imread(fn, 2);
+        } catch (...)
+        {
+                qDebug() << "Image read error" << fn;
+        }
+
         semaphore.release();
 
         if (mat.type() != CV_16U)

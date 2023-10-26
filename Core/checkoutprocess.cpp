@@ -18,7 +18,7 @@ CheckoutProcess::CheckoutProcess():
 {
     startTimer(100);
     worker_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount());
-
+    worker_threadpool.setExpiryTimeout(-1);
 }
 
 CheckoutProcess& CheckoutProcess::handler()
@@ -34,8 +34,8 @@ CheckoutProcess& CheckoutProcess::handler()
         proc->connect(&NetworkProcessHandler::handler(), SIGNAL(parametersReady(QJsonObject)),
                       proc, SLOT(receivedParameters(QJsonObject)))  ;
 
-        proc->connect(&NetworkProcessHandler::handler(), SIGNAL(processStarted(QString, QString)),
-                      proc, SLOT(networkProcessStarted(QString, QString)));
+        proc->connect(&NetworkProcessHandler::handler(), SIGNAL(processStarted(QString,QString)),
+                      proc, SLOT(networkProcessStarted(QString,QString)));
 
         proc->connect(&NetworkProcessHandler::handler(), SIGNAL(updateProcessStatusMessage(QJsonArray)),
                       proc, SLOT(networkupdateProcessStatus(QJsonArray)))  ;

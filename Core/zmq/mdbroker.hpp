@@ -56,7 +56,7 @@ struct  service_call
     QString project; // The project involved for priority mapping
     QString client; // id of the calling client
 
-    int calls; // Number of process involved by this call
+    int* calls; // Number of process involved by this call
 
     QCborMap callMap; // Mapping names from parameters
     QCborMap parameters; // parameters (with encoded parameters)
@@ -296,9 +296,13 @@ private:
             //            << msg->pop_front();
             //                       qDebug() << msg->pop_front()
             int nbCalls = msg->parts();
+            int* calls = new int();
+            *calls = nbCalls;
+
             qDebug() << "Service Call" << nbCalls;
             while (msg->parts())
             {
+
                 service_call* call = new service_call;
 
                 call->path = srv->m_name;
@@ -306,7 +310,7 @@ private:
                 call->client = client;
 
                 call->callMap = map;
-                call->calls = nbCalls;
+                call->calls = calls;
                 call->parameters = QCborValue::fromCbor(msg->pop_front()).toMap();
                 call->project = call->parameters.value("Project").toString();
 
@@ -359,7 +363,7 @@ private:
                     // first search for plugin priority list if any job was subscribed
                     for (auto &plugin: qAsConst(wrk->priority_plugins))
                         for (auto jbs: m_requests)
-                            if (plugin == jbs->path && jbs->calls < low_job_number && jbs->priority > priority)
+                            if (plugin == jbs->path && jbs->calls && *(jbs->calls) < low_job_number && jbs->priority > priority)
                             {
                                 job = jbs;
                                 priority = jbs->priority;
@@ -378,7 +382,7 @@ private:
 
                 if (job == nullptr)
                     for (auto jbs: m_requests) // Handle low number of jobs first
-                        if (jbs->calls < low_job_number && jbs->priority > priority)
+                        if (jbs->calls && *(jbs->calls) < low_job_number && jbs->priority > priority)
                         {
                             job = jbs;
                             priority = jbs->priority;
@@ -540,7 +544,7 @@ private:
         { // Here we have cancellable jobs
             auto req =
                 QString("Pending: %1|%2|%3|%4|%5").arg(wrk->path, wrk->client, wrk->project)
-                    .arg(wrk->calls)
+                    .arg(*(wrk->calls))
                     .arg(wrk->priority);
             // "Pending: Tools/Speed/Speed Testing 000001EA0453FFE0  239 0"
             //            qDebug() << req;
@@ -706,6 +710,7 @@ private:
 
     void finalize_process(const QJsonObject& agg)
     {
+        QThread::msleep(200); // Wait a few ms for servers to write / close files
         QSettings set;
         QString dbP = set.value("databaseDir", "L:/").toString();
 
@@ -715,7 +720,7 @@ private:
 #endif
 
         dbP.replace("\\", "/").replace("//", "/");
-//        auto agg = running[obj["TaskID"].toString()];
+        //        auto agg = running[obj["TaskID"].toString()];
         if (!agg["CommitName"].toString().isEmpty())
         {
 
@@ -758,8 +763,8 @@ private:
                 // Also change working directory to the "concatenated" folder
                 auto arr = agg["PostProcesses"].toArray();
 
-//                QFuture<void> future = QtConcurrent::run([this, arr, concatenated, dbP, path]
-                                                         {
+                //                QFuture<void> future = QtConcurrent::run([this, arr, concatenated, dbP, path]
+                {
 
                     for (int i = 0; i < arr.size(); ++i )
                     { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
@@ -785,7 +790,7 @@ private:
                     }
 
                 }
-//);
+                //);
 
 
 
@@ -807,8 +812,8 @@ private:
 
                 auto arr = agg["PostProcessesScreen"].toArray();
 
-//                QFuture<void> future = QtConcurrent::run([this, arr, xps, concatenated, dbP, path]
-                                                         {
+                //                QFuture<void> future = QtConcurrent::run([this, arr, xps, concatenated, dbP, path]
+                {
                     for (int i = 0; i < arr.size(); ++i )
                     { // Check if windows or linux conf, if linux changes remove ":" and prepend /mnt/shares/ at the begining of each scripts
                         QString script = arr[i].toString().replace("\\", "/");
@@ -836,7 +841,7 @@ private:
                     }
 
                 }
-//);
+                //);
 
 
 
@@ -880,6 +885,8 @@ private:
                             th = wt;
                             break;
                         }
+                    if (!th)
+                        return;
                     QList<service_call*> finished;
                     QList<service_call*> toCull;
                     for (auto &job : m_ongoing_jobs)
@@ -888,9 +895,17 @@ private:
                             toCull << job;
                             if (th->parameters)
                             {
-                                th->parameters->calls--;
-                                if (th->parameters->calls == 0)
-                                    finished << th->parameters;
+                                if (job->calls)
+                                {
+                                    *(job->calls)=*(job->calls)-1;
+                                    if (*(job->calls) == 0)
+                                    {
+                                        finished << job;
+                                        qDebug() << job->parameters[QString("CommitName")].toString();
+                                        delete job->calls;
+                                        job->calls = nullptr;
+                                    }
+                                }
                             }
                             th->parameters = nullptr;
                             m_finished_jobs << job;
@@ -905,10 +920,17 @@ private:
                     for (auto& final: finished)
                     {
                         auto params = final->parameters.toJsonObject();
+                        qDebug() << "Finished" << params["CommitName"].toString();
+                        zmsg fmsg;
+                        fmsg.push_back(params["CommitName"].toString());
+
+                        worker_send(wrk, (char*)MDPW_FINISHED, 0, &fmsg);
+
                         auto fut = QtConcurrent::run([this, params](){
                             this->finalize_process(params);
-                                    }
-                                          );
+                        }
+                                                     );
+
                     }
                     wrk->available++;
                     wrk->m_expiry = s_clock () + HEARTBEAT_EXPIRY;
@@ -1160,6 +1182,7 @@ public:
         //        qDebug() << job->parameters;
         thread->parameters = job;
 
+        qDebug() << "Sending job" << thread->m_id << job->client << job->path;
         zmsg* msg = new zmsg();
         msg->push_back(job->parameters.toCborValue().toCbor());
         worker_send(wrk, (char*)MDPW_REQUEST, job->path, msg);
@@ -1191,7 +1214,7 @@ public:
 
     void setpython_env(
         QProcessEnvironment pyc
-)
+        )
     {
 
         python_config=pyc;

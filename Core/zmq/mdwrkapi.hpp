@@ -134,7 +134,7 @@ public:
     //  ---------------------------------------------------------------------
     //  Send reply, if any, to broker and wait for next request.
 
-    zmsg *recv (zmsg *&reply_p);
+    std::pair<QString, zmsg *> recv (zmsg *&reply_p);
 
 private:
     QString m_broker;
