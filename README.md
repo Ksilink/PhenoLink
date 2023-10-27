@@ -95,7 +95,7 @@ You can pass *--clean-first* to the build command line to be sure to have a clea
 
 
 * #### Linux
-      export Qt5_DIR= %Path_to_QT%/Qt/5.15.2/gcc_64/
+      export Qt6_DIR= %Path_to_QT%/Qt/6.X.X/gcc_64/
 
       git clone https://github.com/Ksilink/PhenoLink.git      
 
