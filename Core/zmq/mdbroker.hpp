@@ -921,10 +921,8 @@ private:
                     {
                         auto params = final->parameters.toJsonObject();
                         qDebug() << "Finished" << params["CommitName"].toString();
-                        zmsg fmsg;
-                        fmsg.push_back(params["CommitName"].toString());
 
-                        worker_send(wrk, (char*)MDPW_FINISHED, 0, &fmsg);
+                        worker_send(wrk, (char*)MDPW_FINISHED, params["CommitName"].toString());
 
                         auto fut = QtConcurrent::run([this, params](){
                             this->finalize_process(params);
@@ -1040,6 +1038,8 @@ private:
         msg->push_front (MDPW_WORKER);
 
         msg->wrap(worker->m_identity);
+
+//        msg->dump();
 
         msg->send (*m_socket);
 

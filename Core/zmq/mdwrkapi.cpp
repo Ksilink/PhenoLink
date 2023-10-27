@@ -17,8 +17,8 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
     //  Format and send the reply if we were provided one
     zmsg *reply = reply_p;
     assert (reply || !m_expect_reply);
-    if (reply) {
-        assert (m_reply_to.size()!=0);
+    if (reply && m_reply_to.size() != 0) {
+//        assert (m_reply_to.size()!=0);
         reply->wrap (m_reply_to, "");
         m_reply_to = "";
         send_to_broker ((char*)MDPW_REPLY, "", reply);
@@ -71,8 +71,7 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
             }
             else if (command.compare(MDPW_FINISHED) == 0)
             {
-                qDebug() << "Finished received";
-                m_reply_to = msg->unwrap ();
+//                m_reply_to = msg->unwrap ();
                 return std::make_pair(QString("Finished"), msg);
             }
             else {

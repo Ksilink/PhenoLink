@@ -305,7 +305,10 @@ void ZMQThread::run()
         else if (req_type == "Finished")
         {
             qDebug() << "Command Finished from broker";
-            request->dump();
+            QString commit =  request->pop_front();
+
+            NetworkProcessHandler::handler().storeObject(commit);
+
         }
         else if (req_type == "Canceled")
         {
@@ -447,8 +450,8 @@ void ZMQThread::thread_finished()
         // For debug removed the call to avoid writing useless data
 
         // Assume the last thread is over if no more process is ongoing
-        QJsonArray data = NetworkProcessHandler::handler().filterObject(hash, ob,
-                                                                        (QThreadPool::globalInstance()->maxThreadCount()-QThreadPool::globalInstance()->activeThreadCount()) == 0);
+        QJsonArray data = NetworkProcessHandler::handler().filterObject(hash, ob, false);
+                                                                        //(QThreadPool::globalInstance()->maxThreadCount()-QThreadPool::globalInstance()->activeThreadCount()) == 0);
         QCborArray bin = NetworkProcessHandler::handler().filterBinary(hash, ob);
 
 

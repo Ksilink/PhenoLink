@@ -492,6 +492,9 @@ void NetworkProcessHandler::getProcessMessageStatus(QString process, QList<QStri
     Q_UNUSED(hash);
 }
 
+
+
+
 QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, bool last_one)
 {
     QJsonArray res;
@@ -671,6 +674,36 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
     }
 
     return res;
+}
+
+void NetworkProcessHandler::storeObject(QString commit)
+{
+
+//    DataFrame &store = *plateData[plateID];
+
+    QStringList toCull;
+
+    for (auto it = plateData.begin(), end = plateData.end(); it != end; ++it)
+    {
+        if (it.key().endsWith(commit))
+        {
+            auto timer = rstorageTimer[it.key()];
+
+            killTimer(timer);
+
+            storeData(it.key(), true);
+            storageTimer.remove(timer);
+            rstorageTimer.remove(it.key());
+            toCull << it.key();
+
+        }
+    }
+    for (auto& del: toCull)
+    {
+        delete plateData[del];
+        plateData.remove(del);
+    }
+
 }
 
 mdcli &NetworkProcessHandler::getSession()
