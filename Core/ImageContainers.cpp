@@ -26,6 +26,12 @@ int getReadSemaphore()
     return read_semaphore;
 }
 
+ QSemaphore &getSemaphore()
+{
+    static  QSemaphore semaphore(read_semaphore);
+    return semaphore;
+}
+
 }
 
 
@@ -37,7 +43,7 @@ QString getbasePath(QJsonArray data)
 
 cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString(), bool use_semaphore = true)
 {
-    static QSemaphore semaphore(read_semaphore);
+    QSemaphore& semaphore = PhenoLinkImage::getSemaphore();
 
 
     std::vector<cv::Mat> vec;
@@ -54,7 +60,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString(), b
             cv::Mat m;
             QString fname = base_path + data.at((int)i).toString();
             try {
-            m = pl::imread(fname, 2);
+                m = pl::imread(fname, 2);
             } catch (...)
             {
                 qDebug() << "Imread error" << fname;
@@ -83,10 +89,10 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString(), b
         if (use_semaphore) semaphore.acquire();
         QString fn = base_path + data.first().toString();
         try {
-                mat = pl::imread(fn, 2);
+            mat = pl::imread(fn, 2);
         } catch (...)
         {
-                qDebug() << "Image read error" << fn;
+            qDebug() << "Image read error" << fn;
         }
 
         if (use_semaphore) semaphore.release();
@@ -739,8 +745,8 @@ QStringList TimeStackedImageXP::getImageFiles()
     if (_data.contains("BasePath"))
         bp = _data["BasePath"].toString();
 
-//    if (ob.contains("BasePath") && bp.isEmpty())
-//        bp = ob["BasePath"].toString();
+    //    if (ob.contains("BasePath") && bp.isEmpty())
+    //        bp = ob["BasePath"].toString();
 
     qDebug() << _data["Data"].toArray();
 

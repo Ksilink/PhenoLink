@@ -5,6 +5,7 @@
 #include <Core/Dll.h>
 #include <opencv2/highgui.hpp>
 
+#include <QSemaphore>
 
 // FIXME: Add JSON / read & write context
 
@@ -280,7 +281,11 @@ void DllCoreExport loadFromJSON(QJsonObject data, cv::Mat& mat, int image = -1, 
 
 namespace PhenoLinkImage {
 
+    typedef QSemaphore& QSemaphoreRef ;
+
+
     int DllCoreExport getReadSemaphore();
+    QSemaphoreRef  DllCoreExport getSemaphore();
 
 }
 
