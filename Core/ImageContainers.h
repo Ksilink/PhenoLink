@@ -27,7 +27,7 @@ public:
 
     virtual QString basePath(QJsonObject data);
 
-    virtual cv::Mat getImage(size_t channelId, QString base_path = QString());
+    virtual cv::Mat getImage(size_t channelId, QString base_path = QString(), bool use_semaphore=true);
 
     virtual void  deallocate();
     virtual size_t getChannelCount();
@@ -54,7 +54,7 @@ public:
     virtual void loadFromJSON(QJsonObject data, QString bp = QString(), bool noload=false);
     virtual QString basePath(QJsonObject json);
 
-    virtual cv::Mat getImage(size_t i, size_t chann = -1, QString base_path = QString());
+    virtual cv::Mat getImage(size_t i, size_t chann = -1, QString base_path = QString(), bool use_semaphore = true);
 
 };
 
@@ -63,7 +63,7 @@ class DllCoreExport StackedImage: public ImageContainer
 {
 public:
     virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
-    virtual cv::Mat getImage(size_t i, size_t chann, QString base_path = QString());
+    virtual cv::Mat getImage(size_t i, size_t chann, QString base_path = QString(), bool use_semaphore = true);
     virtual QString basePath(QJsonObject json);
     virtual size_t getChannelCount();
 
@@ -109,7 +109,7 @@ public:
     virtual void loadFromJSON(QJsonObject data, QString base_path = QString());
     virtual QString basePath(QJsonObject json);
     virtual size_t getChannelCount();
-    virtual cv::Mat getImage(int i, int c=-1, QString base_path = QString());
+    virtual cv::Mat getImage(int i, int c=-1, QString base_path = QString(), bool use_semaphore = true);
     QStringList getImageFile(int i, int c=-1, QString base_path=QString());
 };
 
@@ -274,7 +274,13 @@ protected:
 
 namespace cocvMat {
 
-void DllCoreExport loadFromJSON(QJsonObject data, cv::Mat& mat, int image = -1, QString base_path=QString());
+void DllCoreExport loadFromJSON(QJsonObject data, cv::Mat& mat, int image = -1, QString base_path=QString(), bool use_semaphore=true);
+
+}
+
+namespace PhenoLinkImage {
+
+    int DllCoreExport getReadSemaphore();
 
 }
 

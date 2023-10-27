@@ -19,13 +19,23 @@
 int DllCoreExport  read_semaphore = 4;
 
 
+namespace PhenoLinkImage {
+
+int getReadSemaphore()
+{
+    return read_semaphore;
+}
+
+}
+
+
 QString getbasePath(QJsonArray data)
 {
     QDir dir(data.first().toString());
     return dir.dirName();
 }
 
-cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
+cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString(), bool use_semaphore = true)
 {
     static QSemaphore semaphore(read_semaphore);
 
@@ -40,7 +50,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
             if (im >= 0 && im != (int)i) continue;
 
             //            qDebug() << "bp:" << base_path << "file: "<<  data.at((int)i).toString();
-            semaphore.acquire();
+            if (use_semaphore)            semaphore.acquire();
             cv::Mat m;
             QString fname = base_path + data.at((int)i).toString();
             try {
@@ -50,7 +60,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
                 qDebug() << "Imread error" << fname;
             }
 
-            semaphore.release();
+            if (use_semaphore)  semaphore.release();
 
             if (m.type() != CV_16U)
             {
@@ -70,7 +80,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
     else
     {
         //        qDebug() << "bp:" << base_path << "file: "<<  data.first().toString();
-        semaphore.acquire();
+        if (use_semaphore) semaphore.acquire();
         QString fn = base_path + data.first().toString();
         try {
                 mat = pl::imread(fn, 2);
@@ -79,7 +89,7 @@ cv::Mat loadImage(QJsonArray data, int im = -1, QString base_path = QString())
                 qDebug() << "Image read error" << fn;
         }
 
-        semaphore.release();
+        if (use_semaphore) semaphore.release();
 
         if (mat.type() != CV_16U)
 
@@ -111,13 +121,13 @@ QStringList _getImageFile(QJsonArray data, int im, QString base_path = QString()
 
 namespace cocvMat
 {
-void loadFromJSON(QJsonObject data, cv::Mat& mat, int im, QString base_path)
+void loadFromJSON(QJsonObject data, cv::Mat& mat, int im, QString base_path, bool use_semaphore )
 {
     QJsonArray times =    data["Data"].toArray();
 
     QString bp = base_path.isEmpty() ? data["BasePath"].toString() : base_path;
 
-    mat = loadImage(times, im, bp);
+    mat = loadImage(times, im, bp, use_semaphore);
 }
 
 }
@@ -172,7 +182,7 @@ QString ImageContainer::basePath(QJsonObject data)
     return getbasePath(times);
 }
 
-cv::Mat ImageContainer::getImage(size_t i, QString base_path)
+cv::Mat ImageContainer::getImage(size_t i, QString base_path, bool use_semaphore)
 {
     if (_loaded) return (*this)[i];
 
@@ -241,7 +251,7 @@ QString TimeImage::basePath(QJsonObject data)
     return getbasePath(times);
 }
 
-cv::Mat TimeImage::getImage(size_t i, size_t chann, QString base_path)
+cv::Mat TimeImage::getImage(size_t i, size_t chann, QString base_path, bool use_semaphore )
 {
     if (_loaded) return (*this)[i];
 
@@ -254,7 +264,7 @@ cv::Mat TimeImage::getImage(size_t i, size_t chann, QString base_path)
             bp = ob["BasePath"].toString();
         QJsonArray chans = ob["Data"].toArray();
 
-        return loadImage(chans, chann, bp);
+        return loadImage(chans, chann, bp, use_semaphore);
     }
 }
 
@@ -276,7 +286,7 @@ void StackedImage::loadFromJSON(QJsonObject data, QString base_path)
     //        qDebug() << "LoadFromJSON not implemented for StackedImage";
 }
 
-cv::Mat StackedImage::getImage(size_t i, size_t chann, QString base_path)
+cv::Mat StackedImage::getImage(size_t i, size_t chann, QString base_path, bool use_semaphore )
 {
     if (_loaded) return (*this)[i];
 
@@ -301,7 +311,7 @@ cv::Mat StackedImage::getImage(size_t i, size_t chann, QString base_path)
         bp = ob["BasePath"].toString();
     QJsonArray chans = ob["Data"].toArray();
 
-    return loadImage(chans, (int)chann, bp);
+    return loadImage(chans, (int)chann, bp, use_semaphore);
 }
 
 size_t StackedImage::getChannelCount()
@@ -434,7 +444,7 @@ size_t ImageXP::getChannelCount()
     return chans.size();
 }
 
-cv::Mat ImageXP::getImage(int i, int c, QString bp)
+cv::Mat ImageXP::getImage(int i, int c, QString bp, bool use_semaphore )
 {
     if (_loaded) {
         if (c >= 0)
@@ -455,7 +465,7 @@ cv::Mat ImageXP::getImage(int i, int c, QString bp)
         bp = ob["BasePath"].toString();
     QJsonArray chans = ob["Data"].toArray();
 
-    return loadImage(chans,c, bp);
+    return loadImage(chans,c, bp,  use_semaphore);
 }
 
 QStringList ImageXP::getImageFile(int i, int c, QString bp)
