@@ -224,7 +224,7 @@ private:
     {
         QSet<worker*> toCull;
         int64_t now = s_clock();
-        for (QSet<worker_threads*>::iterator wrk = m_waiting_threads.begin(), ewrk = m_waiting_threads.end();
+        for (QSet<worker_threads*>::iterator wrk = m_workers_threads.begin(), ewrk = m_workers_threads.end();
              wrk != ewrk; ++wrk)
         {
             if ((*wrk)->m_worker->m_expiry <= now)
@@ -238,16 +238,16 @@ private:
                             m_requests.push_front(job); // push back in front lost jobs
                         }
                 }
-
             }
         }
 
-
+        if (toCull.size())
+            qDebug() << "Purging workers" << toCull.size();
         for (QSet<worker*>::iterator wrk = toCull.begin(); wrk != toCull.end(); ++wrk)
         {
-            if (m_verbose) {
+//            if (m_verbose) {
                 qDebug() << "I: deleting expired worker:" << (*wrk)->m_identity;
-            }
+//            }
             worker_delete((*wrk), 0);
         }
     }
@@ -661,6 +661,9 @@ private:
         }
 
 
+
+
+
         for (auto srv: toCull)
         {
             qDebug() << "Warning service" << srv->m_name << " has no more workers handling it";
@@ -676,16 +679,28 @@ private:
                 ++wt;
         }
 
+        QList<service_call*> tocull;
         for (auto wt = m_workers_threads.begin(), end = m_workers_threads.end(); end != wt; )
         {
             if ((*wt)->m_worker == wrk)
             {
+                for (auto& job: m_ongoing_jobs)
+                    if (job->thread_id == (*wt)->m_id)
+                    {
+                        m_requests.prepend(job);
+                        tocull << job;
+                    }
+
+
                 delete (*wt);
                 wt = m_workers_threads.erase(wt);
             }
             else
                 ++wt;
         }
+
+        for (auto& jb: tocull)
+            m_ongoing_jobs.removeAll(jb);
 
 
 
