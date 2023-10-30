@@ -500,7 +500,7 @@ private:
         int nb_finished_jobs =  clear_list(m_finished_jobs, client);
 
         msg->push_back(QString::number(nb_finished_jobs).toLatin1());
-        //                qDebug() << "Job Status: " << nb_finished_jobs << m_finished_jobs.size() << m_ongoing_jobs.size();
+        std::cout << "\r\n" << "Job Status: " << nb_finished_jobs << m_finished_jobs.size() << m_ongoing_jobs.size() << "    ";
 
     }
 

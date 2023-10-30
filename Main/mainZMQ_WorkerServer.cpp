@@ -34,9 +34,7 @@
 extern int DllCoreExport read_semaphore;
 
 //static GlobParams global_parameters;
-
-
-
+double PCFreq = 0.0;
 
 
 QString storage_path;
@@ -204,7 +202,13 @@ QJsonValue remap(QJsonValue v, QString map)
 
 QJsonObject run_plugin(CheckoutProcessPluginInterface* plugin)
 {
+#ifdef WIN32
 
+    ULONG64 cycles_start, cycles_end;
+
+    QueryThreadCycleTime(GetCurrentThread(), &cycles_start);
+
+#endif
     QJsonObject result ;
     int p = 0;
     try {
@@ -225,8 +229,16 @@ QJsonObject run_plugin(CheckoutProcessPluginInterface* plugin)
         result = plugin->gatherData(timer.elapsed());
         p=8;
 
-        qDebug() << timer.elapsed() << "(ms) done";
+        qDebug() << "Plugin" << plugin->getPath() << "Finished in " << timer.elapsed() << "(ms)";
+#ifdef WIN32
+        {
+            QSettings set("HKEY_LOCAL_MACHINE\\HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", QSettings::Registry64Format );
 
+            PCFreq = set.value("~MHz").toInt()*10;
+        }
+        QueryThreadCycleTime(GetCurrentThread(), &cycles_end);
+        qDebug() << "Consummed CPU Cycles:" << cycles_end-cycles_start << (cycles_end-cycles_start)/ (timer.elapsed()* PCFreq) << "%";
+#endif
         p=9;
     }
     catch (...)
@@ -516,6 +528,7 @@ int main(int ac, char** av)
 
     cv::setBreakOnError(true);
     cv::redirectError(&PhenoLinkOpenCVErrorCallback);
+
 
 
     //    qDebug() << "Runtime PATH" << QString("%1").arg(getenv("PATH"));
