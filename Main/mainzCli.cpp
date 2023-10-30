@@ -458,11 +458,15 @@ void startProcess(QString server, QString proc, QString project, QString commitN
 
     qDebug() << "Sending process to queue" << req->parts();
     // Fire & Forget mode no need to track in CLI
+
+    auto start = QDateTime::currentDateTime();
+
+    // Send the process
     session.send(proc.toLatin1().toStdString(), req);
 
     delete req;
     cborArray.clear();
-
+    // wait for reply
     reply = session.recv();
     if (reply)
         qDebug() << "Process started";
@@ -476,7 +480,6 @@ void startProcess(QString server, QString proc, QString project, QString commitN
         // query the broker for finish
         auto req = new zmsg();
         int finished = 0;
-        auto start = QDateTime::currentDateTime();
         while (finished < processes )
         {
             QThread::msleep(500);
