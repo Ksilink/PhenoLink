@@ -42,6 +42,7 @@ First you need a fully working C++ compiler suite (On windows Visual Studio 2017
 
 We use Vcpkg for easier package integration, this builds all the needed dependencies for you
 
+** [cmake](https://cmake.org/) **
 
 **[VCPKG](https://vcpkg.io/en/getting-started.html) based installation**:  
 
