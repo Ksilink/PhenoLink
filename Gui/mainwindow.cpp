@@ -852,7 +852,7 @@ void MainWindow::updateCurrentSelection()
 
     // Add FrameRate control if it makes sense
     if (inter->getTimePointCount() > 1) {
-        bvl->addWidget(setupVideoFrameRate(new QDoubleSpinBox(wwid), QString("Video Frame Rate")), (int)chList.size(), 0, 1, -1);
+        bvl->addWidget(setupVideoFrameRate(new QDoubleSpinBox(wwid), QString("Video Frame Rate")), i, 0, 1, -1);
     }
 
     ui->imageControl->layout()->addWidget(wwid);
