@@ -1375,9 +1375,6 @@ void ImageForm::removeFromView()
 using namespace qhttp::client;
 
 
-// Checkout Image Webhook
-// https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8
-
 #include <QDir>
 void ImageForm::sharePicture()
 {
@@ -1433,7 +1430,7 @@ void ImageForm::sharePicture()
                                 bytes.toBase64());
 
         // send through http webhook
-        QString webhook("http://192.168.2.127:8122/"); //"https://ksilink.webhook.office.com/webhookb2/fa5cfb4b-e394-4b70-b724-c2d22947d1a6@b707af02-9731-4563-b23a-60be5ef76553/IncomingWebhook/6c72a48fd41b445987ce3be90790c7bf/06fb7b8b-f8ff-4e3f-814d-480eb800a1a8");
+        QString webhook("http://192.168.2.127:8122/");
 
 iclient->request(qhttp::EHTTP_POST,
                  webhook,

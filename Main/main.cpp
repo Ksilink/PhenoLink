@@ -23,7 +23,7 @@
     #include <windows.h>
     #include <wincon.h>
     #include <QtWebView/QtWebView>
-    
+
 #endif
 
 #include <QStyleFactory>
@@ -126,11 +126,14 @@ int main(int argc, char *argv[])
          server.setProcessChannelMode(QProcess::MergedChannels);
         server.setStandardOutputFile(QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() +"/CheckoutServer_log.txt");
         server.setWorkingDirectory(a.applicationDirPath());
-        QString r = "PhenoLinkHttpServer.exe";
+        QString r = "PhenoLinkZMQServer.exe";
 
         server.setProgram(r);
         if (set.value("UserMode/Debug", false).toBool())
-            server.setArguments(QStringList() << "-d");
+            server.setArguments(QStringList() << "-stda" << "-d");
+        else
+            server.setArguments(QStringList() << "-stda" );
+
 
         server.start();
 
@@ -141,7 +144,7 @@ int main(int argc, char *argv[])
     }
 
 
-    NetworkProcessHandler::handler().establishNetworkAvailability();
+//    NetworkProcessHandler::handler().establishNetworkAvailability();
 
     PluginManager::loadPlugins();
     // Start the network based process plugins

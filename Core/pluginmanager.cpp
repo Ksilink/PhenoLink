@@ -12,6 +12,7 @@
 #include "checkoutprocess.h"
 
 #include <QtConcurrent>
+#include <QSettings>
 
 namespace PluginManager
 {
@@ -19,6 +20,10 @@ namespace PluginManager
 void loadPlugins(bool isServer)
 {
     QDir pluginsDir(qApp->applicationDirPath());
+//    QSettings set;
+
+
+
     bool isDebug = false;
     bool isRelease = false;
     bool isRelDeb = false;
@@ -50,10 +55,16 @@ void loadPlugins(bool isServer)
 
     pluginsDir.cd("plugins");
 
-    if (isDebug) pluginsDir.cd("Debug");
-    if (isRelease) pluginsDir.cd("Release");
-    if (isRelDeb) pluginsDir.cd("RelWithDebInfo");
-
+    if (qApp->property("LoadMode").isValid())
+    {
+        pluginsDir.cd(qApp->property("LoadMode").toString());
+    }
+    else
+    {
+        if (isDebug) pluginsDir.cd("Debug");
+        if (isRelease) pluginsDir.cd("Release");
+        if (isRelDeb) pluginsDir.cd("RelWithDebInfo");
+    }
     QCoreApplication::instance()->addLibraryPath(pluginsDir.path());
 
     CheckoutDataLoader& loader = CheckoutDataLoader::handler();
@@ -74,7 +85,12 @@ void loadPlugins(bool isServer)
 
         void operator()(QString fileName)
         {
-            qDebug() << "Checking file" << fileName << pluginsDir.absoluteFilePath(fileName);
+
+            QSettings set;
+
+//            if (set.value("UserMode/Debug", false).toBool())
+//                qDebug() << "Checking file" << fileName << pluginsDir.absoluteFilePath(fileName);
+
             QPluginLoader pluginLoader(pluginsDir.absoluteFilePath(fileName));
 
 
@@ -91,7 +107,8 @@ void loadPlugins(bool isServer)
                 CheckoutDataLoaderPluginInterface* pl = qobject_cast<CheckoutDataLoaderPluginInterface*>(plugin);
                 if (pl)
                 {
-                    qDebug() << "Plugin" << pl->pluginName() << "(" << fileName << ") loaded handling: " << pl->handledFiles();
+//                    if (set.value("UserMode/Debug", false).toBool())
+//                        qDebug() << "Plugin" << pl->pluginName() << "(" << fileName << ") loaded handling: " << pl->handledFiles();
                     mutx.lock();
                     loader.addPlugin(pl);
                     mutx.unlock();
@@ -108,7 +125,8 @@ void loadPlugins(bool isServer)
                     }
                     else
                     {
-                        qDebug() << "Plugin" << pr->getPath() << pr->getComments() << "(" << pr->getAuthors() << ")" << pr->plugin_version();
+//                        if (set.value("UserMode/Debug", false).toBool())
+//                            qDebug() << "Plugin" << pr->getPath() << pr->getComments() << "(" << pr->getAuthors() << ")" << pr->plugin_version();
                         mutx.lock();
                         process.addProcess(pr);
                         mutx.unlock();

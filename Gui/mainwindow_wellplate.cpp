@@ -175,8 +175,8 @@ void MainWindow::on_notebookDisplay_clicked()
     QPair<QStringList, QStringList> datasets = opt.getDatasets();
     QString procs = opt.getProcessing();
 
-    // Let's copy the ipynb file to some other location for better integration
-    // =>
+// Let's copy the ipynb file to some other location for better integration
+// =>
 
 #ifdef _WIN64
     QString username = qgetenv("USERNAME");
@@ -226,26 +226,26 @@ void MainWindow::on_notebookDisplay_clicked()
 
     saveJsonIpynb(file, db + "/Run/" + tgt);
 
-    // Need to load first line of each file & accomodate with plate tags
-    // Also add a other csv input :) (like cellprofiler or other stuffs;
-    // allow linking with plates & plates tags then :)
+// Need to load first line of each file & accomodate with plate tags
+// Also add a other csv input :) (like cellprofiler or other stuffs;
+// allow linking with plates & plates tags then :)
 
 
 
 
 
-    // also we can see if we can introduce some "post processing in python..."
+// also we can see if we can introduce some "post processing in python..."
 #if WIN32
 
 
     //    int tab = ui->tabWidget->addTab(view, "Dash View");
     QWebEngineView *view = new QWebEngineView(this);
     QUrl url(QString("http://%1:%2/notebooks/Run/%5?token=%3&autorun=true")
-             .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
-             .arg("8888")
-             .arg(set.value("JupyterToken", "").toString())
-             //             .arg(dbopts)
-             .arg(tgt)
+                 .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
+                 .arg("8888")
+                 .arg(set.value("JupyterToken", "").toString())
+                 //             .arg(dbopts)
+                 .arg(tgt)
              );
     qDebug() << url;
     QApplication::clipboard()->setText(url.toString());
@@ -275,8 +275,8 @@ void MainWindow::on_dashDisplay_clicked()
     QPair<QStringList, QStringList> datasets = opt.getDatasets();
 
     QString dbopts = QString("dbs=%1").arg(datasets.first.join(";"))
-            + "&" +
-            QString("agdbs=%1").arg(datasets.second.join(";"));
+                     + "&" +
+                     QString("agdbs=%1").arg(datasets.second.join(";"));
 
     dbopts= dbopts.replace("'","");
 
@@ -295,9 +295,9 @@ void MainWindow::on_dashDisplay_clicked()
     QSettings set;
     QWebEngineView *view = new QWebEngineView(this);
     QUrl url(QString("http://%1:%2?%3")
-             .arg(set.value("DashServer", "127.0.0.1").toString())
-             .arg("8050")
-             .arg(dbopts)
+                 .arg(set.value("DashServer", "127.0.0.1").toString())
+                 .arg("8050")
+                 .arg(dbopts)
              );
     qDebug() << url;
     QApplication::clipboard()->setText(url.toString());
@@ -314,15 +314,33 @@ QMutex mx;
 
 void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
 {
-
 #ifdef _WIN64
 
     if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(pairs.second.toStdWString().c_str()))
     {
 
-        mx.lock();
-        pairs.first->setInvalid();
-        mx.unlock();
+        auto str = pairs.second;
+        str.chop(4); str+=".jxl";
+
+        if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(str.toStdWString().c_str()))
+        {
+
+            auto str = pairs.second;
+
+            for (int i = str.size(); i > 0; --i) // Assume it's valid if we have a .tar file
+            {
+                auto t = str.mid(0, i); t += ".tar";
+                if (GetFileAttributesW(t.toStdWString().c_str()) != INVALID_FILE_ATTRIBUTES)
+                    return;
+            }
+
+
+
+
+            mx.lock();
+            pairs.first->setInvalid();
+            mx.unlock();
+        }
     }
 #else
 
@@ -331,6 +349,14 @@ void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
     int exist = stat(pairs.second.toStdString().c_str(), &buf);
     if (exist != 0)
     {
+        auto str = pairs.second;
+        for (int i = str.size(); i > 0; --i)
+        {
+            auto t = str.right(i); t += ".tar";
+            if (stat(pairs.second.toStdString().c_str(), &buf) == 0)
+                return;
+        }
+
         mx.lock();
         pairs.first->setInvalid();
         mx.unlock();
@@ -404,9 +430,9 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
             QStringList fileList = seq->getAllFiles();
             if (fileList.size())
             {
-                QString jxl = fileList.at(0); jxl.chop(4);
-                if (QFile::exists(jxl+".jxl"))
-                    seq->toJxl();
+                //                QString jxl = fileList.at(0); jxl.chop(4);
+                //                if (QFile::exists(jxl+".jxl"))
+                //                    seq->toJxl();
 
                 for (auto l : seq->getAllFiles() )
                     proc_mapps.append(qMakePair(seq,l));
@@ -458,9 +484,9 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
         else
         {
             ui->textLog->setPlainText(
-                        ui->textLog->toPlainText()
-                        +
-                        "\r\nWarning: corrupted data in loading the file, Wellplate structure could not be reconstructed");
+                ui->textLog->toPlainText()
+                +
+                "\r\nWarning: corrupted data in loading the file, Wellplate structure could not be reconstructed");
             //            QMessageBox::warning(this, "Loading error", "Warning: corrupted data in loading the file, Wellplate structure could not be reconstructed");
         }
 
@@ -800,7 +826,7 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
             {
 
                 QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+QChar(r))
-                        + colname + ".jpg";
+                                   + colname + ".jpg";
                 if (QFile::exists(img2Path))
                     hasBirdview2 = true;
                 break;
@@ -835,12 +861,12 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         out << "<html>"
             << "<head>"
             <<"<link rel='stylesheet' href='" << dbP << "/Code/HTML/birdview.css'>"
-           <<"<script src='"<< dbP << "/Code/HTML/jquery.js'></script>"
-          <<"<script src='"<< dbP << "/Code/HTML/ksilink.js'></script>"
-         << "</head>"
-         << "<body><h1>" << mdl->name() << " " << chanChange << "<label class='switch'><input type='checkbox' id='togBtn' onchange='toBW();'><div class='slider round' id='bw'></div></label></h1>"
-         << "<div id='largeImg' class='Center' hidden=True></div>"
-         <<"<table width='100%' >";
+            <<"<script src='"<< dbP << "/Code/HTML/jquery.js'></script>"
+            <<"<script src='"<< dbP << "/Code/HTML/ksilink.js'></script>"
+            << "</head>"
+            << "<body><h1>" << mdl->name() << " " << chanChange << "<label class='switch'><input type='checkbox' id='togBtn' onchange='toBW();'><div class='slider round' id='bw'></div></label></h1>"
+            << "<div id='largeImg' class='Center' hidden=True></div>"
+            <<"<table width='100%' >";
 
         out  << "<thead>" << "<tr><th></th>"; // Empty col for row name
 
@@ -858,14 +884,14 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
                 if (mdl->hasMeasurements(QPoint(r, c)))
                 {
 
-                    QString imgPath = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString('A'+QChar(r))
-                            + colname + ".jpg";
-                    QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString('A'+QChar(r))
-                            + colname + ".jpg";
+                    QString imgPath = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/" + mdl->name() + "_" + QString(QChar('A'+r))
+                                      + colname + ".jpg";
+                    QString img2Path = dbP + "/PROJECTS/" + mdl->getProjectName() + "/Checkout_Results/BirdView/" + mdl->name() + "/bv2" + mdl->name() + "_" + QString(QChar('A'+r))
+                                       + colname + ".jpg";
 
 
                     out <<    "<td><img width='100%' src='file://"
-                           <<  (hasBirdview2 ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString('A'+QChar(r)) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString('A'+QChar(r)) << colname << "&json'" <<"/></td>";
+                        <<  (hasBirdview2 ? img2Path : imgPath) << "' onclick='imgEnlarge(this);' title='"<< (*mdl)(r,c).getTags().join(',') << "' id='" << QString(QChar('A'+r)) << colname << "' checkout='http://localhost:8020/Load?project=" << mdl->getProjectName() << "&plate=" << mdl->name() << "&wells=" << QString(QChar('A'+r)) << colname << "&json'" <<"/></td>";
                     if (res.isEmpty())
                         res = imgPath;
                 }
@@ -876,8 +902,8 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         }
         out  <<"</tbody>";
         out         <<"</table>"
-                   <<"</body>"
-                  << "</html>";
+            <<"</body>"
+            << "</html>";
     }
     return res;
 }

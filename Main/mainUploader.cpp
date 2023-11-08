@@ -13,7 +13,7 @@
 #include <aws/core/Aws.h>
 #include <aws/s3/S3Client.h>
 #include <aws/s3/model/PutObjectRequest.h>
-
+#include <aws/core/auth/AWSCredentials.h>
 
 #include <google/cloud/storage/client.h>
 
@@ -140,8 +140,8 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-AwsFileUploader::AwsFileUploader(const QString &filePath, const QString &bucketName, const QString &keyName)
-    : m_filePath(filePath), m_bucketName(bucketName), m_keyName(keyName)
+AwsFileUploader::AwsFileUploader(const QString &filePath, const QString &bucketName, const QString &keyName, const QString &secretKey)
+    : m_filePath(filePath), m_bucketName(bucketName), m_keyName(keyName), m_secretKey(secretKey)
 {
 }
 
@@ -150,15 +150,33 @@ void AwsFileUploader::start()
     auto future = QtConcurrent::run([this]() { this->upload(); } );
 }
 
+static const char * ALLOCATION_TAG = "PhenoLink"; // your allocation tag
+
 void AwsFileUploader::upload()
 {
+
+    using namespace Aws::Auth;
+    using namespace Aws::Http;
+    using namespace Aws::Client;
+    using namespace Aws::S3;
+    using namespace Aws::S3::Model;
+    using namespace Aws::Utils;
+//    using namespace Aws::Transfer;
+
     QFile file(m_filePath);
     if (!file.open(QIODevice::ReadOnly)) {
         emit finished();
         return;
     }
 
-    Aws::S3::S3Client s3Client;
+    Aws::Client::ClientConfiguration config;
+
+    std::shared_ptr<S3Client> s3Client = Aws::MakeShared<S3Client>(
+        ALLOCATION_TAG,
+        AWSCredentials(Aws::String(m_keyName.toStdString()), Aws::String(m_secretKey.toStdString()))
+//        , config
+    );
+
     Aws::S3::Model::PutObjectRequest objectRequest;
     objectRequest.SetBucket(m_bucketName.toStdString());
     objectRequest.SetKey(m_keyName.toStdString());
@@ -170,7 +188,7 @@ void AwsFileUploader::upload()
     objectRequest.SetContentLength(static_cast<long>(file.size()));
     //    objectRequest.SetDataSentEventHandler(); // Put a Lambda here to get transfert feedback
 
-    auto putObjectOutcome = s3Client.PutObject(objectRequest);
+    auto putObjectOutcome = s3Client->PutObject(objectRequest);
     if (putObjectOutcome.IsSuccess()) {
         emit finished();
     } else {

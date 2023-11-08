@@ -35,7 +35,7 @@ TaggerPlate::TaggerPlate(QString _plate,QWidget *parent) :
     QStringList header;
 
     for (int i = 0; i < 'Q'; ++i)
-        header << QString('A'+QChar((char)i));
+        header << QString(QChar('A'+(char)i));
 
     ui->plateMaps->setVerticalHeaderLabels(header);
 
@@ -168,9 +168,9 @@ void TaggerPlate::on_unsetTags_clicked()
 
 
 // Plate Layout changed (384 / 96 / 1536)
-void TaggerPlate::on_plates_design_currentIndexChanged(const QString &)
-{
-}
+//void TaggerPlate::on_plates_design_currentIndexChanged(const QString &)
+//{
+//}
 
 
 // Find Template
@@ -213,13 +213,16 @@ void TaggerPlate::apply_template(QString script)
 void TaggerPlate::on_pushButton_clicked()
 {
 
+    QSettings set;
+
     QString script = QFileDialog::getOpenFileName(this, "Choose Template storage path",
-                                                  QDir::home().path(), "Tags json file (*.json)",
+                                                  set.value( "LastTagsJSON", QDir::home().path()).toString(), "Tags json file (*.json)",
                                                   0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
                                                   );
 
     if (!script.isEmpty())
     {
+        QStringList sc = script.split("/"); sc.pop_back(); set.setValue("LastTagsJSON", sc.join("/"));
         apply_template(script);
     }
 

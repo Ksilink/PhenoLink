@@ -33,7 +33,7 @@ else()
 endif(WIN32)
 
 set(Checkout_VERSION_MAJOR 23)
-set(Checkout_VERSION_MINOR 04)
+set(Checkout_VERSION_MINOR 08)
 set(Checkout_VERSION_COMPLEMENT R)
 set(Checkout_VERSION_RELEASE 0)
 
@@ -103,7 +103,7 @@ if(UNIX AND NOT APPLE)
         set(LINUX TRUE)
 endif()
 
-set(ONNX_VERSION "1.14.0")
+set(ONNX_VERSION "1.16.1")
 
 if (WIN32) # do the win32 download
       if (ONNX_GPU)
@@ -120,12 +120,12 @@ if (WIN32) # do the win32 download
 
 elseif(LINUX) # do the linux download
     if (ONNX_GPU)
-        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.14.0/onnxruntime-linux-x64-gpu-${ONNX_VERSION}.tgz")
+	    set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-linux-x64-gpu-${ONNX_VERSION}.tgz")
          set(ONNX_ROOTDIR "onnxruntime-linux-x64-gpu-${ONNX_VERSION}")
          set(ONNX_TARGET "onnxruntime-linux-gpu-${ONNX_VERSION}.tgz")
          add_definitions(-DUSE_CUDA)
     else()
-        set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v1.14.0/onnxruntime-linux-x64-${ONNX_VERSION}.tgz")
+	    set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-linux-x64-${ONNX_VERSION}.tgz")
         set(ONNX_ROOTDIR "onnxruntime-linux-x64-${ONNX_VERSION}")
         set(ONNX_TARGET "onnxruntime-linux-${ONNX_VERSION}.tgz")
     endif(ONNX_GPU)
@@ -291,6 +291,7 @@ if(PLUGIN_IN_CORE)
 endif(PLUGIN_IN_CORE)
 
 #add_subdirectory(PluginManager)
+
 add_subdirectory(Core)
 add_subdirectory(qhttp)
 #add_subdirectory(Tags)

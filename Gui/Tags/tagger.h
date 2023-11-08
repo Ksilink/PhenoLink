@@ -46,10 +46,14 @@ public:
     qhttp::client::QHttpClient* getHttp();
 
     QString getProject();
+    void project_changed(const QString &arg1);
 
 signals:
     void populate();
 
+
+private slots:
+    void on_project_currentIndexChanged(int index);
 
 private slots:
     void on_add_global_tags_clicked();
@@ -57,7 +61,6 @@ private slots:
     void on_global_tags_list_customContextMenuRequested(const QPoint &pos);
 
     void removeTag();
-    void on_project_currentIndexChanged(const QString &arg1);
 
     void on_pushButton_2_clicked();
 

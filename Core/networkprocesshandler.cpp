@@ -15,6 +15,9 @@
 #include "qhttp/qhttpserverrequest.hpp"
 #include "qhttp/qhttpserverresponse.hpp"
 
+#include <zmq/mdcliapi.hpp>
+
+
 using namespace qhttp::client;
 
 #undef signals
@@ -248,8 +251,6 @@ void CheckoutHttpClient::finalize()
     iclient.removeAll(ic);
 }
 
-QTextStream *hash_logfile = nullptr;
-
 inline QDataStream &operator<<(QDataStream &out, const std::vector<unsigned char> &args)
 {
     out << (quint64)args.size();
@@ -276,14 +277,11 @@ inline QDataStream &operator>>(QDataStream &in, std::vector<unsigned char> &args
     return in;
 }
 
-NetworkProcessHandler::NetworkProcessHandler() : _waiting_Update(false),
+NetworkProcessHandler::NetworkProcessHandler() : session(nullptr),
+                                                 _waiting_Update(false),
                                                  last_serv_pos(0)
 {
 
-    data = new QFile( QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() + "/HashLogs.txt");
-    if (data->open(QFile::WriteOnly | QFile::Truncate)) {
-        hash_logfile= new QTextStream(data);
-    }
 
     QList<QHostAddress> list = QNetworkInterface::allAddresses();
 
@@ -299,8 +297,6 @@ NetworkProcessHandler::NetworkProcessHandler() : _waiting_Update(false),
 
 NetworkProcessHandler::~NetworkProcessHandler()
 {
-    delete data;
-    delete hash_logfile;
 }
 
 NetworkProcessHandler &NetworkProcessHandler::handler()
@@ -314,36 +310,39 @@ NetworkProcessHandler &NetworkProcessHandler::handler()
 
 void NetworkProcessHandler::establishNetworkAvailability()
 {
-    // Go through configured parameters
-    QHostInfo info;
-    QSettings sets;
+//    // Go through configured parameters
+//    QHostInfo info;
+//    QSettings sets;
 
-    QJsonArray data;
+//    QJsonArray data;
 
-    QStringList var = sets.value("Server", QStringList() << "127.0.0.1").toStringList();
-    QList<QVariant> ports = sets.value("ServerP", QList<QVariant>() << QVariant((int)13378)).toList();
+//    QStringList var = sets.value("Server", QStringList() << "127.0.0.1").toStringList();
+//    QList<QVariant> ports = sets.value("ServerP", QList<QVariant>() << QVariant((int)13378)).toList();
 
-    for (int i = 0; i < var.size(); ++i)
-    {
-        QJsonObject localh;
-        localh["Host"] = var.at(i);
-        localh["Port"] = ports.at(i).toInt();
+//    for (int i = 0; i < var.size(); ++i)
+//    {
+//        QJsonObject localh;
+//        localh["Host"] = var.at(i);
+//        localh["Port"] = ports.at(i).toInt();
 
-        data.append(localh);
-    }
+//        data.append(localh);
+//    }
 
-    if (activeHosts.size() == data.size())
-        return;
-    foreach (QJsonValue ss, data)
-    {
-        QJsonObject o = ss.toObject();
-        auto h = new CheckoutHttpClient(o["Host"].toString(), o["Port"].toInt());
 
-        h->send("/ListProcesses");
-        activeHosts << h;
 
-        qDebug() << "Process from server" << h->iurl;
-    }
+
+//    if (activeHosts.size() == data.size())
+//        return;
+//    foreach (QJsonValue ss, data)
+//    {
+//        QJsonObject o = ss.toObject();
+//        auto h = new CheckoutHttpClient(o["Host"].toString(), o["Port"].toInt());
+
+//        h->send("/ListProcesses");
+//        activeHosts << h;
+
+//        qDebug() << "Process from server" << h->iurl;
+//    }
 }
 
 void NetworkProcessHandler::setNoProxyMode()
@@ -355,6 +354,15 @@ void NetworkProcessHandler::addProxyPort(uint16_t port)
 {
     srv = QString("%1%2").arg(srv).arg(port);
 }
+
+void NetworkProcessHandler::setServerAddress(QString srv_)
+{
+    srv=srv_;
+}
+
+QString NetworkProcessHandler::getServer() {return srv; }
+
+
 
 void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient *cl)
 {
@@ -376,112 +384,89 @@ void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient *cl)
 
 QStringList NetworkProcessHandler::getProcesses()
 {
-    QMutexLocker lock(&mutex_send_lock);
     QStringList l;
+    auto& session = getSession();
 
-    l = procMapper.keys();
-    // qDebug() << "Network Handler list: " << l;
+    zmsg *req = new zmsg();
+
+    session.send("mmi.list", req);
+    zmsg* reply = session.recv();
+    if (reply)
+    {
+        reply->pop_front(); // pop list
+
+        while (reply->parts())
+            l << reply->pop_front();
+    }
+
     return l;
 }
 
 void NetworkProcessHandler::getParameters(QString process)
 {
-    // Try to connect to any host having the same process
-    if (procMapper[process].isEmpty())
-    {
-        qDebug() << "Empty process List" << process;
-        return;
-    }
-    CheckoutHttpClient *h = procMapper[process].first();
-    if (!h)
-    {
-        qDebug() << "getParameters: Get Network process handler";
-        return;
-    }
+    auto& session = getSession();
 
-    qDebug() << "Query Process details" << process << h->iurl;
+    zmsg *req = new zmsg(process.toLatin1());
 
-    h->send(QString("/Process/%1").arg(process));
+    session.send("mmi.list", req);
+    zmsg* reply = session.recv();
+    if (reply)
+    {
+        while (reply->parts())
+            setParameters(QCborValue::fromCbor(reply->pop_front()).toMap().toJsonObject());
+
+    }
 }
 
 void NetworkProcessHandler::setParameters(QJsonObject ob)
 {
-    qDebug() << ob;
+//    qDebug() << ob;
     emit parametersReady(ob);
 }
 
-void NetworkProcessHandler::sendCommand(QString par)
+QString NetworkProcessHandler::sendCommand(QString par)
 {
-    for (auto h : activeHosts)
-        h->send(par);
+
+    QString res;
+    auto& session = getSession();
+
+    zmsg *req = new zmsg();
+
+    session.send(par.toStdString(), req);
+    zmsg* reply = session.recv();
+    if (reply)
+    {
+        while (reply->parts())
+            res += reply->pop_front();
+
+    }
+    return res;
 }
 
-void NetworkProcessHandler::startProcess(QString process, QJsonArray ob)
+void NetworkProcessHandler::startProcess(QString process, QJsonArray array)
 {
-    QList<CheckoutHttpClient *> procsList = procMapper[process];
+    auto& session = getSession();
 
-    // Try to connect to any host having the same process
-    if (procsList.isEmpty())
+    qDebug() << "Prepared " << array.size() << "Wells";
+    auto req = new zmsg();//proc.toLatin1());
+
+    auto cborArray = simplifyArray(array);
+    for (int i = 0; i < cborArray.size(); ++i)
     {
-        qDebug() << "Empty process List" << process;
-        return;
+        //        qDebug() << array.at(i);
+        QByteArray data = cborArray.at(i).toCbor();
+        req->push_back(data);
     }
 
-    int itemsPerServ = (int)ceil(ob.size() / (0.0 + procsList.size()));
-    qDebug() << "Need to dispatch: " << ob.size() << "item to process " << process << "found on " << procsList.size() << "services";
-    qDebug() << "Pushing " << itemsPerServ << "processes to each server";
-    // Perform server order reorganisation to ensure proper dispatch among servers
-    last_serv_pos = last_serv_pos % procsList.size();
+    qDebug() << "Sending process to queue"; //<< req->parts();
 
-    qDebug() << "Starting with server" << last_serv_pos;
+    session.send(process.toLatin1().toStdString(), req);
+    delete req;
 
-    for (int i = 0; i < last_serv_pos; ++i)
-        procsList.push_back(procsList.takeFirst());
-
-    //    foreach (CheckoutHost* h, procsList)
-    //        qDebug() << h->address << h->port;
-
-    int lastItem = 0;
-    if (procsList.size() == 1)
-    {
-        CheckoutHttpClient *h = procsList.front();
-
-        for (int i = 0; i < ob.size(); i++)
-        {
-            QJsonObject t = ob.at(i).toObject();
-            (*hash_logfile) << "Started Core " << t["CoreProcess_hash"].toString() << Qt::endl;
-            runningProcs[t["CoreProcess_hash"].toString()] = h;
-        }
-
-        startProcess(h, process, ob);
-    }
-    else
-        foreach (CheckoutHttpClient *h, procsList)
-        {
-            QJsonArray ar;
-            for (int i = 0; i < itemsPerServ && lastItem < ob.size(); ++i, ++lastItem)
-            {
-                ar.append(ob.at(lastItem));
-                QJsonObject t = ar.at(i).toObject();
-                //            qDebug() << t["CoreProcess_hash"].toString();
-                (*hash_logfile) << "Started Core " << t["CoreProcess_hash"].toString() << Qt::endl;
-                runningProcs[t["CoreProcess_hash"].toString()] = h;
-            }
-            //        qDebug() << "Starting" << h->address << h->port << ar.size();
-            if (ar.size())
-            {
-                static const int subs = 10;
-                for (int i = 0; i < ar.size(); i += subs)
-                {
-                    QJsonArray sub;
-                    for (int l = 0; l < subs && i + l < ar.size(); ++l)
-                        sub.append(ar.at(i + l));
-                    startProcess(h, process, sub);
-                }
-                last_serv_pos++;
-            }
-        }
+    auto reply = session.recv();
+    // Add reply message from broker
 }
+
 
 void NetworkProcessHandler::startProcess(CheckoutHttpClient *h, QString process, QJsonArray ob)
 {
@@ -507,11 +492,15 @@ void NetworkProcessHandler::getProcessMessageStatus(QString process, QList<QStri
     Q_UNUSED(hash);
 }
 
+
+
+
 QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, bool last_one)
 {
     QJsonArray res;
     QJsonObject ob;
     ob["hash"] = hash;
+
 
     auto l = QStringList() << "TaskID"
                            << "DataHash"
@@ -526,7 +515,10 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
         return res;
     }
 
-    QString plate = ds["XP"].toString().replace("\\", "/").replace("/", ""), commit = ds["CommitName"].toString();
+    QString plate = ds["XP"].toString().replace("\\", "/"), commit = ds["CommitName"].toString();
+
+    if (plate.contains("/")) plate=plate.split("/").last();
+
     QString plateID = plate + commit;
 
     if (!plateData.contains(plateID))
@@ -538,6 +530,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
     {
         QSettings set;
         QString dbP = set.value("databaseDir", "L:").toString();
+
 #ifndef WIN32
         if (dbP.contains(":"))
             dbP = QString("/mnt/shares/") + dbP.replace(":", "");
@@ -683,6 +676,67 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
     return res;
 }
 
+void NetworkProcessHandler::storeObject(QString commit)
+{
+
+//    DataFrame &store = *plateData[plateID];
+
+    QStringList toCull;
+
+    for (auto it = plateData.begin(), end = plateData.end(); it != end; ++it)
+    {
+        if (it.key().endsWith(commit))
+        {
+            auto timer = rstorageTimer[it.key()];
+
+            killTimer(timer);
+
+            storeData(it.key(), true);
+            storageTimer.remove(timer);
+            rstorageTimer.remove(it.key());
+            toCull << it.key();
+
+        }
+    }
+    for (auto& del: toCull)
+    {
+        delete plateData[del];
+        plateData.remove(del);
+    }
+
+}
+
+mdcli &NetworkProcessHandler::getSession()
+{
+    if (session == nullptr)
+    {
+        QSettings set;
+        auto srv = QString("tcp://%1:%2").arg(set.value("ZMQServer", "localhost").toString())
+            .arg(set.value("ZMQServerPort", 13555).toInt());
+        session = new mdcli(srv);
+    }
+
+    return *session;
+}
+
+int NetworkProcessHandler::FinishedJobCount()
+{
+    auto& session = getSession();
+    auto req = new zmsg();
+    session.send("mmi.status", req);
+    auto reply = session.recv();
+    // analyze the reply
+//    qDebug() << reply->pop_front();
+
+    QString msg = reply->pop_front();
+
+    delete req;
+    delete reply;
+//    qDebug()<< "Finished job" << msg;
+    return msg.toInt();
+
+}
+
 #include <iostream>
 #define ABORT_ON_FAILURE(expr)                           \
     do                                                   \
@@ -707,7 +761,7 @@ void exportBinary(QJsonObject &ds, QJsonObject &par, QCborMap &ob) // We'd like 
     {
         auto meta = par["Meta"].toArray().first().toObject();
         QString pos = meta["Pos"].toString();
-        
+
 
         int t = meta["TimePos"].toInt(),
                 f = meta["FieldId"].toInt(),
@@ -1056,8 +1110,8 @@ void NetworkProcessHandler::handleHashMapping(QJsonArray Core, QJsonArray Run)
         runningProcs.remove(coreHash);
         runningProcs[hash] = h;
 
-        if (hash_logfile)
-            (*hash_logfile) << coreHash << "->" << hash << Qt::endl;
+//        if (hash_logfile)
+//            (*hash_logfile) << coreHash << "->" << hash << Qt::endl;
 
         // qDebug() << coreHash << "->" << hash;
 

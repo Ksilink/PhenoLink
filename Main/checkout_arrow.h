@@ -12,6 +12,12 @@
 #include <arrow/ipc/reader.h>
 #include <arrow/ipc/api.h>
 
+#include <QString>
+#include <QMap>
+#include <QSet>
+#include <QDebug>
+#include <QDir>
+
 
 namespace fs = arrow::fs;
 
@@ -46,21 +52,21 @@ struct mytrait<class arrow::StringArray>
 };
 
 template <class T>
-typename mytrait<T>::value_type  _get(std::shared_ptr<T> ar, int s)
+inline typename mytrait<T>::value_type  _get(std::shared_ptr<T> ar, int s)
 {
     return ar->Value(s);
 }
 
 
 template<>
-mytrait<arrow::StringArray>::value_type _get(std::shared_ptr<arrow::StringArray> ar, int s)
+inline mytrait<arrow::StringArray>::value_type _get(std::shared_ptr<arrow::StringArray> ar, int s)
 {
     return ar->GetString(s);
 }
 
 
 template <class Bldr, class ColType>
-void concat(const QList<std::shared_ptr<arrow::Array> >& list, std::shared_ptr<arrow::Array>& res, QList<QList<bool> > de_doubler)
+inline void concat(const QList<std::shared_ptr<arrow::Array> >& list, std::shared_ptr<arrow::Array>& res, QList<QList<bool> > de_doubler)
 {
     Bldr bldr;
 
@@ -93,7 +99,7 @@ void concat(const QList<std::shared_ptr<arrow::Array> >& list, std::shared_ptr<a
 }
 
 
-double AggregateSum(QList<float>& f)
+inline double AggregateSum(QList<float>& f)
 {
 
     if (f.size() == 1) return f.at(0);
@@ -104,7 +110,8 @@ double AggregateSum(QList<float>& f)
 
     return r;
 }
-double AggregateMean(QList<float>& f)
+
+inline double AggregateMean(QList<float>& f)
 {
     if (f.size() == 1) return f.at(0);
     double r = 0;
@@ -117,7 +124,7 @@ double AggregateMean(QList<float>& f)
 
 
 
-double AggregateMedian(QList<float>& f)
+inline double AggregateMedian(QList<float>& f)
 {
     if (f.size() < 1) return 0;
     if (f.size() == 1) return f.at(0);
@@ -125,7 +132,7 @@ double AggregateMedian(QList<float>& f)
     return f.at(f.size() / 2);
 }
 
-double AggregateMin(QList<float>& f)
+inline double AggregateMin(QList<float>& f)
 {
     if (f.size() < 1) return 0;
     if (f.size() == 1) return f.at(0);
@@ -135,7 +142,7 @@ double AggregateMin(QList<float>& f)
     return r;
 }
 
-double AggregateMax(QList<float>& f)
+inline double AggregateMax(QList<float>& f)
 {
     if (f.size() < 1) return 0;
     if (f.size() == 1) return f.at(0);
@@ -146,7 +153,7 @@ double AggregateMax(QList<float>& f)
 }
 
 
-float Aggregate(QList<float>& f, QString& ag)
+inline float Aggregate(QList<float>& f, QString& ag)
 {
     if (ag == "Sum") return AggregateSum(f);
     if (ag == "Mean") return AggregateMean(f);
@@ -159,7 +166,7 @@ float Aggregate(QList<float>& f, QString& ag)
 }
 
 
-QList<bool> double_checker(QSet<QString>& skiper, std::shared_ptr<arrow::RecordBatch> rb)
+inline QList<bool> double_checker(QSet<QString>& skiper, std::shared_ptr<arrow::RecordBatch> rb)
 {
     QList<bool> res;
     auto well = std::static_pointer_cast<arrow::StringArray>(rb->GetColumnByName("Well"));
@@ -195,7 +202,7 @@ bool is_arrow_type(QList<  std::shared_ptr<arrow::Array> >& list)
 }
 
 
-void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
+inline void fuseArrow(QString bp, QStringList files, QString out, QString plateID)
 {
     qDebug() << "Fusing" << files << "to" << out;
 

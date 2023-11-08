@@ -802,7 +802,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     if (this->networking && handler.errors() > 0)
     {
         // First chance to try to recover from errors !
-        handler.restartProcessOnErrors();
+//        handler.restartProcessOnErrors();
     }
 
 
@@ -1086,7 +1086,9 @@ void MainWindow::startProcessRun(QString exp)
 
         _cancelation->connect(_cancelation, &QPushButton::clicked,
                               [this](bool){ auto cancel = this->_cancelation->objectName();
-            NetworkProcessHandler::handler().sendCommand(QString("/Cancel/?proc=%1").arg(cancel));
+            NetworkProcessHandler::handler().sendCommand("mmi.cancel");
+            _StatusProgress->setValue(_StatusProgress->maximum());
+
         });
 
 

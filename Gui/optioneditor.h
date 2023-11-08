@@ -17,7 +17,7 @@ class DllGuiExport GlobalOptions: public QWidget
     Q_OBJECT
 public:
     GlobalOptions(QWidget* parent = 0);
-    void ServGui(QStringList var, int i, QList<QVariant> ports, QGridLayout* serv_layout, bool isServ=false);
+    void ServGui(QString var, int ports, QGridLayout* serv_layout);
 
 protected:
     QWidget *features();
@@ -40,9 +40,6 @@ public slots:
 
     void openDirectory();
     void copyDirectory();
-
-    void addServer();
-    void delServer();
 
 protected:
     QLineEdit* username;

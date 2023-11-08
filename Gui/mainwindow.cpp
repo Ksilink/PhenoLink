@@ -102,7 +102,6 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
     _typeOfprocessing(0),
     _history(0),
     //    _numberOfChannels(0),
-    //	_startingProcesses(false),
     _commitName(0),
     _python_interface(0),
     //    _progress(0),
@@ -525,8 +524,8 @@ ctkDoubleRangeSlider* MainWindow::RangeWidgetSetup(ctkDoubleRangeSlider* w, Imag
         w->setMinMax(fo->getDispMin() - dv,
                      fo->getDispMax() + dv);
 
-        w->setMinimumValue(fo->getDispMin());
         w->setMaximumValue(fo->getDispMax());
+        w->setMinimumValue(fo->getDispMin());
 
     }
 
@@ -853,7 +852,7 @@ void MainWindow::updateCurrentSelection()
 
     // Add FrameRate control if it makes sense
     if (inter->getTimePointCount() > 1) {
-        bvl->addWidget(setupVideoFrameRate(new QDoubleSpinBox(wwid), QString("Video Frame Rate")), (int)chList.size(), 0, 1, -1);
+        bvl->addWidget(setupVideoFrameRate(new QDoubleSpinBox(wwid), QString("Video Frame Rate")), i, 0, 1, -1);
     }
 
     ui->imageControl->layout()->addWidget(wwid);
@@ -1670,7 +1669,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     {
         disconnect(_history, SIGNAL(currentTextChanged(QString)), this, SLOT(on_pluginhistory(QString)));
     }
-
+    layo->addRow(_history);
     _history->show();
 
     if (idx < 0)
@@ -1693,7 +1692,6 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
     }
 
 
-    layo->addRow(_history);
     connect(_history, SIGNAL(currentTextChanged(QString)), this, SLOT(on_pluginhistory(QString)));
 
 
@@ -2160,10 +2158,44 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
 void MainWindow::timerEvent(QTimerEvent *event)
 {
-    if (ui->menuProcess->actions().size() == 0)
-        NetworkProcessHandler::handler().establishNetworkAvailability();
+    //    if (ui->menuProcess->actions().size() == 0)
+    //        NetworkProcessHandler::handler().establishNetworkAvailability();
 
     //	if (_startingProcesses) return;
+
+    if (_StatusProgress &&
+        _StatusProgress->value() != _StatusProgress->maximum())
+    {
+
+        int count = NetworkProcessHandler::handler().FinishedJobCount();
+        //        qDebug() << "Timer event" << count;
+        if (count != 0)
+        {
+            _StatusProgress->setValue(count +
+                                      _StatusProgress->value());
+
+
+            uint64_t ms = process_starttime.msecsTo(QDateTime::currentDateTime());
+
+            QTime y(0,0); y = y.addMSecs(ms/(double)_StatusProgress->value());
+            QDateTime z = process_starttime; z = z.addMSecs(QTime(0,0).msecsTo(y) * _StatusProgress->maximum());
+
+            this->statusBar()->showMessage(QString("Starting Time %1 (Per sample run time: %2 - ETA %3)").arg(process_starttime.toString("yyyyMMdd hh:mm:ss.zz"),
+                                                                                                              y.toString("mm:ss.zzz"),
+                                                                                                              z.toString(z.date() != process_starttime.date() ? "yyyyMMdd hh:mm:ss.zz" : "hh:mm:ss.zzz")
+                                                                                                              ));
+
+            if (_StatusProgress->value() == _StatusProgress->maximum())
+            {
+                QList<QPushButton*> list = ui->processingArea->findChildren<QPushButton*>();
+                foreach(QPushButton* b, list)
+                    b->setEnabled(true);
+                QTime y(0, 0);
+                y = y.addMSecs(run_time.elapsed());
+                this->statusBar()->showMessage(QString("Processing finished: %1").arg(y.toString("hh:mm:ss.zzz")));
+            }
+        }
+    }
 
 
     event->accept();
@@ -2196,13 +2228,13 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
     //            stream << QString("Proc: %1 %2 %3\n").arg(thread).arg(ob["Path"].toString()).arg(ob["Pos"].toString());
     //            stream << QString("\t%1 %2 % (%3 %4 %)\n")
-    if (_logData.size() > 1e5)
-    {
-        _logData.remove(0, 5e4);
-    }
-    ui->textLog->setPlainText(_logData);
-    QScrollBar *sb = ui->textLog->verticalScrollBar();
-    sb->setValue(sb->maximum());
+    //    if (_logData.size() > 1e5)
+    //    {
+    //        _logData.remove(0, 5e4);
+    //    }
+    //    ui->textLog->setPlainText(_logData);
+    //    QScrollBar *sb = ui->textLog->verticalScrollBar();
+    //    sb->setValue(sb->maximum());
 
 }
 
@@ -2754,7 +2786,7 @@ void MainWindow::cloudUpload()
                                 continue;
                             auto r = FileList.Append((seq->getBasePath() + "/" + fname).toStdString());
                             auto r2 = uploaded.Append(0); // non uploaded data will be 0, otherwise day of upload
-//                            values[QString("Image_FileName_%1").arg(cname[c].trimmed().replace(" ", "_"))]=fname;
+                            //                            values[QString("Image_FileName_%1").arg(cname[c].trimmed().replace(" ", "_"))]=fname;
                         }
                     }
                 }
@@ -2775,9 +2807,9 @@ void MainWindow::cloudUpload()
 
     QSettings sets;
     QStringList items = { "CloudStorage/provider", "CloudStorage/accessKey",
-                          "CloudStorage/secretKey", "CloudStorage/bucket",
-                          "CloudStorage/key", "CloudStorage/connectionString",
-                          "CloudStorage/container", "CloudStorage/blob" };
+                         "CloudStorage/secretKey", "CloudStorage/bucket",
+                         "CloudStorage/key", "CloudStorage/connectionString",
+                         "CloudStorage/container", "CloudStorage/blob" };
 
     for (auto i : items)
     {
@@ -2796,7 +2828,7 @@ void MainWindow::cloudUpload()
         arrow::schema(fields, meta);
     auto table = arrow::Table::Make(schema, dat);
 
-//    QDir::
+    //    QDir::
     QString upfolder = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
     std::string uri = upfolder.toStdString() + "/cloud_upload.fth";
     std::string root_path;

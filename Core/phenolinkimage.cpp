@@ -19,7 +19,16 @@
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <sys/types.h>
 
+#include <sys/stat.h>
+
+#include <archive.h>
+#include <archive_entry.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 // a jxl decode function
@@ -34,9 +43,9 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
 
     auto dec = JxlDecoderMake(nullptr);
     if (JXL_DEC_SUCCESS !=
-            JxlDecoderSubscribeEvents(dec.get(), JXL_DEC_BASIC_INFO |
-                                      JXL_DEC_COLOR_ENCODING |
-                                      JXL_DEC_FULL_IMAGE)) {
+        JxlDecoderSubscribeEvents(dec.get(), JXL_DEC_BASIC_INFO |
+                                                 JXL_DEC_COLOR_ENCODING |
+                                                 JXL_DEC_FULL_IMAGE)) {
         fprintf(stderr, "JxlDecoderSubscribeEvents failed\n");
         return false;
     }
@@ -78,23 +87,23 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
             ysize = info.ysize;
             //            std::cout << "Data " << xsize << " " << ysize << std::endl;
             JxlResizableParallelRunnerSetThreads(
-                        runner.get(),
-                        JxlResizableParallelRunnerSuggestThreads(info.xsize, info.ysize));
+                runner.get(),
+                JxlResizableParallelRunnerSuggestThreads(info.xsize, info.ysize));
         }
         else if (status == JXL_DEC_COLOR_ENCODING) {
             // Get the ICC color profile of the pixel data
             size_t icc_size;
             if (JXL_DEC_SUCCESS !=
-                    JxlDecoderGetICCProfileSize(
-                        dec.get(), &format, JXL_COLOR_PROFILE_TARGET_DATA, &icc_size)) {
+                JxlDecoderGetICCProfileSize(
+                    dec.get(), &format, JXL_COLOR_PROFILE_TARGET_DATA, &icc_size)) {
                 fprintf(stderr, "JxlDecoderGetICCProfileSize failed\n");
                 return false;
             }
             icc_profile.resize(icc_size);
             if (JXL_DEC_SUCCESS != JxlDecoderGetColorAsICCProfile(
-                        dec.get(), &format,
-                        JXL_COLOR_PROFILE_TARGET_DATA,
-                        icc_profile.data(), icc_profile.size())) {
+                    dec.get(), &format,
+                    JXL_COLOR_PROFILE_TARGET_DATA,
+                    icc_profile.data(), icc_profile.size())) {
                 fprintf(stderr, "JxlDecoderGetColorAsICCProfile failed\n");
                 return false;
             }
@@ -102,7 +111,7 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
         else if (status == JXL_DEC_NEED_IMAGE_OUT_BUFFER) {
             size_t buffer_size;
             if (JXL_DEC_SUCCESS !=
-                    JxlDecoderImageOutBufferSize(dec.get(), &format, &buffer_size)) {
+                JxlDecoderImageOutBufferSize(dec.get(), &format, &buffer_size)) {
                 fprintf(stderr, "JxlDecoderImageOutBufferSize failed\n");
                 return false;
             }
@@ -142,35 +151,143 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
 }
 
 
+cv::Mat cvFromByteArray(QString& path, QByteArray& b, int flags)
+{
+    cv::Mat res;
+
+    if (path.endsWith(".jxl"))
+    {
+        decode(b, res);
+    }
+    else
+    {
+        cv::Mat m(b.length(), 1, CV_8U, b.data());
+        res = cv::imdecode(m, flags);
+    }
+
+    return res;
+}
+
+void fillByteArray(struct archive* ar, QByteArray& ardata)
+{
+    const void *buff;
+    size_t size;
+    la_int64_t offset;
+    for (;;)
+    {
+        int r = archive_read_data_block(ar, &buff, &size, &offset);
+        if (r == ARCHIVE_EOF)
+            break;
+        if (r < ARCHIVE_OK)
+        {
+            qDebug() << "Error reading archive";
+            return;
+        }
+        ardata.append((char*)buff, size);
+    }
+}
+
+
+QMap<QString, int > split_pos; // store temp access file
 
 cv::Mat pl::imread(QString &path, int flags)
 {
     cv::Mat res;
+    QString lpath = path;
 
+    // Assuming if file doesn't exist it's a jxl file
     if (!QFile::exists(path))
     {
-        path.chop(4);
-        path+=".jxl";
+        QString filename = path; // initial file name to search through archive
+
+        lpath.chop(4);
+        QString pth = lpath;
+
+        lpath+=".jxl";
+
+        if (!QFile::exists(lpath))
+        { // TODO: Check for .tar file with less char than initial file
+            // this allows for single file many channels, single file many time points / channels
+            // Many fields in single file etc...
+            int idx = filename.lastIndexOf("/");
+            QString refname = filename.mid(0, idx);
+
+            int start_pth = split_pos.value(refname, pth.size());
+
+            for (int i = pth.size(); i > 0; --i)
+            {
+                QString  tp = pth.mid(0, i);
+                tp += ".tar";
+                if (QFile::exists(tp))
+                { // Found the closest matching archive name
+                    if (start_pth != pth.size()) // save for later
+                        split_pos[refname]=i;
+
+                    QString search_file = filename.mid(idx+1),
+                        search_file_jxl = filename.mid(idx+1, filename.size()-idx-5)+".jxl";
+
+//                    qDebug() << tp << search_file << search_file_jxl;
+
+                    QByteArray ardata;
+
+                    // Open archive
+                    bool jxl = false;
+                    struct archive_entry *entry;
+                    int r;
+
+
+                    struct archive *ar = archive_read_new();
+                    archive_read_support_format_tar(ar);
+
+                    r = archive_read_open_filename(ar, tp.toLatin1().data(), 10240);
+                    if (r != ARCHIVE_OK) {
+                        qDebug() << "Archive opening error";
+                        return res;
+
+                    }
+                    while (archive_read_next_header(ar, &entry) == ARCHIVE_OK)
+                    {
+                        auto arch_fname =archive_entry_pathname_utf8(entry);
+                        jxl = search_file_jxl==arch_fname;
+                        if (search_file==arch_fname || jxl)
+                        {
+                            fillByteArray(ar, ardata);
+                            break;
+                        } else
+                        {
+                           archive_read_data_skip(ar);  // Note 2
+                        }
+                    }
+                    r = archive_read_free(ar);  // Note 3
+                    if (r != ARCHIVE_OK)
+                    {
+                        qDebug() << "Close Archive error";
+                    }
+
+                    if (ardata.size() == 0)
+                        qDebug() << "Error getting image data from archive";
+                    else
+                    {
+                        auto name = jxl ? QString(".jxl") : QString(".tif");
+                        res = cvFromByteArray(name, ardata, flags);
+                    }
+                    return res;
+                }
+            }
+        }
+
     }
 
 
-    QFile f(path);
+    QFile f(lpath);
     if (f.open(QFile::ReadOnly))
     {
         QByteArray b = f.readAll();
-        if (path.endsWith(".jxl"))
-        {
-            decode(b, res);
-        }
-        else
-        {
-            cv::Mat m(b.length(), 1, CV_8U, b.data());
-            res = cv::imdecode(m, flags);
-        }
+        res = cvFromByteArray(lpath, b, flags);
     }
     else
     {
-        qDebug() << "File openning error" << path;
+        qDebug() << "File opening error" << lpath;
     }
     return res;
 }

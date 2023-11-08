@@ -9,7 +9,8 @@ class AwsFileUploader : public QObject
     Q_OBJECT
 
 public:
-    AwsFileUploader(const QString& filePath, const QString& bucketName, const QString& keyName);
+    AwsFileUploader(const QString& filePath, const QString& bucketName,
+                    const QString& keyName,  const QString& secretKey);
 
     void start();
 
@@ -23,6 +24,7 @@ private:
     QString m_filePath;
     QString m_bucketName;
     QString m_keyName;
+    QString m_secretKey;
 };
 
 

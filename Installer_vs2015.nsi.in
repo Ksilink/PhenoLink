@@ -46,9 +46,9 @@ File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
 #File "@CMAKE_BINARY_DIR@\bin\*.dll"
 
-#SetOutPath $INSTDIR\bin\Release\resources
-#File "@CMAKE_BINARY_DIR@\bin\resources\*.pak"
-#File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
+SetOutPath $INSTDIR\bin\Release\resources
+File "@CMAKE_BINARY_DIR@\bin\Release\resources\*.pak"
+File "@CMAKE_BINARY_DIR@\bin\Release\resources\*.dat"
 
 SetOutPath $INSTDIR\bin\Release\styles
 File "@CMAKE_BINARY_DIR@\bin\Release\styles\*.dll"
@@ -56,8 +56,8 @@ File "@CMAKE_BINARY_DIR@\bin\Release\styles\*.dll"
 SetOutPath $INSTDIR\bin\Release\iconengines
 File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
 
-SetOutPath $INSTDIR\bin\Release\translations
-File "@CMAKE_BINARY_DIR@\bin\Release\translations\*.qm"
+SetOutPath $INSTDIR\bin\Release\translations\Qt6\qtwebengine_locales
+File "@CMAKE_BINARY_DIR@\bin\Release\translations\Qt6\qtwebengine_locales\*"
 
 #SetOutPath $INSTDIR\bin\qtwebengine_locales
 #File "@CMAKE_BINARY_DIR@\bin\Release\translations\qtwebengine_locales\*.pak"
@@ -68,11 +68,11 @@ CreateDirectory $INSTDIR\bin\Cache
 
 # define uninstaller name
 WriteUninstaller $INSTDIR\uninstaller.exe
-
+SetOutPath $INSTDIR\bin\plugins\Release
 
 # Start Menu
         createDirectory "$SMPROGRAMS\PhenoLink"
-        createShortCut "$SMPROGRAMS\PhenoLink\PhenoLink.lnk" "$INSTDIR\PhenoLink.exe" "" "$INSTDIR\PhenoLink.exe"
+        createShortCut "$SMPROGRAMS\PhenoLink\PhenoLink.lnk" "$INSTDIR\bin\Release\PhenoLink.exe" "" "$INSTDIR\bin\Release\PhenoLink.exe"
 
 
 
@@ -82,9 +82,8 @@ SectionEnd
 Section "Plugin Installer Section"
 
 # define output path
-SetOutPath $INSTDIR\bin\Release\plugins
-File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
-File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll" # Grrr hack for DLL to be imported by the loader
+SetOutPath $INSTDIR\bin\plugins\Release
+File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll"
 ;SetOutPath $INSTDIR\bin\Release\accessible
 ;File "@CMAKE_BINARY_DIR@\bin\accessible\*.dll"
 

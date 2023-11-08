@@ -17,6 +17,8 @@ CheckoutProcess::CheckoutProcess():
     _counter(0)
 {
     startTimer(100);
+    worker_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount());
+    worker_threadpool.setExpiryTimeout(-1);
 }
 
 CheckoutProcess& CheckoutProcess::handler()
@@ -32,8 +34,8 @@ CheckoutProcess& CheckoutProcess::handler()
         proc->connect(&NetworkProcessHandler::handler(), SIGNAL(parametersReady(QJsonObject)),
                       proc, SLOT(receivedParameters(QJsonObject)))  ;
 
-        proc->connect(&NetworkProcessHandler::handler(), SIGNAL(processStarted(QString, QString)),
-                      proc, SLOT(networkProcessStarted(QString, QString)));
+        proc->connect(&NetworkProcessHandler::handler(), SIGNAL(processStarted(QString,QString)),
+                      proc, SLOT(networkProcessStarted(QString,QString)));
 
         proc->connect(&NetworkProcessHandler::handler(), SIGNAL(updateProcessStatusMessage(QJsonArray)),
                       proc, SLOT(networkupdateProcessStatus(QJsonArray)))  ;
@@ -477,8 +479,8 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray array)
 {
 
     qDebug() << "Remaining unstarted processes" << _process_to_start.size()
-             << QThreadPool::globalInstance()->activeThreadCount()
-             << QThreadPool::globalInstance()->maxThreadCount();
+             << worker_threadpool.activeThreadCount()
+             << worker_threadpool.maxThreadCount();
 
     CheckoutProcessPluginInterface* plugin = _plugins[process];
     if (plugin)
@@ -555,7 +557,7 @@ void CheckoutProcess::startProcessServer(QString process, QJsonArray array)
             _peruser_futures[key].push_back(wa);
             status_protect.unlock();
 
-            QFuture<QJsonObject> fut = QtConcurrent::run(run_plugin, plugin);
+            QFuture<QJsonObject> fut = QtConcurrent::run(&worker_threadpool, run_plugin, plugin);
             wa->setFuture(fut);
 #endif
         }
@@ -574,7 +576,7 @@ void CheckoutProcess::updatePath()
 
 void CheckoutProcess::receivedParameters(QJsonObject obj)
 {
-    //  qDebug() << obj;
+//      qDebug() << obj;
     QString process = obj["Path"].toString();
     _params[process] = obj;
     emit parametersReady(obj);
@@ -833,6 +835,7 @@ void CheckoutProcess::watcher_finished()
 
 
         emit finishedJob(hash, ob);
+//        delete wa;
     }
     else
         qDebug() << "Error Retrieving watcher for QFuture of processes";
@@ -907,9 +910,21 @@ void CheckoutProcess::finishedProcess(QString hash, QJsonObject result)
     //    qDebug() << "Removing" << hash;
 }
 
+
+
+
 unsigned CheckoutProcess::numberOfRunningProcess()
 {
     return  _status.size();
+}
+
+void CheckoutProcess::setNumberOfProcess(int nb)
+{
+    process_mutex.lock();
+    _status.clear();
+    for (int i = 0; i < nb; ++i)
+        _status[QString::number(i)]=nullptr;
+    process_mutex.unlock();
 }
 
 void CheckoutProcess::exitServer()
