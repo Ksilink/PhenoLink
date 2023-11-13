@@ -13,7 +13,7 @@ Dedicated to biological images produced with automated microscopes, Checkout has
            margin-left: auto;
            margin-right: auto;
            width: 70%;"
-src ="./docs/FIGS/PhenoLink_MP.png">
+src ="./docs/FIGS/Pheno.png">
 * ### Multi Readers
   Mainly developed for Yokogawa (CV7000/CV8000), Checkout also handles InCell and Zeiss readers. More readers can be of course implemented. 
 * ### Image Processing
