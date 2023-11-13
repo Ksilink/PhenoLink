@@ -499,7 +499,7 @@ void ZMQThread::thread_finished()
                     // Need to put back image on client
                     client->send(QString("/addImage/"), QString(), b.toCbor());
                 }
-                client->sendQueue(); // force the emission of data let's be synchronous need to wait
+//                client->sendQueue(); // force the emission of data let's be synchronous need to wait
             }
         }
 
