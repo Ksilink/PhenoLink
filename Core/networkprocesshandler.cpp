@@ -450,6 +450,12 @@ void NetworkProcessHandler::startProcess(QString process, QJsonArray array)
     qDebug() << "Prepared " << array.size() << "Wells";
     auto req = new zmsg();//proc.toLatin1());
 
+
+
+
+
+
+
     auto cborArray = simplifyArray(array);
     for (int i = 0; i < cborArray.size(); ++i)
     {
@@ -459,6 +465,10 @@ void NetworkProcessHandler::startProcess(QString process, QJsonArray array)
     }
 
     qDebug() << "Sending process to queue"; //<< req->parts();
+
+
+
+
 
     session.send(process.toLatin1().toStdString(), req);
     delete req;

@@ -211,7 +211,7 @@ QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher, 
                 if (par["isDbPath"].toBool())
                 {
                     QString v = set.value("databaseDir", par["Default"].toString()).toString();
-                    v=QString("%1/PROJECTS/%2/Checkout_Results/").arg(v).arg(sfm->getOwner()->property("project"));
+                    v=QString("%1/PROJECTS/%2/Checkout_Results/").arg(v).arg(project);
                     par["Value"]=v;
                     params.replace(i, par);
                 }
@@ -408,6 +408,7 @@ void startProcess(QString server, QString proc, QString project, QString commitN
 {
 
     qDebug() << "Connecting to" << server << "sending" << proc;
+    qDebug() << "Should commit file to " << commitName;
     mdcli session(server);
 
     // Query the process list
@@ -470,8 +471,8 @@ void startProcess(QString server, QString proc, QString project, QString commitN
     reply = session.recv();
     if (reply)
         qDebug() << "Process started";
-    else
-        qDebug() << "Error while starting process";
+//    else
+//        qDebug() << "Error while starting process";
 
 
     if (wait)
@@ -614,14 +615,11 @@ int main(int ac, char** av)
             int p = i+2;
             QString project = find("project", ac, p + 1, av);
             QString drive = find("drive", ac, p + 1, av);
+            commit = find("commitName", ac, p+1, av);
 
             for (; p < ac; ++p){
                 QString par(av[p]);
-                if (par.startsWith("commitName="))
-                {
-                    commit = par.split("=").last();
-                }
-                else if (par.contains("="))
+                if (par.contains("="))
                 {
                     pluginParams << par;
                 }
@@ -637,7 +635,7 @@ int main(int ac, char** av)
                 QString v(av[l]);
                 if (!v.contains("="))
                 {
-                    v = handler.findPlate(v, project.split(","), drive);
+                    v = handler.findPlate(v, project.split(",", Qt::SkipEmptyParts), drive);
                     if (!v.isEmpty())
                         plates << v;
                 }

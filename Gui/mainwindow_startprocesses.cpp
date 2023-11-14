@@ -253,15 +253,15 @@ QJsonArray MainWindow::startProcess(SequenceFileModel* sfm, QJsonObject obj,
         if (_typeOfprocessing->currentText() == "Current Image")
         {
             if (im["zPos"].toInt() !=  (int)inter->getZ() ||
-                    im["FieldId"].toInt() != (int)inter->getField() ||
-                    im["TimePos"].toInt() != (int)inter->getTimePoint())
+                im["FieldId"].toInt() != (int)inter->getField() ||
+                im["TimePos"].toInt() != (int)inter->getTimePoint())
                 continue;
         }
 
         if (_typeOfprocessing->currentText() == "All Loaded Screens"
-                ||
-                _typeOfprocessing->currentText().startsWith("Selected Screens")
-                )
+            ||
+            _typeOfprocessing->currentText().startsWith("Selected Screens")
+            )
             obj["shallDisplay"] = false;
         else
             obj["shallDisplay"] = true;
@@ -492,6 +492,18 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 {
     static int WorkID = 1;
 
+
+    QString address;
+    {
+
+        QHostInfo ifo;
+        auto addresses = ifo.addresses();
+        for (auto add: addresses)
+            if (add.isGlobal())
+                address = add.toString();
+
+    }
+
     Q_UNUSED(started);
     //    _startingProcesses = true;
     QJsonObject objR, stored;
@@ -578,7 +590,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
                     auto p = sfm->pos();
                     QString x = QString("%1").arg(p.x()),
-                            y = QString("%1").arg(p.y());
+                        y = QString("%1").arg(p.y());
                     if (data.contains(x))
                     {
                         QJsonObject t = data[x].toObject();
@@ -599,7 +611,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                     adjustParameterFromWidget(sfm, oo, params, bias);
 
                     int channel = -1,
-                            fieldId = recurseField(data, "FieldId");
+                        fieldId = recurseField(data, "FieldId");
 
                     if (channel == -1 && !asVectorImage)
                         channel = recurseField(data, "Channel");
@@ -664,6 +676,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                 obj["Project"] = project;
 
                 obj["Pos"]="A01"; // Force return pos to be A01
+                obj["ReplyTo"] = address;
 
                 obj["CommitName"] = _commitName->text();
 
@@ -753,7 +766,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
 
 
     QString st = (stored["CommitName"].toString().isEmpty()) ? "/params/":
-                                                               "/"+stored["CommitName"].toString() +"/";
+                     "/"+stored["CommitName"].toString() +"/";
 
     QString proc = _preparedProcess;
 
@@ -762,12 +775,12 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     QDir dir(set.value("databaseDir").toString());
 
     QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/").arg(dir.absolutePath(), lsfm[0]->getOwner()->property("project"))
-            ;
+        ;
 
     dir.mkpath(writePath + st);
     QString fn = writePath + st +
-            proc.replace("/", "_").replace(" ", "_") + "_" +
-            QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss")+".json";
+                 proc.replace("/", "_").replace(" ", "_") + "_" +
+                 QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss")+".json";
 
     qDebug() << "Saving run params to:" << fn;
 
@@ -794,7 +807,8 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     // Nico@DESKTOP-KH3G5D0:Tools/Speed/SpeedTesting(5)
 
     QString username = set.value("UserName", "").toString(),
-            hostname = QHostInfo::localHostName();
+        hostname = QHostInfo::localHostName();
+
 
     // Set the cancel name of the object
     _cancelation->setObjectName(QString("%1@%2:%3(%4)").arg(username,hostname, proc.replace("/", "") ).arg(WorkID));
@@ -802,7 +816,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     if (this->networking && handler.errors() > 0)
     {
         // First chance to try to recover from errors !
-//        handler.restartProcessOnErrors();
+        //        handler.restartProcessOnErrors();
     }
 
 
@@ -895,8 +909,8 @@ void MainWindow::startProcessRun(QString exp)
                 for (QList<SequenceFileModel*> ::Iterator si = seqs.begin(), se = seqs.end(); si != se; ++si)
                 {
                     if ((*si)->getOwner()
-                            && (*si)->getOwner()->hasMeasurements((*si)->pos())
-                            && (*si)->isValid())
+                        && (*si)->getOwner()->hasMeasurements((*si)->pos())
+                        && (*si)->isValid())
                     {
                         // si->Pos();
                         lsfm << *si;
@@ -930,7 +944,7 @@ void MainWindow::startProcessRun(QString exp)
         }
     }
     if (_typeOfprocessing->currentText() == "Current Image" &&
-            _sinteractor.current())
+        _sinteractor.current())
         lsfm.push_back(_sinteractor.current()->getSequenceFileModel());
 
 
@@ -963,7 +977,7 @@ void MainWindow::startProcessRun(QString exp)
         if (!ok) return;
 
         QStringList tag_filter = filtertags.isEmpty() ? QStringList() :
-                                                        filtertags.split(';');
+                                     filtertags.split(';');
         QStringList remTags;
         QRegularExpression wellMatcher;
         QList<QRegularExpression> tagRegexps;
@@ -1056,10 +1070,10 @@ void MainWindow::startProcessRun(QString exp)
         for (auto& pl: pls)
         {
             QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/%4.fth")
-                    .arg(dir.absolutePath(),
-                         lsfm[0]->getOwner()->property("project"),
-                    _commitName->text(),
-                    pl);
+                                    .arg(dir.absolutePath(),
+                                         lsfm[0]->getOwner()->property("project"),
+                                         _commitName->text(),
+                                         pl);
             qDebug() << writePath;
         }
     }
@@ -1086,10 +1100,10 @@ void MainWindow::startProcessRun(QString exp)
 
         _cancelation->connect(_cancelation, &QPushButton::clicked,
                               [this](bool){ auto cancel = this->_cancelation->objectName();
-            NetworkProcessHandler::handler().sendCommand("mmi.cancel");
-            _StatusProgress->setValue(_StatusProgress->maximum());
+                                  NetworkProcessHandler::handler().sendCommand("mmi.cancel");
+                                  _StatusProgress->setValue(_StatusProgress->maximum());
 
-        });
+                              });
 
 
         w->layout()->addWidget(_StatusProgress);
@@ -1196,7 +1210,7 @@ void MainWindow::pluginHistory(QComboBox * cb)
             return;
 
     QJsonArray params = _processParams["Parameters"].toArray(),
-            rel_par = reloaded["Parameters"].toArray();
+        rel_par = reloaded["Parameters"].toArray();
     // now we iterate through this params, search in reloaded a diffe
     for (int i = 0; i < params.size(); ++i)
     {
@@ -1204,15 +1218,15 @@ void MainWindow::pluginHistory(QComboBox * cb)
         for (int j = 0; j < rel_par.size(); ++j)
         {
             if (ref_tag == rel_par[j].toObject()["Tag"].toString() &&
-                    !compare_par(params[i].toObject(), rel_par[j].toObject()))
+                !compare_par(params[i].toObject(), rel_par[j].toObject()))
             {
-                  auto ob=params[i].toObject();
-                  ob["Value"] = rel_par[j].toObject()["Value"];
-                  if (rel_par[j].toObject().contains("Value2"))
-                      ob["Value2"] = rel_par[j].toObject()["Value2"];
-                  ob["NonDefault"]=true;
-                  params.replace(i, ob);
-                  break;
+                auto ob=params[i].toObject();
+                ob["Value"] = rel_par[j].toObject()["Value"];
+                if (rel_par[j].toObject().contains("Value2"))
+                    ob["Value2"] = rel_par[j].toObject()["Value2"];
+                ob["NonDefault"]=true;
+                params.replace(i, ob);
+                break;
             }
         }
     }
