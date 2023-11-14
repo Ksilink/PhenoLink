@@ -737,6 +737,8 @@ int NetworkProcessHandler::FinishedJobCount()
     auto reply = session.recv();
     // analyze the reply
 //    qDebug() << reply->pop_front();
+    if (reply->parts() <= 0)
+        return 0;
 
     QString msg = reply->pop_front();
 
