@@ -178,7 +178,14 @@ public:
             for (auto i = _metaData.begin(), e = _metaData.end(); i != e; ++i)
                 qDebug() << i.key() << i.value();
 
-        return _metaData[me];
+        if (_metaData.contains(me))
+            return _metaData[me];
+
+        for (auto i = _metaData.begin(), e = _metaData.end(); i != e; ++i)
+            if (i.key().endsWith(me))
+                return i.value();
+
+        return QString();
     }
 
     // Unbias on load
