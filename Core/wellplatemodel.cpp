@@ -2315,11 +2315,12 @@ ExperimentFileModel* loadScreenFunc(QString it, bool allow_loaded, Screens& _scr
 
 Screens ScreensHandler::loadScreens(QStringList list, bool allow_loaded)
 {
+    QThreadPool threads; threads.setMaxThreadCount(12);
     _error = QString();
     // This class shall use the plugin interface to expose multiple instances of the CheckoutDataLoaderPluginInterface
 
     auto func = std::bind(loadScreenFunc, std::placeholders::_1, allow_loaded, _screens);
-    Screens tmp = QtConcurrent::blockingMapped(list, func);
+    Screens tmp = QtConcurrent::blockingMapped(&threads, list, func);
 
     Screens res;
 

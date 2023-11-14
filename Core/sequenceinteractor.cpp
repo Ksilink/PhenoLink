@@ -655,6 +655,8 @@ std::tuple<double, QPoint> refineLower(cv::Mat& up, cv::Mat& down, int overlap, 
 
 void SequenceInteractor::refinePacking()
 {
+    QThreadPool threads; threads.setMaxThreadCount(12);
+   
     // Assume single channel is enough !
 
     // Need to compute the unpacking starting from upper left hand corner
@@ -722,7 +724,7 @@ void SequenceInteractor::refinePacking()
     };
 
     QList< std::tuple<int, double, QPoint> > res
-            = QtConcurrent::blockingMapped(data_mapping, Mapping()); //apply the mapping
+            = QtConcurrent::blockingMapped(&threads, data_mapping, Mapping()); //apply the mapping
 
     //    for (auto d : data_mapping)
     //    {
