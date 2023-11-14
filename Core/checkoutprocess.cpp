@@ -318,7 +318,17 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
 {
     //    qDebug() << "Starting process" << process << array;
     QSettings set;
+    QString address;
+    {
 
+
+        const QHostAddress& localhost = QHostAddress(QHostAddress::LocalHost);
+        for (auto& add : QNetworkInterface::allAddresses()) {
+            if (add.protocol() == QAbstractSocket::IPv4Protocol && add != localhost)
+                 address = add.toString();
+        }
+
+    }
 #ifdef WIN32
     QString username = qgetenv("USERNAME");
 #else
@@ -370,6 +380,8 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
         pp["Username"] = username;
         pp["Computer"] = QHostInfo::localHostName();
         pp["StartTime"] = QDateTime::currentDateTime().toMSecsSinceEpoch();
+        pp["ReplyTo"] = address;
+
         array.replace(i, pp);
     }
 

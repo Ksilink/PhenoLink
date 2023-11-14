@@ -493,16 +493,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     static int WorkID = 1;
 
 
-    QString address;
-    {
-
-        QHostInfo ifo;
-        auto addresses = ifo.addresses();
-        for (auto add: addresses)
-            if (add.isGlobal())
-                address = add.toString();
-
-    }
+    
 
     Q_UNUSED(started);
     //    _startingProcesses = true;
@@ -675,8 +666,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                 obj["ProcessStartId"] = StartId;
                 obj["Project"] = project;
 
-                obj["Pos"]="A01"; // Force return pos to be A01
-                obj["ReplyTo"] = address;
+                obj["Pos"]="A01"; // Force return pos to be A01                
 
                 obj["CommitName"] = _commitName->text();
 
