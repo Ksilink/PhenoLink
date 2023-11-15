@@ -483,7 +483,7 @@ void startProcess(QString server, QString proc, QString project, QString commitN
         int finished = 0;
         while (finished < processes )
         {
-            QThread::msleep(500);
+            QThread::msleep(800);
 
             session.send("mmi.status", req);
             reply = session.recv();

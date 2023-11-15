@@ -729,23 +729,53 @@ mdcli &NetworkProcessHandler::getSession()
     return *session;
 }
 
-int NetworkProcessHandler::FinishedJobCount()
+
+bool NetworkProcessHandler::queryJobStatus()
 {
     auto& session = getSession();
     auto req = new zmsg();
     session.send("mmi.status", req);
     auto reply = session.recv();
-    // analyze the reply
-//    qDebug() << reply->pop_front();
-    if (reply->parts() <= 0)
-        return 0;
+
+    if (reply == nullptr)     return false;
+    if (reply->parts() <= 0)  return false;
 
     QString msg = reply->pop_front();
+    jobcount = msg.toInt();
+
+    if (!reply->parts())
+        return true;
+
+    msg = reply->pop_front();
+    finishedjobs = msg.toInt();
+    if (!reply->parts())
+        return true;
+
+    msg = reply->pop_front();
+    ongoingjob = msg.toInt();
+    
 
     delete req;
     delete reply;
-//    qDebug()<< "Finished job" << msg;
-    return msg.toInt();
+    //    qDebug()<< "Finished job" << msg;
+    return true;
+
+}
+
+int NetworkProcessHandler::DoneJobCount() 
+{
+    return jobcount;
+}
+
+int NetworkProcessHandler::OngoingJobCount() 
+{
+    return ongoingjob;
+}
+
+
+int NetworkProcessHandler::FinishedJobCount()
+{
+    return finishedjobs;
 
 }
 

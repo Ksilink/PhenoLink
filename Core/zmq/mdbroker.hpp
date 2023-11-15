@@ -498,9 +498,15 @@ private:
     void jobStatus(zmsg *msg, QString client)
     {
         int nb_finished_jobs =  clear_list(m_finished_jobs, client);
+        int finished, ongoing;
+        std::tie(finished, ongoing) = count_jobs(client);
+
 
         msg->push_back(QString::number(nb_finished_jobs).toLatin1());
-        std::cout << "\r\n" << "Job Status: " << nb_finished_jobs << m_finished_jobs.size() << m_ongoing_jobs.size() << "    ";
+        msg->push_back(QString::number(finished).toLatin1());
+        msg->push_back(QString::number(ongoing).toLatin1());
+        if (nb_finished_jobs )
+            std::cout << "\r\n" << "Job Status: " << nb_finished_jobs << " " << finished << "  " << ongoing << "         ";
 
     }
 
@@ -1159,7 +1165,7 @@ public:
 
         for (auto kv = ob.begin(), ekv = ob.end(); kv != ekv; ++kv)
         {
-            if (map.contains(kv.key()))
+            if (!map.contains(kv.key()))
             {
                 qDebug() << "Warning key" << kv.key() << "cannot be found in" << map;
                 continue;
@@ -1231,6 +1237,20 @@ public:
 
         return nb_culled;
     }
+
+
+    std::pair<int, int> count_jobs(QString client)
+    {
+
+        int finished = 0, ongoing = 0;
+        for (auto j : m_finished_jobs)
+            finished += (j->client == client);
+        for (auto j : m_ongoing_jobs)
+            ongoing += (j->client == client);
+
+        return std::make_pair(finished, ongoing);
+    }
+
 
     void setpython_env(
         QProcessEnvironment pyc

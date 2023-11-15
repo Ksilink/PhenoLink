@@ -140,7 +140,10 @@ public:
 
     mdcli& getSession();
 
+    bool queryJobStatus();
+    int DoneJobCount();
     int FinishedJobCount();
+    int OngoingJobCount();
 
 private slots:
     void displayError(QAbstractSocket::SocketError socketError);
@@ -184,6 +187,10 @@ protected:
     QMap<QString, DataFrame*> plateData;
     QMap<int, QString> storageTimer;
     QMap<QString, int> rstorageTimer;
+
+
+    int jobcount, ongoingjob, finishedjobs;
+
 
 };
 
