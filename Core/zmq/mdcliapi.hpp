@@ -50,9 +50,10 @@ public:
         }
         m_client = new zmq::socket_t (*m_context, ZMQ_DEALER);
         int linger = 0;
-        m_client->setsockopt (ZMQ_LINGER, &linger, sizeof (linger));
+        m_client->set(zmq::sockopt::linger, linger);
         s_set_id(*m_client);
         m_client->connect (m_broker.toStdString());
+        _status = true;
 //        if (m_verbose)
 //            /*s_console*/ ("I: connecting to broker at %s...", m_broker.toStdString());
     }
@@ -131,8 +132,14 @@ public:
         else
             if (m_verbose)
                 s_console ("W: permanent error, abandoning request");
-
+        _status = false;
         return 0;
+    }
+
+
+    bool getStatus()
+    {
+        return _status;
     }
 
 private:
@@ -141,6 +148,7 @@ private:
     zmq::socket_t * m_client;     //  Socket to broker
     int m_verbose;                //  Print activity to stdout
     int m_timeout;                //  Request timeout
+    bool _status;
 };
 
 #endif // MDCLIAPI_HPP

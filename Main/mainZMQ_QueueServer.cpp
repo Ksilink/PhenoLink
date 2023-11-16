@@ -207,10 +207,6 @@ int main(int ac, char** av)
 
         worker.start();
 
-        if (!worker.waitForStarted())
-            qDebug() << "Server not properly started" << worker.errorString() << r;
-
-
     }
 
 
@@ -228,12 +224,20 @@ int main(int ac, char** av)
 
     if (s_interrupted)
         printf ("W: interrupt received, shutting down...\n");
-    worker.kill();
 
     } catch(...)
     {
-        qDebug() << "Binding not available (another process???)";
+        qDebug() << "Binding not available (another process? ??)";
     }
+    if (worker.isOpen())
+    {
+        worker.terminate();
+        QThread::sleep(1);
+        worker.kill();
+        QThread::sleep(1);
+    }
+
+
     return 0;
 
 

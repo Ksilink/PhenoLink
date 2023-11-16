@@ -1601,12 +1601,12 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
                 QStringList j = (*it).split("_");
                 if (j.size() < 3) continue;
                 bool ok;
-                
-              
+
+
 
                 QString hours = j.takeLast(); hours.toInt(&ok);
                 if (!ok) continue;
-                
+
                 hours = hours.mid(0, hours.size()-5);
 
                 QString date = j.takeLast();  date.toInt(&ok);
@@ -2171,10 +2171,13 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
     //	if (_startingProcesses) return;
 
+    qDebug() << "Refreshing status" << _StatusProgress;
+
     if (_StatusProgress &&
         _StatusProgress->value() != _StatusProgress->maximum())
     {
-        
+
+        qDebug() << "Status" << _StatusProgress->value() <<  _StatusProgress->maximum();
         auto &nhandler = NetworkProcessHandler::handler();
 
         if (!nhandler.queryJobStatus())
@@ -2182,7 +2185,7 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
 
         int count = nhandler.DoneJobCount();
-        
+
         //        qDebug() << "Timer event" << count;
         if (count != 0)
         {

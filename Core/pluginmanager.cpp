@@ -65,6 +65,10 @@ void loadPlugins(bool isServer)
         if (isRelease) pluginsDir.cd("Release");
         if (isRelDeb) pluginsDir.cd("RelWithDebInfo");
     }
+
+    if (!pluginsDir.setCurrent(pluginsDir.path()))
+        qDebug() << "Unable to set current directory to " << pluginsDir;
+
     QCoreApplication::instance()->addLibraryPath(pluginsDir.path());
 
     CheckoutDataLoader& loader = CheckoutDataLoader::handler();

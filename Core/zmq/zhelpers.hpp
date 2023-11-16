@@ -321,10 +321,26 @@ s_console (const char *format, ...)
 //  zmq_poll.
 
 static int s_interrupted = 0;
+
+#ifdef WIN32
+
+#include <windows.h>
+#include <stdio.h>
+inline BOOL WINAPI s_signal_handler(DWORD signal) {
+
+    if (signal == CTRL_C_EVENT)
+        s_interrupted = 1;
+//        printf("Ctrl-C handled\n"); // do cleanup
+
+    return TRUE;
+}
+#else
 inline static void s_signal_handler (int signal_value)
 {
     s_interrupted = 1;
 }
+#endif
+
 
 inline static void s_catch_signals ()
 {
@@ -335,6 +351,11 @@ inline static void s_catch_signals ()
     sigemptyset (&action.sa_mask);
     sigaction (SIGINT, &action, NULL);
     sigaction (SIGTERM, &action, NULL);
+#else
+    if (!SetConsoleCtrlHandler(s_signal_handler, TRUE)) {
+        printf("\nERROR: Could not set control handler");
+        return ;
+    }
 #endif
 }
 

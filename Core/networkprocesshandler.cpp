@@ -718,6 +718,14 @@ void NetworkProcessHandler::storeObject(QString commit)
 
 mdcli &NetworkProcessHandler::getSession()
 {
+
+    if (session && !session->getStatus())
+    {
+        qDebug() << "Reseting Network session";
+        delete session;
+        session = nullptr;
+    }
+
     if (session == nullptr)
     {
         QSettings set;
@@ -725,6 +733,7 @@ mdcli &NetworkProcessHandler::getSession()
             .arg(set.value("ZMQServerPort", 13555).toInt());
         session = new mdcli(srv);
     }
+
 
     return *session;
 }
@@ -753,7 +762,7 @@ bool NetworkProcessHandler::queryJobStatus()
 
     msg = reply->pop_front();
     ongoingjob = msg.toInt();
-    
+
 
     delete req;
     delete reply;
@@ -762,12 +771,12 @@ bool NetworkProcessHandler::queryJobStatus()
 
 }
 
-int NetworkProcessHandler::DoneJobCount() 
+int NetworkProcessHandler::DoneJobCount()
 {
     return jobcount;
 }
 
-int NetworkProcessHandler::OngoingJobCount() 
+int NetworkProcessHandler::OngoingJobCount()
 {
     return ongoingjob;
 }

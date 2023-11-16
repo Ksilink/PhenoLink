@@ -92,7 +92,7 @@ void MainWindow::on_loadSelection_clicked()
     // Retrieve the checked data
     QStringList checked = mdl->getCheckedDirectories(false);
 
-    loadSelection(checked);
+    loadSelection(checked, false);
 }
 
 

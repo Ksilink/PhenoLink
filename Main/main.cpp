@@ -137,10 +137,8 @@ int main(int argc, char *argv[])
 
         server.start();
 
-        if (!server.waitForStarted())
-            qDebug() << "Server not properly started" << server.errorString() << r;
 
-     //   QThread::sleep(5);
+        QThread::sleep(1);
     }
 
 
@@ -167,16 +165,19 @@ int main(int argc, char *argv[])
     // The server shall probably not be killed by the app,
     // depending on the expected behavior of the service
     //qDebug() << server.readAll();
-    server.kill();
-
+    if (server.isOpen())
+    {
+        server.terminate();
+        QThread::sleep(1);
+        server.kill();
+        QThread::sleep(1);
+    }
 
 
     foreach (QString file, ScreensHandler::getHandler().getTemporaryFiles())
         QFile::remove(file);
 
-
     exit(res);
-
     return res;
 }
 
