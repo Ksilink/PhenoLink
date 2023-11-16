@@ -2166,10 +2166,22 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
 void MainWindow::timerEvent(QTimerEvent *event)
 {
-    //    if (ui->menuProcess->actions().size() == 0)
+
+    if (ui->menuProcess->actions().size() == 0)
+    {
+//        qDebug() << CheckoutProcess::handler().paths();
+
+
+        refreshProcessMenu();
+
+    }
     //        NetworkProcessHandler::handler().establishNetworkAvailability();
 
     //	if (_startingProcesses) return;
+
+
+//    if ()
+
 
     qDebug() << "Refreshing status" << _StatusProgress;
 
@@ -2177,8 +2189,8 @@ void MainWindow::timerEvent(QTimerEvent *event)
         _StatusProgress->value() != _StatusProgress->maximum())
     {
 
-        qDebug() << "Status" << _StatusProgress->value() <<  _StatusProgress->maximum();
         auto &nhandler = NetworkProcessHandler::handler();
+        qDebug() << "Status" << _StatusProgress->value() <<  _StatusProgress->maximum();
 
         if (!nhandler.queryJobStatus())
             qDebug() << "Job Status Query not successful";

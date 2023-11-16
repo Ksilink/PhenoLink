@@ -386,7 +386,7 @@ QStringList NetworkProcessHandler::getProcesses()
 {
     QStringList l;
     auto& session = getSession();
-
+    qDebug() << "Live retrieving process list from Server";
     zmsg *req = new zmsg();
 
     session.send("mmi.list", req);
@@ -398,6 +398,7 @@ QStringList NetworkProcessHandler::getProcesses()
         while (reply->parts())
             l << reply->pop_front();
     }
+    qDebug() << l;
 
     return l;
 }
@@ -746,9 +747,19 @@ bool NetworkProcessHandler::queryJobStatus()
     session.send("mmi.status", req);
     auto reply = session.recv();
 
-    if (reply == nullptr)     return false;
-    if (reply->parts() <= 0)  return false;
 
+    if (reply == nullptr)
+    {
+        qDebug() << "Null reply";
+        return false;
+    }
+    if (reply->parts() <= 0)
+    {
+        qDebug() << "No parts reply";
+        return false;
+    }
+
+    reply->dump();
     QString msg = reply->pop_front();
     jobcount = msg.toInt();
 
