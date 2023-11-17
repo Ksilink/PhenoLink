@@ -386,7 +386,7 @@ QStringList NetworkProcessHandler::getProcesses()
 {
     QStringList l;
     auto& session = getSession();
-    qDebug() << "Live retrieving process list from Server";
+    qDebug() << "Live retrieving process list from Server" << QThread::currentThreadId();
     zmsg *req = new zmsg();
 
     session.send("mmi.list", req);
@@ -398,6 +398,8 @@ QStringList NetworkProcessHandler::getProcesses()
         while (reply->parts())
             l << reply->pop_front();
     }
+    else
+        qDebug() << "Network Session error";
     qDebug() << l;
 
     return l;
@@ -732,7 +734,16 @@ mdcli &NetworkProcessHandler::getSession()
         QSettings set;
         auto srv = QString("tcp://%1:%2").arg(set.value("ZMQServer", "localhost").toString())
             .arg(set.value("ZMQServerPort", 13555).toInt());
-        session = new mdcli(srv);
+
+
+        QString username = set.value("UserName", "").toString(),
+            hostname = QHostInfo::localHostName();
+
+        QByteArray indata = QString("%1@%2").arg(username).arg(hostname).toLatin1();
+        QString hash = QCryptographicHash::hash(indata, QCryptographicHash::Md5);
+
+        qDebug() << "Session ID" << hash;
+        session = new mdcli(srv, hash);
     }
 
 

@@ -483,14 +483,19 @@ private:
         }
         else
         {
-            qDebug() << "Sending list";
+            qDebug() << "Sending list" << m_services.size();
 
             for (auto procs = m_services.keyBegin(), end = m_services.keyEnd(); procs != end; ++procs)
             {
                 //                qDebug() << (*procs);
                 if (!procs->startsWith("mmi."))
+                {
                     msg->push_back((*procs).toLatin1());
+                    qDebug() << (*procs).toLatin1();
+                }
             }
+
+
         }
     }
 
@@ -500,6 +505,9 @@ private:
         int nb_finished_jobs =  clear_list(m_finished_jobs, client);
         int finished, ongoing;
         std::tie(finished, ongoing) = count_jobs(client);
+
+
+        qDebug() << "Job Status" << client << nb_finished_jobs << " " << finished << "  " << ongoing << "         ";
 
 
         msg->push_back(QString::number(nb_finished_jobs).toLatin1());

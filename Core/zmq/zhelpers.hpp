@@ -232,12 +232,16 @@ s_set_id(zmq::socket_t & socket)//, intptr_t id)
     std::stringstream ss;
     ss << std::hex << std::uppercase
        << std::setw(4) << std::setfill('0') << &socket;
+
 //    m_worker->set(zmq::sockopt::linger, 0);
     socket.set(zmq::sockopt::routing_id, ss.str());
 //    socket.setsockopt(ZMQ_IDENTITY, ss.str().c_str(), ss.str().length());
     return ss.str();
 }
 #endif
+
+
+
 
 //  Report 0MQ version number
 //
