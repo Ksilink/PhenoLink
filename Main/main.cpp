@@ -28,6 +28,7 @@
 
 #include <QStyleFactory>
 
+
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     Q_UNUSED(context);
@@ -120,7 +121,8 @@ int main(int argc, char *argv[])
     QStringList var = set.value("Server", QStringList() << "127.0.0.1").toStringList();
     QProcess server;
 
-    if (var.contains("127.0.0.1") || var.contains("localhost"))
+//    if (var.contains("127.0.0.1") || var.contains("localhost"))
+    if (false)
     {
         // Start the network worker for processes
          server.setProcessChannelMode(QProcess::MergedChannels);

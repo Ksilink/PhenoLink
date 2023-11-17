@@ -241,7 +241,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
 
     refreshProcessMenu();
 
-    startTimer(set.value("RefreshRate", 300).toInt());
+    startTimer(set.value("NetworkRefreshRate", 2500).toInt());
 
 #ifdef CheckoutCoreWithPython
     setupPython();
@@ -2183,14 +2183,14 @@ void MainWindow::timerEvent(QTimerEvent *event)
 //    if ()
 
 
-    qDebug() << "Refreshing status" << _StatusProgress;
+//    qDebug() << "Refreshing status" << _StatusProgress;
 
     if (_StatusProgress &&
         _StatusProgress->value() != _StatusProgress->maximum())
     {
 
         auto &nhandler = NetworkProcessHandler::handler();
-        qDebug() << "Status" << _StatusProgress->value() <<  _StatusProgress->maximum();
+//        qDebug() << "Status" << _StatusProgress->value() <<  _StatusProgress->maximum();
 
         if (!nhandler.queryJobStatus())
             qDebug() << "Job Status Query not successful";

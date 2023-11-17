@@ -86,7 +86,7 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
                 if (m_verbose) {
                     s_console ("W: disconnected from broker - retrying...");
                 }
-                qDebug() << "Disconnected from broker";
+                qDebug() << "Disconnected from broker" << s_interrupted;
                 s_sleep (m_reconnect);
                 connect_to_broker ();
                 // Send the preamble messages (list of processes)

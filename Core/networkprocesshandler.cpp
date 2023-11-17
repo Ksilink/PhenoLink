@@ -740,9 +740,10 @@ mdcli &NetworkProcessHandler::getSession()
             hostname = QHostInfo::localHostName();
 
         QByteArray indata = QString("%1@%2").arg(username).arg(hostname).toLatin1();
-        QString hash = QCryptographicHash::hash(indata, QCryptographicHash::Md5);
+        QString hash = QCryptographicHash::hash(indata, QCryptographicHash::Md5).toHex();
 
         qDebug() << "Session ID" << hash;
+
         session = new mdcli(srv, hash);
     }
 
@@ -770,7 +771,7 @@ bool NetworkProcessHandler::queryJobStatus()
         return false;
     }
 
-    reply->dump();
+//    reply->dump();
     QString msg = reply->pop_front();
     jobcount = msg.toInt();
 

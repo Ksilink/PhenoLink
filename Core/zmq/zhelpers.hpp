@@ -3,6 +3,8 @@
 
 //  Include a bunch of headers that we will need in the examples
 
+#include <Dll.h>
+
 #include <zmq.hpp> // https://github.com/zeromq/cppzmq
 
 #include <iostream>
@@ -324,18 +326,21 @@ s_console (const char *format, ...)
 //  your main loop if s_interrupted is ever 1. Works especially well with
 //  zmq_poll.
 
-static int s_interrupted = 0;
+extern int DllCoreExport s_interrupted;
 
 #ifdef WIN32
 
 #include <windows.h>
 #include <stdio.h>
+
 inline BOOL WINAPI s_signal_handler(DWORD signal) {
 
     if (signal == CTRL_C_EVENT)
+    {
+//        printf("Ctrl-C handled %d\n", s_interrupted); // do cleanup
         s_interrupted = 1;
-//        printf("Ctrl-C handled\n"); // do cleanup
 
+    }
     return TRUE;
 }
 #else

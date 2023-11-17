@@ -507,7 +507,7 @@ private:
         std::tie(finished, ongoing) = count_jobs(client);
 
 
-        qDebug() << "Job Status" << client << nb_finished_jobs << " " << finished << "  " << ongoing << "         ";
+//        qDebug() << "Job Status" << client << nb_finished_jobs << " " << finished << "  " << ongoing << "         ";
 
 
         msg->push_back(QString::number(nb_finished_jobs).toLatin1());

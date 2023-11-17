@@ -28,6 +28,7 @@
 
 #include <Core/networkprocesshandler.h>
 
+
 #include <zmq/mdwrkapi.hpp>
 #include <system_error>
 
@@ -288,11 +289,13 @@ void ZMQThread::run()
     session.set_worker_preamble(nbTh, processlist);
 
     zmsg *reply = nullptr;
-    while (1) {
+    while (!s_interrupted) {
         QString req_type;
         zmsg *request = nullptr;
         std::tie(req_type, request) =
             session.recv (reply);
+
+        if (s_interrupted) break;
 
         if (req_type == "Request")
         {
@@ -530,6 +533,9 @@ int main(int ac, char** av)
     cv::redirectError(&PhenoLinkOpenCVErrorCallback);
 
 
+
+    s_version_assert (4, 0);
+    s_catch_signals ();
 
     //    qDebug() << "Runtime PATH" << QString("%1").arg(getenv("PATH"));
 
