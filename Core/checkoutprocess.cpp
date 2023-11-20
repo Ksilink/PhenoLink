@@ -325,7 +325,10 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
         const QHostAddress& localhost = QHostAddress(QHostAddress::LocalHost);
         for (auto& add : QNetworkInterface::allAddresses()) {
             if (add.protocol() == QAbstractSocket::IPv4Protocol && add != localhost)
-                 address = add.toString();
+            {
+                address = add.toString();
+                break;
+            }
         }
 
     }
