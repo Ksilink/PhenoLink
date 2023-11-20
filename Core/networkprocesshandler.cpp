@@ -772,18 +772,25 @@ bool NetworkProcessHandler::queryJobStatus()
     }
 
 //    reply->dump();
+
     QString msg = reply->pop_front();
+    if (msg == "mmi.status")
+        msg = reply->pop_front();
+
+//    qDebug() << msg << msg.toInt();
     jobcount = msg.toInt();
 
     if (!reply->parts())
         return true;
 
     msg = reply->pop_front();
+//    qDebug() << msg << msg.toInt();
     finishedjobs = msg.toInt();
     if (!reply->parts())
         return true;
 
     msg = reply->pop_front();
+//    qDebug() << msg << msg.toInt();
     ongoingjob = msg.toInt();
 
 
