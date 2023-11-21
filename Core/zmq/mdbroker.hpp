@@ -1177,7 +1177,7 @@ public:
             QString id;
 
             if (map.contains(kv.key()))
-                map[kv.key()].toString();
+                id = map[kv.key()].toString();
             else
             {
                 if (!kv.key().isInteger() && kv.key().isString())

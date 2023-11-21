@@ -43,6 +43,7 @@ public:
 protected:
     QList<CheckoutHttpClient*> alive_replies;
 
+    void save_and_send_binary(QJsonObject *ob);
 };
 
 

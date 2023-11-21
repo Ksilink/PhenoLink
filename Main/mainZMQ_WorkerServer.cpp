@@ -441,8 +441,10 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
 }
 
 
-void ZMQThread::save_and_send_binary(QJsonObject& ob)
+void ZMQThread::save_and_send_binary(QJsonObject *_ob)
 {
+
+    auto ob = *_ob;
 
     QString hash = ob["Process_hash"].toString();
 
@@ -506,7 +508,7 @@ void ZMQThread::thread_finished()
 
         QJsonObject ob = wa->result();
 
-        QtConcurrent::run(&ZMQThread::save_and_send_binary, this, ob);
+        auto res = QtConcurrent::run(&ZMQThread::save_and_send_binary, this, &ob);
 
         // consider the storage over here
         auto msg = new zmsg(ob["Client"].toString().toLatin1().data());
