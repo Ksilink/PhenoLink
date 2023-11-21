@@ -386,7 +386,7 @@ QStringList NetworkProcessHandler::getProcesses()
 {
     QStringList l;
     auto& session = getSession();
-
+    qDebug() << "Live retrieving process list from Server" << QThread::currentThreadId();
     zmsg *req = new zmsg();
 
     session.send("mmi.list", req);
@@ -398,6 +398,9 @@ QStringList NetworkProcessHandler::getProcesses()
         while (reply->parts())
             l << reply->pop_front();
     }
+    else
+        qDebug() << "Network Session error";
+    qDebug() << l;
 
     return l;
 }
@@ -718,13 +721,32 @@ void NetworkProcessHandler::storeObject(QString commit)
 
 mdcli &NetworkProcessHandler::getSession()
 {
+
+    if (session && !session->getStatus())
+    {
+        qDebug() << "Reseting Network session";
+        delete session;
+        session = nullptr;
+    }
+
     if (session == nullptr)
     {
         QSettings set;
         auto srv = QString("tcp://%1:%2").arg(set.value("ZMQServer", "localhost").toString())
             .arg(set.value("ZMQServerPort", 13555).toInt());
-        session = new mdcli(srv);
+
+
+        QString username = set.value("UserName", "").toString(),
+            hostname = QHostInfo::localHostName();
+
+        QByteArray indata = QString("%1@%2").arg(username).arg(hostname).toLatin1();
+        QString hash = QCryptographicHash::hash(indata, QCryptographicHash::Md5).toHex();
+
+        qDebug() << "Session ID" << hash;
+
+        session = new mdcli(srv, hash);
     }
+
 
     return *session;
 }
@@ -738,28 +760,40 @@ bool NetworkProcessHandler::queryJobStatus()
     auto reply = session.recv();
     qDebug() << "Reply status" << reply;
 
-    if (reply == nullptr)     return false;
-    
-    qDebug() << reply->parts();
 
-    if (reply->parts() <= 0)  return false;
-    reply->dump();
+    if (reply == nullptr)
+    {
+        qDebug() << "Null reply";
+        return false;
+    }
+    if (reply->parts() <= 0)
+    {
+        qDebug() << "No parts reply";
+        return false;
+    }
 
+//    reply->dump();
 
     QString msg = reply->pop_front();
+    if (msg == "mmi.status")
+        msg = reply->pop_front();
+
+//    qDebug() << msg << msg.toInt();
     jobcount = msg.toInt();
 
     if (!reply->parts())
         return true;
 
     msg = reply->pop_front();
+//    qDebug() << msg << msg.toInt();
     finishedjobs = msg.toInt();
     if (!reply->parts())
         return true;
 
     msg = reply->pop_front();
+//    qDebug() << msg << msg.toInt();
     ongoingjob = msg.toInt();
-    
+
 
     delete req;
     delete reply;
@@ -768,12 +802,12 @@ bool NetworkProcessHandler::queryJobStatus()
 
 }
 
-int NetworkProcessHandler::DoneJobCount() 
+int NetworkProcessHandler::DoneJobCount()
 {
     return jobcount;
 }
 
-int NetworkProcessHandler::OngoingJobCount() 
+int NetworkProcessHandler::OngoingJobCount()
 {
     return ongoingjob;
 }

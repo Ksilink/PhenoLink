@@ -3,6 +3,8 @@
 
 //  Include a bunch of headers that we will need in the examples
 
+#include <Dll.h>
+
 #include <zmq.hpp> // https://github.com/zeromq/cppzmq
 
 #include <iostream>
@@ -232,12 +234,16 @@ s_set_id(zmq::socket_t & socket)//, intptr_t id)
     std::stringstream ss;
     ss << std::hex << std::uppercase
        << std::setw(4) << std::setfill('0') << &socket;
+
 //    m_worker->set(zmq::sockopt::linger, 0);
     socket.set(zmq::sockopt::routing_id, ss.str());
 //    socket.setsockopt(ZMQ_IDENTITY, ss.str().c_str(), ss.str().length());
     return ss.str();
 }
 #endif
+
+
+
 
 //  Report 0MQ version number
 //
@@ -320,11 +326,30 @@ s_console (const char *format, ...)
 //  your main loop if s_interrupted is ever 1. Works especially well with
 //  zmq_poll.
 
-static int s_interrupted = 0;
+extern int DllCoreExport s_interrupted;
+
+#ifdef WIN32
+
+#include <windows.h>
+#include <stdio.h>
+
+inline BOOL WINAPI s_signal_handler(DWORD signal) {
+
+    if (signal == CTRL_C_EVENT)
+    {
+//        printf("Ctrl-C handled %d\n", s_interrupted); // do cleanup
+        s_interrupted = 1;
+
+    }
+    return TRUE;
+}
+#else
 inline static void s_signal_handler (int signal_value)
 {
     s_interrupted = 1;
 }
+#endif
+
 
 inline static void s_catch_signals ()
 {
@@ -335,6 +360,11 @@ inline static void s_catch_signals ()
     sigemptyset (&action.sa_mask);
     sigaction (SIGINT, &action, NULL);
     sigaction (SIGTERM, &action, NULL);
+#else
+    if (!SetConsoleCtrlHandler(s_signal_handler, TRUE)) {
+        printf("\nERROR: Could not set control handler");
+        return ;
+    }
 #endif
 }
 

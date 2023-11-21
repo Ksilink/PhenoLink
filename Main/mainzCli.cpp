@@ -67,7 +67,7 @@ void listParams(QJsonObject ob)
         if (c["isImage"].toBool(false)) continue;
 
         QString val = QString("\t%1 :\t%2\r\n").arg(c["Tag"].toString(), c["Comment"].toString());
-//        qDebug() << c;
+        //        qDebug() << c;
         if (c.contains("Enum"))
         {
             val += "Options: [";
@@ -87,13 +87,15 @@ void listParams(QJsonObject ob)
         std::cout << val.toStdString() << std::endl;
     }
 
-//    if (proc.isEmpty())
-//        qApp->exit();
+    //    if (proc.isEmpty())
+    //        qApp->exit();
 }
 
-QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher, QString& project)
+QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher, QString& project, QString wells)
 {
-//    QReguExp siteMatcher;
+    //    QReguExp siteMatcher;
+
+    QStringList wells_list = wells.split(",", Qt::SkipEmptyParts);
 
     QSettings set;
 
@@ -109,7 +111,7 @@ QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher, 
     {
         QJsonObject pobj = par.toObject();
         QString op = pobj["Tag"].toString();
-//        op.replace(" ", "");
+        //        op.replace(" ", "");
 
         for (auto s: this->params)
         {
@@ -155,7 +157,17 @@ QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher, 
         auto efm = ScreensHandler::getHandler().loadScreen(plate);
         QList<SequenceFileModel*> t = efm->getAllSequenceFiles();
         foreach (SequenceFileModel* l, t)
-            lsfm.push_back(l);
+        {
+            if (wells_list.isEmpty())
+            {
+                lsfm.push_back(l);
+            }
+            else
+            {
+                if (wells_list.contains(l->Pos()))
+                    lsfm.push_back(l);
+            }
+        }
     }
 
 
@@ -278,7 +290,7 @@ QJsonArray helper::setupProcess(QJsonObject ob, QRegularExpression siteMatcher, 
 
     if (!dump.isEmpty())
     {
-//        qDebug() << procArray;
+        //        qDebug() << procArray;
         // Save Json to file
         QFile saveFile(dump);
 
@@ -337,7 +349,7 @@ void dumpProcess(QString server, QString proc = QString())
         }
     }
     else
-            qDebug() << "No response from server";
+        qDebug() << "No response from server";
 
     delete req;
     delete reply;
@@ -404,7 +416,8 @@ void showPlate(ExperimentFileModel* efm)
 
 
 
-void startProcess(QString server, QString proc, QString project, QString commitName,  QStringList params, QStringList plates, QString dumpfile, bool wait)
+void startProcess(QString server, QString proc, QString project, QString commitName,  QStringList params,
+                  QStringList plates, QString wells, QString dumpfile, bool wait)
 {
 
     qDebug() << "Connecting to" << server << "sending" << proc;
@@ -438,7 +451,7 @@ void startProcess(QString server, QString proc, QString project, QString commitN
 
 
     auto array = h.setupProcess(QCborValue::fromCbor(response).toMap().toJsonObject(),
-                                QRegularExpression(), project);
+                                QRegularExpression(), project, wells);
 
     // Unroll the array to start the process
     delete req;
@@ -452,7 +465,7 @@ void startProcess(QString server, QString proc, QString project, QString commitN
     auto cborArray = simplifyArray(array);
     for (int i = 0; i < cborArray.size(); ++i)
     {
-//        qDebug() << array.at(i);
+        //        qDebug() << array.at(i);
         QByteArray data = cborArray.at(i).toCbor();
         req->push_back(data);
     }
@@ -471,8 +484,8 @@ void startProcess(QString server, QString proc, QString project, QString commitN
     reply = session.recv();
     if (reply)
         qDebug() << "Process started";
-//    else
-//        qDebug() << "Error while starting process";
+    //    else
+    //        qDebug() << "Error while starting process";
 
 
     if (wait)
@@ -615,6 +628,7 @@ int main(int ac, char** av)
             int p = i+2;
             QString project = find("project", ac, p + 1, av);
             QString drive = find("drive", ac, p + 1, av);
+            QString wells = find("well", ac, p+1, av);
             commit = find("commitName", ac, p+1, av);
 
             for (; p < ac; ++p){
@@ -641,7 +655,7 @@ int main(int ac, char** av)
                 }
             }
             if (!process.isEmpty() && !plates.isEmpty())
-                startProcess(QString("tcp://%1").arg(var.first()), process, project, commit, pluginParams, plates, dumpfile, wait);
+                startProcess(QString("tcp://%1").arg(var.first()), process, project, commit, pluginParams, plates, wells, dumpfile, wait);
         }
 
 

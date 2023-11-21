@@ -14,7 +14,7 @@ public:
     //  ---------------------------------------------------------------------
     //  Constructor
 
-    mdcli (QString broker, int verbose = 0)
+    mdcli (QString broker, QString id = QString(), int verbose = 0)
     {
         s_version_assert (4, 0);
 
@@ -25,7 +25,7 @@ public:
         m_client = 0;
 
         s_catch_signals ();
-        connect_to_broker ();
+        connect_to_broker (id);
     }
 
 
@@ -43,16 +43,22 @@ public:
     //  ---------------------------------------------------------------------
     //  Connect or reconnect to broker
 
-    void connect_to_broker ()
+
+
+    void connect_to_broker (QString id = QString())
     {
         if (m_client) {
             delete m_client;
         }
         m_client = new zmq::socket_t (*m_context, ZMQ_DEALER);
         int linger = 0;
-        m_client->setsockopt (ZMQ_LINGER, &linger, sizeof (linger));
-        s_set_id(*m_client);
+        m_client->set(zmq::sockopt::linger, linger);
+        if (!id.isEmpty())
+            m_client->set(zmq::sockopt::routing_id, id.toStdString());
+        else
+           s_set_id(*m_client);
         m_client->connect (m_broker.toStdString());
+        _status = true;
 //        if (m_verbose)
 //            /*s_console*/ ("I: connecting to broker at %s...", m_broker.toStdString());
     }
@@ -133,8 +139,13 @@ public:
         else
             if (m_verbose)
                 s_console ("W: permanent error, abandoning request");
-
+        _status = false;
         return 0;
+    }
+
+    bool getStatus()
+    {
+        return _status;
     }
 
 private:
@@ -143,6 +154,7 @@ private:
     zmq::socket_t * m_client;     //  Socket to broker
     int m_verbose;                //  Print activity to stdout
     int m_timeout;                //  Request timeout
+    bool _status;
 };
 
 #endif // MDCLIAPI_HPP

@@ -241,7 +241,7 @@ MainWindow::MainWindow(QProcess *serverProc, QWidget *parent) :
 
     refreshProcessMenu();
 
-    startTimer(set.value("RefreshRate", 300).toInt());
+    startTimer(set.value("NetworkRefreshRate", 2500).toInt());
 
 #ifdef CheckoutCoreWithPython
     setupPython();
@@ -1601,12 +1601,12 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
                 QStringList j = (*it).split("_");
                 if (j.size() < 3) continue;
                 bool ok;
-                
-              
+
+
 
                 QString hours = j.takeLast(); hours.toInt(&ok);
                 if (!ok) continue;
-                
+
                 hours = hours.mid(0, hours.size()-5);
 
                 QString date = j.takeLast();  date.toInt(&ok);
@@ -2166,23 +2166,38 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
 void MainWindow::timerEvent(QTimerEvent *event)
 {
-    //    if (ui->menuProcess->actions().size() == 0)
+
+    if (ui->menuProcess->actions().size() == 0)
+    {
+//        qDebug() << CheckoutProcess::handler().paths();
+
+
+        refreshProcessMenu();
+
+    }
     //        NetworkProcessHandler::handler().establishNetworkAvailability();
 
     //	if (_startingProcesses) return;
 
+
+//    if ()
+
+
+//    qDebug() << "Refreshing status" << _StatusProgress;
+
     if (_StatusProgress &&
         _StatusProgress->value() != _StatusProgress->maximum())
     {
-        
+
         auto &nhandler = NetworkProcessHandler::handler();
+//        qDebug() << "Status" << _StatusProgress->value() <<  _StatusProgress->maximum();
 
         if (!nhandler.queryJobStatus())
             qDebug() << "Job Status Query not successful";
 
 
         int count = nhandler.DoneJobCount();
-        
+
         //        qDebug() << "Timer event" << count;
         if (count != 0)
         {

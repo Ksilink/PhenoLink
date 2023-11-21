@@ -1,6 +1,8 @@
 #include "zmsg.hpp"
 
 
+int s_interrupted = 0;
+
 QMutex zmsg::session_locker;
 
 bool zmsg::recv(zmq::socket_t &socket) {
