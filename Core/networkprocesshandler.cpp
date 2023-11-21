@@ -736,9 +736,15 @@ bool NetworkProcessHandler::queryJobStatus()
     auto req = new zmsg();
     session.send("mmi.status", req);
     auto reply = session.recv();
+    qDebug() << "Reply status" << reply;
 
     if (reply == nullptr)     return false;
+    
+    qDebug() << reply->parts();
+
     if (reply->parts() <= 0)  return false;
+    reply->dump();
+
 
     QString msg = reply->pop_front();
     jobcount = msg.toInt();

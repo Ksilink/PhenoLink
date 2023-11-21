@@ -89,6 +89,8 @@ public:
             s_console ("I: send request to '%s' service:", service.c_str());
             request->dump ();
         }
+
+
         request->send (*m_client);
         return 0;
     }
