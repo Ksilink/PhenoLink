@@ -440,6 +440,59 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
     qDebug() << "Process add in thread list";
 }
 
+
+void ZMQThread::save_and_send_binary(QJsonObject& ob)
+{
+
+    QString hash = ob["Process_hash"].toString();
+
+
+    //        QString key = QString("%1@%2#%3#%4!%5")
+    //                          .arg(ob["Username"].toString(), ob["Computer"].toString(),
+    //                               ob["Path"].toString(), ob["WorkID"].toString(),
+    //                               ob["XP"].toString());
+
+
+    // TODO: Uncomment the bellow mentionned entries
+    // For debug removed the call to avoid writing useless data
+
+    QJsonArray data = NetworkProcessHandler::handler().filterObject(hash, ob, false);
+    QCborArray bin = NetworkProcessHandler::handler().filterBinary(hash, ob);
+
+
+    // Handle the image transfers
+    if (bin.size()!=0)
+    {
+        QString address = ob["ReplyTo"].toString();
+        ///    qDebug() << hash << res << address;
+        if (!address.isEmpty())
+        {
+            CheckoutHttpClient *client = NULL;
+
+            for (CheckoutHttpClient *cl : alive_replies)
+                if (address == cl->iurl.host())
+                {
+                    client = cl;
+                }
+
+            if (!client)
+            {
+                client = new CheckoutHttpClient(address, 8020);
+                alive_replies << client;
+            }
+
+            for (auto b : bin)
+            {
+                // FIXME
+                // Need to put back image on client
+                client->send(QString("/addImage/"), QString(), b.toCbor());
+            }
+        }
+    }
+
+}
+
+
 void ZMQThread::thread_finished()
 {
     qDebug() << "Process finished";
@@ -452,61 +505,13 @@ void ZMQThread::thread_finished()
 
 
         QJsonObject ob = wa->result();
-        QString hash = ob["Process_hash"].toString();
 
-
-        QString key = QString("%1@%2#%3#%4!%5")
-                          .arg(ob["Username"].toString(), ob["Computer"].toString(),
-                               ob["Path"].toString(), ob["WorkID"].toString(),
-                               ob["XP"].toString());
-
-
-        // TODO: Uncomment the bellow mentionned entries
-        // For debug removed the call to avoid writing useless data
-
-        // Assume the last thread is over if no more process is ongoing
-        QJsonArray data = NetworkProcessHandler::handler().filterObject(hash, ob, false);
-                                                                        //(QThreadPool::globalInstance()->maxThreadCount()-QThreadPool::globalInstance()->activeThreadCount()) == 0);
-        QCborArray bin = NetworkProcessHandler::handler().filterBinary(hash, ob);
-
+        QtConcurrent::run(&ZMQThread::save_and_send_binary, this, ob);
 
         // consider the storage over here
         auto msg = new zmsg(ob["Client"].toString().toLatin1().data());
         msg->push_back(QString("%1").arg(ob["ThreadID"].toInt()).toLatin1());
         session.send_to_broker((char*)MDPW_READY, "", msg);
-
-        // Handle the image transfers
-        if (bin.size()!=0)
-        {
-            QString address = ob["ReplyTo"].toString();
-            ///    qDebug() << hash << res << address;
-            if (!address.isEmpty())
-            {
-                CheckoutHttpClient *client = NULL;
-
-                for (CheckoutHttpClient *cl : alive_replies)
-                    if (address == cl->iurl.host())
-                    {
-                        client = cl;
-                    }
-
-                if (!client)
-                {
-                    client = new CheckoutHttpClient(address, 8020);
-                    alive_replies << client;
-                }
-
-                for (auto b : bin)
-                {
-                    // FIXME
-                    // Need to put back image on client
-                    client->send(QString("/addImage/"), QString(), b.toCbor());
-                }
-//                client->sendQueue(); // force the emission of data let's be synchronous need to wait
-            }
-        }
-
-
     }
 
 

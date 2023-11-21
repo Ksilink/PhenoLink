@@ -39,6 +39,7 @@ public:
 
     void thread_finished();
 
+
 protected:
     QList<CheckoutHttpClient*> alive_replies;
 
