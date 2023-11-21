@@ -1173,13 +1173,22 @@ public:
 
         for (auto kv = ob.begin(), ekv = ob.end(); kv != ekv; ++kv)
         {
-            if (!map.contains(kv.key()))
+
+            QString id;
+
+            if (map.contains(kv.key()))
+                map[kv.key()].toString();
+            else
             {
-                qDebug() << "Warning key" << kv.key() << "cannot be found in" << map;
-                continue;
+                if (!kv.key().isInteger() && kv.key().isString())
+                    id = kv.key().toString();
+                else
+                {
+                    qDebug() << "Warning key" << kv.key() << "cannot be found in" << map;
+                    continue;
+
+                }
             }
-//            assert(map.contains(kv.key()));
-            QString id = map[kv.key()].toString();
 
 
             if (kv.value().isMap())
