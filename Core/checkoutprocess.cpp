@@ -319,9 +319,9 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
     //    qDebug() << "Starting process" << process << array;
     QSettings set;
     QString address;
+
+    if (array.size() < 10) // Hard value for feedback of binary data if more than 10 process no output will be provided to the GUI
     {
-
-
         const QHostAddress& localhost = QHostAddress(QHostAddress::LocalHost);
         for (auto& add : QNetworkInterface::allAddresses()) {
             if (add.protocol() == QAbstractSocket::IPv4Protocol && add != localhost)
