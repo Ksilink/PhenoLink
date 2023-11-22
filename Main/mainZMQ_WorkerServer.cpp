@@ -285,6 +285,7 @@ void ZMQThread::run()
 
     auto nbTh = QString("%1").arg(global_parameters.max_threads).toStdString();
 
+    QSet<QString> commitNames;
 
     session.set_worker_preamble(nbTh, processlist);
 
@@ -312,6 +313,8 @@ void ZMQThread::run()
             //        qDebug() << obj["ThreadID"] << obj["Client"];
             QJsonArray ob; ob.push_back(obj);
 
+            commitNames.insert(obj["CommitName"].toString());
+
             startProcessServer(obj["Path"].toString(), ob);
             // See tj
 
@@ -322,14 +325,23 @@ void ZMQThread::run()
             qDebug() << "Command Finished from broker";
             QString commit =  request->pop_front();
 
-            NetworkProcessHandler::handler().storeObject(commit);
+            NetworkProcessHandler::handler().storeObject(commit, true);
 
-        }
+        } 
         else if (req_type == "Canceled")
         {
             delete request;
             qDebug() << "Canceled process";
             break;
+        }
+        else if (req_type == "Timer")
+        {           
+            qDebug() << "Save Timer" << commitNames;
+            for (auto name : commitNames)
+            {            
+                NetworkProcessHandler::handler().storeObject(name);
+            }
+            commitNames.clear();
         }
 
         if (!reply)
@@ -342,6 +354,13 @@ void ZMQThread::run()
 
         //        qDebug() << "Sending OK reply";
     }
+
+
+
+
+    for (auto name : commitNames)
+        NetworkProcessHandler::handler().storeObject(name);
+
 
     delete processlist;
     qApp->exit(0);
@@ -444,7 +463,7 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
 void ZMQThread::save_and_send_binary(QJsonObject *_ob)
 {
 
-    auto ob = *_ob;
+    auto &ob = *_ob;
 
     QString hash = ob["Process_hash"].toString();
 
@@ -492,6 +511,7 @@ void ZMQThread::save_and_send_binary(QJsonObject *_ob)
         }
     }
 
+    delete _ob;
 }
 
 
@@ -508,7 +528,10 @@ void ZMQThread::thread_finished()
 
         QJsonObject ob = wa->result();
 
-        auto res = QtConcurrent::run(&ZMQThread::save_and_send_binary, this, &ob);
+        QJsonObject* sob = new QJsonObject(ob);
+
+
+        auto res = QtConcurrent::run(&ZMQThread::save_and_send_binary, this, sob);
 
         // consider the storage over here
         auto msg = new zmsg(ob["Client"].toString().toLatin1().data());

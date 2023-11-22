@@ -666,30 +666,30 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
 
     res << ob;
 
-    if (rstorageTimer.contains(plateID))
-        killTimer(rstorageTimer[plateID]);
+    //if (rstorageTimer.contains(plateID))
+    //    killTimer(rstorageTimer[plateID]);
 
-    int timer = startTimer(30000); // reset the current timer to 30s since last modification
+    //int timer = startTimer(30000); // reset the current timer to 30s since last modification
 
-    storageTimer[timer] = plateID;
-    rstorageTimer[plateID] = timer;
+    //storageTimer[timer] = plateID;
+    //rstorageTimer[plateID] = timer;
+    bool tt = true;
+    //if (CheckoutProcess::handler().numberOfRunningProcess() <= 0 || last_one) // Directly save if no more process running
+    //{
+    //    //for (auto &k : rstorageTimer)
+    //    //    killTimer(k); // End timers
+    //    for (auto &k : storageTimer)
+    //        storeData(&k, &tt); // perfom storage
 
-    if (CheckoutProcess::handler().numberOfRunningProcess() <= 0 || last_one) // Directly save if no more process running
-    {
-        for (auto &k : rstorageTimer)
-            killTimer(k); // End timers
-        for (auto &k : storageTimer)
-            storeData(&k, true); // perfom storage
-
-        // Cleanup
-        storageTimer.clear();
-        rstorageTimer.clear();
-    }
+    //    // Cleanup
+    //    //storageTimer.clear();
+    //    //rstorageTimer.clear();
+    //}
 
     return res;
 }
 
-void NetworkProcessHandler::storeObject(QString commit)
+void NetworkProcessHandler::storeObject(QString commit, bool finished)
 {
 
 //    DataFrame &store = *plateData[plateID];
@@ -700,23 +700,24 @@ void NetworkProcessHandler::storeObject(QString commit)
     {
         if (it.key().endsWith(commit))
         {
-            auto timer = rstorageTimer[it.key()];
+            //auto timer = rstorageTimer[it.key()];
 
-            killTimer(timer);
+            //killTimer(timer);
             QString name = it.key();
             bool tt = true;
-            auto res = QtConcurrent::run(&NetworkProcessHandler::storeData, *this, &name, &tt);
-            storageTimer.remove(timer);
-            rstorageTimer.remove(name);
+            auto res = QtConcurrent::run(&NetworkProcessHandler::storeData, this, &name, &tt);
+            //storageTimer.remove(timer);
+            //rstorageTimer.remove(name);
             toCull << name;
 
         }
     }
-    for (auto& del: toCull)
-    {
-        delete plateData[del];
-        plateData.remove(del);
-    }
+    if (finished)
+        for (auto& del: toCull)
+        {
+            delete plateData[del];
+            plateData.remove(del);
+        }
 
 }
 
@@ -1206,17 +1207,18 @@ void NetworkProcessHandler::timerEvent(QTimerEvent *event)
 {
 
     //    qDebug() << "Timer event" << event->timerId() << storageTimer.keys();
-    if (storageTimer.contains(event->timerId()))
-    {
-        int timer = event->timerId();
-        QString d = storageTimer[timer];
-        rstorageTimer.remove(d);
-        storageTimer.remove(timer);
+    //bool tt = false;
+    //if (storageTimer.contains(event->timerId()))
+    //{
+    //    int timer = event->timerId();
+    //    QString d = storageTimer[timer];
+    //    rstorageTimer.remove(d);
+    //    storageTimer.remove(timer);
 
-        killTimer(timer);
+    //    killTimer(timer);
 
-        storeData(&d, false);
-    }
+    //    storeData(&d, &tt);
+    //}
 }
 
 #include <Main/checkout_arrow.h>

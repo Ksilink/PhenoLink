@@ -136,7 +136,7 @@ public:
     QCborArray filterBinary(QString hash, QJsonObject ds);
     QJsonArray filterObject(QString hash, QJsonObject ds, bool last_one=false);
 
-    void storeObject(QString commit);
+    void storeObject(QString commit, bool finished = false);
 
     mdcli& getSession();
 
