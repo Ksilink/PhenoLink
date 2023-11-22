@@ -129,7 +129,7 @@ public:
 
 
      void timerEvent(QTimerEvent *event) override;
-     void storeData(QString plate, bool finished=false);
+     void storeData(QString* plate, bool* finished);
 //     void setPythonEnvironment(QProcessEnvironment env);
 
 

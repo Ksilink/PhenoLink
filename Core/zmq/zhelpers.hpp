@@ -90,9 +90,14 @@ s_recv(void *socket, int flags = 0) {
 
     size_t size = zmq_msg_size(&message);
     char *string = (char*)malloc(size + 1);
-    memcpy(string, zmq_msg_data(&message), size);
-    zmq_msg_close(&message);
-    string[size] = 0;
+    if (string)
+    {
+        memcpy(string, zmq_msg_data(&message), size);
+        zmq_msg_close(&message);
+        string[size] = 0;
+    }
+    else
+        std::cerr << "Memory Allocation error" << size + 1 << "not allocated";
     return (string);
 }
 

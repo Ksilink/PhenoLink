@@ -679,7 +679,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
         for (auto &k : rstorageTimer)
             killTimer(k); // End timers
         for (auto &k : storageTimer)
-            storeData(k, true); // perfom storage
+            storeData(&k, true); // perfom storage
 
         // Cleanup
         storageTimer.clear();
@@ -703,11 +703,12 @@ void NetworkProcessHandler::storeObject(QString commit)
             auto timer = rstorageTimer[it.key()];
 
             killTimer(timer);
-
-            storeData(it.key(), true);
+            QString name = it.key();
+            bool tt = true;
+            auto res = QtConcurrent::run(&NetworkProcessHandler::storeData, *this, &name, &tt);
             storageTimer.remove(timer);
-            rstorageTimer.remove(it.key());
-            toCull << it.key();
+            rstorageTimer.remove(name);
+            toCull << name;
 
         }
     }
@@ -1214,16 +1215,23 @@ void NetworkProcessHandler::timerEvent(QTimerEvent *event)
 
         killTimer(timer);
 
-        storeData(d, false);
+        storeData(&d, false);
     }
 }
 
 #include <Main/checkout_arrow.h>
 
-void NetworkProcessHandler::storeData(QString d, bool finished)
+void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
 {
-
+    bool finished = *_finished;
+    QString d = *plate;
     // Generate the storage for the data of the time
+    if (!plateData.contains(d))
+    {
+        qDebug() << "Storing data failure:" << d << "not found";
+        return;
+    }
+ 
     DataFrame &df = *plateData[d];
     //        QStringList headers =  + df.arrInt.keys() + df.arrStr.keys();
 
