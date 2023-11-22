@@ -10,7 +10,7 @@
     "dependencies": [{
             "name": "opencv",
             "default-features": false,
-            "features": ["contrib", "dnn", "jpeg", "tiff", "nonfree"]
+            "features": ["contrib", "dnn", "jpeg", "tiff", "nonfree", "ipp", "tbb"]
         },
         {
             "name": "arrow",
