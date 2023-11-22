@@ -703,12 +703,12 @@ void NetworkProcessHandler::storeObject(QString commit, bool finished)
             //auto timer = rstorageTimer[it.key()];
 
             //killTimer(timer);
-            QString name = it.key();
-            bool tt = true;
-            auto res = QtConcurrent::run(&NetworkProcessHandler::storeData, this, &name, &tt);
+            QString* name = new QString(it.key());
+            bool *tt = new bool(true);
+            auto res = QtConcurrent::run(&NetworkProcessHandler::storeData, this, name, tt);
             //storageTimer.remove(timer);
             //rstorageTimer.remove(name);
-            toCull << name;
+            toCull << it.key();
 
         }
     }
@@ -1227,6 +1227,11 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
 {
     bool finished = *_finished;
     QString d = *plate;
+
+    delete _finished;
+    delete plate;
+
+
     // Generate the storage for the data of the time
     if (!plateData.contains(d))
     {
