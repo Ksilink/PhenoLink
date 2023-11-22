@@ -673,7 +673,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
 
     //storageTimer[timer] = plateID;
     //rstorageTimer[plateID] = timer;
-    bool tt = true;
+//    bool tt = true;
     //if (CheckoutProcess::handler().numberOfRunningProcess() <= 0 || last_one) // Directly save if no more process running
     //{
     //    //for (auto &k : rstorageTimer)
@@ -712,12 +712,12 @@ void NetworkProcessHandler::storeObject(QString commit, bool finished)
 
         }
     }
-    if (finished)
-        for (auto& del: toCull)
-        {
-            delete plateData[del];
-            plateData.remove(del);
-        }
+//    if (finished)
+//        for (auto& del: toCull)
+//        {
+//            delete plateData[del];
+//            plateData.remove(del);
+//        }
 
 }
 
@@ -1238,7 +1238,7 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
         qDebug() << "Storing data failure:" << d << "not found";
         return;
     }
- 
+
     DataFrame &df = *plateData[d];
     //        QStringList headers =  + df.arrInt.keys() + df.arrStr.keys();
 
