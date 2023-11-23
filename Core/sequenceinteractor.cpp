@@ -870,7 +870,10 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
         QVector<QPoint> proj(perf.size());
         for (auto a = li.begin(), ae = li.end(); a != ae; ++a)
             for (auto b = a->begin(), be = a->end(); b != be; ++b)
-                proj[b.value() - 1] = QPoint(a.key(), b.key());
+                if (b.value() > 0 && b.value() < proj.size())
+                    proj[b.value() - 1] = QPoint(a.key(), b.key());
+                else
+                    qDebug() << "Error for displaying data";
 
 
         QImage toPix(rows, cols, QImage::Format_RGBA8888);
