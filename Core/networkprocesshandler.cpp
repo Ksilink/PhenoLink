@@ -506,6 +506,8 @@ void NetworkProcessHandler::getProcessMessageStatus(QString process, QList<QStri
 }
 
 
+QMutex plate_data_locker;
+
 
 
 QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, bool last_one)
@@ -537,6 +539,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
     if (!plateData.contains(plateID))
         plateData.insert(plateID, new DataFrame);
 
+    plate_data_locker.lock();
     DataFrame &store = *plateData[plateID];
 
     if (store.outfile.isEmpty() && !commit.isEmpty())
@@ -578,6 +581,8 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
         }
         store.fresh = false;
     }
+
+
 
     std::map<QString, QString> tr = {{"FieldId", "fieldId"}, {"zPos", "sliceId"}, {"TimePos", "timepoint"}, {"Channel", "channel"}, {"Pos", "Well"}, {"WellTags", "tags"}};
 
@@ -686,6 +691,8 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
     //    //rstorageTimer.clear();
     //}
 
+    plate_data_locker.unlock();
+
     return res;
 }
 
@@ -693,8 +700,17 @@ void NetworkProcessHandler::storeObject(QString commit, bool finished)
 {
 
 //    DataFrame &store = *plateData[plateID];
+    //if (!finished) // not finished yet, just try to lock 
+    //{
+    //    if (!plate_data_locker.tryLock()) // not lockable skip this time
+    //        return;
+    //}
+    //else  // we have finished so we really want to clear :)
+    //    plate_data_locker.lock();
 
     QStringList toCull;
+
+
 
     for (auto it = plateData.begin(), end = plateData.end(); it != end; ++it)
     {
@@ -712,6 +728,7 @@ void NetworkProcessHandler::storeObject(QString commit, bool finished)
 
         }
     }
+    //plate_data_locker.unlock();
 //    if (finished)
 //        for (auto& del: toCull)
 //        {
@@ -1230,8 +1247,8 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
 
     delete _finished;
     delete plate;
-
-
+    plate_data_locker.lock();
+ 
     // Generate the storage for the data of the time
     if (!plateData.contains(d))
     {
@@ -1259,6 +1276,7 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
 
         for (auto &k : txt)
             fields.push_back(arrow::field(k.toStdString(), arrow::int16()));
+
         for (auto &h : df.arrStr.keys())
         {
             std::shared_ptr<arrow::KeyValueMetadata> meta = NULLPTR;
@@ -1407,6 +1425,8 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
         }
         // plateData.remove(d);
     }
+    plate_data_locker.unlock();
+
 }
 
 // void NetworkProcessHandler::setPythonEnvironment(QProcessEnvironment env) {
