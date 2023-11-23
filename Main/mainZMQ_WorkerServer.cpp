@@ -336,12 +336,15 @@ void ZMQThread::run()
         }
         else if (req_type == "Timer")
         {           
-            qDebug() << "Save Timer" << commitNames;
-            for (auto name : commitNames)
-            {            
-                NetworkProcessHandler::handler().storeObject(name);
+            if (!commitNames.empty())
+            {
+                qDebug() << "Save Timer" << commitNames;
+                for (auto name : commitNames)
+                {
+                    NetworkProcessHandler::handler().storeObject(name);
+                }
+                commitNames.clear();
             }
-            commitNames.clear();
         }
 
         if (!reply)

@@ -980,6 +980,19 @@ void exportBinary(QJsonObject &ds, QJsonObject &par, QCborMap &ob) // We'd like 
     }
 }
 
+void NetworkProcessHandler::lockDataSaver()
+{
+    plate_data_locker.lock();
+
+}
+
+void NetworkProcessHandler::unlockDataSaver()
+{
+    plate_data_locker.unlock();
+
+}
+
+
 QCborArray NetworkProcessHandler::filterBinary(QString hash, QJsonObject ds)
 {
 

@@ -133,6 +133,9 @@ public:
 //     void setPythonEnvironment(QProcessEnvironment env);
 
 
+     void lockDataSaver();
+     void unlockDataSaver();
+
     QCborArray filterBinary(QString hash, QJsonObject ds);
     QJsonArray filterObject(QString hash, QJsonObject ds, bool last_one=false);
 
