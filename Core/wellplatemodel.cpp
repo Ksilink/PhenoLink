@@ -1450,19 +1450,19 @@ SequenceFileModel::Channel& SequenceFileModel::getChannelsFiles(int timePoint, i
     
     FieldImaging::iterator fi = _data.begin(); 
     
-    if (_data.size() < fieldIdx) return chan;
+    if (fieldIdx > _data.size() ) return chan;
     std::advance(fi, fieldIdx - 1);
     if (fi == _data.end()) return chan;
     
     ImageStack::iterator si = fi->begin(); 
     
-    if (fi->size() < Zindex) return chan;
+    if (Zindex > fi->size() ) return chan;
     std::advance(si, Zindex - 1);
     if (si == fi->end()) return chan;
     
     TimeLapse::iterator ti = si->begin(); 
     
-    if (si->size() < timePoint) return chan;
+    if (timePoint > si->size() ) return chan;
     std::advance(ti, timePoint - 1);
     if (ti == si->end()) return chan;
     
