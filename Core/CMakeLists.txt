@@ -21,7 +21,7 @@ if (BUILD_PLUGINS)
         RESULT_VARIABLE   git_return
         OUTPUT_VARIABLE   plugin_date)
 else()
-    set(plugin_date "")
+    set(plugin_date "Build Without Plugins")
 endif(BUILD_PLUGINS)
 
 
