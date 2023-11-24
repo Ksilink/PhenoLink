@@ -27,6 +27,12 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
         delete reply_p;
         reply_p = 0;
     }
+    else if (reply)
+    {
+        m_reply_to = "";
+        delete reply_p;
+        reply_p = 0;
+    }
     m_expect_reply = true;
 
     
