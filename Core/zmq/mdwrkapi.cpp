@@ -64,11 +64,12 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
             //free (header);
 
             auto command = msg->pop_front ();
-            if (timer > 20) // every 20 heartbeats force the saving of commit names
-            {
-                timer = 0;
-                return  std::make_pair(QString("Timer"), msg); 
-            } else if (command.compare (MDPW_REQUEST) == 0) {
+            //if (timer > 20) // every 20 heartbeats force the saving of commit names
+            //{
+            //    timer = 0;
+            //    return  std::make_pair(QString("Timer"), msg); 
+            //} else 
+            if (command.compare (MDPW_REQUEST) == 0) {
                 //  We should pop and save as many addresses as there are
                 //  up to a null part, but for now, just save one...
                 m_reply_to = msg->unwrap ();

@@ -671,6 +671,11 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
 
     res << ob;
 
+
+    auto plid = new QString(plateID);
+    auto finished = new bool(true);
+    storeData(plid, finished);
+
     //if (rstorageTimer.contains(plateID))
     //    killTimer(rstorageTimer[plateID]);
 

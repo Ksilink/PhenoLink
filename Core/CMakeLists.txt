@@ -8,7 +8,6 @@ add_definitions(-DQHTTP_HAS_CLIENT)
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
 
-if (BUILD_PLUGINS)
 
     execute_process(
         COMMAND           "${GIT_EXECUTABLE}"
@@ -20,9 +19,6 @@ if (BUILD_PLUGINS)
         WORKING_DIRECTORY "${PLUGIN_PATH}"
         RESULT_VARIABLE   git_return
         OUTPUT_VARIABLE   plugin_date)
-else()
-    set(plugin_date "BuildWithoutPlugins")
-endif(BUILD_PLUGINS)
 
 
 
@@ -81,7 +77,13 @@ pkg_check_modules(Jxl REQUIRED IMPORTED_TARGET libjxl)
 pkg_check_modules(JxlThreads REQUIRED IMPORTED_TARGET libjxl_threads)
 
 
+if (BUILD_PLUGINS)
+    target_compile_definitions(PhenoLinkCore PUBLIC  -DGitPluginDate=${plugin_date})
+else()
+    set(plugin_date "BuildWithoutPlugins")
 target_compile_definitions(PhenoLinkCore PUBLIC  -DGitPluginDate="${plugin_date}")
+endif(BUILD_PLUGINS)
+
 
 
 target_include_directories(PhenoLinkCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

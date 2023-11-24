@@ -325,7 +325,7 @@ void ZMQThread::run()
             qDebug() << "Command Finished from broker";
             QString commit =  request->pop_front();
 
-            NetworkProcessHandler::handler().storeObject(commit, true);
+         /*   NetworkProcessHandler::handler().storeObject(commit, true);*/
 
         } 
         else if (req_type == "Canceled")
@@ -334,6 +334,7 @@ void ZMQThread::run()
             qDebug() << "Canceled process";
             break;
         }
+        /*
         else if (req_type == "Timer")
         {           
             if (!commitNames.empty())
@@ -345,7 +346,7 @@ void ZMQThread::run()
                 }
                 commitNames.clear();
             }
-        }
+        }*/
 
         if (!reply)
             reply = new zmsg(request->address().toLatin1());
@@ -469,13 +470,6 @@ void ZMQThread::save_and_send_binary(QJsonObject *_ob)
     auto &ob = *_ob;
 
     QString hash = ob["Process_hash"].toString();
-
-
-    //        QString key = QString("%1@%2#%3#%4!%5")
-    //                          .arg(ob["Username"].toString(), ob["Computer"].toString(),
-    //                               ob["Path"].toString(), ob["WorkID"].toString(),
-    //                               ob["XP"].toString());
-
 
     // TODO: Uncomment the bellow mentionned entries
     // For debug removed the call to avoid writing useless data
