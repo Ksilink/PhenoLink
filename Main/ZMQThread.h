@@ -22,6 +22,7 @@ class  ZMQThread : public QThread
 
     GlobParams& global_parameters;
     QThreadPool worker_threadpool;
+    QThreadPool save_threadpool;
     bool verbose;
     QString proxy;
     QString drive_map;

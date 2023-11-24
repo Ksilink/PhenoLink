@@ -671,6 +671,7 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
 
     res << ob;
 
+    plate_data_locker.unlock();
 
     auto plid = new QString(plateID);
     auto finished = new bool(true);
@@ -696,7 +697,6 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
     //    //rstorageTimer.clear();
     //}
 
-    plate_data_locker.unlock();
 
     return res;
 }

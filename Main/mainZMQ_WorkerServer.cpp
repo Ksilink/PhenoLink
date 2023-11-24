@@ -381,7 +381,14 @@ inline ZMQThread::ZMQThread(GlobParams &gp, QThread *parentThread, QString prx, 
 
     worker_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount());
     worker_threadpool.setExpiryTimeout(-1);
+
+
+    save_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount()/2);
+    save_threadpool.setExpiryTimeout(-1);
+
 }
+
+
 
 void ZMQThread::startProcessServer(QString process, QJsonArray array)
 {
@@ -528,7 +535,7 @@ void ZMQThread::thread_finished()
         QJsonObject* sob = new QJsonObject(ob);
 
 
-        auto res = QtConcurrent::run(&ZMQThread::save_and_send_binary, this, sob);
+        auto res = QtConcurrent::run(&save_threadpool, &ZMQThread::save_and_send_binary, this, sob);
 
         // consider the storage over here
         auto msg = new zmsg(ob["Client"].toString().toLatin1().data());
