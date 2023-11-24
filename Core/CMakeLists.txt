@@ -21,7 +21,7 @@ if (BUILD_PLUGINS)
         RESULT_VARIABLE   git_return
         OUTPUT_VARIABLE   plugin_date)
 else()
-    set(plugin_date "")
+    set(plugin_date "BuildWithoutPlugins")
 endif(BUILD_PLUGINS)
 
 
@@ -81,7 +81,7 @@ pkg_check_modules(Jxl REQUIRED IMPORTED_TARGET libjxl)
 pkg_check_modules(JxlThreads REQUIRED IMPORTED_TARGET libjxl_threads)
 
 
-target_compile_definitions(PhenoLinkCore PUBLIC  -DGitPluginDate=${plugin_date})
+target_compile_definitions(PhenoLinkCore PUBLIC  -DGitPluginDate="${plugin_date}")
 
 
 target_include_directories(PhenoLinkCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
