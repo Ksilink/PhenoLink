@@ -48,6 +48,7 @@ QMutex access_mutex;
 #define HEARTBEAT_EXPIRY    HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
 
 struct service;
+struct worker_threads;
 
 
 struct  service_call
@@ -64,7 +65,7 @@ struct  service_call
     int priority; // if we have computed priority for this service call :)
 
     int thread_id;
-
+    worker_threads* worker_thread = 0;
 };
 
 
@@ -916,10 +917,13 @@ private:
                         }
                     if (!th)
                         return;
+
                     QList<service_call*> finished;
                     QList<service_call*> toCull;
                     for (auto &job : m_ongoing_jobs)
-                        if (job->client == client && job->thread_id == thread_id)
+                        if (job->client == client &&
+                            job->thread_id == thread_id &&
+                            job->worker_thread == th)
                         {
                             toCull << job;
                             if (th->parameters)
@@ -1221,11 +1225,12 @@ public:
         job->parameters.insert(QString("ThreadID"), thread->m_id);
         job->parameters.insert(QString("Client"), job->client);
         job->thread_id = thread->m_id;
+        job->worker_thread = thread;
 
         //        qDebug() << job->parameters;
         thread->parameters = job;
 
-        qDebug() << "Sending job" << thread->m_id << job->client << job->path;
+        qDebug() << "Sending job" << wrk << thread->m_id << job->client << job->path;
         zmsg* msg = new zmsg();
         msg->push_back(job->parameters.toCborValue().toCbor());
         worker_send(wrk, (char*)MDPW_REQUEST, job->path, msg);
