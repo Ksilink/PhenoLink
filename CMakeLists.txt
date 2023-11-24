@@ -8,7 +8,7 @@
 ##########################
 
 
-
+##
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 set(VCPKG_FEATURE_FLAGS versions)
@@ -16,8 +16,14 @@ set(VCPKG_DISABLE_COMPILER_TRACKING 1)
 
 project(PhenoLink)
 
+#
+#
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+#
+#
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -120,12 +126,12 @@ if (WIN32) # do the win32 download
 
 elseif(LINUX) # do the linux download
     if (ONNX_GPU)
-	    set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-linux-x64-gpu-${ONNX_VERSION}.tgz")
+            set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-linux-x64-gpu-${ONNX_VERSION}.tgz")
          set(ONNX_ROOTDIR "onnxruntime-linux-x64-gpu-${ONNX_VERSION}")
          set(ONNX_TARGET "onnxruntime-linux-gpu-${ONNX_VERSION}.tgz")
          add_definitions(-DUSE_CUDA)
     else()
-	    set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-linux-x64-${ONNX_VERSION}.tgz")
+            set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-linux-x64-${ONNX_VERSION}.tgz")
         set(ONNX_ROOTDIR "onnxruntime-linux-x64-${ONNX_VERSION}")
         set(ONNX_TARGET "onnxruntime-linux-${ONNX_VERSION}.tgz")
     endif(ONNX_GPU)
@@ -308,6 +314,8 @@ add_subdirectory(Main)
 
 if(BUILD_PLUGINS)
     add_subdirectory(Plugins)
+else()
+    set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 endif(BUILD_PLUGINS)
 
 if(BUILD_RAW_PROCESSOR)

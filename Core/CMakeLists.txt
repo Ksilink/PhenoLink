@@ -8,16 +8,23 @@ add_definitions(-DQHTTP_HAS_CLIENT)
 add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
 
-execute_process(
-    COMMAND           "${GIT_EXECUTABLE}"
-    log
-    -1
-    --date=iso
-    --pretty=format:"%ai"
-    "."
-    WORKING_DIRECTORY "${PLUGIN_PATH}"
-    RESULT_VARIABLE   git_return
-    OUTPUT_VARIABLE   plugin_date)
+if (BUILD_PLUGINS)
+
+    execute_process(
+        COMMAND           "${GIT_EXECUTABLE}"
+        log
+        -1
+        --date=iso
+        --pretty=format:"%ai"
+        "."
+        WORKING_DIRECTORY "${PLUGIN_PATH}"
+        RESULT_VARIABLE   git_return
+        OUTPUT_VARIABLE   plugin_date)
+else()
+    set(plugin_date "")
+endif(BUILD_PLUGINS)
+
+
 
 message("Computing hash for ${PluginFile}: ${plugin_date}")
 
