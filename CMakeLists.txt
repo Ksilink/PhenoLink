@@ -92,12 +92,12 @@ set(Checkout_VERSION_RELEASE "${Checkout_VERSION_RELEASE}-${app_hash_short}-${pl
 add_definitions(-DCheckout_Git_Hash="${app_hash_short}-${plugin_hash_short}${git_dirty}")
 
 
-option(BUILD_PLUGINS "Build plugins" OFF)
+option(BUILD_PLUGINS "Build plugins" ON)
 option(BUILD_PYTHON_SCRIPTING "Build with Core side Python Scripting" OFF)
-option(BUILD_WITH_VTK "Build the VTK optional stuff" OFF)
+option(BUILD_WITH_VTK "Build the VTK optional stuff" ON)
 option(BUILD_RAW_PROCESSOR "Build the Raw data processor (very advanced users - developper feature)" OFF)
 option(PLUGIN_IN_CORE "Shall Core call plugins" OFF)
-option(ONNX_GPU "Use ONNX GPU Version" ON)
+option(ONNX_GPU "Use ONNX GPU Version" OFF)
 
 if(UNIX AND NOT APPLE)
         set(LINUX TRUE)
