@@ -1265,7 +1265,7 @@ public:
     {
 
         int finished = 0, ongoing = 0;
-        for (auto j : m_finished_jobs)
+        for (auto j : m_requests)
             finished += (j->client == client);
         for (auto j : m_ongoing_jobs)
             ongoing += (j->client == client);
