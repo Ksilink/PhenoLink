@@ -705,7 +705,7 @@ void NetworkProcessHandler::storeObject(QString commit, bool finished)
 {
 
 //    DataFrame &store = *plateData[plateID];
-    //if (!finished) // not finished yet, just try to lock 
+    //if (!finished) // not finished yet, just try to lock
     //{
     //    if (!plate_data_locker.tryLock()) // not lockable skip this time
     //        return;
@@ -782,7 +782,7 @@ bool NetworkProcessHandler::queryJobStatus()
     auto req = new zmsg();
     session.send("mmi.status", req);
     auto reply = session.recv();
-    qDebug() << "Reply status" << reply;
+    // qDebug() << "Reply status" << reply;
 
 
     if (reply == nullptr)
@@ -1266,7 +1266,7 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
     delete _finished;
     delete plate;
     plate_data_locker.lock();
- 
+
     // Generate the storage for the data of the time
     if (!plateData.contains(d))
     {

@@ -503,9 +503,12 @@ private:
     // Count the number of finished process for this client & clean the list
     void jobStatus(zmsg *msg, QString client)
     {
-        int nb_finished_jobs =  clear_list(m_finished_jobs, client);
+
+
+
         int finished, ongoing;
-        std::tie(finished, ongoing) = count_jobs(client);
+            std::tie(finished, ongoing) = count_jobs(client);
+        int nb_finished_jobs =  clear_list(m_finished_jobs, client);
 
 
 //        qDebug() << "Job Status" << client << nb_finished_jobs << " " << finished << "  " << ongoing << "         ";
@@ -1265,8 +1268,14 @@ public:
     {
 
         int finished = 0, ongoing = 0;
-        for (auto j : m_requests)
-            finished += (j->client == client);
+        for (auto j : m_finished_jobs)
+            if (j->client == client)
+                {
+                    finished = *(j->calls);
+                    break;
+                }
+
+
         for (auto j : m_ongoing_jobs)
             ongoing += (j->client == client);
 

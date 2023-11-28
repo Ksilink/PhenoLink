@@ -2225,6 +2225,25 @@ void MainWindow::timerEvent(QTimerEvent *event)
                 this->statusBar()->showMessage(QString("Processing finished: %1").arg(y.toString("hh:mm:ss.zzz")));
             }
         }
+        else if ( nhandler.FinishedJobCount() == 0)
+        {
+            _StatusProgress->setValue(_StatusProgress->value());
+
+            uint64_t ms = process_starttime.msecsTo(QDateTime::currentDateTime());
+
+            QTime y(0,0); y = y.addMSecs(ms/(double)_StatusProgress->value());
+            QDateTime z = process_starttime; z = z.addMSecs(QTime(0,0).msecsTo(y) * _StatusProgress->maximum());
+
+            if (_StatusProgress->value() == _StatusProgress->maximum())
+            {
+                QList<QPushButton*> list = ui->processingArea->findChildren<QPushButton*>();
+                foreach(QPushButton* b, list)
+                    b->setEnabled(true);
+                QTime y(0, 0);
+                y = y.addMSecs(run_time.elapsed());
+                this->statusBar()->showMessage(QString("Processing finished: %1").arg(y.toString("hh:mm:ss.zzz")));
+            }
+        }
 
     }
 
