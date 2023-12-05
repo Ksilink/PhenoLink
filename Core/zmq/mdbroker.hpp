@@ -1269,7 +1269,7 @@ public:
 
         int finished = 0, ongoing = 0;
         for (auto j : m_finished_jobs)
-            if (j->client == client)
+            if (j->client == client && j->calls)
                 {
                     finished = *(j->calls);
                     break;
