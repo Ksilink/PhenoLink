@@ -118,7 +118,8 @@ int main(int argc, char *argv[])
     if (!set.contains("databaseDir"))
         set.setValue("databaseDir", QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() + "/databases/");
 
-    QStringList var = set.value("Server", QStringList() << "127.0.0.1").toStringList();
+
+    QStringList var = set.value("ZMQServer", QStringList() << "127.0.0.1").toStringList();
     QProcess server;
 
     if (var.contains("127.0.0.1") || var.contains("localhost"))
