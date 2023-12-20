@@ -26,6 +26,7 @@
 #include <QMutex>
 #include <QProcess>
 #include <QtConcurrent>
+#include <QThreadPool>
 #include <QSettings>
 
 
@@ -246,9 +247,9 @@ private:
             qDebug() << "Purging workers" << toCull.size();
         for (QSet<worker*>::iterator wrk = toCull.begin(); wrk != toCull.end(); ++wrk)
         {
-//            if (m_verbose) {
-                qDebug() << "I: deleting expired worker:" << (*wrk)->m_identity;
-//            }
+            //            if (m_verbose) {
+            qDebug() << "I: deleting expired worker:" << (*wrk)->m_identity;
+            //            }
             worker_delete((*wrk), 0);
         }
     }
@@ -507,11 +508,11 @@ private:
 
 
         int finished, ongoing;
-            std::tie(finished, ongoing) = count_jobs(client);
+        std::tie(finished, ongoing) = count_jobs(client);
         int nb_finished_jobs =  clear_list(m_finished_jobs, client);
 
 
-//        qDebug() << "Job Status" << client << nb_finished_jobs << " " << finished << "  " << ongoing << "         ";
+        //        qDebug() << "Job Status" << client << nb_finished_jobs << " " << finished << "  " << ongoing << "         ";
 
 
         msg->push_back(QString::number(nb_finished_jobs).toLatin1());
@@ -757,34 +758,62 @@ private:
         if (!agg["CommitName"].toString().isEmpty())
         {
 
+            QString project =  agg["Project"].toString();
+            QString commit = agg["CommitName"].toString();
+
+
             QString path = QString("%1/PROJECTS/%2/Checkout_Results/%3").arg(dbP,
-                                                                             agg["Project"].toString(),
-                                                                             agg["CommitName"].toString()).replace("\\", "/").replace("//", "/");;
+                                                                             project,
+                                                                             commit).replace("\\", "/").replace("//", "/");
 
             QThread::sleep(5); // Let time to sync
 
+            // FIXME:  Cloud solution adjustements needed here !
+
+
             QDir dir(path);
 
-            QStringList files = dir.entryList(QStringList() << QString("%1_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", "")), QDir::Files);
-            QString concatenated = QString("%1/%2.fth").arg(path,agg["XP"].toString().replace("/",""));
-            if (files.isEmpty())
+            //            qDebug() << "folder" << folder << dir << QString("*_[0-9]*[0-9][0-9][0-9][0-9].fth");
+            QStringList files = dir.entryList(QStringList() << QString("*_[0-9]*[0-9][0-9][0-9][0-9].fth"), QDir::Files);
+            //            qDebug() << files;
+
+            QStringList plates;
+
+            for (auto pl: files)
             {
-                qDebug() << "Error fusing the data to generate" << concatenated;
-                qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(agg["XP"].toString().replace("/", ""));
+                QString t(pl.left(pl.lastIndexOf("_")));
+                if (!plates.contains(t))
+                    plates << t;
             }
-            else
+            qDebug() << plates;
+            QStringList fused_arrow;
+
+            for (auto plate: plates)
             {
 
-                if (QFile::exists(concatenated)) // In case the feather exists already add this for fusion at the end of the process since arrow fuse handles duplicates if will skip value if recomputed and keep non computed ones (for instance when redoing a well computation)
+                QStringList files = dir.entryList(QStringList() << QString("%1_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(plate), QDir::Files);
+
+
+                QString concatenated = QString("%1/%2.fth").arg(path,plate.replace("/",""));
+                if (files.isEmpty())
                 {
-                    dir.rename(concatenated, concatenated + ".torm");
-                    files << concatenated.split("/").last()+".torm";
+                    qDebug() << "Error fusing the data to generate" << concatenated;
+                    qDebug() << QString("%4_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(plate.replace("/", ""));
                 }
+                else
+                {
 
-                auto fut = QtConcurrent::run(fuseArrow,
-                                             path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+                    if (QFile::exists(concatenated)) // In case the feather exists already add this for fusion at the end of the process since arrow fuse handles duplicates if will skip value if recomputed and keep non computed ones (for instance when redoing a well computation)
+                    {
+                        dir.rename(concatenated, concatenated + ".torm");
+                        files << concatenated.split("/").last()+".torm";
+                    }
 
-                //                        fuseArrow(path, files, concatenated,agg["XP"].toString().replace("\\", "/").replace("/",""));
+//                    auto fut = QtConcurrent::run(fuseArrow,
+//                                                 path, files, concatenated, plate.replace("\\", "/").replace("/",""));
+                    fuseArrow(path, files, concatenated, plate.replace("\\", "/").replace("/",""));
+                    fused_arrow << concatenated;
+                }
             }
 
 
@@ -797,6 +826,7 @@ private:
                 auto arr = agg["PostProcesses"].toArray();
 
                 //                QFuture<void> future = QtConcurrent::run([this, arr, concatenated, dbP, path]
+                for (auto& concatenated: fused_arrow)
                 {
 
                     for (int i = 0; i < arr.size(); ++i )
@@ -809,8 +839,8 @@ private:
                         this->postproc << python;
 
                         python->setProcessEnvironment(python_config);
-                        qDebug() << python_config.value("PATH");
-                        qDebug() << args;
+                        //                        qDebug() << python_config.value("PATH");
+                        //                       qDebug() << args;
 
                         this->postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
                         this->postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".log");
@@ -823,10 +853,6 @@ private:
                     }
 
                 }
-                //);
-
-
-
             }
             else
                 qDebug() << "No Postprocesses";
@@ -839,9 +865,7 @@ private:
                 // Set our python env first
                 // Setup the call to python
                 // Also change working directory to the "concatenated" folder
-                auto data = agg["Experiments"].toArray();
-                QStringList xps;
-                for (auto d: data) xps << d.toString().replace("\\", "/").replace("/", "")+".fth";
+                QStringList xps = fused_arrow;
 
                 auto arr = agg["PostProcessesScreen"].toArray();
 
@@ -860,8 +884,8 @@ private:
                         this->postproc << python;
 
                         python->setProcessEnvironment(python_config);
-                        qDebug() << python_config.value("PATH");
-                        qDebug() << args;
+//                        qDebug() << python_config.value("PATH");
+  //                      qDebug() << args;
 
                         postproc.last()->setProcessChannelMode(QProcess::MergedChannels);
                         postproc.last()->setStandardOutputFile(path+"/"+script.split("/").last().replace(".py", "")+".screen_log");
@@ -1075,7 +1099,7 @@ private:
 
         msg->wrap(worker->m_identity);
 
-//        msg->dump();
+        //        msg->dump();
 
         msg->send (*m_socket);
 
@@ -1270,10 +1294,10 @@ public:
         int finished = 0, ongoing = 0;
         for (auto j : m_finished_jobs)
             if (j->client == client && j->calls)
-                {
-                    finished = *(j->calls);
-                    break;
-                }
+            {
+                finished = *(j->calls);
+                break;
+            }
 
 
         for (auto j : m_ongoing_jobs)
