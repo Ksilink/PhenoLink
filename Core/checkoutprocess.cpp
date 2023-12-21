@@ -1029,7 +1029,7 @@ QString CheckoutProcess::dumpHtmlStatus()
         {
             body += QString("%1 : %2<br>"/* <a href='/Cancel/%1'>Cancel User Processes</a><br>"*/).arg(it.key()).arg(it.value().size());
             QMap<QString, int> counter;
-            status_protect.lock();
+//            status_protect.lock();
 
             //        for (auto q: it.value())
             //        {
@@ -1040,7 +1040,7 @@ QString CheckoutProcess::dumpHtmlStatus()
             //        for (auto it = counter.begin(), e = counter.end(); it != e; ++it)
             //            body += QString("<p>%1 : %2 </p>").arg(it.key()).arg(it.value());
 
-            status_protect.unlock();
+//            status_protect.unlock();
         }
     QHostInfo info;
     QStringList addresses;
@@ -1078,15 +1078,15 @@ void CheckoutProcess::removeRunner(QString user, QFutureWatcher<QJsonObject>* ru
 void CheckoutProcess::cancelUser(QString user)
 {
     Q_UNUSED(user);
-    status_protect.lock();
-    //    for (auto q : _peruser_futures[user])
-    //    {
-    //        auto res = QThreadPool::globalInstance()->tryTake(static_cast<PluginRunner*>(q));
-    //        Q_UNUSED(res);
-    //    }
-    //    _peruser_futures[user].clear();
-    //    _peruser_futures.remove(user);
-    status_protect.unlock();
+//    status_protect.lock();
+//    //    for (auto q : _peruser_futures[user])
+//    //    {
+//    //        auto res = QThreadPool::globalInstance()->tryTake(static_cast<PluginRunner*>(q));
+//    //        Q_UNUSED(res);
+//    //    }
+//    //    _peruser_futures[user].clear();
+//    //    _peruser_futures.remove(user);
+//    status_protect.unlock();
 }
 
 void CheckoutProcess::finishedProcess(QStringList /*dhash*/)

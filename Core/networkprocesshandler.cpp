@@ -310,39 +310,7 @@ NetworkProcessHandler &NetworkProcessHandler::handler()
 
 void NetworkProcessHandler::establishNetworkAvailability()
 {
-//    // Go through configured parameters
-//    QHostInfo info;
-//    QSettings sets;
 
-//    QJsonArray data;
-
-//    QStringList var = sets.value("Server", QStringList() << "127.0.0.1").toStringList();
-//    QList<QVariant> ports = sets.value("ServerP", QList<QVariant>() << QVariant((int)13378)).toList();
-
-//    for (int i = 0; i < var.size(); ++i)
-//    {
-//        QJsonObject localh;
-//        localh["Host"] = var.at(i);
-//        localh["Port"] = ports.at(i).toInt();
-
-//        data.append(localh);
-//    }
-
-
-
-
-//    if (activeHosts.size() == data.size())
-//        return;
-//    foreach (QJsonValue ss, data)
-//    {
-//        QJsonObject o = ss.toObject();
-//        auto h = new CheckoutHttpClient(o["Host"].toString(), o["Port"].toInt());
-
-//        h->send("/ListProcesses");
-//        activeHosts << h;
-
-//        qDebug() << "Process from server" << h->iurl;
-//    }
 }
 
 void NetworkProcessHandler::setNoProxyMode()
@@ -367,7 +335,7 @@ QString NetworkProcessHandler::getServer() {return srv; }
 void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient *cl)
 {
     //    qDebug() << "Settings Processes";
-    QMutexLocker lock(&mutex_send_lock);
+    mutex_send_lock.lock();
     for (int p = 0; p < ar.size(); ++p)
     {
         QString pr = ar[p].toString();
@@ -378,6 +346,8 @@ void NetworkProcessHandler::setProcesses(QJsonArray ar, CheckoutHttpClient *cl)
             procMapper[pr] << cl;
         }
     }
+    mutex_send_lock.unlock();
+
 
     CheckoutProcess::handler().updatePath();
 }
@@ -677,41 +647,12 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
     auto finished = new bool(true);
     storeData(plid, finished);
 
-    //if (rstorageTimer.contains(plateID))
-    //    killTimer(rstorageTimer[plateID]);
-
-    //int timer = startTimer(30000); // reset the current timer to 30s since last modification
-
-    //storageTimer[timer] = plateID;
-    //rstorageTimer[plateID] = timer;
-//    bool tt = true;
-    //if (CheckoutProcess::handler().numberOfRunningProcess() <= 0 || last_one) // Directly save if no more process running
-    //{
-    //    //for (auto &k : rstorageTimer)
-    //    //    killTimer(k); // End timers
-    //    for (auto &k : storageTimer)
-    //        storeData(&k, &tt); // perfom storage
-
-    //    // Cleanup
-    //    //storageTimer.clear();
-    //    //rstorageTimer.clear();
-    //}
-
 
     return res;
 }
 
 void NetworkProcessHandler::storeObject(QString commit, bool finished)
 {
-
-//    DataFrame &store = *plateData[plateID];
-    //if (!finished) // not finished yet, just try to lock
-    //{
-    //    if (!plate_data_locker.tryLock()) // not lockable skip this time
-    //        return;
-    //}
-    //else  // we have finished so we really want to clear :)
-    //    plate_data_locker.lock();
 
     QStringList toCull;
 
@@ -721,25 +662,16 @@ void NetworkProcessHandler::storeObject(QString commit, bool finished)
     {
         if (it.key().endsWith(commit))
         {
-            //auto timer = rstorageTimer[it.key()];
 
-            //killTimer(timer);
             QString* name = new QString(it.key());
             bool *tt = new bool(true);
             auto res = QtConcurrent::run(&NetworkProcessHandler::storeData, this, name, tt);
-            //storageTimer.remove(timer);
-            //rstorageTimer.remove(name);
+
             toCull << it.key();
 
         }
     }
-    //plate_data_locker.unlock();
-//    if (finished)
-//        for (auto& del: toCull)
-//        {
-//            delete plateData[del];
-//            plateData.remove(del);
-//        }
+
 
 }
 
@@ -1271,6 +1203,7 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
     if (!plateData.contains(d))
     {
         qDebug() << "Storing data failure:" << d << "not found";
+         plate_data_locker.unlock();
         return;
     }
 
@@ -1278,7 +1211,10 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
     //        QStringList headers =  + df.arrInt.keys() + df.arrStr.keys();
 
     if (df.outfile.isEmpty())
+    {
+         plate_data_locker.unlock();
         return;
+    }
     QString target = df.outfile;
 
     {
@@ -1394,6 +1330,7 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
         if (!r0.ok())
         {
             qDebug() << "Arrow Error not able to load" << df.outfile;
+             plate_data_locker.unlock();
             return;
         }
 
@@ -1404,6 +1341,7 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
         if (!r1.ok())
         {
             qDebug() << "Arrow Error to Open Stream" << df.outfile;
+             plate_data_locker.unlock();
             return;
         }
         auto output = r1.ValueOrDie();
@@ -1415,6 +1353,7 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
         if (!r2.ok())
         {
             qDebug() << "Arrow Unable to make file writer";
+             plate_data_locker.unlock();
             return;
         }
 

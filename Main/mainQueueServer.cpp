@@ -1312,8 +1312,8 @@ void Server::process( qhttp::server::QHttpRequest* req,  qhttp::server::QHttpRes
             if (store.open(QFile::WriteOnly))
                 store.write(QCborValue::fromJsonValue(ar).toCbor());
         }
-        qApp->exit(0);
         workers_lock.unlock();
+        qApp->exit(0);
     }
 
 
