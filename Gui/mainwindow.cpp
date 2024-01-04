@@ -1554,7 +1554,7 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
     // L:/{Project}/Checkout_Results/*/{processpath}_date_time.json :)
     // Order data by date/time ,
 
-        QSet<QString> projects;
+    QSet<QString> projects;
     for (auto scr : ScreensHandler::getHandler().getScreens())
         projects.insert(scr->property("project"));
 
@@ -1568,16 +1568,16 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
         QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/").arg(dir.absolutePath(), proj);
         QDir prdir(writePath);
         QStringList dirs = prdir.entryList(QStringList() << "*", QDir::Dirs | QDir::NoDotAndDotDot);
-        for (auto dir : dirs)
+        for (auto& dir : dirs)
         {
             QDir gjsons(writePath+"/"+dir);
             QStringList df = gjsons.entryList(QStringList() << process.replace("/", "_").replace(" ", "_") + "*.json", QDir::Files);
             jsons.append(df);
-            for (QString s: df)
+            for (QString& s: df)
                 commits << writePath+"/"+dir + "/" + s;
         }
     }
-    // sooooo many !!!!
+
     jsons.sort();
     QStringList disp, paths;
     disp << "Default";
@@ -1585,7 +1585,6 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
 
     for (auto it = jsons.rbegin(), e= jsons.rend(); it != e; ++it)
     {
-        //   qDebug() << *it;
         for (auto & r: commits)
             if (r.contains(*it))
             {
@@ -1593,21 +1592,19 @@ void constructHistoryComboBox(QComboBox* cb, QString process)
                 QStringList path = r.split("/");
                 QString commitName = path.at(path.size() - 2);
                 if (commitName == "params")
-                {
-                    commitName = "";
                     continue;
-                }
+
                 if (r.endsWith("_tags.json")) continue;
                 QStringList j = (*it).split("_");
                 if (j.size() < 3) continue;
+
                 bool ok;
 
-
-
-                QString hours = j.takeLast(); hours.toInt(&ok);
-                if (!ok) continue;
-
+                QString hours = j.takeLast();
                 hours = hours.mid(0, hours.size()-5);
+                hours.toInt(&ok);
+//                qDebug() << (*it) << j << hours;
+                if (!ok) continue;
 
                 QString date = j.takeLast();  date.toInt(&ok);
                 if (!ok) continue;
