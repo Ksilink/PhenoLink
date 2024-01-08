@@ -8,11 +8,11 @@
 #include <iostream>
 #include <vector>
 
-
+/*
 #include <qhttp/qhttpclient.hpp>
 #include "qhttp/qhttpclientrequest.hpp"
 #include "qhttp/qhttpclientresponse.hpp"
-
+*/
 #include <QInputDialog>
 
 #include <QJsonDocument>
@@ -34,7 +34,7 @@
 
 #include <Core/ck_mongo.h>
 
-using namespace qhttp::client;
+//using namespace qhttp::client;
 
 using bsoncxx::builder::stream::close_array;
 using bsoncxx::builder::stream::close_document;
@@ -46,7 +46,7 @@ using namespace bsoncxx::builder::basic;
 
 tagger::tagger(QStringList datas, QWidget *parent) :
     QDialog(parent),
-    dataset(datas), http(nullptr),
+    dataset(datas), // http(nullptr),
     ui(new Ui::tagger)
 {
     setWindowTitle("Setting Plate Tags");
@@ -55,59 +55,10 @@ tagger::tagger(QStringList datas, QWidget *parent) :
     mongocxx::uri uri("mongodb://192.168.2.127:27017");
     mongocxx::client client(uri);
 
-    connect(this, SIGNAL(populate()), this, SLOT(on_populate()));
+//    connect(this, SIGNAL(populate()), this, SLOT(on_populate()));
 
     this->_tags_of_tags["DMSO"].insert("Drugs"); // Tags a compound corresponding tag as compound
     this->_grouped_tags[""]["Drugs"].insert("DMSO");
-
-
-    http = getHttp();
-    QString url("http://labcollector.ksilink.int/webservice/index.php?v=2&module=strains"),
-            key("74a7d185e35ca33dc082f3e1605b914d1c6fc1c1add3ef4f96e6a284952199f2");
-
-    http->request(qhttp::EHTTP_GET, url,
-                  [key, url]( qhttp::client::QHttpRequest* req){
-        req->addHeader("X-LC-APP-Auth", key.toLatin1());
-        req->addHeader("Accept", "application/json");
-        QByteArray body;
-        req->addHeader("content-length", QString::number(body.length()).toLatin1());
-        req->end(body);
-    },
-
-    [this]( qhttp::client::QHttpResponse* res) {
-        res->collectData();
-        res->onEnd([this, res](){
-            auto data = res->collectedData();
-            this->labcollector_strains = QJsonDocument::fromJson(data);
-            for (auto items: this->labcollector_strains.array())
-            {
-                auto obj = items.toObject();
-                QString pr = obj["project"].toString().simplified();
-                if (!pr.isEmpty())
-                {
-                    _projects.insert(pr);
-                    if (!obj["number"].toString().simplified().isEmpty())
-                    {
-                        this->_well_tags[pr].insert(obj["number"].toString());
-                        this->_tags_of_tags[obj["number"].toString()].insert("CellLines"); // Tags the tag as a cell line
-                        this->_grouped_tags[pr]["CellLines"].insert(obj["number"].toString().simplified());
-                    }
-                }
-            }
-
-            QString cur=this->ui->project->currentText();
-            this->ui->project->clear();
-            QStringList lst(_projects.begin(), _projects.end()); lst.sort();
-
-            this->ui->project->addItems(lst);
-            if (!cur.isEmpty())
-                this->ui->project->setCurrentText(cur);
-
-            emit populate();
-
-        });
-    });
-
 
     try {
         //        for (auto& dbn: client.list_database_names())
@@ -122,11 +73,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
         auto cursor = db["tags"].aggregate(pipe);
         for (auto & item: cursor)
         {
-#if (BSONCXX_VERSION_MAJOR >= 3 && BSONCXX_VERSION_MINOR >= 7)
             bsoncxx::stdx::string_view view = item["_id"].get_string().value;
-#else
-            bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
-#endif
+
             QString pr = QString::fromStdString(std::string{view}).simplified();
             if (!pr.isEmpty())
                 _projects.insert(pr) ;
@@ -157,11 +105,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 auto cursor = db["tags"].aggregate(pipe);
                 for (auto & item: cursor)
                 {
-#if (BSONCXX_VERSION_MAJOR >= 3 && BSONCXX_VERSION_MINOR >= 7)
                     bsoncxx::stdx::string_view view = item["_id"].get_string().value;
-#else
-                    bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
-#endif
+
                     _well_tags[prj].insert(QString::fromStdString(std::string{view}).simplified());
                 }
             }
@@ -169,60 +114,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
     }  catch (...){
 
     }
-
-
-    url="http://labcollector.ksilink.int/webservice/index.php?v=2&module=chemicals";
-
-    http->request(qhttp::EHTTP_GET, url,
-                  [key, url]( qhttp::client::QHttpRequest* req){
-        if (req)
-        {
-            req->addHeader("X-LC-APP-Auth", key.toLatin1());
-            req->addHeader("Accept", "application/json");
-            QByteArray body;
-            req->addHeader("content-length", QString::number(body.length()).toLatin1());
-            req->end(body);
-        }
-    },
-
-    [this]( qhttp::client::QHttpResponse* res) {
-        if (res)
-        {
-            res->collectData();
-            res->onEnd([this, res](){
-                auto data = res->collectedData();
-                QMap<QString, QString> map={ // No API way found as of yet to get this info...
-                                             //                                         {"1","Reagents"},
-                                             {"3","Drugs"},
-                                             //                                         {"4","Cell Culture Room"},// degage
-                                             //                                         {"5","Pipettes"},// degage
-                                             //                                         {"6","Filtration"},// degage
-                                             //                                         {"7","Reservoirs"},// degage
-                                             //                                         {"8","Gloves"},// degage
-                                             {"9","Antibodies"},
-                                             //                                         {"10","Plates"},// degage
-                                             //                                         {"11","Sanitisers"},// degage
-                                             //                                         {"12","Screening"}, // degage
-                                             //                                         {"13","Tips"},// degage
-                                             //                                         {"14","Tubes"},// degage
-                                             //                                         {"15","Western Blot"}// degage
-                                           };
-                this->labcollector_chemicals = QJsonDocument::fromJson(data);
-                for (auto items: this->labcollector_chemicals.array())
-                {
-                    auto obj = items.toObject();
-                    if (map.contains(obj["cat_id"].toString().simplified()))
-                    {
-                        this->_tags_of_tags[obj["name"].toString().simplified()].insert(map[obj["cat_id"].toString().simplified()]); // Tags a compound corresponding tag as compound
-                        this->_grouped_tags[""][map[obj["cat_id"].toString().simplified()]].insert(obj["name"].toString().simplified());
-                    }
-                }
-                emit populate();
-            });
-        }
-    });
-
-    try
+ try
     {
         auto db = client["tags"];
 
@@ -236,11 +128,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             QStringList data;
             for (auto & item: cursor)
             {
-#if (BSONCXX_VERSION_MAJOR >= 3 && BSONCXX_VERSION_MINOR >= 7)
                 bsoncxx::stdx::string_view view = item["_id"].get_string().value;
-#else
-                bsoncxx::stdx::string_view view = item["_id"].get_utf8().value;
-#endif
+
                 data << QString::fromStdString(std::string{view}).simplified();
             }
 
@@ -258,13 +147,9 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 
             for (auto & item: cursor)
             {
-#if (BSONCXX_VERSION_MAJOR >= 3 && BSONCXX_VERSION_MINOR >= 7)
                 bsoncxx::stdx::string_view prview = item["_id"]["project"].get_string().value;
                 bsoncxx::stdx::string_view cellview = item["_id"]["cell_lines"].get_string().value;
-#else
-                bsoncxx::stdx::string_view prview = item["_id"]["project"].get_utf8().value;
-                bsoncxx::stdx::string_view cellview = item["_id"]["cell_lines"].get_utf8().value;
-#endif
+
                 QString t = QString::fromStdString(std::string{cellview}).simplified();
                 QString prj = QString::fromStdString(std::string{prview}).simplified();
 
@@ -272,8 +157,36 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             }
             //ui->cell_lines->addItems(data);
         }
+
+        {
+            mongocxx::pipeline pipe{};
+            pipe.unwind(make_document(kvp("path","$Categories.CellLines"), kvp("preserveNullAndEmptyArrays", false)));
+            pipe.group(make_document(kvp("_id", make_document(kvp("cell_lines", "$Categories.CellLines"), kvp("project", "$meta.project"))),
+
+                                     kvp("count", make_document(kvp("$sum", 1)))));
+
+            auto cursor = db["tags"].aggregate(pipe);
+
+            for (auto & item: cursor)
+            {
+                bsoncxx::stdx::string_view prview = item["_id"]["project"].get_string().value;
+                bsoncxx::stdx::string_view cellview = item["_id"]["cell_lines"].get_string().value;
+
+                QString t = QString::fromStdString(std::string{cellview}).simplified();
+                QString prj = QString::fromStdString(std::string{prview}).simplified();
+
+                _grouped_tags[prj]["CellLines"].insert(t);
+            }
+            //ui->cell_lines->addItems(data);
+        }
+
     }
     catch(...) {}
+
+
+
+
+
 
     QWidget *twobut = new QWidget();
     twobut->setLayout(new QHBoxLayout());
@@ -378,8 +291,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 platet->updatePlate();
             }
 
-        int p = std::min(1, (int)(date.size()-1));
-        ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(p)));
+            int p = std::min(1, (int)(date.size()-1));
+            ui->Plates->addTab(platet, QString("%1 %2 %3").arg(plate, date.first(), date.at(p)));
 
             if (!proj.isEmpty())
                 this->ui->project->setCurrentText(proj);
@@ -395,13 +308,6 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 tagger::~tagger()
 {
     delete ui;
-}
-
-QHttpClient *tagger::getHttp()
-{
-    if (!http)
-        http = new QHttpClient();
-    return http;
 }
 
 QString tagger::getProject() { return proj; }
@@ -528,7 +434,7 @@ void tagger::on_pushButton_clicked()
             json["meta"] = meta;
 
             std::string qdoc = QJsonDocument(json).toJson().toStdString(),
-                    plt = json["plateAcq"].toString().toStdString();
+                plt = json["plateAcq"].toString().toStdString();
 
             auto doc = bsoncxx::from_json(qdoc);
 
@@ -739,18 +645,18 @@ void tagger::on_maptemplate()
 
 
 
-void tagger::on_populate()
-{
-    if (!proj.isEmpty())
-        for (auto w: this->findChildren<TaggerPlate*>())
-        {
-            if (qobject_cast<TaggerPlate*>(w))
-            {
-                auto platet = qobject_cast<TaggerPlate*>(w);
-                platet->setTags(_grouped_tags, _well_tags, proj);
-            }
-        }
-}
+//void tagger::on_populate()
+//{
+//    if (!proj.isEmpty())
+//        for (auto w: this->findChildren<TaggerPlate*>())
+//        {
+//            if (qobject_cast<TaggerPlate*>(w))
+//            {
+//                auto platet = qobject_cast<TaggerPlate*>(w);
+//                platet->setTags(_grouped_tags, _well_tags, proj);
+//            }
+//        }
+//}
 
 
 void tagger::on_Plates_currentChanged(int index)

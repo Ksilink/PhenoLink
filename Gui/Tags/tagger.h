@@ -22,7 +22,7 @@ namespace Ui {
 class tagger;
 }
 
-namespace qhttp { namespace client { class QHttpClient; }  }
+//namespace qhttp { namespace client { class QHttpClient; }  }
 
 class tagger : public QDialog
 {
@@ -43,13 +43,13 @@ public:
         return res;
     }
 
-    qhttp::client::QHttpClient* getHttp();
+//    qhttp::client::QHttpClient* getHttp();
 
     QString getProject();
     void project_changed(const QString &arg1);
 
-signals:
-    void populate();
+//signals:
+//    void populate();
 
 
 private slots:
@@ -68,7 +68,7 @@ private slots:
 
     void on_mapcsv();
     void on_maptemplate();
-    void on_populate();
+//    void on_populate();
 
     void on_Plates_currentChanged(int index);
 
@@ -79,7 +79,7 @@ private:
 
     // For labcollector connection
 
-    qhttp::client::QHttpClient* http;
+//    qhttp::client::QHttpClient* http;
 
     QSet<QString> _projects;
     QMap<QString, QSet<QString> > _well_tags; // Per project tags
