@@ -302,7 +302,7 @@ void ZMQThread::run()
         {
 
             if (request == 0) {
-                qDebug() << "Broken answer";
+                qDebug() << QDateTime::currentDateTime().toString("yyyy MMMM dd hh:mm:ss.zzz") << "Broken answer";
                 break;              //  Worker was interrupted
             }
             //
@@ -322,21 +322,21 @@ void ZMQThread::run()
         }
         else if (req_type == "Finished")
         {
-            qDebug() << "Command Finished from broker";
+            qDebug() << QDateTime::currentDateTime().toString("yyyy MMMM dd hh:mm:ss.zzz") << "Command Finished from broker";
             QString commit =  request->pop_front();
 
-         /*   NetworkProcessHandler::handler().storeObject(commit, true);*/
-
-        } 
+            NetworkProcessHandler::handler().clearData(commit);
+            qDebug() << "Commit" << commit << "Cleared";
+        }
         else if (req_type == "Canceled")
         {
             delete request;
-            qDebug() << "Canceled process";
+            qDebug() << QDateTime::currentDateTime().toString("yyyy MMMM dd hh:mm:ss.zzz") << "Canceled process";
             break;
         }
         /*
         else if (req_type == "Timer")
-        {           
+        {
             if (!commitNames.empty())
             {
                 qDebug() << "Save Timer" << commitNames;
@@ -393,7 +393,8 @@ inline ZMQThread::ZMQThread(GlobParams &gp, QThread *parentThread, QString prx, 
 void ZMQThread::startProcessServer(QString process, QJsonArray array)
 {
 
-    qDebug() << "Remaining unstarted processes" //<< _process_to_start.size()
+    qDebug() << QDateTime::currentDateTime().toString("yyyy MMMM dd hh:mm:ss.zzz")
+             << "Remaining unstarted processes" //<< _process_to_start.size()
              << worker_threadpool.activeThreadCount()
              << worker_threadpool.maxThreadCount();
 

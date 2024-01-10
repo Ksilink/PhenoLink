@@ -593,7 +593,6 @@ void TaggerPlate::updatePlate()
     tagger["plate"] = plate;
     tagger["plateAcq"] = QString("%1/%2").arg(plateDate, plate);
 
-
 }
 
 

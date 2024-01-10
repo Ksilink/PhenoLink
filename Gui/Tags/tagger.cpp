@@ -107,7 +107,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 {
                     bsoncxx::stdx::string_view view = item["_id"].get_string().value;
 
-                    _well_tags[prj].insert(QString::fromStdString(std::string{view}).simplified());
+                    _well_tags[prj].insert(QString::fromStdString(std::string{view}).simplified().replace("::", "."));
                 }
             }
         }
@@ -130,7 +130,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             {
                 bsoncxx::stdx::string_view view = item["_id"].get_string().value;
 
-                data << QString::fromStdString(std::string{view}).simplified();
+                data << QString::fromStdString(std::string{view}).simplified().replace("::", ".");
             }
 
             ui->global_tags->addItems(data);
@@ -150,8 +150,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 bsoncxx::stdx::string_view prview = item["_id"]["project"].get_string().value;
                 bsoncxx::stdx::string_view cellview = item["_id"]["cell_lines"].get_string().value;
 
-                QString t = QString::fromStdString(std::string{cellview}).simplified();
-                QString prj = QString::fromStdString(std::string{prview}).simplified();
+                QString t = QString::fromStdString(std::string{cellview}).simplified().replace("::", ".");
+                QString prj = QString::fromStdString(std::string{prview}).simplified().replace("::", ".");
 
                 _grouped_tags[prj]["CellLines"].insert(t);
             }
@@ -172,8 +172,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                 bsoncxx::stdx::string_view prview = item["_id"]["project"].get_string().value;
                 bsoncxx::stdx::string_view cellview = item["_id"]["cell_lines"].get_string().value;
 
-                QString t = QString::fromStdString(std::string{cellview}).simplified();
-                QString prj = QString::fromStdString(std::string{prview}).simplified();
+                QString t = QString::fromStdString(std::string{cellview}).simplified().replace("::", ".");
+                QString prj = QString::fromStdString(std::string{prview}).simplified().replace("::", ".");
 
                 _grouped_tags[prj]["CellLines"].insert(t);
             }

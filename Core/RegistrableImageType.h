@@ -80,6 +80,33 @@ public:
             for (int i = 0; i < t.size(); ++i)
                 _vectorNames << t[i].toString();
         }
+
+        if (json.contains("ColumnNameMapper"))
+        {
+            QJsonObject colmap = json["ColumnNameMapper"].toObject();
+
+            for (auto& col: colmap.keys())
+            {
+                auto map = colmap[col].toObject();
+                for (auto& k: map.keys())
+                {
+                    _namemapper[col][k.toInt()] = map[k].toString();
+                }
+            }
+
+        }
+
+        if (json.contains("ColumnNameMapMasked"))
+        {
+
+            auto ar=json["ColumnNameMapMasked"].toArray();
+            for (auto c : ar)
+                _name_masked.insert(c.toString());
+        }
+
+
+
+
         if (json.contains("Colormap"))
         {
             QJsonObject ob = json["Colormap"].toObject();
@@ -115,6 +142,26 @@ public:
 
         std::vector<QString> map = { "Image", "Roi_cv_stats", "Roi_rect", "Histogram" };
         json["ContentType"] = map[_content_type];
+
+        if (_namemapper.size())
+        {
+
+            QJsonObject colmap;
+            for (auto& col: _namemapper.keys() )
+            {
+                QJsonObject map;
+                for (auto& id : _namemapper[col].keys())
+                    map[QString::number(id)] = _namemapper[col][id];
+                colmap[col]=map;
+            }
+            json["ColumnNameMapper"] = colmap;
+        }
+
+        if (_name_masked.size())
+        {
+            json["ColumnNameMapMasked"] = QJsonArray::fromStringList(QStringList(_name_masked.begin(), _name_masked.end()));
+        }
+
 
         if (_colormap.size() > 0)
         {
@@ -226,6 +273,29 @@ public:
         return _vectorNames;
     }
 
+
+    Self& setNameMapper(QString column, QMap<int, QString> name_map)
+    {
+
+        _namemapper[column] = name_map;
+        return      *this;
+    }
+
+    QMap<QString, QMap<int, QString> > getNameMapper()
+    {
+        return _namemapper;
+    }
+
+
+    Self& setNameMapAsMask(QString column)
+    {
+        _name_masked.insert(column);
+        return *this;
+    }
+
+
+
+
     RegistrableImageParent& setContentType(ContentType t)
     {
         _content_type = t;
@@ -253,6 +323,10 @@ protected:
     QStringList _meta;
     QStringList _vectorNames;
     QMap<QString, QString> _metaData;
+
+    QSet<QString> _name_masked;
+    QMap<QString, QMap<int, QString> > _namemapper;
+
     QStringList _bias_files;
     QString base_path;
 };

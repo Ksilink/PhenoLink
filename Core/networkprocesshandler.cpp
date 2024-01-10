@@ -1386,6 +1386,31 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
 
 }
 
+void NetworkProcessHandler::clearData(QString commit)
+{
+
+    plate_data_locker.lock();
+
+    QStringList toCull;
+
+    for (auto it = plateData.begin(), end = plateData.end(); it != end; ++it)
+    {
+        if (it.key().endsWith(commit))
+        {
+            toCull << it.key();
+        }
+    }
+
+    for (auto plate: toCull)
+    {
+        DataFrame* df = plateData[plate];
+        plateData.remove(plate);
+        delete df;
+    }
+
+    plate_data_locker.unlock();
+}
+
 // void NetworkProcessHandler::setPythonEnvironment(QProcessEnvironment env) {
 
 //    python_env = env;
