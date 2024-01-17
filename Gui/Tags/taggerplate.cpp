@@ -394,10 +394,7 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
                 if (!ap) {
                     r->appendRow(new QStandardItem(it));
                 }
-
             }
-
-
         }
     }
 

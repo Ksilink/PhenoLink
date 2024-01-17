@@ -984,6 +984,17 @@ private:
 
                         worker_send(wrk, (char*)MDPW_FINISHED, params["CommitName"].toString());
 
+                        if (m_worker_activated.contains(m_finished_jobs.last()->client))
+                            for (auto& wk: m_worker_activated[m_finished_jobs.last()->client])
+                            {
+                                for (auto& lwrk: m_workers)
+                                    if (lwrk != wrk && lwrk->m_name == wk)
+                                        worker_send(lwrk, (char*)MDPW_FINISHED, params["CommitName"].toString());
+
+                            }
+
+
+
                         auto fut = QtConcurrent::run([this, params](){
                             this->finalize_process(params);
                         }
@@ -1245,6 +1256,9 @@ public:
     void start_job(worker* wrk, worker_threads* thread, service_call* job)
     {
 
+        m_worker_activated[job->client] << wrk->m_name;
+//        m_worker_activated[job->client] << wrk->m_identity;
+
         // Perform the parameter adjust
 
         job->parameters = recurseExpandParameters(job->parameters, job->callMap);
@@ -1253,6 +1267,7 @@ public:
         job->parameters.insert(QString("Client"), job->client);
         job->thread_id = thread->m_id;
         job->worker_thread = thread;
+
 
         //        qDebug() << job->parameters;
         thread->parameters = job;
@@ -1326,6 +1341,7 @@ private:
 
     QMap<QString, service*> m_services;  //  Hash of known services
     QMap<QString, worker*> m_workers;    //  Hash of known workers
+    QMap<QString, QSet<QString> > m_worker_activated; // Hash of workers running for
 
     QList<service_call* > m_requests; // List of pending requests
     QList<service_call*> m_ongoing_jobs; // jobs that are running

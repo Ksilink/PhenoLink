@@ -493,7 +493,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
     static int WorkID = 1;
 
 
-    
+
 
     Q_UNUSED(started);
     //    _startingProcesses = true;
@@ -666,7 +666,7 @@ void MainWindow::startProcessOtherStates(QList<bool> selectedChanns, QList<Seque
                 obj["ProcessStartId"] = StartId;
                 obj["Project"] = project;
 
-                obj["Pos"]="A01"; // Force return pos to be A01                
+                obj["Pos"]="A01"; // Force return pos to be A01
 
                 obj["CommitName"] = _commitName->text();
 
@@ -902,7 +902,6 @@ void MainWindow::startProcessRun(QString exp)
                         && (*si)->getOwner()->hasMeasurements((*si)->pos())
                         && (*si)->isValid())
                     {
-                        // si->Pos();
                         lsfm << *si;
                     }
                 }
@@ -911,9 +910,13 @@ void MainWindow::startProcessRun(QString exp)
     }
 
     if (_typeOfprocessing->currentText() == "All loaded Sequences")
-        lsfm = hdl.getSequences();
+        for (auto& seq: hdl.getSequences())
+            if (seq->isValid() && seq->getOwner()->hasMeasurements(seq->pos()))
+                lsfm << seq;
+
     if (_typeOfprocessing->currentText() == "Current Well")
         lsfm.push_back(hdl.current());
+
     if (_typeOfprocessing->currentText() == "Selected Wells")
     {
         Screens s = ScreensHandler::getHandler().getScreens();

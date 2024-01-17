@@ -1185,7 +1185,12 @@ void SequenceFileModel::removeMeta()
 
 bool SequenceFileModel::hasChannel(int timePoint, int fieldIdx, int Zindex, int channel)
 {
-    return  _data[fieldIdx][Zindex][timePoint].contains(channel);
+
+    if (_data.contains(fieldIdx))
+        if( _data[fieldIdx].contains(Zindex))
+            if (_data[fieldIdx][Zindex].contains(timePoint))
+                return  _data[fieldIdx][Zindex][timePoint].contains(channel);
+    return false;
 }
 
 void SequenceFileModel::setPos(unsigned r, unsigned c)
@@ -1447,25 +1452,25 @@ QString SequenceFileModel::getFileChanId(int timePoint, int fieldIdx, int Zindex
 SequenceFileModel::Channel& SequenceFileModel::getChannelsFiles(int timePoint, int fieldIdx, int Zindex)
 {
     static SequenceFileModel::Channel chan;
-    
-    FieldImaging::iterator fi = _data.begin(); 
-    
+
+    FieldImaging::iterator fi = _data.begin();
+
     if (fieldIdx > _data.size() ) return chan;
     std::advance(fi, fieldIdx - 1);
     if (fi == _data.end()) return chan;
-    
-    ImageStack::iterator si = fi->begin(); 
-    
+
+    ImageStack::iterator si = fi->begin();
+
     if (Zindex > fi->size() ) return chan;
     std::advance(si, Zindex - 1);
     if (si == fi->end()) return chan;
-    
-    TimeLapse::iterator ti = si->begin(); 
-    
+
+    TimeLapse::iterator ti = si->begin();
+
     if (timePoint > si->size() ) return chan;
     std::advance(ti, timePoint - 1);
     if (ti == si->end()) return chan;
-    
+
     return ti.value();
 }
 
