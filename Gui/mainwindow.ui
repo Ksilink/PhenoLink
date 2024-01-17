@@ -149,6 +149,7 @@
     <addaction name="actionDisplay_Channel_Names"/>
     <addaction name="sync_fields"/>
     <addaction name="sync_zstack"/>
+    <addaction name="scalecontrol"/>
     <addaction name="separator"/>
     <addaction name="separator"/>
     <addaction name="menuInfos"/>
@@ -1119,6 +1120,14 @@
     <string>Overlay controls</string>
    </property>
   </action>
+  <action name="scalecontrol">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Scale Control</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -1130,8 +1139,6 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="rcs.qrc"/>
-  <include location="rcs.qrc"/>
   <include location="rcs.qrc"/>
  </resources>
  <connections/>

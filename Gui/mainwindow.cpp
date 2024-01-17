@@ -861,7 +861,7 @@ void MainWindow::updateCurrentSelection()
     { // Overlay control
         ImageInfos* fo = inter->getChannelImageInfos(*_channelsIds.begin());
 
-        auto wwid = new QWidget;
+        auto wwid = new QWidget();
 
         QGridLayout* bvl = new QGridLayout(wwid);
         bvl->setSpacing(1);
@@ -894,10 +894,47 @@ void MainWindow::updateCurrentSelection()
         bvl->addWidget(new QLabel("Scale: ", wwid), 2, 1);
         bvl->addWidget(setupTilePosition(new QSpinBox(wwid), "Scale", fo), 2, 2);
 
+        int itms = 3;
+
+        // Add Scale Control if user check box is setup
+        if (ui->scalecontrol->isChecked())
+        {
+            auto label  = new QLabel("Text", wwid);
+            label->setToolTip("Adjust Scale value parameters");
+            bvl->addWidget(label, itms, 0);
+
+            auto color_pos = new QWidget(wwid);
+            QGridLayout* cpl = new QGridLayout(color_pos);
+            cpl->addWidget(new ctkColorPickerButton(color_pos), 0, 0, 1, 1);
+
+
+            auto bt = new QToolButton(color_pos);
+            bt->setArrowType(Qt::LeftArrow);
+            cpl->addWidget(bt, 0, 1, 1, 1);
+
+            bt = new QToolButton(color_pos);
+            bt->setArrowType(Qt::UpArrow);
+            cpl->addWidget(bt, 0, 2);
+
+            bt = new QToolButton(color_pos);
+            bt->setArrowType(Qt::DownArrow);
+            cpl->addWidget(bt, 1, 2);
+
+            bt = new QToolButton(color_pos);
+            bt->setArrowType(Qt::RightArrow);
+            cpl->addWidget(bt, 0, 3, 1, 1);
+
+            bvl->addWidget(color_pos, itms, 1);
+            auto fontsize = new QSpinBox(wwid);
+            bvl->addWidget(fontsize, itms, 2);
+
+            itms++;
+        }
+
+
 
 
         QStringList overlays = inter->getMetaList();
-        int itms = 3;
 
         ui->pickOverlay->clear();
         ui->pickOverlay->insertItems(0, overlays);
