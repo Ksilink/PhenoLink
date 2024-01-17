@@ -538,7 +538,8 @@ void ZMQThread::thread_finished()
 
         auto res = QtConcurrent::run(&save_threadpool, &ZMQThread::save_and_send_binary, this, sob);
 
-        // consider the storage over here
+        res.waitForFinished();
+
         auto msg = new zmsg(ob["Client"].toString().toLatin1().data());
         msg->push_back(QString("%1").arg(ob["ThreadID"].toInt()).toLatin1());
         session.send_to_broker((char*)MDPW_READY, "", msg);

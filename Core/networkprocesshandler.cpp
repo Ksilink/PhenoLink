@@ -506,10 +506,11 @@ QJsonArray NetworkProcessHandler::filterObject(QString hash, QJsonObject ds, boo
 
     QString plateID = plate + commit;
 
+    plate_data_locker.lock();
+
     if (!plateData.contains(plateID))
         plateData.insert(plateID, new DataFrame);
 
-    plate_data_locker.lock();
     DataFrame &store = *plateData[plateID];
 
     if (store.outfile.isEmpty() && !commit.isEmpty())

@@ -766,7 +766,7 @@ private:
                                                                              project,
                                                                              commit).replace("\\", "/").replace("//", "/");
 
-            QThread::sleep(5); // Let time to sync
+            QThread::sleep(15); // Let time to sync
 
             // FIXME:  Cloud solution adjustements needed here !
 
@@ -774,7 +774,7 @@ private:
             QDir dir(path);
 
             //            qDebug() << "folder" << folder << dir << QString("*_[0-9]*[0-9][0-9][0-9][0-9].fth");
-            QStringList files = dir.entryList(QStringList() << QString("*_[0-9]*[0-9][0-9][0-9][0-9].fth"), QDir::Files);
+            QStringList files = dir.entryList(QStringList() << QString("*_[0-9]*[0-9].fth"), QDir::Files);
             //            qDebug() << files;
 
             QStringList plates;
@@ -791,7 +791,7 @@ private:
             for (auto plate: plates)
             {
 
-                QStringList files = dir.entryList(QStringList() << QString("%1_[0-9]*[0-9][0-9][0-9][0-9].fth").arg(plate), QDir::Files);
+                QStringList files = dir.entryList(QStringList() << QString("%1_[0-9]*[0-9].fth").arg(plate), QDir::Files);
 
 
                 QString concatenated = QString("%1/%2.fth").arg(path,plate.replace("/",""));
