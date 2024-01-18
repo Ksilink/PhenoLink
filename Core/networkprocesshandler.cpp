@@ -289,7 +289,7 @@ NetworkProcessHandler::NetworkProcessHandler() : session(nullptr),
     {
         if (!addr.isLoopback())
             if (addr.protocol() == QAbstractSocket::IPv4Protocol)
-                srv = QString("_%1").arg(addr.toString().replace(".", ""));
+                srv = QString("_%1").arg(addr.toString());
         if (!srv.isEmpty())
             break; // stop on non empty
     }
@@ -320,7 +320,7 @@ void NetworkProcessHandler::setNoProxyMode()
 
 void NetworkProcessHandler::addProxyPort(uint16_t port)
 {
-    srv = QString("%1%2").arg(srv).arg(port);
+    srv = QString("%1.%2").arg(srv).arg(port);
 }
 
 void NetworkProcessHandler::setServerAddress(QString srv_)
