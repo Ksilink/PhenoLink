@@ -335,14 +335,17 @@ private:
             worker* wrk = nullptr; // Search first worker most recently seen
             for (auto w = m_workers.begin(), e = m_workers.end(); w != e; ++w)
             {
-                if (wrk == nullptr)
+                if (srv->m_process.contains(wrk)) // check if the worker belongs to the allowed serving queue
                 {
-                    if (w.value()->available > 0)
-                        wrk = *w;
+                    if (wrk == nullptr)
+                    {
+                        if (w.value()->available > 0)
+                            wrk = *w;
+                    }
+                    else
+                        if (w.value()->m_expiry > wrk->m_expiry && w.value()->available > 0)
+                            wrk = *w;
                 }
-                else
-                    if (w.value()->m_expiry > wrk->m_expiry && w.value()->available > 0)
-                        wrk = *w;
             }
 
             // Assign thread

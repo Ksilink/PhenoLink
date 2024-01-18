@@ -3802,7 +3802,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
                 arrow::schema(fields, meta);
         auto table = arrow::Table::Make(schema, data);
         QDir dir(set.value("databaseDir").toString());
-        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/ag").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
+        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/ag").arg(dir.absolutePath(),_owner->property("project"),prefix)
                 ;
         QString fname = writePath + _owner->name() + ".fth";
 
@@ -3852,7 +3852,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
         // Now: Assuming the following reordering:
         // dir + {tag.project} + Checkout_Results/ + prefix + / PlateName + .csv
         // If file exists move previous file with a post_fix info
-        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix)
+        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/").arg(dir.absolutePath(),_owner->property("project"),prefix)
                 ;
         QString fname = _owner->name() + ".csv";
 
@@ -3893,7 +3893,7 @@ int ExperimentDataTableModel::commitToDatabase(QString, QString prefix)
     {
         QDir dir(set.value("databaseDir").toString());
 
-        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/").arg(dir.absolutePath()).arg(_owner->property("project")).arg(prefix);
+        QString writePath = QString("%1/PROJECTS/%2/Checkout_Results/%3/").arg(dir.absolutePath(),_owner->property("project"),prefix);
         QString fname = "ag" + _owner->name() + ".csv";
         QFile file(writePath + fname);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))

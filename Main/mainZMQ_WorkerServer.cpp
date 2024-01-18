@@ -324,9 +324,11 @@ void ZMQThread::run()
         {
             qDebug() << QDateTime::currentDateTime().toString("yyyy MMMM dd hh:mm:ss.zzz") << "Command Finished from broker";
             QString commit =  request->pop_front();
-
-            NetworkProcessHandler::handler().clearData(commit);
-            qDebug() << "Commit" << commit << "Cleared";
+            if (!commit.isEmpty())
+            {
+                NetworkProcessHandler::handler().clearData(commit);
+                qDebug() << "Commit" << commit << "Cleared";
+            }
         }
         else if (req_type == "Canceled")
         {
