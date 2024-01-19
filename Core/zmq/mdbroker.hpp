@@ -1202,7 +1202,7 @@ public:
             now = s_clock();
             if (now >= heartbeat_at) {
                 purge_workers ();
-                for (auto wrk: m_workers)
+                for (auto& wrk: m_workers)
                     worker_send (wrk, MDPW_HEARTBEAT);
 
                 heartbeat_at += HEARTBEAT_INTERVAL;
