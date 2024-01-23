@@ -7,6 +7,7 @@
 
 
 #include "mdwrkapi.hpp"
+#include "performances.hpp"
 //#include "mdbroker.hpp"
 
 extern struct GlobParams global_parameters;
@@ -35,7 +36,7 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
     }
     m_expect_reply = true;
 
-    
+
 
     while (!s_interrupted) {
         zmq::pollitem_t items[] = {
@@ -67,8 +68,8 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
             //if (timer > 20) // every 20 heartbeats force the saving of commit names
             //{
             //    timer = 0;
-            //    return  std::make_pair(QString("Timer"), msg); 
-            //} else 
+            //    return  std::make_pair(QString("Timer"), msg);
+            //} else
             if (command.compare (MDPW_REQUEST) == 0) {
                 //  We should pop and save as many addresses as there are
                 //  up to a null part, but for now, just save one...
@@ -111,9 +112,31 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
         //                qDebug() << s_clock() << m_heartbeat_at;
         if (s_clock () >= m_heartbeat_at) {
             //                    qDebug() << "Sending heartbeat";
+
+                perf_instance.refresh();
+
+
+                auto* mg = new zmsg();
+
+                // Get computer Memory total
+                // Get computer Memory usage
+                // Get process Memory usage
+
+                mg->push_back(QString::number(perf_instance.totalPhysMem));
+                mg->push_back(QString::number(perf_instance.physMemUsed));
+                mg->push_back(QString::number(perf_instance.procPhysMem));
+
+                // Get computer CPU load
+                // Get Process CPU Load
+
+                mg->push_back(QString::number(perf_instance.total_cpu_load));
+                mg->push_back(QString::number(perf_instance.proc_cpu_load));
+
+
+
             auto nbThreads = QString("%1").arg(global_parameters.max_threads-global_parameters.running_threads).toStdString();
 
-            send_to_broker ((char*)MDPW_HEARTBEAT, nbThreads);
+            send_to_broker ((char*)MDPW_HEARTBEAT, nbThreads, mg);
             m_heartbeat_at = s_clock() + m_heartbeat;
             timer++;
         }

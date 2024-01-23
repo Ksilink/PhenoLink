@@ -89,6 +89,8 @@ struct  worker
     }
 
     QMap<QString, QJsonObject> m_plugins;
+
+    QMap<QString, QString>  health;
 };
 
 
@@ -557,6 +559,20 @@ private:
         }
     }
 
+    void list_workers_health(zmsg* msg, QString client)
+    {
+        Q_UNUSED(client);
+
+        for (auto& wrk: m_workers)
+        {
+            QString res = QString("%1|%2|").arg( wrk->m_identity, wrk->m_name);
+            for (auto& k: wrk->health.keys())
+                res += QString("%1:%2#").arg(k, wrk->health[k]);
+            msg->push_back(res);
+        }
+    }
+
+
     void list_workers_activity(zmsg* msg, QString client)
     {
         Q_UNUSED(client);
@@ -624,6 +640,7 @@ private:
                 { "mmi.cancel", &broker::cancelJob},
                 { "mmi.list_services", &broker::listServicesandVersions },
                 { "mmi.workers", &broker::list_workers_activity},
+                { "mmi.health", &broker::list_workers_health},
                 //                        { "mmi.process", nullptr}
 
             };
@@ -1034,7 +1051,19 @@ private:
                     {
                         worker_send(wrk, (char*)MDPW_PROCESSLIST, 0, 0);
                     }
+                    if (msg->parts() == 6)
+                    {
+                            //qDebug() << msg->pop_front();
 
+                        wrk->health["NumberThreads"]=msg->pop_front();
+
+                        wrk->health["TotalPhysicalMemory"]=msg->pop_front();
+                        wrk->health["PhysicalMemoryUsed"]=msg->pop_front();
+                        wrk->health["PhenoLinkMemoryUsage"]=msg->pop_front();
+
+                        wrk->health["TotalWorkerCPULoad"]=msg->pop_front();
+                        wrk->health["PhenoLinkWorkerCPULoad"]=msg->pop_front();
+                    }
 
                 } else {
                     if (command.compare (MDPW_DISCONNECT) == 0) {
