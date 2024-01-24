@@ -137,6 +137,7 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
             auto nbThreads = QString("%1").arg(global_parameters.max_threads-global_parameters.running_threads).toStdString();
 
             send_to_broker ((char*)MDPW_HEARTBEAT, nbThreads, mg);
+            delete mg;
             m_heartbeat_at = s_clock() + m_heartbeat;
             timer++;
         }

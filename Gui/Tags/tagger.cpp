@@ -185,6 +185,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 
 
 
+    // FIXME add: media, density, treatment, coating, staining, drugs
+
 
 
 
