@@ -337,7 +337,7 @@ private:
             worker* wrk = nullptr; // Search first worker most recently seen
             for (auto w = m_workers.begin(), e = m_workers.end(); w != e; ++w)
             {
-                if (srv->m_process.contains(wrk)) // check if the worker belongs to the allowed serving queue
+                if (srv->m_process.contains(w.value())) // check if the worker belongs to the allowed serving queue
                 {
                     if (wrk == nullptr)
                     {
