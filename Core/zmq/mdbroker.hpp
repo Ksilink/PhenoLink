@@ -368,8 +368,8 @@ private:
                 { // if the worker has no priority list
 
                     // first search for plugin priority list if any job was subscribed
-                    for (auto &plugin: qAsConst(wrk->priority_plugins))
-                        for (auto jbs: m_requests)
+                    for (auto& plugin : qAsConst(wrk->priority_plugins))
+                        for (auto jbs : m_requests)
                             if (plugin == jbs->path && jbs->calls && *(jbs->calls) < low_job_number && jbs->priority > priority)
                             {
                                 job = jbs;
@@ -378,8 +378,8 @@ private:
 
                     // If no low count priority jobs check if we have long
                     if (job == nullptr)
-                        for (auto & plugin: qAsConst(wrk->priority_plugins))
-                            for (auto jbs: m_requests)
+                        for (auto& plugin : qAsConst(wrk->priority_plugins))
+                            for (auto jbs : m_requests)
                                 if (plugin == jbs->path && jbs->priority > priority)
                                 {
                                     job = jbs;
@@ -388,7 +388,7 @@ private:
                 }
 
                 if (job == nullptr)
-                    for (auto jbs: m_requests) // Handle low number of jobs first
+                    for (auto jbs : m_requests) // Handle low number of jobs first
                         if (jbs->calls && *(jbs->calls) < low_job_number && jbs->priority > priority)
                         {
                             job = jbs;
@@ -406,7 +406,8 @@ private:
                     ;
 
             }
-            //            else
+            else
+                break;
             //                qDebug() << "No worker threads found for worker";
 
         }
