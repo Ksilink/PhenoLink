@@ -209,7 +209,14 @@ void ImageForm::watcherPixmap()
 void ImageForm::updateImageInfos()
 {
     if (!_interactor || removing) return;
-
+    if (!_interactor->fieldDetails())
+    {
+        textItem->hide();
+        textItem2->hide();
+        return;
+    }
+    textItem->show();
+    textItem2->show();
 
     //  Well Name C1 (Z: z, t: t, F: f)
     imageInfos = QString("%1 (Z: %2, t: %3, F: %4)")
@@ -907,6 +914,12 @@ void ImageForm::imageMouseMove(QPointF pos)
 void ImageForm::mouseOverImage(QPointF pos)
 {
     if (!_interactor || removing) return;
+    if (!_interactor->fieldDetails())
+    {
+        textItem->hide();
+        textItem2->hide();
+        return;
+    }
 
     _pos = pos;
     QString str = QString("(%1 x %2 : ").arg((int)pos.x()).arg((int)pos.y());
@@ -954,6 +967,11 @@ void ImageForm::mouseOverImage(QPointF pos)
     }
 
     imagePosInfo = str;
+
+
+    textItem->show();
+    textItem2->show();
+
 
     updateImageInfos();
     textItem2->setPlainText(imagePosInfo);

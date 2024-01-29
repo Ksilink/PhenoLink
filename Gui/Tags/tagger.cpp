@@ -89,7 +89,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
         if (!cur.isEmpty())
             this->ui->project->setCurrentText(cur);
 
-        //        qDebug() << "Mongo" << _projects;
+                qDebug() << "Mongo" << _projects;
 
         { // Mongo
 
@@ -108,6 +108,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                     bsoncxx::stdx::string_view view = item["_id"].get_string().value;
 
                     _well_tags[prj].insert(QString::fromStdString(std::string{view}).simplified().replace("::", "."));
+                    qDebug() << prj << QString::fromStdString(std::string{view}).simplified().replace("::", ".");
                 }
             }
         }
@@ -614,10 +615,7 @@ void tagger::on_mapcsv()
             features.clear();
 
         }
-
     }
-
-
 }
 
 

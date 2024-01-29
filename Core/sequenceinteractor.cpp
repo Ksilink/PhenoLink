@@ -15,17 +15,24 @@
 QMutex sequence_interactorMutex;
 QMutex lock_infos;
 
+
+
+double SequenceInteractor::_overlay_width = 1;
+bool SequenceInteractor::showFieldDetails = true;
+
+
+
 SequenceInteractor::SequenceInteractor() :
     _mdl(0),
     _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),
     //    disp_tile(false), tile_id(0),
-    last_scale(-1.), _updating(false), _changed(true), _overlay_width(1)
+    last_scale(-1.), _updating(false), _changed(true)
 {
 }
 
 SequenceInteractor::SequenceInteractor(SequenceFileModel* mdl, QString key) :
     _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),
-    _fps(25.), loadkey(key), last_scale(-1.), _updating(false), _changed(true), _overlay_width(1)
+    _fps(25.), loadkey(key), last_scale(-1.), _updating(false), _changed(true)
 {
 }
 
@@ -656,7 +663,7 @@ std::tuple<double, QPoint> refineLower(cv::Mat& up, cv::Mat& down, int overlap, 
 void SequenceInteractor::refinePacking()
 {
     QThreadPool threads; threads.setMaxThreadCount(12);
-   
+
     // Assume single channel is enough !
 
     // Need to compute the unpacking starting from upper left hand corner
@@ -763,6 +770,17 @@ void SequenceInteractor::refinePacking()
         }
     }
 
+}
+
+bool SequenceInteractor::fieldDetails()
+{
+    return showFieldDetails;
+}
+
+void SequenceInteractor::changeFieldDetails(bool v)
+{
+    qDebug() << "Change Field Display state" << v;
+    showFieldDetails = v;
 }
 
 void SequenceInteractor::preloadImage()

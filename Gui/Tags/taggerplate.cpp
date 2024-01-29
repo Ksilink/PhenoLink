@@ -121,7 +121,7 @@ void TaggerPlate::on_setTags_clicked()
         if (item)
         {
             QString str = item->child(idx.row())->text();
-      //      qDebug() << item->text() << str << ui->plateMaps->selectedItems().size();
+            //      qDebug() << item->text() << str << ui->plateMaps->selectedItems().size();
 
             for (auto idx: ui->plateMaps->selectionModel()->selectedIndexes())
             {
@@ -232,10 +232,10 @@ void TaggerPlate::on_pushButton_clicked()
 void TaggerPlate::on_pushButton_2_clicked()
 {
     QString script =
-            QFileDialog::getSaveFileName(this, "Choose Template storage path",
-                                         QDir::home().path(), "Tags json file (*.json)",
-                                         0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
-                                         );
+        QFileDialog::getSaveFileName(this, "Choose Template storage path",
+                                     QDir::home().path(), "Tags json file (*.json)",
+                                     0, /*QFileDialog::DontUseNativeDialog                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | */QFileDialog::DontUseCustomDirectoryIcons
+                                     );
 
     if (!script.isEmpty())
     {
@@ -335,31 +335,46 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
         mdl->setRecursiveFilteringEnabled(true);
         mdl->setFilterCaseSensitivity(Qt::CaseInsensitive);
         //        mdl->setSortRole():
-// Cascade with the "project" entry
+        // Cascade with the "project" entry
         mdl->setSourceModel(model);
         ui->treeView->setModel(mdl);
         model->setHorizontalHeaderLabels(QStringList() << "Label" << "Amount" << "Project");
-//        model->set
+        //        model->set
     }
     else
         model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
 
 
     QStandardItem* root = model->invisibleRootItem();
-    root->removeRows(0, root->rowCount());
+//    root->removeRows(0, root->rowCount());
 
 
     QSet<QString> skip;
-    QStringList headers = QStringList() << "" << project;
-    for (auto& k : headers)
+//    QStringList headers = QStringList() << "" << project;
+    for (auto& k : data.keys())
         for (auto & key: data[k].keys())
         {
-            QStandardItem * item = new QStandardItem(key);
-            root->appendRow(item);
+
+            QStandardItem * item = nullptr;
+            for (int i = 0; i < root->rowCount();++i)
+                if (root->child(i)->text()==key)
+                    item=root->child(i);
+
+            if (!item) {
+                item = new QStandardItem(key);
+                root->appendRow(item);
+            }
             for (auto& prod: data[k][key])
             {
                 if (!prod.simplified().isEmpty())
-                    item->appendRow(new QStandardItem(prod));
+                {
+
+                    QList<QStandardItem *> items;
+                    items << new QStandardItem(prod)
+                          << new QStandardItem("")
+                          << new QStandardItem(project);
+                    item->appendRow(items);
+                }
                 for (const QString& ot: othertags[project])
                 {
                     if (ot.startsWith(prod))
@@ -379,8 +394,12 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
                 if (root->child(i)->text() == k)
                     r = root->child(i);
             if (!r) {
-                r = new QStandardItem(k);
-                root->appendRow(r);
+
+                QList<QStandardItem *> items;
+                items << new QStandardItem(k)
+                      << new QStandardItem("")
+                      << new QStandardItem(project);
+                root->appendRow(items);
             }
 
             auto ar = cats[k].toArray();
@@ -392,7 +411,11 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
                     if (r->child(i)->text() == it)
                         ap = r->child(i);
                 if (!ap) {
-                    r->appendRow(new QStandardItem(it));
+                    QList<QStandardItem *> items;
+                    items << new QStandardItem(it)
+                          << new QStandardItem("")
+                          << new QStandardItem(project);
+                    r->appendRow(items);
                 }
             }
         }
@@ -414,7 +437,7 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
 void TaggerPlate::setTag(int r, int c, QString tags)
 {
 
-//    qDebug() << "Set Tag" << r << c << tags;
+    //    qDebug() << "Set Tag" << r << c << tags;
     tags = tags.replace("::", ".");
     if (!ui->plateMaps->item(r,c))
     {
@@ -536,7 +559,7 @@ void TaggerPlate::updatePlate()
                 {
                     int c = arr[i].toInt();
 
-    //                qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
+                    //                qDebug() << "set Color" << ctag << "to" << QString("%1%2").arg(k.key()).arg(c+1,2, 10, QLatin1Char('0'));
                     setColor(r,c, ctag);
                 }
             }
@@ -705,20 +728,20 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
     menu.addSeparator();
     auto *pco = menu.addMenu("Set Pattern");
     QStringList opts = QStringList() << "SolidPattern" <<
-                                        "Dense1Pattern" <<
-                                        "Dense2Pattern" <<
-                                        "Dense3Pattern" <<
-                                        "Dense4Pattern" <<
-                                        "Dense5Pattern" <<
-                                        "Dense6Pattern" <<
-                                        "Dense7Pattern" <<
-                                        "HorPattern" <<
-                                        "VerPattern" <<
-                                        "CrossPattern" <<
-                                        "BDiagPattern" <<
-                                        "FDiagPattern" <<
-                                        "DiagCrossPattern" <<
-                                        "LinearGradientPattern"
+                       "Dense1Pattern" <<
+                       "Dense2Pattern" <<
+                       "Dense3Pattern" <<
+                       "Dense4Pattern" <<
+                       "Dense5Pattern" <<
+                       "Dense6Pattern" <<
+                       "Dense7Pattern" <<
+                       "HorPattern" <<
+                       "VerPattern" <<
+                       "CrossPattern" <<
+                       "BDiagPattern" <<
+                       "FDiagPattern" <<
+                       "DiagCrossPattern" <<
+                       "LinearGradientPattern"
                                      << "RadialGradientPattern"
                                      << "ConicalGradientPattern";
 

@@ -227,6 +227,8 @@ private slots:
 
     void on_actionOverlay_controls_triggered(bool checked);
 
+    void on_actionDisplay_Field_Infos_toggled(bool arg1);
+
 public slots:
 
     void updateCurrentSelection();

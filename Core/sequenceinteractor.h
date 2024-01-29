@@ -92,6 +92,10 @@ public:
     ImageInfos *imageInfos(QString file, int channel = -1, QString key = QString());
     void refinePacking();
 
+
+    bool fieldDetails();
+    void changeFieldDetails(bool v);
+
     bool overlayDisplayed(QString name);
     int getOverlayId(QString name);
     int getOverlayMax(QString name);
@@ -161,7 +165,12 @@ protected:
     static SequenceInteractor* _current;
     float last_scale;
     bool _updating, _changed;
-    double _overlay_width;
+
+    static double _overlay_width;
+
+    //
+    static bool showFieldDetails;
+
 
     QStringList overlay_tag_filter;
 

@@ -67,6 +67,8 @@ struct  service_call
 
     int thread_id;
     worker_threads* worker_thread = 0;
+    QDateTime start_time;
+
 };
 
 
@@ -968,6 +970,9 @@ private:
 
                     QList<service_call*> finished;
                     QList<service_call*> toCull;
+
+                    // Compute runtime of calls to generate a ETA
+
                     for (auto &job : m_ongoing_jobs)
                         if (job->client == client &&
                             job->thread_id == thread_id &&
@@ -991,6 +996,7 @@ private:
                             th->parameters = nullptr;
                             m_finished_jobs << job;
                         }
+
                     for (auto& j : toCull) m_ongoing_jobs.removeOne(j);
 
 
@@ -1013,8 +1019,6 @@ private:
                                         worker_send(lwrk, (char*)MDPW_FINISHED, params["CommitName"].toString());
 
                             }
-
-
 
                         auto fut = QtConcurrent::run([this, params](){
                             this->finalize_process(params);
@@ -1300,7 +1304,7 @@ public:
         job->parameters.insert(QString("Client"), job->client);
         job->thread_id = thread->m_id;
         job->worker_thread = thread;
-
+        job->start_time = QDateTime::currentDateTime();
 
         //        qDebug() << job->parameters;
         thread->parameters = job;

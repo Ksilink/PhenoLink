@@ -3556,3 +3556,9 @@ void MainWindow::on_actionOverlay_controls_triggered(bool checked)
 
 }
 
+
+void MainWindow::on_actionDisplay_Field_Infos_toggled(bool arg1)
+{
+    _sinteractor.changeFieldDetails(arg1);
+}
+
