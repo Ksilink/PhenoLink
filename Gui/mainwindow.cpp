@@ -905,28 +905,69 @@ void MainWindow::updateCurrentSelection()
 
             auto color_pos = new QWidget(wwid);
             QGridLayout* cpl = new QGridLayout(color_pos);
-            cpl->addWidget(new ctkColorPickerButton(color_pos), 0, 0, 1, 1);
+            cpl->addWidget(new ctkColorPickerButton(QColor(Qt::yellow), "Text", color_pos), 0, 0);
 
+            auto lb = new QLabel("Offset X",color_pos);
+            cpl->addWidget(lb, 0,1);
 
-            auto bt = new QToolButton(color_pos);
-            bt->setArrowType(Qt::LeftArrow);
-            cpl->addWidget(bt, 0, 1, 1, 1);
+            auto sp = new QDoubleSpinBox(color_pos);
+            sp->setRange(-800,+800);
+            sp->setSingleStep(5);
 
-            bt = new QToolButton(color_pos);
-            bt->setArrowType(Qt::UpArrow);
-            cpl->addWidget(bt, 0, 2);
+            cpl->addWidget(sp, 0, 2);
 
-            bt = new QToolButton(color_pos);
-            bt->setArrowType(Qt::DownArrow);
-            cpl->addWidget(bt, 1, 2);
+            lb = new QLabel("Offset Y",color_pos);
+            cpl->addWidget(lb, 0,3);
 
-            bt = new QToolButton(color_pos);
-            bt->setArrowType(Qt::RightArrow);
-            cpl->addWidget(bt, 0, 3, 1, 1);
+            sp = new QDoubleSpinBox(color_pos);
+            sp->setRange(-800,+800);
+            sp->setSingleStep(5);
+
+            cpl->addWidget(sp, 0, 4);
+
 
             bvl->addWidget(color_pos, itms, 1);
+//            bvl->addWidget(new QLabel("Font S."), itms, 2)
             auto fontsize = new QSpinBox(wwid);
-            bvl->addWidget(fontsize, itms, 2);
+            bvl->addWidget(fontsize, itms, 3);
+            itms++;
+
+            label  = new QLabel("Bar", wwid);
+            label->setToolTip("Adjust Scale bar parameters");
+            bvl->addWidget(label, itms, 0);
+
+            color_pos = new QWidget(wwid);
+            cpl = new QGridLayout(color_pos);
+            cpl->addWidget(new ctkColorPickerButton(Qt::black, "Bar", color_pos), 0, 0, 1, 1);
+
+            lb = new QLabel("Offset X",color_pos);
+            cpl->addWidget(lb, 0,1);
+
+             sp = new QDoubleSpinBox(color_pos);
+            sp->setRange(-800,+800);
+            sp->setSingleStep(5);
+
+            cpl->addWidget(sp, 0, 2);
+
+            lb = new QLabel("Offset Y",color_pos);
+            cpl->addWidget(lb, 0,3);
+
+
+            sp = new QDoubleSpinBox(color_pos);
+            sp->setRange(-800,+800);
+            sp->setSingleStep(5);
+            cpl->addWidget(sp, 0, 4);
+
+            lb = new QLabel("Bar Size",color_pos);
+            cpl->addWidget(lb, 0,5);
+
+
+            sp = new QDoubleSpinBox(color_pos);
+            sp->setRange(-100,+100);
+            sp->setSingleStep(5);
+            cpl->addWidget(sp, 0, 6);
+
+            bvl->addWidget(color_pos, itms, 1);
 
             itms++;
         }

@@ -174,6 +174,11 @@ protected:
 
     QStringList overlay_tag_filter;
 
+
+    static float offsetTextX,offsetTextY, offsetBarX, offsetBarY;
+    static int textSize;
+
+
 };
 
 

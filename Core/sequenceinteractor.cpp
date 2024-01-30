@@ -22,6 +22,15 @@ bool SequenceInteractor::showFieldDetails = true;
 
 
 
+float SequenceInteractor::offsetTextX = 0;
+float SequenceInteractor::offsetTextY = 0;
+float SequenceInteractor::offsetBarX = 0;
+float SequenceInteractor::offsetBarY = 0;
+
+int SequenceInteractor::textSize;
+
+
+
 SequenceInteractor::SequenceInteractor() :
     _mdl(0),
     _timepoint(1), _field(1), _zpos(1), _channel(1), _fps(25.),
