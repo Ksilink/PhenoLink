@@ -156,6 +156,9 @@ message("Setting ONNX include & Lib to : ${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}")
 set(PLUGIN_NWD_OLY OFF)
 
 
+
+
+set(OPENSOURCE_PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../PhenoLinkPlugins")
 set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../CheckoutPlugins")
 
 include_directories(${ARROW_INCLUDE_DIR})
@@ -313,10 +316,15 @@ add_subdirectory(Main)
 
 
 if(BUILD_PLUGINS)
-    add_subdirectory(Plugins)
-else()
-    set(PLUGIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
+    IF(EXISTS "${PLUGIN_PATH}")
+    add_subdirectory("${PLUGIN_PATH}" "${CMAKE_CURRENT_BINARY_DIR}/bin/internalplugins")
+    ENDIF()
+    IF (EXISTS "${OPENSOURCE_PLUGIN_PATH}")
+    add_subdirectory("${OPENSOURCE_PLUGIN_PATH}" "${CMAKE_CURRENT_BINARY_DIR}/bin/plugins")
+    ENDIF()
 endif(BUILD_PLUGINS)
+
+
 
 if(BUILD_RAW_PROCESSOR)
     add_subdirectory(RawProcessor)

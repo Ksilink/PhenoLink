@@ -22,12 +22,12 @@ bool SequenceInteractor::showFieldDetails = true;
 
 
 
-float SequenceInteractor::offsetTextX = 0;
-float SequenceInteractor::offsetTextY = 0;
-float SequenceInteractor::offsetBarX = 0;
-float SequenceInteractor::offsetBarY = 0;
+float SequenceInteractor::_offsetTextX = 0;
+float SequenceInteractor::_offsetTextY = 0;
+float SequenceInteractor::_offsetBarX = 0;
+float SequenceInteractor::_offsetBarY = 0;
 
-int SequenceInteractor::textSize;
+int SequenceInteractor::_textSize = 0;
 
 
 
