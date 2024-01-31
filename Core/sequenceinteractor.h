@@ -174,6 +174,8 @@ protected:
 
     QStringList overlay_tag_filter;
 
+    static QColor _textColor;
+    static QColor _barColor;
 
     static float _offsetTextX;
     static float _offsetTextY;

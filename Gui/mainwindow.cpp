@@ -905,7 +905,7 @@ void MainWindow::updateCurrentSelection()
 
             auto color_pos = new QWidget(wwid);
             QGridLayout* cpl = new QGridLayout(color_pos);
-            cpl->addWidget(new ctkColorPickerButton(QColor(Qt::yellow), "Text", color_pos), 0, 0);
+            cpl->addWidget(new ctkColorPickerButton(QColor(Qt::black), "Text", color_pos), 0, 0);
 
             auto lb = new QLabel("Offset X",color_pos);
             cpl->addWidget(lb, 0,1);
@@ -938,7 +938,7 @@ void MainWindow::updateCurrentSelection()
 
             color_pos = new QWidget(wwid);
             cpl = new QGridLayout(color_pos);
-            cpl->addWidget(new ctkColorPickerButton(Qt::black, "Bar", color_pos), 0, 0, 1, 1);
+            cpl->addWidget(new ctkColorPickerButton(Qt::yellow, "Bar", color_pos), 0, 0, 1, 1);
 
             lb = new QLabel("Offset X",color_pos);
             cpl->addWidget(lb, 0,1);

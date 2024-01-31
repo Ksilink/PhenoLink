@@ -20,7 +20,8 @@ QMutex lock_infos;
 double SequenceInteractor::_overlay_width = 1;
 bool SequenceInteractor::showFieldDetails = true;
 
-
+QColor SequenceInteractor::_textColor = QColor(Qt::black);
+QColor SequenceInteractor::_barColor = QColor(Qt::yellow);
 
 float SequenceInteractor::_offsetTextX = 0;
 float SequenceInteractor::_offsetTextY = 0;
@@ -1620,15 +1621,18 @@ QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
                 QPen p(Qt::yellow);
                 p.setWidthF(_overlay_width);
                 item->setPen(p);
-                QPointF x1(key.x() - size - 50, key.y() - 20), x2(key.x() - 50, key.y() - 20);
+                QPointF x1(key.x() - size - 50 + _offsetBarX, key.y() - 20 + _offsetBarY),
+                    x2(key.x() - 50 + _offsetBarX, key.y() - 20+ _offsetBarY);
+
                 QLineF line(x1, x2);
                 item->setLine(line);
                 // Now write text above
                 //               parent->par
                 auto t = new QGraphicsTextItem(parent);
 
+//                t->setC
                 t->setPlainText(QString("%1 µm").arg(len));
-                t->setPos(key.x() - size / 2 - 50, key.y() - 25);
+                t->setPos(key.x() - size / 2 - 50 + _offsetBarX + _offsetTextX, key.y() - 25 + _offsetBarY + _offsetTextY);
 
                 res << item << t;
             }
