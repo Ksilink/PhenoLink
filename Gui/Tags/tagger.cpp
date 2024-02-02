@@ -587,7 +587,7 @@ void tagger::on_mapcsv()
 
                                         if (!categories[col->currentText()].contains(t))
                                             categories[col->currentText()]<<t;
-                                        platet->setTag(r,c,header.at(col->currentIndex()-1));
+                                        platet->setTag(r,c, t);
                                     }
                                     i++;
                                 }
