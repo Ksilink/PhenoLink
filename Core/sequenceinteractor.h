@@ -118,6 +118,20 @@ public:
     QStringList getMetaTags(int idx);
     void addMetaTags(int idx);
 
+    void setTextColor(const QColor &newTextColor);
+
+    void setBarColor(const QColor &newBarColor);
+
+    void setOffsetTextX(float newOffsetTextX);
+
+    void setOffsetTextY(float newOffsetTextY);
+
+    void setOffsetBarX(float newOffsetBarX);
+
+    void setOffsetBarY(float newOffsetBarY);
+
+    void setTextSize(int newTextSize);
+
 public slots:
 
     void setTimePoint(unsigned t);

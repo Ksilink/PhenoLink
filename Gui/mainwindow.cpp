@@ -905,7 +905,11 @@ void MainWindow::updateCurrentSelection()
 
             auto color_pos = new QWidget(wwid);
             QGridLayout* cpl = new QGridLayout(color_pos);
-            cpl->addWidget(new ctkColorPickerButton(QColor(Qt::black), "Text", color_pos), 0, 0);
+            auto cpick = new ctkColorPickerButton(QColor(Qt::black), "Text", color_pos);
+
+            connect(cpick, &ctkColorPickerButton::colorChanged,  [this](QColor color) {this->_sinteractor.current()->setTextColor(color); } );
+
+            cpl->addWidget(cpick, 0, 0);
 
             auto lb = new QLabel("Offset X",color_pos);
             cpl->addWidget(lb, 0,1);
@@ -913,6 +917,7 @@ void MainWindow::updateCurrentSelection()
             auto sp = new QDoubleSpinBox(color_pos);
             sp->setRange(-800,+800);
             sp->setSingleStep(5);
+            connect(sp, &QDoubleSpinBox::valueChanged, [this](double v) { this->_sinteractor.current()->setOffsetTextX( v); });
 
             cpl->addWidget(sp, 0, 2);
 
@@ -923,13 +928,22 @@ void MainWindow::updateCurrentSelection()
             sp->setRange(-800,+800);
             sp->setSingleStep(5);
 
+            connect(sp, &QDoubleSpinBox::valueChanged, [this](double v) { this->_sinteractor.current()->setOffsetTextY( v); });
             cpl->addWidget(sp, 0, 4);
 
+            cpl->addWidget(new QLabel("Font S."), 0, 5);
+            auto fontsize = new QSpinBox(color_pos);
+            fontsize->setRange(0, 1000);
+            connect(fontsize, &QSpinBox::valueChanged, [this](int v) { this->_sinteractor.current()->setTextSize(v); });
 
-            bvl->addWidget(color_pos, itms, 1);
+            cpl->addWidget(fontsize, 0, 6);
+
+
+
+            bvl->addWidget(color_pos, itms, 1, 1, 2);
 //            bvl->addWidget(new QLabel("Font S."), itms, 2)
-            auto fontsize = new QSpinBox(wwid);
-            bvl->addWidget(fontsize, itms, 3);
+//            auto fontsize = new QSpinBox(wwid);
+//            bvl->addWidget(fontsize, itms, 3);
             itms++;
 
             label  = new QLabel("Bar", wwid);
@@ -938,7 +952,12 @@ void MainWindow::updateCurrentSelection()
 
             color_pos = new QWidget(wwid);
             cpl = new QGridLayout(color_pos);
-            cpl->addWidget(new ctkColorPickerButton(Qt::yellow, "Bar", color_pos), 0, 0, 1, 1);
+            cpick = new ctkColorPickerButton(Qt::yellow, "Bar", color_pos);
+            cpl->addWidget(cpick, 0, 0, 1, 1);
+
+            connect(cpick, &ctkColorPickerButton::colorChanged,  [this](QColor color) {this->_sinteractor.current()->setBarColor(color); } );
+
+
 
             lb = new QLabel("Offset X",color_pos);
             cpl->addWidget(lb, 0,1);
@@ -946,6 +965,7 @@ void MainWindow::updateCurrentSelection()
              sp = new QDoubleSpinBox(color_pos);
             sp->setRange(-800,+800);
             sp->setSingleStep(5);
+            connect(sp, &QDoubleSpinBox::valueChanged, [this](double v) { this->_sinteractor.current()->setOffsetBarX( v); });
 
             cpl->addWidget(sp, 0, 2);
 
@@ -957,17 +977,19 @@ void MainWindow::updateCurrentSelection()
             sp->setRange(-800,+800);
             sp->setSingleStep(5);
             cpl->addWidget(sp, 0, 4);
+            connect(sp, &QDoubleSpinBox::valueChanged, [this](double v) { this->_sinteractor.current()->setOffsetBarY( v); });
 
-            lb = new QLabel("Bar Size",color_pos);
-            cpl->addWidget(lb, 0,5);
+//            lb = new QLabel("Bar Size",color_pos);
+//            cpl->addWidget(lb, 0,5);
 
 
-            sp = new QDoubleSpinBox(color_pos);
-            sp->setRange(-100,+100);
-            sp->setSingleStep(5);
-            cpl->addWidget(sp, 0, 6);
+//            sp = new QDoubleSpinBox(color_pos);
+//            sp->setRange(-100,+100);
+//            sp->setSingleStep(5);
+//            cpl->addWidget(sp, 0, 6);
+//            connect(sp, &QDoubleSpinBox::valueChanged, [_sinteractor](double v) { _sinteractor.setOffsetBarX( v); });
 
-            bvl->addWidget(color_pos, itms, 1);
+            bvl->addWidget(color_pos, itms, 1, 1,2);
 
             itms++;
         }

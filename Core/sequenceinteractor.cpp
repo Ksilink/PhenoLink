@@ -210,6 +210,48 @@ QStringList SequenceInteractor::tagFilter()
     return overlay_tag_filter;
 }
 
+void SequenceInteractor::setTextSize(int newTextSize)
+{
+    _textSize = newTextSize;
+      modifiedImage();
+}
+
+void SequenceInteractor::setOffsetBarY(float newOffsetBarY)
+{
+    _offsetBarY = newOffsetBarY;
+        modifiedImage();
+}
+
+void SequenceInteractor::setOffsetBarX(float newOffsetBarX)
+{
+    _offsetBarX = newOffsetBarX;
+          modifiedImage();
+}
+
+void SequenceInteractor::setOffsetTextY(float newOffsetTextY)
+{
+    _offsetTextY = newOffsetTextY;
+            modifiedImage();
+}
+
+void SequenceInteractor::setOffsetTextX(float newOffsetTextX)
+{
+    _offsetTextX = newOffsetTextX;
+              modifiedImage();
+}
+
+void SequenceInteractor::setBarColor(const QColor &newBarColor)
+{
+    _barColor = newBarColor;
+                modifiedImage();
+}
+
+void SequenceInteractor::setTextColor(const QColor &newTextColor)
+{
+    _textColor = newTextColor;
+                  modifiedImage();
+}
+
 
 void SequenceInteractor::setOverlayId(QString name, int tile)
 {
@@ -1618,7 +1660,7 @@ QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
 
                 float size = len / dx;
                 // We need to figure out the position we have with respect to the border...
-                QPen p(Qt::yellow);
+                QPen p(_barColor);
                 p.setWidthF(_overlay_width);
                 item->setPen(p);
                 QPointF x1(key.x() - size - 50 + _offsetBarX, key.y() - 20 + _offsetBarY),
@@ -1630,8 +1672,11 @@ QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
                 //               parent->par
                 auto t = new QGraphicsTextItem(parent);
 
-//                t->setC
+                t->setDefaultTextColor(_textColor);
                 t->setPlainText(QString("%1 µm").arg(len));
+                QFont f = t->font();
+                f.setPointSize(f.pointSize() + _textSize);
+                t->setFont(f);
                 t->setPos(key.x() - size / 2 - 50 + _offsetBarX + _offsetTextX, key.y() - 25 + _offsetBarY + _offsetTextY);
 
                 res << item << t;

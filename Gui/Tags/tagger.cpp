@@ -44,6 +44,7 @@ using bsoncxx::builder::stream::open_array;
 using bsoncxx::builder::stream::open_document;
 using namespace bsoncxx::builder::basic;
 
+
 tagger::tagger(QStringList datas, QWidget *parent) :
     QDialog(parent),
     dataset(datas), // http(nullptr),
@@ -108,7 +109,7 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                     bsoncxx::stdx::string_view view = item["_id"].get_string().value;
 
                     _well_tags[prj].insert(QString::fromStdString(std::string{view}).simplified().replace("::", "."));
-                    qDebug() << prj << QString::fromStdString(std::string{view}).simplified().replace("::", ".");
+//                    qDebug() << prj << QString::fromStdString(std::string{view}).simplified().replace("::", ".");
                 }
             }
         }
@@ -181,8 +182,56 @@ tagger::tagger(QStringList datas, QWidget *parent) :
             //ui->cell_lines->addItems(data);
         }
 
+        {
+            mongocxx::pipeline pipe{};
+            pipe.match(make_document(kvp("Categories",make_document(
+                                                           kvp("$exists", true)))));
+            pipe.project(make_document(kvp("data",
+                                           make_document(kvp("$objectToArray", "$Categories"))),
+                                       kvp("project", "$meta.project")));
+            pipe.unwind(make_document(kvp("path", "$data"),
+                                      kvp("includeArrayIndex", "string"),
+                                      kvp("preserveNullAndEmptyArrays", false) ));
+            pipe.unwind(make_document(kvp("path", "$data.v"),
+                                      kvp("preserveNullAndEmptyArrays", false)));
+            pipe.group(make_document(kvp("_id", "null"),
+                                     kvp("unique", make_document(kvp("$addToSet",
+                                                                               make_document(
+                                                                                   kvp("$concat",
+                                                                                       make_array("$project", "/", "$data.k", "/", make_document(kvp("$toString", "$data.v") )) )))))));
+
+            auto cursor = db["tags"].aggregate(pipe);
+
+            for (auto & item: cursor)
+            {
+                qDebug() << QString::fromStdString(bsoncxx::to_json(item));
+
+                auto unique = item["unique"].get_array().value;
+                for (auto &k: unique )
+                {
+                    QStringList kv = QString::fromStdString(std::string{k.get_string().value}).split("/");
+
+                    if (kv.size() < 3) {
+                        qDebug() << "Skipping" << kv;
+                        continue;
+                    }
+//                    qDebug() << kv;
+
+                    _grouped_tags[kv[0]][kv[1]].insert(kv[2]);
+                }
+//                QString t = QString::fromStdString(std::string{cellview}).simplified().replace("::", ".");
+//                QString prj = QString::fromStdString(std::string{prview}).simplified().replace("::", ".");
+
+//                _grouped_tags[prj]["CellLines"].insert(t);
+            }
+        }
+
     }
-    catch(...) {}
+    catch(...) {
+
+
+
+ }
 
 
 

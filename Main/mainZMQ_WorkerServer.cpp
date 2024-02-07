@@ -327,7 +327,7 @@ void ZMQThread::run()
             if (!commit.isEmpty())
             {
                 NetworkProcessHandler::handler().clearData(commit);
-                qDebug() << "Commit" << commit << "Cleared";
+                qDebug() << QDateTime::currentDateTime().toString("yyyy MMMM dd hh:mm:ss.zzz") << "Commit" << commit << "Cleared";
             }
         }
         else if (req_type == "Canceled")
