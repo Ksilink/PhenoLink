@@ -1309,7 +1309,7 @@ public:
         //        qDebug() << job->parameters;
         thread->parameters = job;
 
-        qDebug() << "Sending job" << wrk << thread->m_id << job->client << job->path;
+        qDebug() << "Sending job" << wrk->m_name << wrk->m_identity << thread->m_id << job->client << job->project << job->path;
         zmsg* msg = new zmsg();
         msg->push_back(job->parameters.toCborValue().toCbor());
         worker_send(wrk, (char*)MDPW_REQUEST, job->path, msg);

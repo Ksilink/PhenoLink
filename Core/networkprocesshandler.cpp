@@ -1044,7 +1044,7 @@ QCborArray NetworkProcessHandler::filterBinary(QString hash, QJsonObject ds)
                             ob.insert(QCborValue("Message"), QCborValue(msg));
                         }
 
-                        qDebug() << "Got binary data: " << dhash << buf.size() << ar.size() << pos;
+                        qDebug() << "Got binary data: " << dhash << ds["XP"].toString() << ds["CommitName"].toString() << obj.value("Tag").toString() << buf.size() << ar.size() << pos;
                         mm.insert(QCborValue("BinaryData"), ar); // QCborValue(data));
 
                         exportBinary(ds, obj, mm);
