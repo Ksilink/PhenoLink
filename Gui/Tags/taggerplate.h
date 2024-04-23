@@ -50,8 +50,6 @@ public:
 
     void apply_template(QString script);
 
-private slots:
-    void on_checkBox_toggled(bool checked);
 
 private slots:
     void on_setTags_clicked();
@@ -69,6 +67,8 @@ private slots:
     void on_lineEdit_textChanged(const QString &arg1);
 
     void on_plateMaps_customContextMenuRequested(const QPoint &pos);
+
+    void on_projectFilter_textChanged(const QString &arg1);
 
 private:
     Ui::TaggerPlate *ui;

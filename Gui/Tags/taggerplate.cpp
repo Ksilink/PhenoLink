@@ -71,7 +71,10 @@ QJsonObject &TaggerPlate::getTags() {
 
 void TaggerPlate::setCategories(QMap<QString, QStringList> map)
 {
-    QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    auto mlcpds = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    if (!mlcpds) return;
+
+    auto ml = qobject_cast<QSortFilterProxyModel*>(mlcpds->sourceModel());
     if (!ml) return;
 
     QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
@@ -81,6 +84,7 @@ void TaggerPlate::setCategories(QMap<QString, QStringList> map)
 
     for (auto& name: map.keys())
     {
+        name=name.simplified();
         QStandardItem* parent = nullptr;
         for (int i = 0; i < root->rowCount(); ++i)
             if (root->child(i)->text() == name)
@@ -102,8 +106,12 @@ void TaggerPlate::setCategories(QMap<QString, QStringList> map)
 
 void TaggerPlate::on_setTags_clicked()
 {
-    QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    auto mlcpds = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    if (!mlcpds) return;
+
+    auto ml = qobject_cast<QSortFilterProxyModel*>(mlcpds->sourceModel());
     if (!ml) return;
+
 
     QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
     if (!model) return;
@@ -141,8 +149,12 @@ void TaggerPlate::on_setTags_clicked()
 
 void TaggerPlate::on_unsetTags_clicked()
 {
-    QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    auto mlcpds = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    if (!mlcpds) return;
+
+    auto ml = qobject_cast<QSortFilterProxyModel*>(mlcpds->sourceModel());
     if (!ml) return;
+
 
     QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
     if (!model) return;
@@ -267,7 +279,10 @@ void TaggerPlate::on_treeView_customContextMenuRequested(const QPoint &pos)
     auto idx = ui->treeView->indexAt(pos);
 
 
-    QSortFilterProxyModel* ml = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    auto mlcpds = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    if (!mlcpds) return;
+
+    auto ml = qobject_cast<QSortFilterProxyModel*>(mlcpds->sourceModel());
     if (!ml) return;
 
     QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
@@ -330,20 +345,38 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
     if (!ml)
     {
         model = new QStandardItemModel(0, 3);
+
+        projmdl = new QSortFilterProxyModel(this);
+
+        projmdl->setRecursiveFilteringEnabled(true);
+        projmdl->setFilterCaseSensitivity(Qt::CaseInsensitive);
+        projmdl->setFilterKeyColumn(2);
+        //        mdl->setSortRole():
+        // Cascade with the "project" entry
+        projmdl->setSourceModel(model);
+
         mdl = new QSortFilterProxyModel(this);
 
         mdl->setRecursiveFilteringEnabled(true);
         mdl->setFilterCaseSensitivity(Qt::CaseInsensitive);
-        //        mdl->setSortRole():
-        // Cascade with the "project" entry
-        mdl->setSourceModel(model);
+
+        mdl->setSourceModel(projmdl);
+
+
+
         ui->treeView->setModel(mdl);
         model->setHorizontalHeaderLabels(QStringList() << "Label" << "Amount" << "Project");
         //        model->set
     }
     else
-        model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
+    {
 
+        model = qobject_cast<QStandardItemModel*>(qobject_cast<QSortFilterProxyModel*>(ml->sourceModel())->sourceModel());
+    }
+    if (!model) // not ready yet
+        return;
+
+    ui->projectFilter->setText(project);
 
     QStandardItem* root = model->invisibleRootItem();
 //    root->removeRows(0, root->rowCount());
@@ -351,6 +384,7 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
 
     QSet<QString> skip;
 //    QStringList headers = QStringList() << "" << project;
+  //  qDebug() << "Cmpds" << data;
     for (auto& k : data.keys())
         for (auto & key: data[k].keys())
         {
@@ -372,7 +406,7 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
                     QList<QStandardItem *> items;
                     items << new QStandardItem(prod)
                           << new QStandardItem("")
-                          << new QStandardItem(project);
+                          << new QStandardItem(k);
                     item->appendRow(items);
                 }
                 for (const QString& ot: othertags[project])
@@ -422,8 +456,21 @@ void TaggerPlate::setTags(QMap<QString, QMap<QString, QSet<QString > > > &data,
     }
 
 
-    auto others = new QStandardItem("Others");
-    root->appendRow(others);
+
+    QStandardItem* others = nullptr;
+
+    for (int i = 0; i < root->rowCount(); ++i)
+        if (root->child(i)->text() == "Others")
+        {
+            others = root->child(i);
+            break;
+        }
+
+    if (!others)
+    {
+        others = new QStandardItem("Others");
+        root->appendRow(others);
+    }
 
     for (const QString& ot: othertags[project])
         if (!skip.contains(ot) && !ot.simplified().isEmpty())
@@ -613,6 +660,11 @@ void TaggerPlate::updatePlate()
     tagger["plate"] = plate;
     tagger["plateAcq"] = QString("%1/%2").arg(plateDate, plate);
 
+
+//    QStringList cats;
+//    for (int i = 0; i < root->rowCount(); ++i)
+//        cats.append(root->child(i)->text());
+
 }
 
 
@@ -668,6 +720,8 @@ QJsonObject TaggerPlate::refreshJson()
     QStringList ops =  QStringList() << "map" << "color_map" << "fgcolor_map" << "pattern_map";
     for (auto& p : ops) tagger[p] = QJsonObject(); // Clear the mapping prior to applying the view
 
+    QStringList used_tags;
+
     for (int c = 0; c < ui->plateMaps->columnCount(); ++c)
         for (unsigned char r = 0; r < (unsigned char)std::min(255, ui->plateMaps->rowCount()); ++r)
             if (ui->plateMaps->item(r,c))
@@ -678,7 +732,11 @@ QJsonObject TaggerPlate::refreshJson()
                 QStringList stags = item->text().split(";");
 
                 for (QString& t: stags)
+                {
+                    if (!used_tags.contains(t)) used_tags << t;
+
                     addInfo(tagger, "map", t, QString("%1").arg(QLatin1Char('A' + r)), c);
+                }
 
                 if (item->foreground().color().isValid() && item->foreground().color().name() != "#000000" && item->foreground().color().name() != "#ffffff" && item->background().color() != transparent)
                     addInfo(tagger, "fgcolor_map", item->foreground().color().name(), QString("%1").arg(QLatin1Char('A'+r)), c);
@@ -691,6 +749,37 @@ QJsonObject TaggerPlate::refreshJson()
             }
 
 
+    QJsonObject categories;
+    auto mlcpds = qobject_cast<QSortFilterProxyModel*>(ui->treeView->model());
+    if (mlcpds)
+    {
+
+    auto ml = qobject_cast<QSortFilterProxyModel*>(mlcpds->sourceModel());
+
+    if (ml)
+    {
+        QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
+        if (model) {
+
+            QStandardItem* root = model->invisibleRootItem();
+            for (int i = 0; i < root->rowCount(); ++i)
+                {
+                    auto ch = root->child(i);//->text();
+                    for (int j = 0; j < ch->rowCount(); ++j)
+                    if (used_tags.contains(ch->child(j)->text()))
+                    {
+                        QJsonArray ar = categories.contains(ch->text()) ?
+                                            categories[ch->text()].toArray()
+                                                                        : QJsonArray();
+                        ar.append(ch->child(j)->text());
+                        categories[ch->text()]=ar;
+                    }
+                }
+        }
+    }
+
+    }
+
     tagger.insert("plateAcq",QJsonValue(QString("%1/%2").arg(plateDate, plate)));
     tagger.insert("plate",QJsonValue(plate));
     tagger.insert("serverPath", QJsonValue(path));
@@ -700,23 +789,6 @@ QJsonObject TaggerPlate::refreshJson()
 }
 
 
-void TaggerPlate::on_lineEdit_textChanged(const QString &arg1)
-{
-
-    if (arg1.isEmpty())
-        ui->treeView->setSortingEnabled(false);
-    else
-        ui->treeView->setSortingEnabled(true);
-
-    // Adjust the filter of the treeview
-    if (mdl)
-    {
-        mdl->setFilterFixedString(arg1);
-        mdl->setRecursiveFilteringEnabled(true);
-        mdl->setFilterCaseSensitivity(Qt::CaseInsensitive);
-    }
-
-}
 
 
 void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
@@ -862,9 +934,37 @@ void TaggerPlate::on_plateMaps_customContextMenuRequested(const QPoint &pos)
     }
 }
 
-
-void TaggerPlate::on_checkBox_toggled(bool checked)
+void TaggerPlate::on_lineEdit_textChanged(const QString &arg1)
 {
 
+    if (arg1.isEmpty())
+        ui->treeView->setSortingEnabled(false);
+    else
+        ui->treeView->setSortingEnabled(true);
+
+    // Adjust the filter of the treeview
+    if (mdl)
+    {
+        mdl->setFilterFixedString(arg1);
+        mdl->setRecursiveFilteringEnabled(true);
+        mdl->setFilterCaseSensitivity(Qt::CaseInsensitive);
+    }
+
+}
+
+void TaggerPlate::on_projectFilter_textChanged(const QString &arg1)
+{
+    if (arg1.isEmpty())
+        ui->treeView->setSortingEnabled(false);
+    else
+        ui->treeView->setSortingEnabled(true);
+
+    // Adjust the filter of the treeview
+    if (projmdl)
+    {
+        projmdl->setFilterFixedString(arg1);
+        projmdl->setRecursiveFilteringEnabled(true);
+        projmdl->setFilterCaseSensitivity(Qt::CaseInsensitive);
+    }
 }
 
