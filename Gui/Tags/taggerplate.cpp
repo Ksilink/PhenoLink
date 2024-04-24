@@ -118,7 +118,17 @@ void TaggerPlate::on_setTags_clicked()
 
     QStandardItem* root = model->invisibleRootItem();
 
-    auto idx = ml->mapToSource(ui->treeView->selectionModel()->currentIndex());
+
+    auto a0 = ui->treeView->selectionModel()->currentIndex();
+
+    auto a2 = mlcpds->mapToSource(a0);
+
+    auto idx = ml->mapToSource(a2);
+
+
+
+   // auto idx = ml->mapToSource(mlcpds->mapToSource(ui->treeView->selectionModel()->currentIndex()));
+
     qDebug() << idx;// << idx.parent();
     if (idx.isValid() && idx.parent().isValid())
     {
@@ -161,7 +171,12 @@ void TaggerPlate::on_unsetTags_clicked()
 
     QStandardItem* root = model->invisibleRootItem();
 
-    auto idx = ml->mapToSource(ui->treeView->selectionModel()->currentIndex());
+    auto a0 = ui->treeView->selectionModel()->currentIndex();
+
+    auto a2 = mlcpds->mapToSource(a0);
+
+    auto idx = ml->mapToSource(a2);
+
     if (idx.isValid() && idx.parent().isValid())
     {
         QStandardItem* item = root->child(idx.parent().row());
