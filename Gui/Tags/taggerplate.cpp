@@ -129,7 +129,7 @@ void TaggerPlate::on_setTags_clicked()
 
    // auto idx = ml->mapToSource(mlcpds->mapToSource(ui->treeView->selectionModel()->currentIndex()));
 
-    qDebug() << idx;// << idx.parent();
+//    qDebug() << idx;// << idx.parent();
     if (idx.isValid() && idx.parent().isValid())
     {
         //        qDebug() << idx << idx.parent();
@@ -525,6 +525,7 @@ void TaggerPlate::setTag(int r, int c, QString tags)
         ui->plateMaps->item(r,c)->setToolTip(lst.join("\r\n"));
     }
 
+
     ui->plateMaps->resizeColumnsToContents();
     ui->plateMaps->resizeRowsToContents();
 }
@@ -798,7 +799,7 @@ QJsonObject TaggerPlate::refreshJson()
     tagger.insert("plateAcq",QJsonValue(QString("%1/%2").arg(plateDate, plate)));
     tagger.insert("plate",QJsonValue(plate));
     tagger.insert("serverPath", QJsonValue(path));
-
+    tagger.insert("Categories", categories);
 
     return tagger;
 }
