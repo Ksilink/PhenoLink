@@ -299,8 +299,10 @@ QStringList SequenceInteractor::getChannelNames()
 }
 
 void SequenceInteractor::setChannelNames(QStringList names)
-{
-    channel_names = names;
+{ // assert we have trimmed channel names.
+    channel_names.clear();
+    for (auto st : names)
+        channel_names << st.trimmed();
 }
 
 unsigned SequenceInteractor::getFieldCount()
