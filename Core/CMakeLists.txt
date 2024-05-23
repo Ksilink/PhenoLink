@@ -90,7 +90,7 @@ endif(BUILD_PLUGINS)
 target_include_directories(PhenoLinkCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(WIN32)
-    target_link_libraries(PhenoLinkCore Pdh QHttp Qt::Widgets Qt::Core Qt::Network Qt::Xml Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS} arrow_shared mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc Azure::azure-storage-blobs PkgConfig::Jxl PkgConfig::JxlThreads LibArchive::LibArchive ${cppzmq_LIBRARY} libzmq libzmq-static )
+    target_link_libraries(PhenoLinkCore Pdh QHttp Qt::Widgets Qt::Core Qt::Network Qt::Xml Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS} arrow_shared mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage Azure::azure-storage-blobs PkgConfig::Jxl PkgConfig::JxlThreads LibArchive::LibArchive ${cppzmq_LIBRARY} libzmq libzmq-static )
 else()
     target_link_libraries(PhenoLinkCore PRIVATE QHttp Qt::Widgets Qt::Core Qt::Network Qt::Xml Qt::Concurrent "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS}  mongo::mongocxx_static mongo::bsoncxx_static Boost::boost  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage google-cloud-cpp::experimental-storage-grpc Azure::azure-storage-blobs PkgConfig::Jxl PkgConfig::JxlThreads  LibArchive::LibArchive ${cppzmq_LIBRARY} libzmq libzmq-static )
 endif(WIN32)
