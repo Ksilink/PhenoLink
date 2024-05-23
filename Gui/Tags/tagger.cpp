@@ -609,7 +609,11 @@ void tagger::on_mapcsv()
                                         if (col->currentIndex()!=0)
                                         {
                                             auto t = header.at(col->currentIndex()-1);
-                                            if (subfeatures.at(i)->currentIndex()!=0)
+                                            if ((t=="-") || (t.isEmpty())) continue; // skip empty
+
+                                            if (subfeatures.at(i)->currentIndex()!=0 &&
+                                                header.at(subfeatures.at(i)->currentIndex()-1).isEmpty() &&
+                                                header.at(subfeatures.at(i)->currentIndex()-1) != "-")
                                                 t += "#" + header.at(subfeatures.at(i)->currentIndex()-1);
 
                                             if (!categories[col->currentText()].contains(t))
@@ -629,8 +633,11 @@ void tagger::on_mapcsv()
                                     if (col->currentIndex()!=0)
                                     {
                                         auto t = header.at(col->currentIndex()-1);
+                                        if ((t=="-") || (t.isEmpty())) continue; // skip empty data
 
-                                        if (subfeatures.at(i)->currentIndex()!=0)
+                                        if (subfeatures.at(i)->currentIndex()!=0 &&
+                                            header.at(subfeatures.at(i)->currentIndex()-1).isEmpty() &&
+                                            header.at(subfeatures.at(i)->currentIndex()-1) != "-")
                                             t += "#" + header.at(subfeatures.at(i)->currentIndex()-1);
 
 
@@ -653,6 +660,7 @@ void tagger::on_mapcsv()
                 {
                     auto platet = qobject_cast<TaggerPlate*>(w);
                     platet->setCategories(categories);
+                    platet->refreshJson();
                 }
             }
 

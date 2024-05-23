@@ -1612,7 +1612,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
 
 
 
-    if (!(par.contains("NonDefault") && (par.contains("Value")
+    if ((par.contains("NonDefault") && (par.contains("Value")
                                          && isdiff(par[ reloaded ? "Value" : "Default"], par["Default"]))))
     {
         wid->setStyleSheet("color: rgb(182,64,18);");
@@ -1904,6 +1904,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                 //                qDebug() << "Mapping data Per channel value";
                 foreach(int i, list)
                 {
+                    bool lreloaded = reloaded;
 
                     if (c < start) { c++; continue; }
                     if (c > end) break;
@@ -1944,13 +1945,13 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
 
                     if (par["Type"].toString() == "ChannelSelector")
                     {
-                        if (reloaded && par.contains("Value"))
+                        if (lreloaded && par.contains("Value"))
                         {
                             if (par["Value"].isArray())
                                 par["Default"] = par["Value"].toArray().at(c);
                             else
                                 par["Default"] = par["Value"];
-                            reloaded = false;
+                            lreloaded = false;
                         }
                         else {
                             par["Default"] = c_def; // increment the default value for each channel.
@@ -1964,11 +1965,11 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                                 par["Default"] = par["Value"].toArray().at(c-start);
                             else if (!par["Value"].toString().isEmpty())
                                 par["Default"] = par["Value"];
-                            reloaded = false;
+                            lreloaded = false;
                         }
                     //                    qDebug() << c;
 
-                    QWidget* w = widgetFromJSON(par, reloaded);
+                    QWidget* w = widgetFromJSON(par, lreloaded);
                     if (w)
                     {
                         w->setAttribute(Qt::WA_DeleteOnClose, true);
