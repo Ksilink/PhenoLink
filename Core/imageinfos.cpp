@@ -417,7 +417,7 @@ void ImageInfos::setColor(QColor c, bool refresh)
 
 void ImageInfos::setChannelName(QString name)
 {
-    channelName = name;
+    channelName = name.trimmed();
 }
 
 QString ImageInfos::getChannelName()

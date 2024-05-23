@@ -945,7 +945,7 @@ void DataProperty::setProperties(QString ttag, QString value)
     if (_dict.contains(tag))
         tag = _dict[tag];
 
-    _properties[tag] = value;
+    _properties[tag] = value.trimmed();
 }
 
 QString DataProperty::property(QString tag) const
