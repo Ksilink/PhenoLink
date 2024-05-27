@@ -1,4 +1,4 @@
-
+#define NOMINMAX
 #include <QtCore>
 
 template <>
@@ -8,7 +8,7 @@ public:
   typedef Registrable<THE_TYPE> Self;
   typedef THE_TYPE DataType;
 
-  Registrable(): _hasDefault(false), _hasRange(false), _low(std::numeric_limits<DataType>::min()), _high(std::numeric_limits<DataType>::max()),
+  Registrable(): _hasDefault(false), _hasRange(false), _low((DataType)-1e6), _high((DataType)1e9),
     _isSlider(false), _value(0)
   {
 
@@ -130,7 +130,7 @@ public:
     json["Aggregation"] = QString(_aggreg == Sum ? "Sum" :
                           ( _aggreg == Mean ? "Mean" :
                           ( _aggreg == Median ? "Median" :
-                          ( _aggreg ==  Min ? "Min" : "Max" ))));
+                                                                                            ( _aggreg ==  (Min) ? "Min" : "Max" ))));
   }
 
   virtual QString toString() const
