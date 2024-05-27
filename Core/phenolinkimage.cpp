@@ -92,6 +92,7 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
         }
         else if (status == JXL_DEC_COLOR_ENCODING) {
             // Get the ICC color profile of the pixel data
+           /*
             size_t icc_size;
             if (JXL_DEC_SUCCESS !=
                 JxlDecoderGetICCProfileSize(
@@ -106,7 +107,7 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
                     icc_profile.data(), icc_profile.size())) {
                 fprintf(stderr, "JxlDecoderGetColorAsICCProfile failed\n");
                 return false;
-            }
+            }*/
         }
         else if (status == JXL_DEC_NEED_IMAGE_OUT_BUFFER) {
             size_t buffer_size;

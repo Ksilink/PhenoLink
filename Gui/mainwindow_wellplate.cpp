@@ -9,6 +9,7 @@
 #include <unistd.h>
 #else
 #include <sys/utime.h>
+#include <fileapi.h>
 #endif
 
 
