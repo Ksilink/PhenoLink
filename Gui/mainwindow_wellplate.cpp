@@ -78,12 +78,10 @@
 
 #include <time.h>
 
-#if WIN32
-
-
-#include <QtWebEngineWidgets/QtWebEngineWidgets>
-#include <QWebEngineView>
-#endif
+// #if WIN32
+//     #include <QtWebEngineWidgets/QtWebEngineWidgets>
+//     #include <QWebEngineView>
+// #endif
 
 #include <dashoptions.h>
 
@@ -238,21 +236,21 @@ void MainWindow::on_notebookDisplay_clicked()
 #if WIN32
 
 
-    //    int tab = ui->tabWidget->addTab(view, "Dash View");
-    QWebEngineView *view = new QWebEngineView(this);
-    QUrl url(QString("http://%1:%2/notebooks/Run/%5?token=%3&autorun=true")
-                 .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
-                 .arg("8888")
-                 .arg(set.value("JupyterToken", "").toString())
-                 //             .arg(dbopts)
-                 .arg(tgt)
-             );
-    qDebug() << url;
-    QApplication::clipboard()->setText(url.toString());
-    view->load(url);
-    int tab = ui->tabWidget->addTab(view, "Notebook View");
+    // //    int tab = ui->tabWidget->addTab(view, "Dash View");
+    // QWebEngineView *view = new QWebEngineView(this);
+    // QUrl url(QString("http://%1:%2/notebooks/Run/%5?token=%3&autorun=true")
+    //              .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
+    //              .arg("8888")
+    //              .arg(set.value("JupyterToken", "").toString())
+    //              //             .arg(dbopts)
+    //              .arg(tgt)
+    //          );
+    // qDebug() << url;
+    // QApplication::clipboard()->setText(url.toString());
+    // view->load(url);
+    // int tab = ui->tabWidget->addTab(view, "Notebook View");
 
-    Q_UNUSED(tab);
+    // Q_UNUSED(tab);
 #endif
 
 }
@@ -292,19 +290,19 @@ void MainWindow::on_dashDisplay_clicked()
 
 
     //    int tab = ui->tabWidget->addTab(view, "Dash View");
-    QSettings set;
-    QWebEngineView *view = new QWebEngineView(this);
-    QUrl url(QString("http://%1:%2?%3")
-                 .arg(set.value("DashServer", "127.0.0.1").toString())
-                 .arg("8050")
-                 .arg(dbopts)
-             );
-    qDebug() << url;
-    QApplication::clipboard()->setText(url.toString());
-    view->load(url);
-    int tab = ui->tabWidget->addTab(view, "Dash View");
+    // QSettings set;
+    // QWebEngineView *view = new QWebEngineView(this);
+    // QUrl url(QString("http://%1:%2?%3")
+    //              .arg(set.value("DashServer", "127.0.0.1").toString())
+    //              .arg("8050")
+    //              .arg(dbopts)
+    //          );
+    // qDebug() << url;
+    // QApplication::clipboard()->setText(url.toString());
+    // view->load(url);
+    // int tab = ui->tabWidget->addTab(view, "Dash View");
 
-    Q_UNUSED(tab);
+    // Q_UNUSED(tab);
 #endif
 }
 
@@ -943,11 +941,11 @@ void MainWindow::createBirdView()
     QString imgName = generatePlate(file, mdl);
     file.close();
 
-    // Launch the HTML viewer on the birdview file
-    QWebEngineView *view = new QWebEngineView(this);
-    QUrl url(fpath);
-    view->load(url);
-    ui->tabWidget->addTab(view, "Birdview");
+    // // Launch the HTML viewer on the birdview file
+    // QWebEngineView *view = new QWebEngineView(this);
+    // QUrl url(fpath);
+    // view->load(url);
+    // ui->tabWidget->addTab(view, "Birdview");
 
 
 #endif

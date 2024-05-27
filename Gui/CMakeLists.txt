@@ -59,7 +59,7 @@ set(PhenoLinkGui_SRC
                Tags/tagger.h Tags/tagger.cpp  Tags/tagger.ui
                Tags/taggerplate.h Tags/taggerplate.cpp Tags/taggerplate.ui
                Widgets/overlayfilter.h Widgets/overlayfilter.cpp Widgets/overlayfilter.ui
-               
+
                rcs.qrc
     )
 
@@ -67,7 +67,7 @@ if(VTK_FOUND)
     link_directories(${VTK_LIB_DIR})
     # include(${VTK_USE_FILE})
     set(CheckoutVTKLib ${VTK_LIBRARIES})
-    
+
 endif(VTK_FOUND)
 
 if (BUILD_PYTHON_SCRIPTING)
@@ -101,7 +101,7 @@ endif()
 
 
 IF(WIN32)
-    target_link_libraries(PhenoLinkGui ${CheckoutPythonLib} PhenoLinkCore ${CheckoutVTKLib} QHttp Qt::OpenGLWidgets Qt::Widgets  Qt6::WebEngineWidgets  Qt6::Concurrent ${OpenCV_LIBS}  mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost )
+    target_link_libraries(PhenoLinkGui ${CheckoutPythonLib} PhenoLinkCore ${CheckoutVTKLib} QHttp Qt::OpenGLWidgets Qt::Widgets  Qt6::Concurrent ${OpenCV_LIBS}  mongo::mongocxx_shared mongo::bsoncxx_shared  Boost::boost )
 ELSE()
         target_link_libraries(PhenoLinkGui PRIVATE  ${CheckoutPythonLib} PhenoLinkCore ${CheckoutVTKLib} QHttp Qt::OpenGLWidgets Qt::Widgets Qt::Concurrent  ${OpenCV_LIBS}  mongo::mongocxx_static mongo::bsoncxx_static Boost::boost)
 ENDIF(WIN32)

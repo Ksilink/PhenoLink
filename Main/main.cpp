@@ -22,7 +22,7 @@
 
     #include <windows.h>
     #include <wincon.h>
-    #include <QtWebView/QtWebView>
+    // #include <QtWebView/QtWebView>
 
 #endif
 
@@ -83,9 +83,9 @@ int main(int argc, char *argv[])
 {
     //    qInstallMessageHandler(myMessageOutput);
     //  show_console();
-#if WIN32
-    QtWebView::initialize();
-#endif
+// #if WIN32
+//     QtWebView::initialize();
+// #endif
 
     QApplication a(argc, argv);
     QApplication::setStyle(QStyleFactory::create("Plastique"));

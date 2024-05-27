@@ -1,75 +1,72 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
-
-    "name": "checkout",
-
-    "version": "2.0",
-
-
-
-    "dependencies": [{
-            "name": "opencv",
-            "default-features": false,
-            "features": ["contrib", "dnn", "jpeg", "tiff", "nonfree", "ipp", "tbb"]
-        },
-        {
-            "name": "arrow",
-            "default-features": true,
-            "features": ["filesystem", "dataset"]
-        },
-        {
-            "name": "dlib"
-        },
-        {
-            "name": "mongo-cxx-driver"
-        },
-        {
-            "name": "eigen3"
-        },
-        {
-            "name": "gsl"
-        },
-        {
-            "name": "fftw3",
-            "features": ["avx2", "threads"]
-        },
-        {
-            "name" : "aws-sdk-cpp",
-            "features": [ "s3" ]
-        },
-        {
-            "name":"google-cloud-cpp",
-            "features": ["storage"]
-        },
-        {
-            "name": "azure-storage-blobs-cpp"
-        },
-        {
-            "name": "libjxl"
-        },
-        {
-            "name": "qt",
-            "platform": "!linux"
-        },
-        {
-            "name": "qtwebengine",
-            "features": [  "geolocation","spellchecker","webchannel"],
-            "platform": "!linux"
-        },
-        {
-            "name": "qtwebview",
-            "platform": "!linux"
-        },
-        {
-            "name": "vtk",
-            "features":["qt"],
-            "platform": "!linux"
-        },
-        {
-            "name": "cppzmq"
-        },
-        {
-            "name": "libarchive"
-        }
-    ]
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "name": "checkout",
+  "version": "2.0",
+  "dependencies": [
+    {
+      "name": "arrow",
+      "default-features": true,
+      "features": [
+        "filesystem",
+        "dataset"
+      ]
+    },
+    {
+      "name": "dlib"
+    },
+    {
+      "name": "mongo-cxx-driver"
+    },
+    {
+      "name": "eigen3"
+    },
+    {
+      "name": "gsl"
+    },
+    {
+      "name": "fftw3",
+      "features": [
+        "avx2",
+        "threads"
+      ]
+    },
+    {
+      "name": "aws-sdk-cpp",
+      "features": [
+        "s3"
+      ]
+    },
+    {
+      "name": "google-cloud-cpp",
+      "features": [
+        "storage"
+      ]
+    },
+    {
+      "name": "azure-storage-blobs-cpp"
+    },
+    {
+      "name": "libjxl"
+    },
+    {
+      "name": "cppzmq"
+    },
+    {
+      "name": "libarchive"
+    },
+    {
+      "name": "opencv",
+      "default-features": false,
+      "features": [
+        "contrib",
+        "dnn",
+        "jpeg",
+        "tiff",
+        "nonfree",
+        "ipp",
+        "tbb"
+      ]
+    }
+  ],
+  "builtin-baseline": "59aeb8fe8fe1c980de6bd5ba634cf21024522d81"
 }

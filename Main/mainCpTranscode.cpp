@@ -44,7 +44,98 @@
 #include <string.h>
 
 
-
+/**
+ * @struct Data
+ *
+ * @brief This structure is used to hold various data and state information for the application.
+ *
+ * @var Data::outdir
+ * The output directory where the processed files will be stored.
+ *
+ * @var Data::indir
+ * The input directory from where the files will be read for processing.
+ *
+ * @var Data::dry_run
+ * A boolean flag indicating whether the application should run in dry-run mode. In dry-run mode, no actual file operations are performed.
+ *
+ * @var Data::inplace
+ * A boolean flag indicating whether the processing should be done in-place. If true, the original files are replaced with the processed ones.
+ *
+ * @var Data::effort
+ * An integer representing the effort level for the compression algorithm. Higher values indicate more effort (and potentially better compression, but slower).
+ *
+ * @var Data::tar
+ * An integer representing the number of characters to remove from the original file name when creating tar files.
+ *
+ * @var Data::queue_mut
+ * A mutex used for synchronizing access to the file and folder queues.
+ *
+ * @var Data::fileFolderQueue
+ * A map where the key is a folder name and the value is a list of files in that folder that need to be processed.
+ *
+ * @var Data::ongoingfolder
+ * A set of folder names that are currently being processed.
+ *
+ * @var Data::folderQueue
+ * A threadsafe queue of folders that need to be processed.
+ *
+ * @var Data::folderOver
+ * An atomic integer representing the number of folders that are still being processed.
+ *
+ * @var Data::folder_mut
+ * A mutex used for synchronizing access to the folder-related data.
+ *
+ * @var Data::copy_count
+ * An atomic counter for the number of files that have been copied.
+ *
+ * @var Data::write_count
+ * An atomic counter for the number of files that have been written.
+ *
+ * @var Data::console
+ * A mutex used for synchronizing access to the console output.
+ *
+ * @var Data::prepared
+ * An atomic counter for the number of files that have been prepared for processing.
+ *
+ * @var Data::readed
+ * An atomic counter for the number of bytes that have been read.
+ *
+ * @var Data::writen
+ * An atomic counter for the number of bytes that have been written.
+ *
+ * @var Data::ts
+ * A timestamp representing the start time of the processing.
+ *
+ * @var Data::older
+ * A timestamp representing the oldest file or folder that should be considered for processing.
+ *
+ * @var Data::group0
+ * An atomic counter for the number of tasks in group 0.
+ *
+ * @var Data::group1
+ * An atomic counter for the number of tasks in group 1.
+ *
+ * @var Data::mgroup0
+ * A mutex used for synchronizing access to the group0 counter.
+ *
+ * @var Data::mgroup1
+ * A mutex used for synchronizing access to the group1 counter.
+ *
+ * @var Data::tarobjects
+ * A map where the key is a folder name and the value is a pointer to an archive object representing a tar file.
+ *
+ * @var Data::tar_remove
+ * A map where the key is a folder name and the value is a list of objects to be removed from the tar file.
+ *
+ * @var Data::tar_lock
+ * A mutex used for synchronizing access to the tar-related data.
+ *
+ * @var Data::tar_close
+ * A map where the key is a pointer to an archive object and the value is an integer representing the number of times the archive should be closed.
+ *
+ * @var Data::folderset
+ * A semaphore used for controlling the number of concurrent folder processing tasks.
+ */
 struct Data {
 
     QString outdir;
@@ -122,48 +213,89 @@ struct Data {
 
 };
 
+/**
+ * @class FileProcessor
+ *
+ * @brief This class is responsible for processing the files.
+ *
+ * @var FileProcessor::data
+ * A reference to the Data structure that holds the application state.
+ *
+ * @fn FileProcessor::compress
+ * This function compresses an image using the JPEG XL compression algorithm.
+ *
+ * @fn FileProcessor::writeFile
+ * This function writes the compressed data to a file.
+ *
+ * @fn FileProcessor::run
+ * The main function that is executed when the thread starts. It processes the files and writes the compressed data to the output files.
+ */
+/**
+ * @class InputProcessor
+ *
+ * @brief This class is responsible for scanning the directories and preparing the files for processing.
+ *
+ * @var InputProcessor::data
+ * A reference to the Data structure that holds the application state.
+ *
+ * @fn InputProcessor::run
+ * The main function that is executed when the thread starts. It scans the directories and prepares the files for processing.
+ */
 class InputProcessor : public QRunnable {
 public:
     InputProcessor(Data &data) : data(data) {}
 
     void run() override {
-
+        // The loop continues as long as there are folders to scan
         while (data.scanFolder())
         {
+            // Pop a folder from the queue
             auto rec = data.folderQueue.pop();
             if (rec)
             {
+                // Increment the group0 counter (number of tasks in group 0)
                 {
                     QMutexLocker lock(&data.mgroup0);
-                    data.group0 ++;
+                    data.group0++;
                 }
 
+                // Create a directory iterator for the current folder
                 QDirIterator it(*rec);
                 int add = 0;
                 QSet<QString> tar_name;
+                // Iterate over all files and subdirectories in the current directory
                 while (it.hasNext())
                 {
                     QString file = it.next();
+                    // Skip the current directory and the parent directory
                     if (file.endsWith(".") || file.endsWith(".."))
                         continue;
 
+                    // Lock the mutex to ensure thread safety when accessing shared data
                     data.folder_mut.lock();
+                    // Add the current folder to the set of folders being processed
                     data.ongoingfolder.insert(*rec);
+                    // Unlock the mutex
                     data.folder_mut.unlock();
 
+                    // Get information about the current file or directory
                     auto finfo = it.fileInfo();
+                    // If it's a directory and it's newer than the oldest allowed date, add it to the queue
                     if (finfo.isDir() && (!data.older.isNull() && finfo.lastModified() < data.older))
                     {
                         data.folderQueue.push(finfo.absoluteFilePath());
                         data.folderOver++;
                     }
+                    // If it's a file and it's newer than the start time of the processing, add it to the file queue
                     else if (finfo.isFile() && finfo.lastModified() > data.ts)
                     {
+                        // Lock the mutex to ensure thread safety when accessing shared data
                         data.folder_mut.lock();
                         QString filepath = finfo.absoluteFilePath();
-                        if (filepath.endsWith(".tif") && data.tar > 0  && filepath.split("/").last().size() > data.tar)
-                        { // advanced mode for tif / tar handling consider the tar as a folder
-                            auto name = filepath.mid(0, filepath.size() -data.tar - 4);
+                        // If the file is a .tif file and the tar mode is enabled, add it to the tar file queue
+                        if (filepath.endsWith(".tif") && data.tar > 0 && filepath.split("/").last().size() > data.tar)
+                        {
+                            auto name = filepath.mid(0, filepath.size() - data.tar - 4);
                             tar_name << name;
                             data.fileFolderQueue[name].push_back(filepath.mid(data.indir.length()));
                         }
@@ -171,32 +303,33 @@ public:
                         {
                             data.fileFolderQueue[*rec].push_back(filepath.mid(data.indir.length()));
                         }
+                        // Unlock the mutex
                         data.folder_mut.unlock();
-
-                        //                        data.fileQueue.push(finfo.absoluteFilePath().mid(data.indir.length()));
                     }
                     add++;
                 }
+                // Lock the mutex to ensure thread safety when accessing shared data
                 data.folder_mut.lock();
 
-                for (auto& tar: tar_name) data.ongoingfolder.remove(tar);
+                // Remove the current folder from the set of folders being processed
+                for (auto& tar : tar_name) data.ongoingfolder.remove(tar);
                 data.ongoingfolder.remove(*rec);
                 if (data.fileFolderQueue[*rec].empty())
                     data.fileFolderQueue.remove(*rec);
 
-
+                // Unlock the mutex
                 data.folder_mut.unlock();
 
-                data.prepared+=add;
+                // Increment the counter of prepared files
+                data.prepared += add;
+                // Decrement the group0 counter (number of tasks in group 0)
                 {
                     QMutexLocker lock(&data.mgroup0);
-                    data.group0 --;
+                    data.group0--;
                     data.folderOver--;
                 }
-
             }
         }
-
     }
 
 private:
@@ -644,7 +777,7 @@ public:
         }
 
 
-    
+
     }
 
 private:

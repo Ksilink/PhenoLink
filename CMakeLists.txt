@@ -100,7 +100,7 @@ add_definitions(-DCheckout_Git_Hash="${app_hash_short}-${plugin_hash_short}${git
 
 option(BUILD_PLUGINS "Build plugins" ON)
 option(BUILD_PYTHON_SCRIPTING "Build with Core side Python Scripting" OFF)
-option(BUILD_WITH_VTK "Build the VTK optional stuff" ON)
+option(BUILD_WITH_VTK "Build the VTK optional stuff" OFF)
 option(BUILD_RAW_PROCESSOR "Build the Raw data processor (very advanced users - developper feature)" OFF)
 option(PLUGIN_IN_CORE "Shall Core call plugins" OFF)
 option(ONNX_GPU "Use ONNX GPU Version" OFF)
@@ -178,10 +178,11 @@ find_package(Qt6 COMPONENTS  Widgets  Xml
                 OpenGLWidgets Concurrent  Network  REQUIRED)
 
 if (WIN32)
-find_package(Qt6 COMPONENTS  WebView  REQUIRED)
 
-    find_package(Qt6WebView CONFIG REQUIRED)
-    find_package(Qt6WebEngineWidgets CONFIG REQUIRED)
+    # find_package(Qt6 COMPONENTS  WebView  REQUIRED)
+
+    # find_package(Qt6WebView CONFIG REQUIRED)
+    # find_package(Qt6WebEngineWidgets CONFIG REQUIRED)
 
 endif(WIN32)
 find_package(bsoncxx   REQUIRED)

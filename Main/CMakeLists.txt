@@ -26,7 +26,7 @@ IF(WIN32)
 
 #    target_compile_definitions(PhenoLink PUBLIC  -DGitPluginDate=${plugin_date} )
 
-    target_link_libraries(PhenoLink PhenoLinkGui PhenoLinkCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent Qt::WebView ${OpenCV_LIBS} )
+    target_link_libraries(PhenoLink PhenoLinkGui PhenoLinkCore QHttp Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS} )
     #install_qt5_executable(Checkout)
     install(TARGETS PhenoLink COMPONENT applications DESTINATION bin)
 
