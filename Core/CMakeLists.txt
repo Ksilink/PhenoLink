@@ -77,6 +77,9 @@ find_package(PkgConfig)
 pkg_check_modules(Jxl REQUIRED IMPORTED_TARGET libjxl)
 pkg_check_modules(JxlThreads REQUIRED IMPORTED_TARGET libjxl_threads)
 
+#find_package(Jxl REQUIRED)
+#find_package(JxlThreads REQUIRED)
+
 
 if (BUILD_PLUGINS)
     target_compile_definitions(PhenoLinkCore PUBLIC  -DGitPluginDate=${plugin_date})
