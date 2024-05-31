@@ -33,6 +33,10 @@ find_package(Git REQUIRED)
 find_package(Arrow CONFIG REQUIRED)
 
 if(WIN32)
+  set(CMAKE_CXX_FLAGS "/EHsc")
+
+
+
 else()
     set(CMAKE_CXX_FLAGS "-Wno-deprecated")
     set(CMAKE_C_FLAGS "-Wno-deprecated")
