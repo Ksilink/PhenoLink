@@ -42,3 +42,4 @@ out/
 *.autosave
 *.TMP
 vcpkg-configuration.json
+CMake*.json
