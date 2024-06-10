@@ -25,6 +25,7 @@
 
 
 #undef signals
+
 #include <arrow/api.h>
 #include <arrow/filesystem/filesystem.h>
 #include <arrow/util/iterator.h>

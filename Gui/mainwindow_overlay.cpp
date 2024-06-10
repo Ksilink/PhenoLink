@@ -328,6 +328,8 @@ void ReadFeather(QString file, StructuredMetaData& data)
                 {
                     if (array->IsValid(s))
                         mat.at<float>(s+r, c) = array->Value(s);
+					else
+						qDebug() << "Invalid value" << s << c;
                 }
 
                 mr = std::max(mr, (int)array->length());

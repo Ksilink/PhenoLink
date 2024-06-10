@@ -1263,7 +1263,10 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
         // We need to go columns wise
         {
             arrow::StringBuilder wells, plate;
-            arrow::NumericBuilder<arrow::Int16Type> tp, fi, zp, ch;
+            arrow::NumericBuilder<arrow::Int32Type> tp, fi, zp, ch;
+
+
+
 
             for (auto &k : items)
             {
@@ -1271,18 +1274,43 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
                 auto status = wells.Append(v[0].toStdString());
                 status = plate.Append(df.plate.toStdString());
 
+                qDebug() << v;
+                qDebug() << tp.length() << fi.length() << zp.length() << ch.length();
+
                 status = tp.Append(v[1].toInt());
                 status = fi.Append(v[2].toInt());
                 status = zp.Append(v[3].toInt());
                 status = ch.Append(v[4].toInt());
-            }
 
-            auto status = wells.Finish(&dat[0]);
+
+                qDebug() << tp.length() << fi.length() << zp.length() << ch.length();
+
+            }
+            qDebug() << wells.length() << plate.length() << tp.length();
+
+            arrow::Status status = wells.Finish(&dat[0]);
+            if (status.code() != arrow::StatusCode::OK)
+                qDebug() << QString::fromStdString(status.ToString());
             status = plate.Finish(&dat[1]);
+            if (status.code() != arrow::StatusCode::OK)
+                qDebug() << QString::fromStdString(status.ToString());
+
             status = tp.Finish(&dat[2]);
+            if (status.code() != arrow::StatusCode::OK)
+                qDebug() << QString::fromStdString(status.ToString());
+
+
+
             status = fi.Finish(&dat[3]);
+            if (status.code() != arrow::StatusCode::OK)
+                qDebug() << QString::fromStdString(status.ToString());
             status = zp.Finish(&dat[4]);
+            if (status.code() != arrow::StatusCode::OK)
+                qDebug() << QString::fromStdString(status.ToString());
             status = ch.Finish(&dat[5]);
+
+            if (status.code() != arrow::StatusCode::OK)
+                qDebug() << QString::fromStdString(status.ToString());
 
             int dp = 6;
             for (auto &sk : df.arrStr.keys())
@@ -1292,12 +1320,16 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
                 arrow::StringBuilder bldr;
                 for (auto &k : items)
                 {
+    
                     if (mp.contains(k))
                         auto status = bldr.Append(mp.value(k).toStdString());
                     else
                         auto status = bldr.AppendNull();
                 }
                 auto status = bldr.Finish(&dat[dp]);
+                if (status.code() != arrow::StatusCode::OK)
+                    qDebug() << QString::fromStdString(status.ToString());
+
                 dp++;
             }
 
@@ -1316,6 +1348,8 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
                 auto status = bldr.Finish(&dat[dp]);
                 dp++;
             }
+
+
         }
 
         auto schema =
