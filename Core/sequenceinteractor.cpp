@@ -1686,9 +1686,7 @@ QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
         }
 
     }
-
-
-    //    SequenceFileModel::Channel& chans = _mdl->getChannelsFiles(_timepoint, _field, _zpos);
+   
 
     int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
     //    qDebug() << "Overlays :" << _timepoint << _field << _zpos << cns;

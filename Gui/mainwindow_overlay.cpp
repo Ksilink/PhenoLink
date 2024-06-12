@@ -393,7 +393,7 @@ void MainWindow::importOverlay()
     bool ok;
     QString scom = QInputDialog::getItem(this, "Select Commit Name data", "Commit Name:", coms.keys(), 0, false, &ok);
 
-    if (ok & !scom.isEmpty())
+    if (ok && !scom.isEmpty())
     {
         // Let's reload the datas !!!!
         //  void addMeta(int timePoint, int fieldIdx, int Zindex, int Channel, QString name, StructuredMetaData meta);
