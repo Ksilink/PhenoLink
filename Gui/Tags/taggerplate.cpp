@@ -774,6 +774,10 @@ QJsonObject TaggerPlate::refreshJson()
 
     if (ml)
     {
+
+        QSet<QString> seen;
+
+
         QStandardItemModel* model = qobject_cast<QStandardItemModel*>(ml->sourceModel());
         if (model) {
 
@@ -787,7 +791,14 @@ QJsonObject TaggerPlate::refreshJson()
                         QJsonArray ar = categories.contains(ch->text()) ?
                                             categories[ch->text()].toArray()
                                                                         : QJsonArray();
-                        ar.append(ch->child(j)->text());
+                        QString s = ch->child(j)->text().trimmed();
+                        if (ar.contains(s) || seen.contains(s))
+                            continue;
+
+                        seen.insert(s);
+
+                        ar.append(s);
+
                         categories[ch->text()]=ar;
                     }
                 }
