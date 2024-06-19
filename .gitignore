@@ -39,6 +39,7 @@ CMakeLists.txt.user
 CMakeLists.txt.user
 *.pyc
 out/
+build/
 *.autosave
 *.TMP
 vcpkg-configuration.json
