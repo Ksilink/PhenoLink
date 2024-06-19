@@ -382,13 +382,13 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
         ui->textLog->append(err);
         ui->textLog->show();
 
-        //        err.truncate(80);
-        //        QMessageBox::StandardButton reply;
+               err.truncate(5000);
+               QMessageBox::StandardButton reply;
 
-        //        reply = QMessageBox::warning(this, "Data Loading",
-        //                                     QString("A problem occured during data loading:  \n'%1...'").arg(err),
-        //                                     QMessageBox::Abort | QMessageBox::Ignore
-        ////                                     );
+               reply = QMessageBox::warning(this, "Data Loading",
+                                            QString("A problem occured during data loading:  \n'%1...'").arg(err),
+                                             QMessageBox::Ignore
+                                             );
         //        QSettings set;
 
         //        if (!set.value("UserMode/VeryAdvanced", false).toBool() &&  reply == QMessageBox::Abort)
