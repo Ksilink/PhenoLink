@@ -216,8 +216,8 @@ tagger::tagger(QStringList datas, QWidget *parent) :
                         continue;
                     }
 //                    qDebug() << kv;
-
-                    _grouped_tags[kv[0]][kv[1]].insert(kv[2]);
+                    if (kv[1].trimmed() != "-" && kv[2].trimmed() != "-")
+                    _grouped_tags[kv[0].trimmed()][kv[1].trimmed()].insert(kv[2].trimmed());
                 }
 //                QString t = QString::fromStdString(std::string{cellview}).simplified().replace("::", ".");
 //                QString prj = QString::fromStdString(std::string{prview}).simplified().replace("::", ".");
@@ -232,12 +232,6 @@ tagger::tagger(QStringList datas, QWidget *parent) :
 
 
  }
-
-
-
-    // FIXME add: media, density, treatment, coating, staining, drugs
-
-
 
 
     QWidget *twobut = new QWidget();

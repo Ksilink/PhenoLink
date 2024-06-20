@@ -812,6 +812,35 @@ QJsonObject TaggerPlate::refreshJson()
     tagger.insert("serverPath", QJsonValue(path));
     tagger.insert("Categories", categories);
 
+    if (!tagger.contains("acquisitionDate"))
+    {
+        QStringList dateList=plateDate.split("_");
+        if (dateList.size() > 2)
+        {
+        auto date=QDateTime::fromString(dateList[dateList.size()-2]+"-"+dateList[dateList.size()-1], "yyyyMMdd-HHmmss");
+
+        tagger.insert("acquisitionDate", date.toString(Qt::ISODateWithMs));
+        }
+    }
+
+    if (!tagger.contains("size"))
+    {
+        QDir folder(path);
+        folder.cdUp();
+
+        auto flist = folder.entryList(QStringList() << "*.jxl" << "*.tif" );
+        if (flist.size() > 0)
+        {
+        QFile img(flist.first());
+        float im_size = img.size();
+
+        tagger.insert("size", (flist.size() * im_size ) / 1024 / 1024 / 1024);
+        }
+        else
+            qDebug() << "Not able to compute folder size due to empty results from folder.entryList"
+                     << folder << path;
+    }
+
     return tagger;
 }
 

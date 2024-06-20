@@ -16,7 +16,7 @@ SetCompressorDictSize 4
 
 InstallDir "$PROGRAMFILES64\Phenolink"
 
-; These are the programs that are needed by ACME Suite.
+; These are the programs that are needed by ACME Suite
 Section -Prerequisites
   SetOutPath $INSTDIR\Prerequisites
 
@@ -34,33 +34,33 @@ Section "Main Installer Section"
 RMDir /r $INSTDIR
 
 # define output path
-SetOutPath $INSTDIR\bin\Release
+SetOutPath $INSTDIR\bin\
 
 # specify file to go in output path
-File "@CMAKE_BINARY_DIR@\bin\Release\Phenolink.exe"
-File "@CMAKE_BINARY_DIR@\bin\Release\PhenolinkHttpServer.exe"
-File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
-#File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll" # Grrr hack for DLL to be imported by the loader
+File "@CMAKE_BINARY_DIR@\bin\Phenolink.exe"
+File "@CMAKE_BINARY_DIR@\bin\PhenolinkHttpServer.exe"
+File "@CMAKE_BINARY_DIR@\bin\*.dll"
+#File "@CMAKE_BINARY_DIR@\bin\plugins\*.dll" # Grrr hack for DLL to be imported by the loader
 File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 
 File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
 #File "@CMAKE_BINARY_DIR@\bin\*.dll"
 
-SetOutPath $INSTDIR\bin\Release\resources
-File "@CMAKE_BINARY_DIR@\bin\Release\resources\*.pak"
-File "@CMAKE_BINARY_DIR@\bin\Release\resources\*.dat"
+SetOutPath $INSTDIR\bin\resources
+File "@CMAKE_BINARY_DIR@\bin\resources\*.pak"
+File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
 
-SetOutPath $INSTDIR\bin\Release\styles
-File "@CMAKE_BINARY_DIR@\bin\Release\styles\*.dll"
+SetOutPath $INSTDIR\bin\styles
+File "@CMAKE_BINARY_DIR@\bin\styles\*.dll"
 
-SetOutPath $INSTDIR\bin\Release\iconengines
-File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
+SetOutPath $INSTDIR\bin\iconengines
+File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"
 
-SetOutPath $INSTDIR\bin\Release\translations\Qt6\qtwebengine_locales
-File "@CMAKE_BINARY_DIR@\bin\Release\translations\Qt6\qtwebengine_locales\*"
+SetOutPath $INSTDIR\bin\translations\Qt6\qtwebengine_locales
+File "@CMAKE_BINARY_DIR@\bin\translations\qtwebengine_locales\*"
 
 #SetOutPath $INSTDIR\bin\qtwebengine_locales
-#File "@CMAKE_BINARY_DIR@\bin\Release\translations\qtwebengine_locales\*.pak"
+#File "@CMAKE_BINARY_DIR@\bin\translations\qtwebengine_locales\*.pak"
 
 
 CreateDirectory $INSTDIR\bin\Cache
@@ -68,11 +68,11 @@ CreateDirectory $INSTDIR\bin\Cache
 
 # define uninstaller name
 WriteUninstaller $INSTDIR\uninstaller.exe
-SetOutPath $INSTDIR\bin\plugins\Release
+SetOutPath $INSTDIR\bin\plugins
 
 # Start Menu
         createDirectory "$SMPROGRAMS\PhenoLink"
-        createShortCut "$SMPROGRAMS\PhenoLink\PhenoLink.lnk" "$INSTDIR\bin\Release\PhenoLink.exe" "" "$INSTDIR\bin\Release\PhenoLink.exe"
+        createShortCut "$SMPROGRAMS\PhenoLink\PhenoLink.lnk" "$INSTDIR\bin\PhenoLink.exe" "" "$INSTDIR\bin\PhenoLink.exe"
 
 
 
@@ -82,19 +82,19 @@ SectionEnd
 Section "Plugin Installer Section"
 
 # define output path
-SetOutPath $INSTDIR\bin\plugins\Release
-File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll"
-;SetOutPath $INSTDIR\bin\Release\accessible
+SetOutPath $INSTDIR\bin\plugins
+File "@CMAKE_BINARY_DIR@\bin\plugins\*.dll"
+;SetOutPath $INSTDIR\bin\accessible
 ;File "@CMAKE_BINARY_DIR@\bin\accessible\*.dll"
 
-SetOutPath $INSTDIR\bin\Release\platforms
-File "@CMAKE_BINARY_DIR@\bin\Release\platforms\*.dll"
+SetOutPath $INSTDIR\bin\platforms
+File "@CMAKE_BINARY_DIR@\bin\platforms\*.dll"
 
-SetOutPath $INSTDIR\bin\Release\iconengines
-File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
+SetOutPath $INSTDIR\bin\iconengines
+File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"
 
-SetOutPath $INSTDIR\bin\Release\imageformats
-File "@CMAKE_BINARY_DIR@\bin\Release\imageformats\*.dll"
+SetOutPath $INSTDIR\bin\imageformats
+File "@CMAKE_BINARY_DIR@\bin\imageformats\*.dll"
 
 SectionEnd
 
