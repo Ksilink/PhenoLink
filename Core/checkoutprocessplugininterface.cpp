@@ -170,6 +170,7 @@ void CheckoutProcessPluginInterface::prepareData()
     //  qDebug() << "Process hash func: " << hash;
     int p = 0;
     foreach ( RegistrableParent* regs, _parameters)
+        if (regs)
     {
         QString dhash = QString("%1%2").arg(hash).arg(p++);
         regs->setHash(dhash);
@@ -223,7 +224,12 @@ void CheckoutProcessPluginInterface::prepareData()
                 }
             }
         }
+
     }
+        else
+        {
+            qDebug() << "Warning registered parameter doesn't exist";
+        }
     {
         QMutexLocker locker(&mutex);
         if (_meta.size())

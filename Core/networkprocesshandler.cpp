@@ -1274,8 +1274,8 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
                 auto status = wells.Append(v[0].toStdString());
                 status = plate.Append(df.plate.toStdString());
 
-                qDebug() << v;
-                qDebug() << tp.length() << fi.length() << zp.length() << ch.length();
+                //qDebug() << v;
+                //qDebug() << tp.length() << fi.length() << zp.length() << ch.length();
 
                 status = tp.Append(v[1].toInt());
                 status = fi.Append(v[2].toInt());
@@ -1283,10 +1283,10 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
                 status = ch.Append(v[4].toInt());
 
 
-                qDebug() << tp.length() << fi.length() << zp.length() << ch.length();
+                //qDebug() << tp.length() << fi.length() << zp.length() << ch.length();
 
             }
-            qDebug() << wells.length() << plate.length() << tp.length();
+            //qDebug() << wells.length() << plate.length() << tp.length();
 
             arrow::Status status = wells.Finish(&dat[0]);
             if (status.code() != arrow::StatusCode::OK)

@@ -568,7 +568,7 @@ int main(int ac, char** av)
     app.setOrganizationName("WD");
 
     cv::setBreakOnError(true);
-    cv::redirectError(&PhenoLinkOpenCVErrorCallback);
+    //cv::redirectError(&PhenoLinkOpenCVErrorCallback);
 
 
 

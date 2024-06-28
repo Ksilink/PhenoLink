@@ -264,7 +264,11 @@ public:
 
     Self& setChannelNames(QStringList names)
     {
-        _vectorNames = names;
+        _vectorNames.clear();
+
+        for (auto name : names)
+            _vectorNames.append(name.trimmed());
+     
         return *this;
     }
 
