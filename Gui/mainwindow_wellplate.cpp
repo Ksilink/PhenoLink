@@ -316,32 +316,40 @@ void proc_mapped(QPair<SequenceFileModel*, QString>& pairs)
 {
 #ifdef _WIN64
 
-    if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(pairs.second.toStdWString().c_str()))
-    {
+    QString str = pairs.second;
 
-        auto str = pairs.second;
+    if (str.endsWith(".jxl"))
+    {
         str.chop(4); str+=".jxl";
 
-        if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(str.toStdWString().c_str()))
-        {
-
-            auto str = pairs.second;
-
-            for (int i = str.size(); i > 0; --i) // Assume it's valid if we have a .tar file
-            {
-                auto t = str.mid(0, i); t += ".tar";
-                if (GetFileAttributesW(t.toStdWString().c_str()) != INVALID_FILE_ATTRIBUTES)
-                    return;
-            }
-
-
-
-
-            mx.lock();
-            pairs.first->setInvalid();
-            mx.unlock();
-        }
     }
+    if (str.endsWith(".czi"))
+    {
+
+        str.chop(4);
+
+        str.chop(str.size()-str.lastIndexOf("."));
+        str += ".czi";
+    }
+
+
+    if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(str.toStdWString().c_str()))
+    {
+        auto str = pairs.second;
+
+        for (int i = str.size(); i > 0; --i) // Assume it's valid if we have a .tar file
+        {
+            auto t = str.mid(0, i); t += ".tar";
+            if (GetFileAttributesW(t.toStdWString().c_str()) != INVALID_FILE_ATTRIBUTES)
+                return;
+        }
+
+
+        mx.lock();
+        pairs.first->setInvalid();
+        mx.unlock();
+    }
+
 #else
 
 

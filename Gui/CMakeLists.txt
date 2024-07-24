@@ -5,6 +5,18 @@ add_definitions(-DQHTTP_HAS_CLIENT)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CZI_LIB "")
+if (BUILD_CARL_ZEISS_IMAGING_SUPPORT)
+    add_compile_definitions(-DCZI)
+    link_directories("${CZI_DIR}/Src/libCZI/Release/")
+    link_directories("${CZI_DIR}/Src/libCZI/Debug/")
+    set(CZI_LIB  "libCZI")
+endif()
+
+
+
+
+
 set(PhenoLinkGui_SRC
                 mainwindow.cpp mainwindow_wellplate.cpp
                 mainwindow_datatables.cpp mainwindow_startprocesses.cpp

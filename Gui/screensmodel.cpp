@@ -168,9 +168,16 @@ void ScreensModel::recurse(QString dir, QStringList search, QStandardItem* paren
         {
             QDir glob(dir);
             QFileInfoList ff = glob.entryInfoList(QStringList() << *it, QDir::Files);
+            int child = 0;
             foreach (QFileInfo i, ff)
             {
-                parent->setData(i.absoluteFilePath(), Qt::UserRole + 4);
+                QStandardItem* r = new QStandardItem(i.fileName().chopped(4));
+
+                r->setData(i.absoluteFilePath(), Qt::UserRole + 4);
+                r->setFlags(parent->flags() | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+                r->setData(Qt::Unchecked, Qt::CheckStateRole);
+                parent->setChild(child++, r);
+                // parent->setData(i.absoluteFilePath(), Qt::UserRole + 4);
                 //                qDebug() << i.absoluteFilePath();
                 parent->setFlags(parent->flags() | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
                 parent->setData(Qt::Unchecked, Qt::CheckStateRole);
@@ -185,7 +192,6 @@ void ScreensModel::recurse(QString dir, QStringList search, QStandardItem* paren
                     gpparent->setData(Qt::Unchecked, Qt::CheckStateRole);
                 }
                 done = true;
-                break;
             }
         }
     }

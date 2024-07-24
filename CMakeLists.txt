@@ -14,6 +14,14 @@ cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 set(VCPKG_FEATURE_FLAGS versions)
 set(VCPKG_DISABLE_COMPILER_TRACKING 1)
 
+
+
+#cmake_policy(SET CMP0091 NEW) # enable new "MSVC runtime library selection" (https://cmake.org/cmake/help/latest/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html)
+
+#set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+
+
 project(PhenoLink)
 
 #
@@ -33,7 +41,7 @@ find_package(Git REQUIRED)
 find_package(Arrow CONFIG REQUIRED)
 
 if(WIN32)
-  set(CMAKE_CXX_FLAGS "/EHsc")
+    set(CMAKE_CXX_FLAGS "/EHsc")
 
 
 
@@ -109,6 +117,10 @@ option(BUILD_RAW_PROCESSOR "Build the Raw data processor (very advanced users - 
 option(PLUGIN_IN_CORE "Shall Core call plugins" OFF)
 option(ONNX_GPU "Use ONNX GPU Version" OFF)
 
+option(BUILD_CARL_ZEISS_IMAGING_SUPPORT "Build with the CarlZeissImaging (CZI) format support" OFF)
+
+
+
 if(UNIX AND NOT APPLE)
         set(LINUX TRUE)
 endif()
@@ -144,6 +156,31 @@ else() # MacOSX ?
 
 endif(WIN32)
 
+if (BUILD_CARL_ZEISS_IMAGING_SUPPORT)
+    set(CZI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../libCZI/build/" CACHE PATH "Path to CZI library ")
+
+    message(STATUS "With CZI ${CZI_DIR}")
+
+    add_definitions(-DCZI)
+
+    include_directories( ${CZI_DIR}/Src/libCZI/ ) # to include folder with config
+    include_directories( ${CZI_DIR}/../Src/libCZI/ ) # to include header files
+
+    add_compile_definitions(-DCZI)
+
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug" )
+        link_directories("${CZI_DIR}/Src/libCZI/Debug/")
+        set(CZI_LIB  "libCZId")
+        file(COPY_FILE "${CZI_DIR}/Src/libCZI/Debug/libCZId.dll" "${CMAKE_BINARY_DIR}/bin/libCZId.dll" ONLY_IF_DIFFERENT)
+    else()
+        link_directories("${CZI_DIR}/Src/libCZI/Release/")
+        set(CZI_LIB  "libCZI")
+        file(COPY_FILE "${CZI_DIR}/Src/libCZI/Release/libCZI.dll" "${CMAKE_BINARY_DIR}/bin/libCZI.dll" ONLY_IF_DIFFERENT)
+    endif()
+
+endif(BUILD_CARL_ZEISS_IMAGING_SUPPORT)
+
+
 # now download the file
 if (NOT EXISTS "${PROJECT_BINARY_DIR}/${ONNX_TARGET}" )
     message("Shall download ${ONNX_URL} to ${ONNX_TARGET}")
@@ -157,6 +194,17 @@ link_directories("${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/lib")
 
 message("Setting ONNX include & Lib to : ${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}")
 
+if (ONNX_GPU)
+    file(COPY_FILE "${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/lib/onnxruntime.dll" "${CMAKE_BINARY_DIR}/bin/onnxruntime.dll" ONLY_IF_DIFFERENT)
+    file(COPY_FILE "${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/lib/onnxruntime_providers_shared.dll" "${CMAKE_BINARY_DIR}/bin/onnxruntime_providers_shared.dll" ONLY_IF_DIFFERENT)
+    file(COPY_FILE "${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/lib/onnxruntime_providers_cuda.dll" "${CMAKE_BINARY_DIR}/bin/onnxruntime_providers_cuda.dll" ONLY_IF_DIFFERENT)
+    file(COPY_FILE "${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/lib/onnxruntime_providers_tensorrt.dll" "${CMAKE_BINARY_DIR}/bin/onnxruntime_providers_tensorrt.dll" ONLY_IF_DIFFERENT)
+else()
+    file(COPY_FILE "${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/lib/onnxruntime.dll" "${CMAKE_BINARY_DIR}/bin/onnxruntime.dll" ONLY_IF_DIFFERENT)
+    file(COPY_FILE "${PROJECT_BINARY_DIR}/${ONNX_ROOTDIR}/lib/onnxruntime_providers_shared.dll" "${CMAKE_BINARY_DIR}/bin/onnxruntime_providers_shared.dll" ONLY_IF_DIFFERENT)
+endif(ONNX_GPU)
+
+
 set(PLUGIN_NWD_OLY OFF)
 
 
@@ -169,7 +217,7 @@ include_directories(${ARROW_INCLUDE_DIR})
 
 message(STATUS "Found Arrow: ${ARROW_INCLUDE_DIR} ")
 
-set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)

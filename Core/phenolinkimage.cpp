@@ -30,6 +30,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef CZI
+#include "libCZI_Config.h"
+#include "CZIReader.h"
+
+#endif
+
 
 // a jxl decode function
 
@@ -196,7 +202,58 @@ cv::Mat pl::imread(QString &path, int flags)
     cv::Mat res;
     QString lpath = path;
 
-    // Assuming if file doesn't exist it's a jxl file
+#ifdef CZI
+
+    if (path.endsWith(".czi"))
+    {
+        auto str = path;
+        str.chop(4);
+
+        auto idxdot = str.lastIndexOf(".");
+        auto idx = str.mid(idxdot+1).toInt();
+
+        str.chop(str.size()-str.lastIndexOf("."));
+        str += ".czi";
+
+        wchar_t* czi_file = (wchar_t*)str.utf16();
+
+        auto stream = libCZI::CreateStreamFromFile(czi_file);
+        auto cziReader = libCZI::CreateCZIReader();
+        cziReader->Open(stream);
+
+
+        // use libczi to skip to proper postion
+
+        auto sbBlk = cziReader->ReadSubBlock(idx);
+        auto bitmap = sbBlk->CreateBitmap();
+
+        int type = -1;
+
+//        cv::
+        if (bitmap->GetPixelType() ==  libCZI::PixelType::Gray8)
+            type = CV_8U;
+
+        if (bitmap->GetPixelType() ==  libCZI::PixelType::Gray16)
+            type = CV_16U;
+
+        cv::Mat res;
+        if (type >= 0)
+        {
+            auto locked = bitmap->Lock();
+            cv::Mat inter =     cv::Mat(bitmap->GetHeight(),
+                                        bitmap->GetWidth(),
+                                        type, locked.ptrDataRoi);
+
+            inter.copyTo(res);
+            bitmap->Unlock();
+        }
+        return res;
+    }
+
+#endif
+
+
+    // Assuming if file doesn't exist it's a jxl file or tar or czi
     if (!QFile::exists(path))
     {
         QString filename = path; // initial file name to search through archive
@@ -204,7 +261,9 @@ cv::Mat pl::imread(QString &path, int flags)
         lpath.chop(4);
         QString pth = lpath;
 
+
         lpath+=".jxl";
+
 
         if (!QFile::exists(lpath))
         { // TODO: Check for .tar file with less char than initial file
