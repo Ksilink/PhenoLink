@@ -65,6 +65,8 @@
 #include <QTableWidget>
 #include <QLabel>
 
+#include <QDesktopServices>
+
 #include <Core/checkoutprocess.h>
 #include <Core/imageinfos.h>
 
@@ -928,6 +930,7 @@ void MainWindow::createBirdView()
         QMessageBox::warning(this, "Warning: adding Workbench", "Experiment Workbenches can only be added after being loaded!");
         return;
     }
+
     ScreensGraphicsView* owner = qobject_cast<ScreensGraphicsView*>(ui->wellPlateViewTab->currentWidget());
     ExperimentFileModel* mdl = 0x0;
     QList<QGraphicsItem *> items = owner->items();
@@ -945,7 +948,7 @@ void MainWindow::createBirdView()
     QSettings set;
     QString dbP=set.value("databaseDir").toString();
 
-    QString fpath = QString("%1/PROJECTS/%2/Checkout_Results/BirdView/birdview_%3.html").arg(dbP,mdl->getProjectName(), mdl->name());
+    QString fpath = QString("file://%1/PROJECTS/%2/Checkout_Results/BirdView/birdview_%3.html").arg(dbP,mdl->getProjectName(), mdl->name());
 
     QFile file(fpath);
     QString imgName = generatePlate(file, mdl);
@@ -953,7 +956,15 @@ void MainWindow::createBirdView()
 
     // // Launch the HTML viewer on the birdview file
     // QWebEngineView *view = new QWebEngineView(this);
-    // QUrl url(fpath);
+    QUrl url(fpath);
+
+    if (!QDesktopServices::openUrl(url))
+    {
+
+        QMessageBox::warning(this, "Warning: Failed to load Birdview", QString("File %1 was not found").arg(fpath));
+            return;
+    }
+
     // view->load(url);
     // ui->tabWidget->addTab(view, "Birdview");
 

@@ -51,7 +51,7 @@ else()
 endif(WIN32)
 
 set(Checkout_VERSION_MAJOR 24)
-set(Checkout_VERSION_MINOR 06)
+set(Checkout_VERSION_MINOR 08)
 set(Checkout_VERSION_COMPLEMENT R)
 set(Checkout_VERSION_RELEASE 0)
 
