@@ -242,15 +242,21 @@ void MainWindow::on_notebookDisplay_clicked()
 
     // //    int tab = ui->tabWidget->addTab(view, "Dash View");
     // QWebEngineView *view = new QWebEngineView(this);
-    // QUrl url(QString("http://%1:%2/notebooks/Run/%5?token=%3&autorun=true")
-    //              .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
-    //              .arg("8888")
-    //              .arg(set.value("JupyterToken", "").toString())
-    //              //             .arg(dbopts)
-    //              .arg(tgt)
-    //          );
+    QUrl url(QString("http://%1:%2/notebooks/Run/%5?token=%3&autorun=true")
+                 .arg(set.value("JupyterNotebook", "127.0.0.1").toString())
+                 .arg("8888")
+                 .arg(set.value("JupyterToken", "").toString())
+                 //             .arg(dbopts)
+                 .arg(tgt)
+             );
     // qDebug() << url;
-    // QApplication::clipboard()->setText(url.toString());
+    QApplication::clipboard()->setText(url.toString());
+#include <QDesktopServices>
+    if (!QDesktopServices::openUrl(url))
+    {
+        QMessageBox::warning(this, "Notebook display", "Notebook cannot be forwarded to you web browser");
+    }
+
     // view->load(url);
     // int tab = ui->tabWidget->addTab(view, "Notebook View");
 
