@@ -254,11 +254,11 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
     return qMakePair(xl, yl);
 }
 
-QPointF getFieldPos(SequenceFileModel* seq, int field, int /*z*/, int /*t*/, int /*c*/)
+QPointF getFieldPos(SequenceFileModel* seq, QString well, int field, int /*z*/, int /*t*/, int /*c*/)
 {
-    QRegularExpression k(QString("^f%1s.*X$").arg(field));
+    QRegularExpression k(QString("^%1f%2s.*X$").arg(well).arg(field));
     double x = seq->property(k).toDouble();
-    k.setPattern(QString("^f%1s.*Y$").arg(field));
+    k.setPattern(QString("^%1f%2s.*Y$").arg(well).arg(field));
     double y = seq->property(k).toDouble();
 
     //qDebug() << "Extracting Field Pos :" << field << x << y;
@@ -267,7 +267,7 @@ QPointF getFieldPos(SequenceFileModel* seq, int field, int /*z*/, int /*t*/, int
 
 
 
-void ExperimentFileModel::setFieldPosition()
+void ExperimentFileModel::setFieldPosition(QString well)
 {
 
     bool found_metadata = false;
@@ -294,12 +294,12 @@ void ExperimentFileModel::setFieldPosition()
 
                 for (unsigned field = 1; field <= mdl->getFieldCount(); ++field)
                 {
-                    QRegularExpression k(QString("^f%1s.*X$").arg(field));
+                    QRegularExpression k(QString("^%1f%2s.*X$").arg(well).arg(field));
                     QString prop = mdl->property(k);
                     if (prop.isEmpty()) continue;
                     found_metadata = true;
                     x.insert(prop.toDouble());
-                    k.setPattern(QString("^f%1s.*Y$").arg(field));
+                    k.setPattern(QString("^%1f%2s.*Y$").arg(well).arg(field));
                     prop = mdl->property(k);
                     if (prop.isEmpty()) continue;
                     y.insert(prop.toDouble());
@@ -319,7 +319,7 @@ void ExperimentFileModel::setFieldPosition()
 
         for (unsigned i = 0; i < nb_fields; ++i)
         {
-            QPointF p = getFieldPos(bmdl, i + 1, 1, 1, 1);
+            QPointF p = getFieldPos(bmdl, well, i + 1, 1, 1, 1);
 
             int x = xl.indexOf(p.x());
             int y = yl.indexOf(p.y());
@@ -341,15 +341,23 @@ void ExperimentFileModel::setFieldPosition()
             toField[x][y] = i + 1;
 
         }
-
     }
+
 }
 
-QMap<int, QMap<int, int> > ExperimentFileModel::getFieldPosition()
+QMap<int, QMap<int, int> > ExperimentFileModel::getFieldPosition(QString well)
 {
-    if (toField.isEmpty())
-        setFieldPosition();
-    return toField;
+    if (well.isEmpty())
+    {
+        if (toField.isEmpty())
+            setFieldPosition(well);
+        return toField;
+    }
+    else
+    {
+        setFieldPosition(well);
+        return toField;
+    }
 }
 
 QPair<QList<double>, QList<double> > ExperimentFileModel::getFieldSpatialPositions()
@@ -2326,8 +2334,8 @@ ExperimentFileModel* loadScreenFunc(QString it, bool allow_loaded, Screens& _scr
     //      qDebug() << "is already loaded" << *it << loaded << _screens.size();
     if (loaded) return 0;
     ExperimentFileModel* res = ScreensHandler::getHandler().loadScreen(it);
-    if (res)
-        res->setFieldPosition();
+    // if (res)
+    //     res->setFieldPosition();
 
     return loadJson(it, res);
 }
@@ -2966,7 +2974,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
     mdl->setProperties("hash", hash);
     mdl->merge(*_mscreens[hash]);
     mdl->setName(_mscreens[hash]->name());
-    mdl->setFieldPosition();
+    // mdl->setFieldPosition();
 
     if (mdl->fileName().isEmpty())
     {

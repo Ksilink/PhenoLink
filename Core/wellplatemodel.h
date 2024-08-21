@@ -436,9 +436,11 @@ public:
 
     QSize getSize();
 
-    void setFieldPosition();
+    void setFieldPosition(QString well);
 
-    QMap<int, QMap<int, int> > getFieldPosition();
+    QMap<int, QMap<int, int> > getFieldPosition(QString well=QString());
+
+
     QPair<QList<double>, QList<double> > getFieldSpatialPositions();
 
     SequenceFileModel& operator()(int row, int col);

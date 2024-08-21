@@ -729,7 +729,7 @@ void SequenceInteractor::refinePacking()
     this->pixOffset.resize(_mdl->getFieldCount());
 
 
-    auto toField = _mdl->getOwner()->getFieldPosition();
+    auto toField = _mdl->getOwner()->getFieldPosition(_mdl->Pos());
 
     for (auto it = toField.begin(), end = toField.end(); it != end; ++it)
     {
@@ -928,7 +928,7 @@ QPixmap SequenceInteractor::getPixmap(bool packed, bool bias_correction, float s
                     toStitch.append(s(pr));
                 }
 
-        auto li = _mdl->getOwner()->getFieldPosition();
+                auto li = _mdl->getOwner()->getFieldPosition(_mdl->Pos());
 
         int rows = 0, cols = 0;
         for (int i = 0; i < toStitch.size(); ++i)
@@ -1328,7 +1328,7 @@ QList<unsigned> SequenceInteractor::getData(QPointF d, int& field, bool packed, 
         d.setX(d.x() - cx * m.cols);
         d.setY(d.y() - cy * m.rows);
 
-        auto toField = _mdl->getOwner()->getFieldPosition();
+        auto toField = _mdl->getOwner()->getFieldPosition(_mdl->Pos());
         if (!toField.contains(cx) || !toField[cx].contains(cy))
         {
             /*  qDebug() << "Field not found for displaying value:"
@@ -1686,7 +1686,7 @@ QList<QGraphicsItem*> SequenceInteractor::getMeta(QGraphicsItem* parent)
         }
 
     }
-   
+
 
     int cns = _mdl->getMetaChannels(_timepoint, _field, _zpos);
     //    qDebug() << "Overlays :" << _timepoint << _field << _zpos << cns;
