@@ -954,7 +954,7 @@ void MainWindow::createBirdView()
     QSettings set;
     QString dbP=set.value("databaseDir").toString();
 
-    QString fpath = QString("file://%1/PROJECTS/%2/Checkout_Results/BirdView/birdview_%3.html").arg(dbP,mdl->getProjectName(), mdl->name());
+    QString fpath = QString("%1/PROJECTS/%2/Checkout_Results/BirdView/birdview_%3.html").arg(dbP,mdl->getProjectName(), mdl->name());
 
     QFile file(fpath);
     QString imgName = generatePlate(file, mdl);
