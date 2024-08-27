@@ -89,6 +89,11 @@ inline void concat(const QList<std::shared_ptr<arrow::Array> >& list, std::share
                     auto status = bldr.AppendNull();
                 }
             }
+            else
+            {
+                if (s < de_doubler[d].size())
+                    qDebug() << "Skipped Value" << d << s;
+            }
         }
 
         d++;
