@@ -117,7 +117,18 @@ option(BUILD_RAW_PROCESSOR "Build the Raw data processor (very advanced users - 
 option(PLUGIN_IN_CORE "Shall Core call plugins" OFF)
 option(ONNX_GPU "Use ONNX GPU Version" OFF)
 
-option(BUILD_CARL_ZEISS_IMAGING_SUPPORT "Build with the CarlZeissImaging (CZI) format support" OFF)
+
+# auto build CZI support if czi lib built using default conf
+if((EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../libCZI/build/Src/libCZI/Debug/libCZId.dll")
+        AND
+    (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../libCZI/build/Src/libCZI/Release/libCZI.dll"))
+    option(BUILD_CARL_ZEISS_IMAGING_SUPPORT "Build with the CarlZeissImaging (CZI) format support" ON)
+else()
+    option(BUILD_CARL_ZEISS_IMAGING_SUPPORT "Build with the CarlZeissImaging (CZI) format support" OFF)
+endif()
+
+
+
 
 
 

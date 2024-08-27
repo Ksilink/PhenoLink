@@ -1263,7 +1263,7 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
         // We need to go columns wise
         {
             arrow::StringBuilder wells, plate;
-            arrow::NumericBuilder<arrow::Int32Type> tp, fi, zp, ch;
+            arrow::NumericBuilder<arrow::Int16Type> tp, fi, zp, ch;
 
 
 
@@ -1320,7 +1320,7 @@ void NetworkProcessHandler::storeData(QString* plate, bool* _finished)
                 arrow::StringBuilder bldr;
                 for (auto &k : items)
                 {
-    
+
                     if (mp.contains(k))
                         auto status = bldr.Append(mp.value(k).toStdString());
                     else

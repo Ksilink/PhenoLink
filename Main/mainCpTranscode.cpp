@@ -637,7 +637,7 @@ public:
                 else if (!QFileInfo::exists(QString("%1/%2").arg(data.outdir, jxl)) || data.effort > 0)
                 {
                     QString file(QString("%1/%2").arg(data.indir, infile));
-                    //                qDebug() << "Loading file for copy" << file;
+                                    qDebug() << "Loading file for copy" << file;
                     data.copy_count++;
                     data.console.lock();
 
@@ -660,7 +660,7 @@ public:
                         {
                             if (file.endsWith(".tif") )
                             {
-                                QString jxl=(infile); jxl.replace(".tif", ".jxl");
+                                QString jxl=(infile); jxl.replace(".tif", "");
 
 
                                 unsigned char* png;
@@ -675,8 +675,31 @@ public:
 
                                 cv::Mat m(q.length(), 1, CV_8U, q.data());
 
-                                auto im =  cv::imdecode(m, -1);
+                                std::vector<cv::Mat> multipage;
+                                cv::imdecodemulti(m, -1, multipage);
+
+                                int page = 1;
+                                for (auto ims: multipage)
+                                {
+
+                                // auto ims =  cv::imdecode(m, -1);
                                 m.release();
+
+//                                cv::Mat im;
+
+                                std::vector<cv::Mat> im_v(ims.channels());
+                                cv::split(ims, im_v);
+                                int channel = 1;
+                                for (auto& im: im_v)
+                                {
+
+                                    if (im.depth() == CV_8U)
+                                    {
+                                        qDebug() << "8bit input image";
+                                        bitdepth = 8;
+                                    }
+                                    else
+                                        bitdepth = 16;
 
                                 if (im.cols != 0 || im.rows != 0)
                                 {
@@ -710,7 +733,23 @@ public:
                                         }
                                     }
 
-                                    writeFile(jxl, compressed);
+                                    if (im_v.size() > 1)
+                                    {
+
+                                        QString name;
+                                        if (multipage.size() == 1)
+                                            name = QString("%1_C%2.jxl").arg(jxl).arg(channel);
+                                        else
+                                        {
+                                            name = QString("%1_F%3C%2.jxl").arg(jxl).arg(channel).arg(page);
+                                            page ++;
+                                        }
+                                        writeFile(name, compressed);
+                                        ++channel;
+                                    }
+                                    else
+                                        writeFile(jxl+".jxl", compressed);
+
                                     im.release();
                                     if (data.inplace)
                                     {
@@ -719,6 +758,8 @@ public:
                                             qDebug() << "File not removed" << file;
                                     }
                                 }
+                            }
+                            }
                             }
                             else
                             {
