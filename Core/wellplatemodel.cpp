@@ -1519,8 +1519,9 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
     {
         for (Channel::iterator it = channels.begin(), e = channels.end(); it != e; ++it, ++chann)
             if (!it.value().startsWith(":/mem/") && chann < selectedChanns.size() && selectedChanns.at(chann))
-            {
+            {                
                 h.channel = it.key();
+                if (h.channel <= 0)   continue;
                 names << st[it.key()-1];
                 data.append(it.value().mid(r));
                 chans.append(it.key());
@@ -1532,6 +1533,8 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
             if (!it.value().startsWith(":/mem/"))
             {
                 h.channel = it.key();
+                if (h.channel <= 0)   continue;
+
                 names << st[it.key()-1];
                 QString t;
                 QString();

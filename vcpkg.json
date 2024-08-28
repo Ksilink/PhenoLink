@@ -15,7 +15,8 @@
       "name": "dlib"
     },
     {
-      "name": "mongo-cxx-driver"
+      "name": "mongo-cxx-driver",
+      "features": ["boost"]
     },
     {
       "name": "eigen3"
