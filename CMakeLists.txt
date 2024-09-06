@@ -53,7 +53,7 @@ endif(WIN32)
 set(Checkout_VERSION_MAJOR 24)
 set(Checkout_VERSION_MINOR 09)
 set(Checkout_VERSION_COMPLEMENT R)
-set(Checkout_VERSION_RELEASE 0)
+set(Checkout_VERSION_RELEASE 1)
 
 message(STATUS "GIT : ${GIT_EXECUTABLE} ${CMAKE_SOURCE_DIR}")
 
