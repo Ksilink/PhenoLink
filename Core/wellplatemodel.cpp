@@ -257,9 +257,22 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
 QPointF getFieldPos(SequenceFileModel* seq, QString well, int field, int /*z*/, int /*t*/, int /*c*/)
 {
     QRegularExpression k(QString("^%1f%2s.*X$").arg(well).arg(field));
-    double x = seq->property(k).toDouble();
+	QString tmp = seq->property(k);
+    if (tmp.isEmpty())
+    {
+        k.setPattern(QString("^f%1s.*X$").arg(field));
+        tmp = seq->property(k);
+    }
+    double x = tmp.toDouble();
     k.setPattern(QString("^%1f%2s.*Y$").arg(well).arg(field));
-    double y = seq->property(k).toDouble();
+    tmp = seq->property(k);
+    if (tmp.isEmpty())
+    {
+        k.setPattern(QString("^f%1s.*Y$").arg(field));
+        tmp = seq->property(k);
+    }
+
+    double y = tmp.toDouble();
 
     //qDebug() << "Extracting Field Pos :" << field << x << y;
     return QPointF(x, y);
@@ -296,11 +309,25 @@ void ExperimentFileModel::setFieldPosition(QString well)
                 {
                     QRegularExpression k(QString("^%1f%2s.*X$").arg(well).arg(field));
                     QString prop = mdl->property(k);
-                    if (prop.isEmpty()) continue;
+                    if (prop.isEmpty())
+                    {
+                        k.setPattern(QString("^f%1s.*X$").arg(field));
+                        prop = mdl->property(k);
+                    }
+
+                        
+                    if (prop.isEmpty())
+                        continue;
                     found_metadata = true;
                     x.insert(prop.toDouble());
                     k.setPattern(QString("^%1f%2s.*Y$").arg(well).arg(field));
                     prop = mdl->property(k);
+                    if (prop.isEmpty())
+                    {
+                        k.setPattern(QString("^f%1s.*Y$").arg(field));
+                        prop = mdl->property(k);
+                    }
+
                     if (prop.isEmpty()) continue;
                     y.insert(prop.toDouble());
                 }
