@@ -94,10 +94,19 @@ int main(int argc, char *argv[])
     a.setApplicationDisplayName(QString("PhenoLink %1").arg(CHECKOUT_VERSION));
     a.setOrganizationDomain("WD");
     a.setOrganizationName("WD");
+    a.setStyle(QStyleFactory::create("windowsvista"));
     QSettings set;
 
     if (set.value("UserMode/Debug", false).toBool())
         show_console();
+
+
+    // const auto & styles = QStyleFactory::keys();
+    // for(const auto & s : styles)
+    // {
+    //     qDebug() << s;
+    // }
+
 
     QLoggingCategory::defaultCategory()->setEnabled(QtDebugMsg, true);
 
