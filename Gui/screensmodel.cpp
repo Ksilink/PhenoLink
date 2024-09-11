@@ -137,6 +137,8 @@ void ScreensModel::recurse(QString dir, QStringList search, QStandardItem* paren
             nowild << *it;
 
     bool done = false;
+    int child = 0;
+
 
     for (QStringList::iterator it = nowild.begin(),e = nowild.end();
          it != e && !done ; ++it)
@@ -168,10 +170,11 @@ void ScreensModel::recurse(QString dir, QStringList search, QStandardItem* paren
         {
             QDir glob(dir);
             QFileInfoList ff = glob.entryInfoList(QStringList() << *it, QDir::Files);
-            int child = 0;
-            foreach (QFileInfo i, ff)
+            for (QFileInfo& i: ff)
             {
-                QStandardItem* r = new QStandardItem(i.fileName().chopped(4));
+                QStandardItem* r = new QStandardItem(i.fileName().split(".").front());
+
+                //qDebug() << i.absoluteFilePath() << i.fileName();
 
                 r->setData(i.absoluteFilePath(), Qt::UserRole + 4);
                 r->setFlags(parent->flags() | Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
@@ -197,7 +200,6 @@ void ScreensModel::recurse(QString dir, QStringList search, QStandardItem* paren
     }
 
     QDir ddir(dir);
-    int child = 0;
     QStringList ents = ddir.entryList(QStringList() << "*", QDir::AllDirs | QDir::NoDotAndDotDot);
     for (QStringList::Iterator it = ents.begin(), e = ents.end(); it != e; ++it)
     {
