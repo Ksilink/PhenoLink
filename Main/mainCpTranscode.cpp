@@ -742,7 +742,6 @@ public:
                                         else
                                         {
                                             name = QString("%1_F%3C%2.jxl").arg(jxl).arg(channel).arg(page);
-                                            page ++;
                                         }
                                         writeFile(name, compressed);
                                         ++channel;
@@ -759,7 +758,10 @@ public:
                                     }
                                 }
                             }
-                            }
+
+                                
+                                page++;
+                                }
                             }
                             else
                             {
