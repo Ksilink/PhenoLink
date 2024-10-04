@@ -72,7 +72,7 @@ SetOutPath $INSTDIR\bin\plugins
 
 # Start Menu
         createDirectory "$SMPROGRAMS\PhenoLink"
-        createShortCut "$SMPROGRAMS\PhenoLink\PhenoLink.lnk" "$INSTDIR\bin\PhenoLink.exe" "" "$INSTDIR\bin\PhenoLink.exe"
+        createShortCut "$SMPROGRAMS\PhenoLink\PhenoLink.lnk" "$INSTDIR\bin\PhenoLink.exe" "-style Fusion" "$INSTDIR\bin\PhenoLink.exe"
 
 
 
