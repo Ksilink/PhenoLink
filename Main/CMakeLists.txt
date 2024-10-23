@@ -223,12 +223,12 @@ add_dependencies (PhenoLinkZMQServer PhenoLinkCore)
 
 add_executable(PhenoLinkZMQWorker mainZMQ_WorkerServer.cpp ZMQThread.h  checkout_arrow.h checkout_python.h ${SrvRCFILE} )
 
-target_include_directories(PhenoLinkZMQWorker PUBLIC ${ZeroMQ_INCLUDE_DIR} ${cppzmq_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(PhenoLinkZMQWorker PUBLIC ${ZeroMQ_INCLUDE_DIR} ${cppzmq_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${Boost_LIBRARY_DIRS})
 # target_link_libraries(main PRIVATE cppzmq cppzmq-static)
 if (WIN32)
-    target_link_libraries( PhenoLinkZMQWorker ${CheckoutLibs} Qt::Core Qt::Concurrent Qt::Network Qt::Widgets ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static)
+    target_link_libraries( PhenoLinkZMQWorker ${CheckoutLibs} Qt::Core Qt::Concurrent Qt::Network Qt::Widgets ${ARROW_STATIC_LIB} ${ARROW_LIBRARIES} ${OpenCV_LIBS} ${cppzmq_LIBRARY} libzmq libzmq-static Boost::chrono Boost::thread ${Boost_LIBRARIES} )
 else()
-        target_link_libraries( PhenoLinkZMQWorker PRIVATE ${CheckoutLibs} Qt::Concurrent Qt::Core Qt::Network Qt::Widgets "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS} cppzmq cppzmq-static)
+        target_link_libraries( PhenoLinkZMQWorker PRIVATE ${CheckoutLibs} Qt::Concurrent Qt::Core Qt::Network Qt::Widgets "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>"  ${OpenCV_LIBS} cppzmq cppzmq-static  Boost::chrono Boost::thread${Boost_LIBRARIES})
 endif(WIN32)
 
 install(TARGETS PhenoLinkZMQWorker COMPONENT applications DESTINATION bin)

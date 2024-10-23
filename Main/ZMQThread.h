@@ -15,30 +15,37 @@
 
 class CheckoutProcessPluginInterface;
 class CheckoutHttpClient;
+struct RunnerThread;
 
 class  ZMQThread : public QThread
+                  // public QObject
 {
-    Q_OBJECT
+     Q_OBJECT
 
     GlobParams& global_parameters;
-    QThreadPool worker_threadpool;
-    QThreadPool save_threadpool;
+    // QThreadPool worker_threadpool;
+    // QThreadPool save_threadpool;
     bool verbose;
     QString proxy;
     QString drive_map;
     QThread* mainThread;
     mdwrk session;
 
+    QList<RunnerThread*> to_join;
+
+
     QMap<QString, CheckoutProcessPluginInterface*> _plugins;
 public:
 
     ZMQThread(GlobParams& gp, QThread* parentThread, QString prx, QString dmap, bool ver);
 
+    void operator()();
+
     void run() override;
+    // void run();
 
     void startProcessServer(QString process, QJsonArray array);
 
-    void thread_finished();
 
 
 protected:

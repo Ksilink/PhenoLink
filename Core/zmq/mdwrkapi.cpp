@@ -13,7 +13,7 @@
 extern struct GlobParams global_parameters;
 
 
-std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
+std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p, std::function<void (void)> cb )
 {
 
     static int timer = 0;
@@ -140,7 +140,16 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p)
             delete mg;
             m_heartbeat_at = s_clock() + m_heartbeat;
             timer++;
+
         }
+
+        if (s_clock() >= m_callback_at)
+        {
+            m_callback_at = s_clock() + m_callback;
+            cb();
+        }
+
+
     }
     if (s_interrupted)
         printf ("W: interrupt received, killing worker...\n");

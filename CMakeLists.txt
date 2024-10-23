@@ -128,7 +128,7 @@ else()
 endif()
 
 
-
+find_package(Boost COMPONENTS thread system chrono REQUIRED)
 
 
 

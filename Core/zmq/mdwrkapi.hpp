@@ -2,6 +2,7 @@
 #ifndef MDWRKAPI_HPP
 #define MDWRKAPI_HPP
 
+#include <QDebug>
 
 #include "zmsg.hpp"
 #include "mdp.hpp"
@@ -31,7 +32,7 @@ public:
     mdwrk (QString broker, QString service, GlobParams& gp, int verbose):
         global_parameters(gp),
         m_broker(broker), m_service(service), m_context(new zmq::context_t (1)), m_worker(0),
-        m_verbose(verbose), m_heartbeat(5000), m_reconnect(2500), m_expect_reply(false)
+        m_verbose(verbose), m_heartbeat(2500), m_callback(1000), m_reconnect(2500), m_expect_reply(false)
 
     {
         s_version_assert (4, 0);
@@ -107,6 +108,7 @@ public:
         //  If liveness hits zero, queue is considered disconnected
         m_liveness = HEARTBEAT_LIVENESS;
         m_heartbeat_at = s_clock () + m_heartbeat;
+        m_callback_at = s_clock () + m_callback;
     }
 
 
@@ -134,7 +136,7 @@ public:
     //  ---------------------------------------------------------------------
     //  Send reply, if any, to broker and wait for next request.
 
-    std::pair<QString, zmsg *> recv (zmsg *&reply_p);
+    std::pair<QString, zmsg *> recv (zmsg *&reply_p, std::function<void (void)> cb = [](){});
 
 private:
     QString m_broker;
@@ -145,8 +147,10 @@ private:
 
     //  Heartbeat management
     int64_t m_heartbeat_at;      //  When to send HEARTBEAT
+    int64_t m_callback_at;
     size_t m_liveness;            //  How many attempts left
     int m_heartbeat;              //  Heartbeat delay, msecs
+    int m_callback;
     int m_reconnect;              //  Reconnect delay, msecs
 
     //  Internal state

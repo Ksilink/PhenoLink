@@ -15,6 +15,9 @@
       "name": "dlib"
     },
     {
+        "name": "boost-thread"
+    },
+    {
       "name": "mongo-cxx-driver",
       "features": ["boost"]
     },

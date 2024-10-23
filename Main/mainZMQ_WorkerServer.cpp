@@ -7,9 +7,7 @@
 #include <QtNetwork>
 #include <QDebug>
 
-#include <fstream>
 #include <iostream>
-#include <limits>
 
 #include "Core/pluginmanager.h"
 
@@ -25,6 +23,8 @@
 #endif
 
 #include <QtConcurrent>
+#include <boost/thread/thread.hpp>
+#include <boost/chrono.hpp>
 
 #include <Core/networkprocesshandler.h>
 
@@ -198,9 +198,6 @@ QJsonValue remap(QJsonValue v, QString map)
     return v;
 }
 
-
-
-
 QJsonObject run_plugin(CheckoutProcessPluginInterface* plugin)
 {
 #ifdef WIN32
@@ -231,6 +228,10 @@ QJsonObject run_plugin(CheckoutProcessPluginInterface* plugin)
         p=8;
 
         qDebug() << "Plugin" << plugin->getPath() << "Finished in " << timer.elapsed() << "(ms)";
+        // std::cout << "Thread " << boost::this_thread::get_id() << std::endl;
+        // std::flush(std::cout);
+
+
 #ifdef WIN32
         {
             QSettings set("HKEY_LOCAL_MACHINE\\HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", QSettings::Registry64Format );
@@ -252,6 +253,60 @@ QJsonObject run_plugin(CheckoutProcessPluginInterface* plugin)
     plugin=0;
     return result;
 }
+
+
+#include <boost/thread.hpp>
+// #include <boost/mutex.hpp>
+
+boost::mutex mtx{};
+
+struct RunnerThread//: public boost::thread
+{
+    CheckoutProcessPluginInterface* plugin;
+    boost::thread join;
+
+
+    QJsonObject result;
+
+
+    RunnerThread(CheckoutProcessPluginInterface* pl):
+        // boost::thread(*this),
+        plugin(pl)
+    {
+        // join = boost::thread(*this);
+        // std::cout << "Thread this ? " << this << get_id() << std::endl;
+    }
+
+    RunnerThread(const RunnerThread& r)
+    {
+        std::cout << "Who dares to copy me " << &r << " " << this << std::endl;
+        // this = std::move(&r);
+
+        this->plugin = r.plugin;
+        this->result = r.result;
+    }
+
+
+    void operator()()
+    { // Running operator
+        // std::cout << std::endl << "Starting Thread" << boost::this_thread::get_id() << " " << this << std::endl;
+
+        result = run_plugin(plugin);
+
+        plugin = 0;
+        // std::cout << std::endl << "Done Thread" << boost::this_thread::get_id() << " " << this << " " << result.size() << std::endl;
+    }
+
+
+};
+
+
+
+void ZMQThread::operator()()
+{
+    this->run();
+}
+
 
 
 void ZMQThread::run()
@@ -294,7 +349,58 @@ void ZMQThread::run()
         QString req_type;
         zmsg *request = nullptr;
         std::tie(req_type, request) =
-            session.recv (reply);
+            session.recv (reply, [this]() {
+
+            QList<RunnerThread*> clr;
+
+            for (QList<RunnerThread*>::iterator beg = this->to_join.begin(), end = this->to_join.end();
+                 beg != end; ++beg)
+            {
+                RunnerThread* runner = *beg;
+
+                if (runner->join.joinable())// && runner->join.started())
+                {
+                    bool finished = runner->join.try_join_for(boost::chrono::milliseconds (0));
+                    if (finished)
+                    {
+                        // std::cout << "Finished job " << runner << runner->result.size();
+                        clr << runner;
+                        CheckoutProcess::handler().setNumberOfProcess(CheckoutProcess::handler().numberOfRunningProcess()
+                                                                      - 1);
+
+
+                        QJsonObject ob = runner->result;
+
+                        QJsonObject* sob = new QJsonObject(ob);
+
+                        auto fut = QtConcurrent::run(&ZMQThread::save_and_send_binary, this, sob);
+
+                        auto msg = new zmsg(ob["Client"].toString().toLatin1().data());
+                        msg->push_back(QString("%1").arg(ob["ThreadID"].toInt()).toLatin1());
+                        this->session.send_to_broker((char*)MDPW_READY, "", msg);
+
+                    }
+                    // else
+                    //     std::cout << "Waiting job "  << runner << " " << runner->join.get_id();
+                }
+                else
+                {
+                    // std::cout << "Not Joinable job "  << runner << " " << runner->join.get_id();
+                    // clr << runner;
+                }
+
+                std::flush(std::cout);
+                // Need to cleanup & send message
+            }
+
+            for (auto r : clr )
+                {
+                   this->to_join.removeAll(r);
+                   delete r;
+                }
+
+
+        });
 
         if (s_interrupted) break;
 
@@ -358,6 +464,11 @@ void ZMQThread::run()
         reply->push_back(QByteArray("OK"));
         reply->push_back(QString("%1").arg(procs.numberOfRunningProcess()).toLatin1());
 
+
+        // Check thread finished
+
+
+
         //        qDebug() << "Sending OK reply";
     }
 
@@ -381,12 +492,12 @@ inline ZMQThread::ZMQThread(GlobParams &gp, QThread *parentThread, QString prx, 
     mainThread(parentThread), session(QString("tcp://%1").arg(proxy), "processes", gp, verbose)
 {
 
-    worker_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount());
-    worker_threadpool.setExpiryTimeout(-1);
+    // worker_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount());
+    // worker_threadpool.setExpiryTimeout(-1);
 
 
-    save_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount()/2);
-    save_threadpool.setExpiryTimeout(-1);
+    // save_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount()/2);
+    // save_threadpool.setExpiryTimeout(-1);
 
 }
 
@@ -397,9 +508,10 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
 
     qDebug() << QDateTime::currentDateTime().toString("yyyy MMMM dd hh:mm:ss.zzz")
              << "Remaining unstarted processes" //<< _process_to_start.size()
-             << worker_threadpool.activeThreadCount()
-             << worker_threadpool.maxThreadCount();
+             // << worker_threadpool.activeThreadCount()
+             // << worker_threadpool.maxThreadCount();
 
+        ;
     CheckoutProcessPluginInterface* plugin = _plugins[process];
 
     if (plugin)
@@ -446,10 +558,10 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
 
 
 
-            QFutureWatcher<QJsonObject>* wa = new QFutureWatcher<QJsonObject>();
-            // Connect the finished
-            connect(wa, &QFutureWatcher<QJsonObject>::finished, this,  &ZMQThread::thread_finished);
-            //            QString key = params["Username"].toString() + "@" + params["Computer"].toString();
+            // QFutureWatcher<QJsonObject>* wa = new QFutureWatcher<QJsonObject>();
+            // // Connect the finished
+            // connect(wa, &QFutureWatcher<QJsonObject>::finished, this,  &ZMQThread::thread_finished);
+            // //            QString key = params["Username"].toString() + "@" + params["Computer"].toString();
 
 
             QString key = QString("%1@%2#%3#%4!%5")
@@ -462,9 +574,19 @@ void ZMQThread::startProcessServer(QString process, QJsonArray array)
                                                           +1);
 
 
-            QFuture<QJsonObject> fut = QtConcurrent::run(&worker_threadpool, run_plugin, plugin);
-            wa->setFuture(fut);
-            wa->moveToThread(mainThread);
+            RunnerThread* runner = new RunnerThread(plugin);
+
+            runner->join = boost::thread([runner](){ (*runner)(); } );
+
+            this->to_join.append(runner);
+
+
+            // runner.boost::thread
+            // boost::thread::sta
+
+            // QFuture<QJsonObject> fut = QtConcurrent::run(&worker_threadpool, run_plugin, plugin);
+            // wa->setFuture(fut);
+            // wa->moveToThread(mainThread);
         }
     }
     else
@@ -481,7 +603,6 @@ void ZMQThread::save_and_send_binary(QJsonObject *_ob)
 
     QString hash = ob["Process_hash"].toString();
 
-    // TODO: Uncomment the bellow mentionned entries
     // For debug removed the call to avoid writing useless data
 
     QJsonArray data = NetworkProcessHandler::handler().filterObject(hash, ob, false);
@@ -511,8 +632,6 @@ void ZMQThread::save_and_send_binary(QJsonObject *_ob)
 
             for (auto b : bin)
             {
-                // FIXME
-                // Need to put back image on client
                 client->send(QString("/addImage/"), QString(), b.toCbor());
             }
         }
@@ -521,34 +640,6 @@ void ZMQThread::save_and_send_binary(QJsonObject *_ob)
     delete _ob;
 }
 
-
-void ZMQThread::thread_finished()
-{
-    qDebug() << "Process finished";
-
-    QFutureWatcher<QJsonObject>* wa = dynamic_cast<QFutureWatcher<QJsonObject>* >(sender());
-    if (wa)
-    {
-        CheckoutProcess::handler().setNumberOfProcess(CheckoutProcess::handler().numberOfRunningProcess()
-                                                      - 1);
-
-
-        QJsonObject ob = wa->result();
-
-        QJsonObject* sob = new QJsonObject(ob);
-
-
-        auto res = QtConcurrent::run(&save_threadpool, &ZMQThread::save_and_send_binary, this, sob);
-
-        res.waitForFinished();
-
-        auto msg = new zmsg(ob["Client"].toString().toLatin1().data());
-        msg->push_back(QString("%1").arg(ob["ThreadID"].toInt()).toLatin1());
-        session.send_to_broker((char*)MDPW_READY, "", msg);
-    }
-
-
-}
 
 
 
@@ -776,9 +867,11 @@ int main(int ac, char** av)
 
 
     ZMQThread thread(global_parameters, QThread::currentThread(), proxy, drive_map, verbose);
-    thread.start();
 
-    return QCoreApplication::exec();
+    thread.start();
+    auto res = QCoreApplication::exec();
+
+    return res;
 }
 
 
