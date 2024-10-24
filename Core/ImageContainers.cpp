@@ -16,7 +16,7 @@
 
 
 
-int DllCoreExport  read_semaphore = 4;
+int DllCoreExport  read_semaphore = 8;
 
 
 namespace PhenoLinkImage {
