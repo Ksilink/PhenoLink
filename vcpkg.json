@@ -67,8 +67,7 @@
         "jpeg",
         "tiff",
         "nonfree",
-        "ipp",
-        "tbb"
+        "ipp"
       ]
     }
   ]
