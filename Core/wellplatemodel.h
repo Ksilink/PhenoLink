@@ -71,6 +71,7 @@ public:
     virtual QString properties();
     virtual bool hasProperty(QString tag) const;
     DataProperty& merge(DataProperty& other);
+    void rmProperty(QString r);
 
 
 
@@ -144,7 +145,7 @@ public:
     QString getFileChanId(int timePoint, int fieldIdx, int Zindex, int channel);
 
     Channel& getChannelsFiles(int timePoint, int fieldIdx, int Zindex);
-    QSet<int> getChannelsIds();
+    QSet<int> &getChannelsIds();
 
     StructuredMetaData& getMeta(int timePoint, int fieldIdx, int Zindex, int channel, QString name);
 
@@ -212,6 +213,8 @@ public:
 
     QString getBasePath();
 
+
+    void  simplifyProperties();
 
 protected:
 
@@ -433,6 +436,9 @@ public:
     void setProperties(QString tag, QString value);
     virtual QString property(QString tag) const;
     virtual QString property(QRegularExpression tag) const;
+
+    void simplifyProperties();
+
 
     QSize getSize();
 

@@ -76,11 +76,11 @@
 
 #include "ScreensDisplay/screensgraphicsview.h"
 #include <QInputDialog>
-#include <stdio.h>
-#include <stdlib.h>
+// #include <stdio.h>
+// #include <stdlib.h>
 #include <sys/types.h>
 
-#include <time.h>
+// #include <time.h>
 
 // #if WIN32
 //     #include <QtWebEngineWidgets/QtWebEngineWidgets>
@@ -398,13 +398,14 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
         ui->textLog->append(err);
         ui->textLog->show();
 
-               err.truncate(5000);
-               QMessageBox::StandardButton reply;
+        err.truncate(5000);
+        QMessageBox::StandardButton reply;
 
-               reply = QMessageBox::warning(this, "Data Loading",
-                                            QString("A problem occured during data loading:  \n'%1...'").arg(err),
-                                             QMessageBox::Ignore
-                                             );
+        reply = QMessageBox::warning(this, "Data Loading",
+                                     QString("A problem occured during data loading:  \n'%1...'").arg(err),
+                                     QMessageBox::Ignore
+                                     );
+        Q_UNUSED(reply);
         //        QSettings set;
 
         //        if (!set.value("UserMode/VeryAdvanced", false).toBool() &&  reply == QMessageBox::Abort)
@@ -514,9 +515,10 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
         // With the _channelsIds we can
 
         QStringList ch = mdl->getChannelNames();
-        for (int i = 0; i < ch.size(); ++i)
+        QSet<int>::iterator id = _channelsIds.begin();
+        for (int i = 0; i < qMin(ch.size(), _channelsIds.size()); ++i,++id)
         {
-            _channelsNames[i+1] = ch.at(i);
+            _channelsNames[*id] = ch.at(i);
         }
     }
 
@@ -554,7 +556,7 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
             foreach(SequenceFileModel* mm, l)
                 mm->setProperties("unpack", "yes");
         }
-        mdl->reloadDatabaseData();
+        // mdl->reloadDatabaseData();
     }
     // Load data using factorised function
     on_wellPlateViewTab_tabBarClicked(ui->wellPlateViewTab->currentIndex());

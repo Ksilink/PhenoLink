@@ -74,7 +74,6 @@
 
 #include <optioneditor.h>
 
-#include "Core/pluginmanager.h"
 #include "Core/networkprocesshandler.h"
 
 #include <QErrorMessage>
@@ -552,9 +551,8 @@ ctkColorPickerButton *MainWindow::colorWidgetSetup(ctkColorPickerButton* bu, Ima
         bu->setAttribute(Qt::WA_DeleteOnClose);
     }
 
-    // bu->setToolTip(QString("ColorChannel%1").arg(channel));
+    bu->setToolTip(QString("ColorChannel %1").arg(channel));
 
-    //  bu->disconnect();
     connect(bu, SIGNAL(colorChanged(QColor)), this, SLOT(setColor(QColor)), Qt::UniqueConnection);
     return bu;
 }
@@ -568,7 +566,8 @@ void MainWindow::setColor(QColor c)
     QString name = sender()->objectName().replace("ColorChannel", "");
     ImageInfos* fo = inter->getChannelImageInfos(name.toInt() );
     fo->setColor(c);
-}
+    // qDebug() << "Setting color for" << name << c;
+ }
 
 QDoubleSpinBox* MainWindow::setupMinMaxRanges(QDoubleSpinBox* extr, ImageInfos* fo, QString text, bool isMin, bool reconnect)
 {
@@ -1858,7 +1857,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
             {
 
                 par["guiChan"] = channels;
-                qDebug() << ar.size();
+                // qDebug() << ar.size();
 
                 if (ar.size() && pos < ar.size())
                 {
@@ -2582,24 +2581,31 @@ void MainWindow::finishedEditMaxValue()
 void MainWindow::changeRangeValueMax(double val)
 {
     SequenceInteractor* inter = _sinteractor.current();
+    bool modified = false;
 
     foreach (QWidget* wwid, _imageControls[inter->getExperimentName()])
     {
         QString name = sender()->objectName().replace("vMax", "");
-        //  qDebug() << "Value Max!!!" << val << name;
-        //    qDebug() << "Interactor: changeRangeValue " << sender()->objectName();// << fo;
-
         if (!wwid) return;
         QList<ctkDoubleRangeSlider*> crs = wwid->findChildren<ctkDoubleRangeSlider*>(QString("Channel%1").arg(name));
-        if (crs.size()) crs.first()->setMaximumValue(val);
-        if (crs.size() && crs.first()->maximum() < val) crs.first()->setMaximum(val);
+        if (crs.size() && val != crs.first()->maximumValue())
+        {
+            crs.first()->setMaximumValue(val);
+            if (crs.first()->maximum() < val) crs.first()->setMaximum(val);
+        }
 
         ImageInfos* fo = inter->getChannelImageInfos(name.toInt());
-        fo->forceMaxValue(val);
+        if (val != fo->getMax())
+        {
+            modified = true;
+            fo->forceMaxValue(val);
+        }
     }
-    if (_syncmapper.contains(sender()->objectName()))
+    if (modified && _syncmapper.contains(sender()->objectName()))
     {
+        blockSignals(true);
         _syncmapper[sender()->objectName()]->setValue(val);
+        blockSignals(false);
     }
 
 }
@@ -2613,24 +2619,35 @@ void MainWindow::finishedEditMinValue()
 void MainWindow::changeRangeValueMin(double val)
 {
     SequenceInteractor* inter = _sinteractor.current();
+    bool modified = false;
 
     foreach (QWidget* wwid, _imageControls[inter->getExperimentName()])
     {
         QString name = sender()->objectName().replace("vMin", "");
-        //  qDebug() << "Value Min !!!" << val << name;
+        // qDebug() << "Value Min !!!" << val << name;
+        // qDebug() << "Interactor: changeRangeValue " << sender()->objectName();// << fo;
 
         if (!wwid) return;
         QList<ctkDoubleRangeSlider*> crs = wwid->findChildren<ctkDoubleRangeSlider*>(QString("Channel%1").arg(name));
-        if (crs.size()) crs.first()->setMinimumValue(val);
-        if (crs.size() && crs.first()->minimum() > val) crs.first()->setMinimum(val);
-
+        if (crs.size() && val != crs.first()->minimumValue())
+        {
+             crs.first()->setMinimumValue(val);
+            if (crs.first()->minimum() > val) crs.first()->setMinimum(val);
+        }
         ImageInfos* fo = inter->getChannelImageInfos(name.toInt());
-        fo->forceMinValue(val);
+        if (val != fo->getMin())
+        {
+            fo->forceMinValue(val);
+            modified = true;
+        }
+
     }
 
-    if (_syncmapper.contains(sender()->objectName()))
+    if (modified && _syncmapper.contains(sender()->objectName()))
     {
+        blockSignals(true);
         _syncmapper[sender()->objectName()]->setValue(val);
+        blockSignals(false);
     }
 }
 

@@ -148,6 +148,17 @@ void loadPlugins(bool isServer)
     };
 
     QStringList entries = pluginsDir.entryList(QStringList() << "*.dll" << "*.so" << "*.dylib", QDir::Files);
+    entries.removeIf([](const QString& str){
+        if (str.contains("opencv") || str.contains("brotl") ||
+            str.contains("jxl") || str.contains("webp") ||
+            str.contains("tiff") || str.contains("protob") ||
+            str.contains("jxl") || str.contains("webp") ||
+            str.contains("tbb") || str.contains("zlib") || str.contains("png") ||
+            str.contains("yuv") || str.contains("fftw") || str.contains("hwy") ||
+            str.contains("lcms") || str.contains("lzma") || str.contains("jpeg")
+                )
+                return true; else return false; });
+
     QtConcurrent::blockingMap(entries, paraLoader(loader, process, pluginsDir, isServer, mutex));
 
 }

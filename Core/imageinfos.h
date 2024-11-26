@@ -43,8 +43,8 @@ class ImageInfos;
 struct ImageInfosShared
 {
     QMap<QString, CommonColorCode> _platename_to_colorCode;
-    QMap<QString, QList<ImageInfos*> > _platename_to_infos;
-    QMap<ImageInfos*, QList<CoreImage* > > _infos_to_coreimage;
+    QMap<QString, QSet<ImageInfos*> > _platename_to_infos;
+    QMap<ImageInfos*, QSet<CoreImage* > > _infos_to_coreimage;
     QMap<QString, QMap<int, cv::Mat> > bias_field; // Per plate bias field, channel
     QMap<QString, cv::Mat> bias_single_loader; // Use this to only load once the file!
 
@@ -79,10 +79,10 @@ public:
     void addCoreImage(CoreImage *ifo);
     inline bool active() const { return _ifo._platename_to_colorCode[_plate]._active; }
 
-    QList<CoreImage*> getCoreImages();
+    QSet<CoreImage *> getCoreImages();
 
     SequenceInteractor* getInteractor();
-    QList<ImageInfos*> getLinkedImagesInfos();
+    QSet<ImageInfos *> getLinkedImagesInfos();
 
     void toggleBiasCorrection();
     void toggleSaturate();

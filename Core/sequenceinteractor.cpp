@@ -4,7 +4,6 @@
 #include <QImage>
 #include <QGraphicsScene>
 #include <QGraphicsView>
-#include "Gui/ctkWidgets/ctkDoubleRangeSlider.h"
 
 #include <QtConcurrent/QtConcurrent>
 #include <QMutex>
@@ -44,6 +43,7 @@ SequenceInteractor::SequenceInteractor(SequenceFileModel* mdl, QString key) :
     _mdl(mdl), _timepoint(1), _field(1), _zpos(1), _channel(1),
     _fps(25.), loadkey(key), last_scale(-1.), _updating(false), _changed(true)
 {
+    _channel = *mdl->getChannelsIds().begin();
 }
 
 void SequenceInteractor::setTimePoint(unsigned t)
@@ -69,7 +69,7 @@ void SequenceInteractor::setField(unsigned t)
 
         if (ifo)
         {
-            QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
+            QSet<ImageInfos*> list = ifo->getLinkedImagesInfos();
             foreach(ImageInfos * info, list)
             {
                 SequenceInteractor* inter = info->getInteractor();
@@ -101,7 +101,7 @@ void SequenceInteractor::setZ(unsigned z)
         ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
         if (ifo)
         {
-            QList<ImageInfos*> list = ifo->getLinkedImagesInfos();
+            QSet<ImageInfos*> list = ifo->getLinkedImagesInfos();
             foreach(ImageInfos * info, list)
             {
                 SequenceInteractor* inter = info->getInteractor();
@@ -441,11 +441,13 @@ void SequenceInteractor::addImage(CoreImage* ci)
 
     //  qDebug() << "Channel Image infos" << nm;
     //if (!_infos.contains(nm))
-    //    _infos[nm] =
-
-    ImageInfos* ifo = imageInfos(nm, _channel);
+    //    _infos[nm]
+    // if (!nm.isEmpty())
+    // {
+    ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
 
     ifo->addCoreImage(ci);
+    // }
 }
 
 void SequenceInteractor::clearMemory(CoreImage* im)
@@ -467,8 +469,11 @@ void SequenceInteractor::clearMemory(CoreImage* im)
                     QString nm = _mdl->getFile(tt, ff, zz, ii);
 
                     bool exists = false;
-                    ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), ii, exists, loadkey);
-                    info->deleteInstance();
+                    if (!nm.isEmpty())
+                    {
+                        ImageInfos* info = ImageInfos::getInstance(this, nm, exp + QString("%1").arg(ii), ii, exists, loadkey);
+                        info->deleteInstance();
+                    }
                     //        delete info;
                     //      _infos.remove(nm);
                 }
@@ -489,11 +494,14 @@ void SequenceInteractor::modifiedImage()
     }
 
     QString nm = _mdl->getFile(_timepoint, _field, _zpos, _channel);
+    // if (!nm.isEmpty())
+    // {
     ImageInfos* ifo = imageInfos(nm, _channel, loadkey);
     foreach(CoreImage * ci, ifo->getCoreImages())
     {
         ci->modifiedImage();
     }
+    // }
     // lock_infos.unlock();
 }
 
@@ -520,6 +528,8 @@ ImageInfos* SequenceInteractor::getChannelImageInfos(unsigned channel)
 
 void SequenceInteractor::setCurrent(SequenceInteractor* i)
 {
+
+    // qDebug() << "Setting SequenceInteractor current" << i << _current;
     if (i != _current)
     {
         _current = i;
@@ -550,6 +560,7 @@ SequenceFileModel* SequenceInteractor::getSequenceFileModel()
 
 SequenceInteractor* SequenceInteractor::current()
 {
+    // qDebug() << "SequenceInteractor Current" << _current;
     return _current;
 }
 
@@ -567,12 +578,13 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
 {
     // FIXME: Change image infos key : use XP / Workbench / deposit group
 
-    // qDebug() << "Get interactor for file object: " << file << channel << getExperimentName();
-    lock_infos.lock();
-    ImageInfos* info = _infos[file];
-    lock_infos.unlock();
+    // qDebug() << "Get interactor for file object: " << file << channel << key << getExperimentName();
 
-    if (!info)
+    // lock_infos.lock();
+    // ImageInfos* info = _infos[file];
+    // lock_infos.unlock();
+    ImageInfos* info = nullptr;
+    // if (!info)
     { // Change behavior: Linking data at the XP level
         // To be added workbench Id + selectionModifier
         QString exp = getExperimentName();// +_mdl->Pos();
@@ -586,14 +598,13 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
 
 
         info = ImageInfos::getInstance(this, file, exp, ii, exists, key);
-        lock_infos.lock();
-        _infos[file] = info;
-        lock_infos.unlock();
+        // lock_infos.lock();
+        // _infos[file] = info;
+        // lock_infos.unlock();
         if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
         {
-            QColor col;
             QString cname = _mdl->getOwner()->property(QString("ChannelsColor%1").arg(ii));
-            col.setNamedColor(cname);
+            QColor col = QColor::fromString(cname);
             info->setColor(col, false);
         }
         else
@@ -760,7 +771,7 @@ void SequenceInteractor::refinePacking()
     // Now i'd like to use the QtConcurrent Map function !!!
     struct Mapping {
 
-        typedef std::tuple<int, double, QPoint> result_type;
+        //typedef std::tuple<int, double, QPoint> result_type;
 
         std::tuple<int, double, QPoint> operator()(std::tuple<int, cv::Mat, cv::Mat, bool /*left/up*/, bool/*1st/2nd step*/> data)
         {

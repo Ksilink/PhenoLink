@@ -47,9 +47,9 @@ ExperimentFileModel *CheckoutDataLoader::getExperimentModel(QString file)
           QString temp = itf->errorString();
 
           if (!temp.isEmpty())
-
             _errors += QString("Plugin %1: Message: %2").arg(itf->pluginName()).arg(temp);
 
+          mdl->simplifyProperties();
           return mdl;
         }
     }

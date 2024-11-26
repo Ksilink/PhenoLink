@@ -46,14 +46,14 @@ ImageInfos::ImageInfos(ImageInfosShared& ifo, SequenceInteractor *par, QString f
         }
     }
 
-    _ifo._platename_to_infos[_plate].append(this);
+    _ifo._platename_to_infos[_plate].insert(this);
 }
 
 ImageInfos::~ImageInfos()
 {
     if (range_timerId>=0)
         killTimer(range_timerId);
-    _ifo._platename_to_infos[_plate].removeAll(this);
+    _ifo._platename_to_infos[_plate].remove(this);
 
 
 }
@@ -133,7 +133,7 @@ void ImageInfos::deleteInstance()
     _ifo._infos_to_coreimage[this].clear();
     _ifo._infos_to_coreimage.remove(this);
 
-    _ifo._platename_to_infos[_plate].removeAll(this);
+    _ifo._platename_to_infos[_plate].remove(this);
 
     QPair<ImageInfosShared*, QMap<QString, ImageInfos*>*> t = instanceHolder();
     QMap<QString, ImageInfos*>& stored = *t.second;
@@ -289,7 +289,7 @@ cv::Mat ImageInfos::bias(int channel, float )
 void ImageInfos::addCoreImage(CoreImage *ifo)
 {
     if (!_ifo._infos_to_coreimage[this].contains(ifo))
-        _ifo._infos_to_coreimage[this].append(ifo);
+        _ifo._infos_to_coreimage[this].insert(ifo);
 }
 
 
@@ -299,7 +299,7 @@ SequenceInteractor *ImageInfos::getInteractor()
     return _parent;
 }
 
-QList<ImageInfos *> ImageInfos::getLinkedImagesInfos()
+QSet<ImageInfos *> ImageInfos::getLinkedImagesInfos()
 {
     return  _ifo._platename_to_infos[_plate];
 }
@@ -378,11 +378,11 @@ void ImageInfos::propagate()
     _parent->modifiedImage();
 }
 
-QList<CoreImage*> ImageInfos::getCoreImages()
+QSet<CoreImage*> ImageInfos::getCoreImages()
 {
     if (_ifo._infos_to_coreimage.contains(this))
         return _ifo._infos_to_coreimage[this];
-    return QList<CoreImage*>();
+    return QSet<CoreImage*>();
 }
 
 bool ImageInfos::isTime() const
@@ -399,7 +399,7 @@ double ImageInfos::getFps() const
 void ImageInfos::setColor(QColor c, bool refresh)
 {
     _modified = true;
-    //qDebug() << "Setting color" << this << c.toRgb();
+    // qDebug() << "Setting color" << this << c.toRgb();
 
     //    c.setHsv(c.hsvHue(), c.hsvSaturation(), 255);
 
@@ -571,6 +571,9 @@ QVector<int> ImageInfos::getState()
 
 void ImageInfos::Update()
 {
+
+
+
     foreach (ImageInfos* ifo, _ifo._platename_to_infos[_plate])
     {
         if (ifo && ifo != this)

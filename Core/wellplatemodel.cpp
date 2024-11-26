@@ -257,7 +257,7 @@ QPair<QList<double>, QList<double> > getWellPos(SequenceFileModel* seq, unsigned
 QPointF getFieldPos(SequenceFileModel* seq, QString well, int field, int /*z*/, int /*t*/, int /*c*/)
 {
     QRegularExpression k(QString("^%1f%2s.*X$").arg(well).arg(field));
-	QString tmp = seq->property(k);
+    QString tmp = seq->property(k);
     if (tmp.isEmpty())
     {
         k.setPattern(QString("^f%1s.*X$").arg(field));
@@ -307,25 +307,25 @@ void ExperimentFileModel::setFieldPosition(QString well)
 
                 for (unsigned field = 1; field <= mdl->getFieldCount(); ++field)
                 {
-                    QRegularExpression k(QString("^%1f%2s.*X$").arg(well).arg(field));
+                    QRegularExpression k(QString("^f%1s.*X$").arg(field));
                     QString prop = mdl->property(k);
                     if (prop.isEmpty())
                     {
-                        k.setPattern(QString("^f%1s.*X$").arg(field));
-                        prop = mdl->property(k);
+                        k.setPattern(QString("^%1f%2s.*X$").arg(well).arg(field));
+                        prop = mdl->getOwner()->property(k);
                     }
 
-                        
+
                     if (prop.isEmpty())
                         continue;
                     found_metadata = true;
                     x.insert(prop.toDouble());
-                    k.setPattern(QString("^%1f%2s.*Y$").arg(well).arg(field));
+                    k.setPattern(QString("^f%1s.*Y$").arg(field));
                     prop = mdl->property(k);
                     if (prop.isEmpty())
                     {
-                        k.setPattern(QString("^f%1s.*Y$").arg(field));
-                        prop = mdl->property(k);
+                        k.setPattern(QString("^%1f%2s.*Y$").arg(well).arg(field));
+                        prop = mdl->getOwner()->property(k);
                     }
 
                     if (prop.isEmpty()) continue;
@@ -975,6 +975,10 @@ QString ExperimentFileModel::property(QRegularExpression tag) const
     return r;
 }
 
+
+
+
+
 void DataProperty::setProperties(QString ttag, QString value)
 {
     QString tag = ttag;
@@ -1020,6 +1024,10 @@ bool DataProperty::hasProperty(QString tag) const
 }
 
 
+
+
+
+
 DataProperty& DataProperty::merge(DataProperty& other)
 {
 
@@ -1031,6 +1039,11 @@ DataProperty& DataProperty::merge(DataProperty& other)
     return *this;
 }
 
+
+void DataProperty::rmProperty(QString r)
+{
+    _properties.remove(r);
+}
 
 
 SequenceFileModel::SequenceFileModel(Dictionnary dict) :
@@ -1080,9 +1093,11 @@ void SequenceFileModel::addFile(int timePoint, int fieldIdx, int Zindex, int cha
     _owner->adjustBasePath(file);
 
     if (!file.isEmpty())
+    {
         _channelsIds.insert(channel);
-//    qDebug() << "Adding: "<< timePoint << fieldIdx << Zindex << channel << file;
-    _data[fieldIdx][Zindex][timePoint][channel] = file;
+    //    qDebug() << "Adding: "<< timePoint << fieldIdx << Zindex << channel << file;
+        _data[fieldIdx][Zindex][timePoint][channel] = file;
+    }
 }
 
 bool SequenceFileModel::hasFile(int timePoint, int fieldIdx, int Zindex, int Channel)
@@ -1170,6 +1185,107 @@ QString SequenceFileModel::getBasePath()
     return _owner->getBasePath();
 }
 
+
+void  ExperimentFileModel::simplifyProperties()
+{
+    // LookUp all the properties if identical values, remove the common denominators
+
+    QHash<QString, QSet<QString> > common;
+
+
+
+    for (auto &r : _sequences)
+        for (auto& c: r)
+        {
+            c.simplifyProperties();
+            // for (unsigned int field = 1; field <= c.getFieldCount(); ++field)
+            // {
+            //     QRegularExpression kX(QString("^f%1s.*X$").arg(field)),
+            //         kY(QString("^f%1s.*Y$").arg(field));
+
+            //     auto x = c.property(kX);
+            //     auto y = c.property(kY);
+            //     common[x].insert(QString("f%1sX").arg(field));
+            //     common[y].insert(QString("f%1sY").arg(field));
+            // }
+        }
+
+    // for (auto it = _properties.begin(), e = _properties.end(); it != e; ++it)
+    // {
+    //     QString key = it.key();
+    //     QString value = it.value().toString();
+
+    //     if ((key.endsWith("X") || key.endsWith("Y")))
+    //     {
+    //         common[value].insert(key);
+    //     }
+    // }
+
+    // if (common.size())
+    // {
+    //     for (auto &r : _sequences)
+    //         for (auto& c: r)
+    //         {
+    //             c.simplifyProperties();
+    //             for (unsigned int field = 1; field <= c.getFieldCount(); ++field)
+    //             {
+    //                 c.rmProperty(QString("f%1sX").arg(field));
+    //                 c.rmProperty(QString("f%1sY").arg(field));
+    //             }
+    //         }
+
+    //     for (auto c =  common.begin(); c != common.end(); ++c)
+    //     {
+    //         for (auto&v : c.value())
+    //             setProperties(v, c.key());
+    //     }
+
+    // }
+
+    // We have all the common X/Y
+    // qDebug() <<"EFM" << _properties;
+    // qDebug() << "EFM" << common;
+
+}
+
+
+void  SequenceFileModel::simplifyProperties()
+{
+
+    QHash<QString, QSet<QString> > common;
+
+    for (auto it = _properties.begin(), e = _properties.end(); it != e; ++it)
+    {
+        QString key = it.key();
+        QString value = it.value().toString();
+
+        if ((key.endsWith("X") || key.endsWith("Y")))
+        {
+            common[value].insert(key);
+        }
+    }
+    // We have all the common X/Y
+
+    for (auto it = common.begin(), e = common.end(); it != e; ++it)
+    {
+        if (it.value().size() > 1)
+        {
+            for (auto& k : it.value())
+            {
+                _properties.remove(k);
+            }
+
+            for (QString key : it.value())
+            {
+                key =  key.left(key.indexOf("s")+1) + key.right(1);
+                if (!_properties.contains(key))
+                    _properties[key] = it.key().toFloat();
+            }
+        }
+    }
+
+    // qDebug() << "SFM" << _properties;
+}
 
 QMap<QString, StructuredMetaData>& SequenceFileModel::getMetas(int timePoint, int fieldIdx, int Zindex, int channel)
 {
@@ -1454,9 +1570,9 @@ QString SequenceFileModel::getFile(int timePoint, int fieldIdx, int Zindex, int 
 
     // if (ti->value().contains(channel))
 
-//    qDebug() << "File" << timePoint << fieldIdx << Zindex << channel<<ti->value(channel);
+   // qDebug() << "File" << timePoint << fieldIdx << Zindex << channel << ti->values(); //channel);
 
-    return ti->value(channel);
+    return ti.value()[channel]; //ci.value();
     /*
     std::advance(ci, channel-1);
     if (ci==ti->end())
@@ -1510,7 +1626,7 @@ SequenceFileModel::Channel& SequenceFileModel::getChannelsFiles(int timePoint, i
     return ti.value();
 }
 
-QSet<int> SequenceFileModel::getChannelsIds()
+QSet<int>& SequenceFileModel::getChannelsIds()
 {
     return _channelsIds;
 }
@@ -1546,7 +1662,7 @@ QList<QJsonObject> SequenceFileModel::toJSONvector(Channel channels,
     {
         for (Channel::iterator it = channels.begin(), e = channels.end(); it != e; ++it, ++chann)
             if (!it.value().startsWith(":/mem/") && chann < selectedChanns.size() && selectedChanns.at(chann))
-            {                
+            {
                 h.channel = it.key();
                 if (h.channel <= 0)   continue;
                 names << st[it.key()-1];
@@ -1634,7 +1750,7 @@ QJsonObject SequenceFileModel::getMeta(QStringList& keys, QString prefix)
 QJsonObject SequenceFileModel::getMeta(SequenceFileModel::MetaDataHandler& h)
 {
     QJsonObject props;
-    for (auto k : (h.metaData))
+    for (auto& k : (h.metaData))
     {
 
         QString mtag = QString("f%1s%2t%3c%4%5").arg(h.fieldIdx).arg(h.zindex)
@@ -1649,7 +1765,7 @@ QJsonObject SequenceFileModel::getMeta(SequenceFileModel::MetaDataHandler& h)
 
     if (_owner)
     {
-        for (auto k : (h.metaData))
+        for (auto& k : (h.metaData))
         {
             QString t = _owner->property(k);
             if (!t.isEmpty())
@@ -2735,8 +2851,7 @@ SequenceFileModel* ScreensHandler::addProcessResultSingleImage(QJsonObject& ob)
                             QJsonObject obj = ob["Colormap"].toObject();
                             for (auto it = obj.begin(); it != obj.end(); ++it)
                             {
-                                QColor col;
-                                col.setNamedColor(it.value().toString());
+                                QColor col = QColor::fromString(it.value().toString());
                                 color[it.key().toInt()] = col;
                             }
                             MemoryHandler::handler().addColor(fname, color);
@@ -3120,8 +3235,7 @@ QList<SequenceFileModel*> ScreensHandler::addProcessResultImage(QCborValue& data
                     auto obj = ob.value(QCborValue("Colormap")).toMap();
                     for (auto it = obj.begin(); it != obj.end(); ++it)
                     {
-                        QColor col;
-                        col.setNamedColor(it.value().toString());
+                        QColor col = QColor::fromString(it.value().toString());
                         color[it.key().toInteger()] = col;
                     }
                     MemoryHandler::handler().addColor(fname, color);
@@ -3454,22 +3568,14 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
 
     static quint64 MaxY = 50, MaxChan = 30, MaxTime = 1000, MaxField = 100, MaxZ = 1000;
     DataHolder h;
-    bool newCol = false;
-    //   QModelIndex idx = index(0,0);
 
     modified = true;
     if (!_datanames.contains(XP))
     {
 
-        //        QSet<QString>::const_iterator pos =
         _datanames.insert(XP);
-        //        int col = std::distance(_datanames.cbegin(), pos);
-        //beginInsertColumns(idx, 5 + (int)_owner->hasTag() + col, 5 + (int)_owner->hasTag() + col);
 
         _datanames.insert(XP);
-        //this->headerDataChanged(Qt::Horizontal, col, col);
-        newCol = true;
-
     }
 
     // Compute signature:
@@ -3478,7 +3584,6 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
             + time * MaxChan * MaxY * MaxTime
             + stackZ * MaxChan * MaxY * MaxTime * MaxZ
             + field * MaxChan * MaxY * MaxTime * MaxZ * MaxField;
-    //  qDebug() << h.signature;
 
     int pos = 0;
     for (QList<DataHolder>::iterator it = _dataset.begin(), e = _dataset.end(); it != e; ++it, ++pos)
@@ -3492,8 +3597,6 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
             return;
         }
     }
-
-    //beginInsertRows(idx, _dataset.size(), _dataset.size());
 
     h.data[XP] = data;
 
@@ -3515,11 +3618,6 @@ void ExperimentDataTableModel::addData(QString XP, int field, int stackZ, int ti
     h.tags = _owner->getTags(h.pos).join(";");
 
     _dataset << h;
-
-    //endInsertRows();
-    //if (newCol)  endInsertColumns();
-
-
 }
 
 
