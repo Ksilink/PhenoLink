@@ -1541,6 +1541,7 @@ QWidget* MainWindow::widgetFromJSON(QJsonObject& par, bool reloaded)
             box->setObjectName("Channels");
             QList<int> list = _channelsIds.values();
             std::sort(list.begin(), list.end());
+            qDebug() << "Channels" << list << _channelsNames;
 
             foreach(int i, list)
             {
@@ -1900,7 +1901,7 @@ void MainWindow::setupProcessCall(QJsonObject obj, int idx)
                 int end = par["endChannel"].toInt();
                 end = end < 0 ? list.size() : end;
                 int c_def = par.contains("Default") ? (par["Default"].isArray() ? par["Default"].toArray().first().toInt() : par["Default"].toInt() ) : start;
-                //                qDebug() << "Mapping data Per channel value";
+                                qDebug() << "Mapping data Per channel value";
                 foreach(int i, list)
                 {
                     bool lreloaded = reloaded;

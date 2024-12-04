@@ -515,11 +515,17 @@ Screens MainWindow::loadSelection(QStringList checked, bool reload)
         // With the _channelsIds we can
 
         QStringList ch = mdl->getChannelNames();
-        QSet<int>::iterator id = _channelsIds.begin();
-        for (int i = 0; i < qMin(ch.size(), _channelsIds.size()); ++i,++id)
+        QList<int> list = _channelsIds.values();
+        std::sort(list.begin(), list.end());
+
+
+        qDebug() << list << ch << _channelsNames;
+        _channelsNames.clear();
+        foreach(int channels, list)
         {
-            _channelsNames[*id] = ch.at(i);
+            _channelsNames[channels] = ch.at(channels-1);
         }
+        qDebug() << _channelsNames;
     }
 
     //    if (!lastOk) return;

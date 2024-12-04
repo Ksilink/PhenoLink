@@ -155,7 +155,13 @@ void loadPlugins(bool isServer)
             str.contains("jxl") || str.contains("webp") ||
             str.contains("tbb") || str.contains("zlib") || str.contains("png") ||
             str.contains("yuv") || str.contains("fftw") || str.contains("hwy") ||
-            str.contains("lcms") || str.contains("lzma") || str.contains("jpeg")
+            str.contains("lcms") || str.contains("lzma") || str.contains("jpeg") ||
+
+            str.contains("conc") || str.contains("abseil") || str.contains("gfortran") ||
+            str.contains("quadmath") || str.contains("lapack") || str.contains("gcc") ||
+
+            str.contains("pthread") || str.contains("vc") || str.contains("Qt6") || str.contains("blas")
+
                 )
                 return true; else return false; });
 
