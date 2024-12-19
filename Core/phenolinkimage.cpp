@@ -175,7 +175,7 @@ cv::Mat cvFromByteArray(QString& path, QByteArray& b, int flags)
     }
     else
     {
-        qDebug() << "Empty image file, check acquisition";
+        qDebug() << "Empty image file" << path << "check acquisition";
     }
 
     return res;
