@@ -161,15 +161,21 @@ int decode(QByteArray& comp, cv::Mat& reconstructed)
 cv::Mat cvFromByteArray(QString& path, QByteArray& b, int flags)
 {
     cv::Mat res;
-
-    if (path.endsWith(".jxl"))
+    if (b.size())
     {
-        decode(b, res);
+        if (path.endsWith(".jxl"))
+        {
+            decode(b, res);
+        }
+        else
+        {
+            cv::Mat m(b.length(), 1, CV_8U, b.data());
+            res = cv::imdecode(m, flags);
+        }
     }
     else
     {
-        cv::Mat m(b.length(), 1, CV_8U, b.data());
-        res = cv::imdecode(m, flags);
+        qDebug() << "Empty image file, check acquisition";
     }
 
     return res;
