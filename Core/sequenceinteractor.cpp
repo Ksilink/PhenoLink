@@ -594,22 +594,25 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
 
 
         QSettings set;
-        exp =  set.value("ShareControls", false).toBool() ? QString("%1").arg(ii) : exp + QString("%1").arg(ii);
+        exp = set.value("ShareControls", false).toBool() ? QString("%1").arg(ii) : exp + QString("%1").arg(ii);
 
 
         info = ImageInfos::getInstance(this, file, exp, ii, exists, key);
         // lock_infos.lock();
         // _infos[file] = info;
         // lock_infos.unlock();
-        if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
+        if (!exists)
         {
-            QString cname = _mdl->getOwner()->property(QString("ChannelsColor%1").arg(ii));
-            QColor col = QColor::fromString(cname);
-            info->setColor(col, false);
-        }
-        else
-            info->setDefaultColor(ii, false);
+            if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
+            {
+                QString cname = _mdl->getOwner()->property(QString("ChannelsColor%1").arg(ii));
+                QColor col = QColor::fromString(cname);
+                info->setColor(col, false);
+            }
+            else
+                info->setDefaultColor(ii, false);
 
+    }
         // Also setup the channel names if needed
         //qDebug() << " --> DEBUG = " << _mdl->getChannelNames().size()<< _mdl->getChannelNames();
         if (_mdl->getChannelNames().size()>=ii)
