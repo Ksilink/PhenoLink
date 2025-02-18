@@ -43,12 +43,12 @@ File "@CMAKE_BINARY_DIR@\bin\*.dll"
 #File "@CMAKE_BINARY_DIR@\bin\plugins\*.dll" # Grrr hack for DLL to be imported by the loader
 File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 
-File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
+#File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
 #File "@CMAKE_BINARY_DIR@\bin\*.dll"
 
-SetOutPath $INSTDIR\bin\resources
-File "@CMAKE_BINARY_DIR@\bin\resources\*.pak"
-File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
+#SetOutPath $INSTDIR\bin\resources
+#File "@CMAKE_BINARY_DIR@\bin\resources\*.pak"
+#File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
 
 SetOutPath $INSTDIR\bin\styles
 File "@CMAKE_BINARY_DIR@\bin\styles\*.dll"
@@ -56,8 +56,8 @@ File "@CMAKE_BINARY_DIR@\bin\styles\*.dll"
 SetOutPath $INSTDIR\bin\iconengines
 File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"
 
-SetOutPath $INSTDIR\bin\translations\Qt6\qtwebengine_locales
-File "@CMAKE_BINARY_DIR@\bin\translations\qtwebengine_locales\*"
+#SetOutPath $INSTDIR\bin\translations\Qt6\qtwebengine_locales
+#File "@CMAKE_BINARY_DIR@\bin\translations\qtwebengine_locales\*"
 
 #SetOutPath $INSTDIR\bin\qtwebengine_locales
 #File "@CMAKE_BINARY_DIR@\bin\translations\qtwebengine_locales\*.pak"
