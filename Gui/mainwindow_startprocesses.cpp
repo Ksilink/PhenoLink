@@ -393,9 +393,10 @@ QJsonArray& MainWindow::adjustParameterFromWidget(SequenceFileModel* sfm, QJsonO
             foreach (QString j, im.keys())
                 par.insert(j, im[j]);
 
-            if (par["Channels"].isArray() && bias.isEmpty())
+
+            if (par["Data"][0]["Channels"].isArray() && bias.isEmpty())
             {
-                QJsonArray chs = par["Channels"].toArray();
+                QJsonArray chs = par["Data"][0]["Channels"].toArray();
                 for (int j = 0; j < chs.size(); ++j)
                 {
                     int channel = chs[j].toInt();

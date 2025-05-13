@@ -363,7 +363,7 @@ void CheckoutProcess::startProcess(QString process, QJsonArray &array)
                                        << "isOptional" << "optionalState"
                                        << "BasePath" << "ContentType" << "ImageType"
                                        << "PlateName" << "Enum" << "DataHash" << "Properties" << "PlateName"
-                                       << "Pos" << "Channel" << "asVectorImage" << "tiled" << "unbias"
+                                       << "Pos" << "Channel" << "asVectorImage" << "tiled" << "unbias" << "bias"
                                        << "isImage" << "FieldId" << "TimePos" << "zPos";
                 for (auto key : l)
                     if (ob.contains(key))

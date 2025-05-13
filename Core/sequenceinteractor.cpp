@@ -1265,7 +1265,12 @@ QImage SequenceInteractor::getPixmapChannels(int field, bool bias_correction, fl
             {
                 if (bias_correction)
                 {
-                    cv::Mat bias = img[c]->bias(c + 1);
+                    cv::Mat dbias = img[c]->bias(c + 1);
+                    cv::Mat bias;
+                    if (dbias.size() != images[c].size())
+                        cv::resize(dbias, bias, images[c].size());
+					else
+						bias = dbias;
 
                     if (saturate && inverted)
                         colorizeImageUnbias<true, true>(img[c], images[c], bias, toPix, rows, cols, binarize);

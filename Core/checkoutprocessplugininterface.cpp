@@ -164,7 +164,7 @@ int getKeyFromJSON(QString key, QJsonObject ob)
 void CheckoutProcessPluginInterface::prepareData()
 {
 
-//    qDebug() << "Plugin Prepare data" << _callParams.keys();
+    //qDebug() << "Plugin Prepare data" << _callParams.keys();
 
     QString hash = _callParams["Process_hash"].toString();
     //  qDebug() << "Process hash func: " << hash;
@@ -184,9 +184,11 @@ void CheckoutProcessPluginInterface::prepareData()
                 if (o.contains("bias"))
                 {
                     auto bar = o["bias"].toArray();
+                    QFileInfo dir(o["BasePath"].toString());
+                    QString base_path = dir.absolutePath();
                     QStringList bfile;
                     for (int i = 0; i < bar.size(); ++i)
-                        bfile << bar[i].toString();
+                        bfile << base_path + "/" + bar[i].toString();
                     im->setBiasFiles(bfile);
                 }
 
