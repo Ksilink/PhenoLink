@@ -37,11 +37,11 @@ RMDir /r $INSTDIR
 SetOutPath $INSTDIR\bin\
 
 # specify file to go in output path
-File "@CMAKE_BINARY_DIR@\bin\Phenolink.exe"
-File "@CMAKE_BINARY_DIR@\bin\PhenolinkHttpServer.exe"
-File "@CMAKE_BINARY_DIR@\bin\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\Phenolink.exe"
+File "@CMAKE_BINARY_DIR@\bin\Release\PhenolinkHttpServer.exe"
+File "@CMAKE_BINARY_DIR@\bin\Release\*.dll"
 #File "@CMAKE_BINARY_DIR@\bin\plugins\*.dll" # Grrr hack for DLL to be imported by the loader
-File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
+#File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 
 #File "@CMAKE_BINARY_DIR@\bin\QtWebEngineProcess.exe"
 #File "@CMAKE_BINARY_DIR@\bin\*.dll"
@@ -51,10 +51,10 @@ File "@CMAKE_BINARY_DIR@\bin\ffmpeg.exe"
 #File "@CMAKE_BINARY_DIR@\bin\resources\*.dat"
 
 SetOutPath $INSTDIR\bin\styles
-File "@CMAKE_BINARY_DIR@\bin\styles\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\styles\*.dll"
 
 SetOutPath $INSTDIR\bin\iconengines
-File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
 
 #SetOutPath $INSTDIR\bin\translations\Qt6\qtwebengine_locales
 #File "@CMAKE_BINARY_DIR@\bin\translations\qtwebengine_locales\*"
@@ -83,18 +83,18 @@ Section "Plugin Installer Section"
 
 # define output path
 SetOutPath $INSTDIR\bin\plugins
-File "@CMAKE_BINARY_DIR@\bin\plugins\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\plugins\Release\*.dll"
 ;SetOutPath $INSTDIR\bin\accessible
 ;File "@CMAKE_BINARY_DIR@\bin\accessible\*.dll"
 
 SetOutPath $INSTDIR\bin\platforms
-File "@CMAKE_BINARY_DIR@\bin\platforms\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\platforms\*.dll"
 
 SetOutPath $INSTDIR\bin\iconengines
-File "@CMAKE_BINARY_DIR@\bin\iconengines\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\iconengines\*.dll"
 
 SetOutPath $INSTDIR\bin\imageformats
-File "@CMAKE_BINARY_DIR@\bin\imageformats\*.dll"
+File "@CMAKE_BINARY_DIR@\bin\Release\imageformats\*.dll"
 
 SectionEnd
 
