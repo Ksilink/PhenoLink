@@ -143,30 +143,32 @@ struct DllCoreExport service
         //    qDebug() << m_name << "plugin_time" << pl_time;
 
         bool added = false;
+        m_process.push_back(wrk);
+        added = true;
 
-        if (m_process.isEmpty())
-        {
-            m_process.push_back(wrk);
-            added = true;
-        }
-        else
-            for (auto w : m_process)
-            {
-                if (!w->m_plugins.contains(m_name))
-                {
-                    continue;
-                }
+        //if (m_process.isEmpty())
+        //{
+        //    m_process.push_back(wrk);
+        //    added = true;
+        //}
+        //else
+        //    for (auto w : m_process)
+        //    {
+        //        if (!w->m_plugins.contains(m_name))
+        //        {
+        //            continue;
+        //        }
 
-                auto newtime = QDateTime::fromString(w->m_plugins[m_name]["PluginVersion"].toString().mid(8,19), "yyyy-MM-dd hh:mm:ss");
-                if (pl_time < newtime) // if all plugins in the list are older than the new clear
-                    m_process.clear();
+        //        auto newtime = QDateTime::fromString(w->m_plugins[m_name]["PluginVersion"].toString().mid(8,19), "yyyy-MM-dd hh:mm:ss");
+        //        if (pl_time < newtime) // if all plugins in the list are older than the new clear
+        //            m_process.clear();
 
-                if ( pl_time <= newtime) // if the plugin time older or equal add new :D (since older would already have been cleared by previous stage
-                {
-                    m_process.push_back(wrk);
-                    added = true;
-                }
-            }
+        //        if ( pl_time <= newtime) // if the plugin time older or equal add new :D (since older would already have been cleared by previous stage
+        //        {
+        //            m_process.push_back(wrk);
+        //            added = true;
+        //        }
+        //    }
 
         return added;
     }
