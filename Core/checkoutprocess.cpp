@@ -16,7 +16,7 @@ QMutex hash_to_save_mtx;
 CheckoutProcess::CheckoutProcess():
     _counter(0)
 {
-    startTimer(100);
+    //startTimer(100);
     worker_threadpool.setMaxThreadCount(QThreadPool::globalInstance()->maxThreadCount());
     worker_threadpool.setExpiryTimeout(-1);
 }

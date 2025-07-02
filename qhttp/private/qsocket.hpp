@@ -13,7 +13,7 @@
 #include "qhttpfwd.hpp"
 
 #include <QTcpSocket>
-#include <QSslSocket>
+#include <QtNetwork/QSslSocket>
 #include <QLocalSocket>
 #include <QUrl>
 ///////////////////////////////////////////////////////////////////////////////

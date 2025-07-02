@@ -113,7 +113,7 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p, std::function<void (void)
         if (s_clock () >= m_heartbeat_at) {
             //                    qDebug() << "Sending heartbeat";
 
-                perf_instance.refresh();
+//                perf_instance.refresh();
 
 
                 auto* mg = new zmsg();
@@ -122,15 +122,15 @@ std::pair<QString, zmsg *> mdwrk::recv(zmsg *&reply_p, std::function<void (void)
                 // Get computer Memory usage
                 // Get process Memory usage
 
-                mg->push_back(QString::number(perf_instance.totalPhysMem));
-                mg->push_back(QString::number(perf_instance.physMemUsed));
-                mg->push_back(QString::number(perf_instance.procPhysMem));
+//                mg->push_back(QString::number(perf_instance.totalPhysMem));
+//              mg->push_back(QString::number(perf_instance.physMemUsed));
+//              //mg->push_back(QString::number(perf_instance.procPhysMem));
 
                 // Get computer CPU load
                 // Get Process CPU Load
 
-                mg->push_back(QString::number(perf_instance.total_cpu_load));
-                mg->push_back(QString::number(perf_instance.proc_cpu_load));
+//                mg->push_back(QString::number(perf_instance.total_cpu_load));
+  //              mg->push_back(QString::number(perf_instance.proc_cpu_load));
 
 
 

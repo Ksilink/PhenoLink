@@ -130,7 +130,8 @@ endif()
 
 find_package(Boost COMPONENTS thread system chrono REQUIRED)
 
-
+set(Qt6_DIR "/home/arno/Qt/6.5.3/gcc_64/lib/cmake/Qt6")
+set(Jxl_LIBRARY_DIRS "/usr/local/lib")
 
 if(UNIX AND NOT APPLE)
         set(LINUX TRUE)
@@ -240,7 +241,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Update to CMake
 find_package(Qt6 COMPONENTS  Widgets  Xml
-                OpenGLWidgets Concurrent  Network  REQUIRED)
+               OpenGLWidgets Concurrent  Network  REQUIRED)
 
 if (WIN32)
 

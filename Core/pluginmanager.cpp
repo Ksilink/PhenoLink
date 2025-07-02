@@ -19,10 +19,12 @@ namespace PluginManager
 
 void loadPlugins(bool isServer)
 {
-    QDir pluginsDir(qApp->applicationDirPath());
+  QDir pluginsDir(QCoreApplication::instance()->applicationDirPath());
+  //QDir pluginsDir(qApp->applicationDirPath());
 //    QSettings set;
-
-
+qDebug()<<pluginsDir.dirName();
+qDebug()<<pluginsDir.absolutePath();
+qDebug()<<pluginsDir.canonicalPath();
 
     bool isDebug = false;
     bool isRelease = false;
@@ -55,16 +57,18 @@ void loadPlugins(bool isServer)
 
     pluginsDir.cd("plugins");
 
-    if (qApp->property("LoadMode").isValid())
-    {
-        pluginsDir.cd(qApp->property("LoadMode").toString());
-    }
-    else
-    {
+    //if (QCoreApplication::instance()->property("LoadMode").isValid())
+    //{
+
+//qDebug()<<pluginsDir.path();
+  //      pluginsDir.cd(qApp->property("LoadMode").toString());
+    //}
+   // else
+    //{
         if (isDebug) pluginsDir.cd("Debug");
         if (isRelease) pluginsDir.cd("Release");
         if (isRelDeb) pluginsDir.cd("RelWithDebInfo");
-    }
+    //}
 
     if (!pluginsDir.setCurrent(pluginsDir.path()))
         qDebug() << "Unable to set current directory to " << pluginsDir;
@@ -93,7 +97,7 @@ void loadPlugins(bool isServer)
             QSettings set;
 
 //            if (set.value("UserMode/Debug", false).toBool())
-//                qDebug() << "Checking file" << fileName << pluginsDir.absoluteFilePath(fileName);
+                qDebug() << "Checking file" << fileName << pluginsDir.absoluteFilePath(fileName);
 
             QPluginLoader pluginLoader(pluginsDir.absoluteFilePath(fileName));
 
@@ -107,12 +111,12 @@ void loadPlugins(bool isServer)
             if (plugin)
             {
                 bool added = false;
-            //    qDebug() << "Plugin" << pluginsDir.absoluteFilePath(fileName);
+                qDebug() << "Plugin" << pluginsDir.absoluteFilePath(fileName);
                 CheckoutDataLoaderPluginInterface* pl = qobject_cast<CheckoutDataLoaderPluginInterface*>(plugin);
                 if (pl)
                 {
 //                    if (set.value("UserMode/Debug", false).toBool())
-//                        qDebug() << "Plugin" << pl->pluginName() << "(" << fileName << ") loaded handling: " << pl->handledFiles();
+                        qDebug() << "Plugin" << pl->pluginName() << "(" << fileName << ") loaded handling: " << pl->handledFiles();
                     mutx.lock();
                     loader.addPlugin(pl);
                     mutx.unlock();
@@ -130,7 +134,7 @@ void loadPlugins(bool isServer)
                     else
                     {
 //                        if (set.value("UserMode/Debug", false).toBool())
-//                            qDebug() << "Plugin" << pr->getPath() << pr->getComments() << "(" << pr->getAuthors() << ")" << pr->plugin_version();
+                            qDebug() << "Plugin" << pr->getPath() << pr->getComments() << "(" << pr->getAuthors() << ")" << pr->plugin_version();
                         mutx.lock();
                         process.addProcess(pr);
                         mutx.unlock();
@@ -140,14 +144,16 @@ void loadPlugins(bool isServer)
 
                 if (!added)
                 { // Removed plugin not added...
-                    //				qDebug() << "Unloading plugin" << pluginLoader.errorString();
+                    				qDebug() << "Unloading plugin" << pluginLoader.errorString();
                     pluginLoader.unload();
                 }
             }
         }
     };
 
-    QStringList entries = pluginsDir.entryList(QStringList() << "*.dll" << "*.so" << "*.dylib", QDir::Files);
+    //QStringList entries = pluginsDir.entryList(QStringList() << "*.*" << "*.so" << "*.dylib", QDir::Files);
+    QStringList entries = pluginsDir.entryList(QDir::Files);
+    qDebug()<<"Entries"<<entries;
     entries.removeIf([](const QString& str){
         if (str.contains("opencv") || str.contains("brotl") ||
             str.contains("jxl") || str.contains("webp") ||

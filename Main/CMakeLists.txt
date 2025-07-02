@@ -125,15 +125,15 @@ install(TARGETS plzcli COMPONENT applications DESTINATION bin)
 
 find_package(LibArchive REQUIRED)
 
-add_executable(CpTranscode mainCpTranscode.cpp ${AppRCFile} enc_fast_lossless.cc)
-target_include_directories(CpTranscode PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+#add_executable(CpTranscode mainCpTranscode.cpp ${AppRCFile} enc_fast_lossless.cc)
+#target_include_directories(CpTranscode PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if (WIN32)
     target_link_libraries(CpTranscode Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS}   arrow_shared ${ARROW_LIBRARIES}  ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage  PkgConfig::Jxl PkgConfig::JxlThreads LibArchive::LibArchive)
 else()
-    target_link_libraries(CpTranscode Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS}  "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage PkgConfig::Jxl PkgConfig::JxlThreads LibArchive::LibArchive)
+  #  target_link_libraries(CpTranscode Qt::Widgets Qt::Core Qt::Network  Qt::Concurrent  ${OpenCV_LIBS}  "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>" ${AWSSDK_LIBRARIES} CURL::libcurl google-cloud-cpp::storage PkgConfig::Jxl PkgConfig::JxlThreads LibArchive::LibArchive)
 endif(WIN32)
 
-install(TARGETS CpTranscode COMPONENT applications DESTINATION bin)
+#install(TARGETS CpTranscode COMPONENT applications DESTINATION bin)
 
 #add_custom_command(TARGET Checkout  PRE_BUILD
 #    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../kill_server.bat"
