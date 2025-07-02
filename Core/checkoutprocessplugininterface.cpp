@@ -238,6 +238,7 @@ void CheckoutProcessPluginInterface::prepareData()
         {
             //            qDebug() << "Expected to find data as input Please debug" << getPath();
             _hashtoBiasCount[_meta.first().hash]++;
+            //qDebug() << "number of workers on " << hash << _hashtoBiasCount[_meta.first().hash];
         }
         else
             qDebug() << "Expected to find data as input Please debug" << getPath();
@@ -293,6 +294,7 @@ void CheckoutProcessPluginInterface::finished()
         _hashtoBiasCount[hash]--;
         if (_hashtoBiasCount[hash] == 0)
         {
+            //qDebug() << hash << "finished";
             for (int i = 0; i < _hashtoBias[hash].size(); ++i)
                 delete _hashtoBias[hash].at(i);
             _hashtoBias.remove(hash);

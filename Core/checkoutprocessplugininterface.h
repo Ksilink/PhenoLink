@@ -418,7 +418,7 @@ public:
                         }
                     }
                 }
-                /*qDebug() << hash << i << "load bias image";*/
+                //qDebug() << hash << i << "load bias image";
                 *mat = pl::imread(file, 2);
                 if (!mat->empty())
                 {
