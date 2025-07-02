@@ -391,6 +391,7 @@ public:
         if (_hashtoBias[hash][i] == 0)
         { // create image
             // auto file = QString("%2/DC_sCMOS #%1_CAM%1.tif").arg(i).arg(_meta.first().file_path);
+            /*qDebug() << _hashtoBias[hash][i];*/
             QString file;
             cv::Mat* mat = new cv::Mat;
             foreach (RegistrableParent* val, _parameters.values())
@@ -406,7 +407,7 @@ public:
                     }
                 }
             }
-
+            /*qDebug() << hash << i << "load bias image";*/
             *mat = pl::imread(file, 2);
             if (!mat->empty())
             {
@@ -424,7 +425,8 @@ public:
             _hashtoBias[hash][i] = mat;
 
         }
-
+        //qDebug() << hash << _hashtoBias[hash].size();
+        //qDebug() << "hash to bias size" << _hashtoBias.size();
         return *_hashtoBias[hash][i];
     }
 
