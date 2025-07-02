@@ -2,6 +2,7 @@
 #define CHECKOUTPROCESSPLUGININTERFACE_H
 
 
+
 #include <QMap>
 #include <QtCore>
 #include "Dll.h"
@@ -12,6 +13,9 @@ class ChannelSelectionType;
 #include "phenolinkimage.h"
 
 #include "ImageContainers.h"
+
+// Constants
+const int MAX_CHANNELS = 8;
 
 struct InputImageMetaData
 {
@@ -384,45 +388,53 @@ public:
 
         QString hash =_meta.first().hash;
 
-        if (i >= _hashtoBias[hash].size())
-        {
-            _hashtoBias[hash].resize(i+1);
+        //if (i >= _hashtoBias[hash].size())
+        //{
+        //    _hashtoBias[hash].resize(i+1);
+            // Ensure vector exists with proper size
+        if (!_hashtoBias.contains(hash)) {
+            _hashtoBias[hash] = QVector<cv::Mat*>(MAX_CHANNELS, nullptr);
         }
-        if (_hashtoBias[hash][i] == 0)
+        
+        if (_hashtoBias[hash][i] == nullptr)
         { // create image
             // auto file = QString("%2/DC_sCMOS #%1_CAM%1.tif").arg(i).arg(_meta.first().file_path);
             /*qDebug() << _hashtoBias[hash][i];*/
-            QString file;
-            cv::Mat* mat = new cv::Mat;
-            foreach (RegistrableParent* val, _parameters.values())
-            {
-                RegistrableImageParent* r = dynamic_cast<RegistrableImageParent* > (val);
-                if (r)
+            QMutexLocker locker(&mutex);
+            if (_hashtoBias[hash][i] == nullptr) {
+
+                QString file;
+                cv::Mat* mat = new cv::Mat;
+                foreach(RegistrableParent * val, _parameters.values())
                 {
-                    auto t = r->getBiasFiles();
-                    if (i < t.size())
+                    RegistrableImageParent* r = dynamic_cast<RegistrableImageParent*> (val);
+                    if (r)
                     {
-                        file = t[i];
-                        break;
+                        auto t = r->getBiasFiles();
+                        if (i < t.size())
+                        {
+                            file = t[i];
+                            break;
+                        }
                     }
                 }
+                /*qDebug() << hash << i << "load bias image";*/
+                *mat = pl::imread(file, 2);
+                if (!mat->empty())
+                {
+                    cv::Mat m;
+                    mat->convertTo(m, CV_32F, 1. / 10000.);
+                    cv::swap(m, *mat);
+                    m.release();
+                }
+                else
+                {
+                    qDebug() << file << "does not exists empty bias returned";
+                    *mat = cv::Mat(2160, 2560, CV_32F, cv::Scalar(1));
+                    // FIXME: default value may not be 1, but could be more like max of U16 or .5 max of U16...
+                }
+                _hashtoBias[hash][i] = mat;
             }
-            /*qDebug() << hash << i << "load bias image";*/
-            *mat = pl::imread(file, 2);
-            if (!mat->empty())
-            {
-                cv::Mat m;
-                mat->convertTo(m, CV_32F, 1. / 10000.);
-                cv::swap(m, *mat);
-                m.release();
-            }
-            else
-            {
-                qDebug() << file << "does not exists empty bias returned";
-                *mat = cv::Mat(2160,2560, CV_32F, cv::Scalar(1));
-                // FIXME: default value may not be 1, but could be more like max of U16 or .5 max of U16...
-            }
-            _hashtoBias[hash][i] = mat;
 
         }
         //qDebug() << hash << _hashtoBias[hash].size();
