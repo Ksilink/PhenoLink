@@ -407,6 +407,7 @@ public:
                 }
             }
 
+
             *mat = pl::imread(file, 2);
             if (!mat->empty())
             {
