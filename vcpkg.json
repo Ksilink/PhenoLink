@@ -69,6 +69,12 @@
         "nonfree",
         "ipp"
       ]
+    },
+    {
+      "name": "polyclipping"
+    },
+    {
+      "name": "nanoflann"
     }
   ]
 
