@@ -18,8 +18,7 @@
         "name": "boost-thread"
     },
     {
-      "name": "mongo-cxx-driver",
-      "features": ["boost"]
+      "name": "mongo-cxx-driver"
     },
     {
       "name": "eigen3"

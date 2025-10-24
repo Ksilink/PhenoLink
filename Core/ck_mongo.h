@@ -7,7 +7,7 @@
 #include <bsoncxx/types.hpp>
 #include <bsoncxx/stdx/string_view.hpp>
 #include <mongocxx/client.hpp>
-#include <mongocxx/stdx.hpp>
+//#include <mongocxx/stdx.hpp>
 #include <mongocxx/uri.hpp>
 #include <mongocxx/instance.hpp>
 #include <bsoncxx/builder/stream/helpers.hpp>
