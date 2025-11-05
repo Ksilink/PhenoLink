@@ -601,8 +601,8 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
         // lock_infos.lock();
         // _infos[file] = info;
         // lock_infos.unlock();
-        //if (!exists)
-        //{
+        if (!exists)
+        {
             if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
             {
                 QString cname = _mdl->getOwner()->property(QString("ChannelsColor%1").arg(ii));
@@ -611,8 +611,7 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
             }
             else
                 info->setDefaultColor(ii, false);
-
-   // }
+        }
         // Also setup the channel names if needed
         //qDebug() << " --> DEBUG = " << _mdl->getChannelNames().size()<< _mdl->getChannelNames();
         if (_mdl->getChannelNames().size()>=ii)
