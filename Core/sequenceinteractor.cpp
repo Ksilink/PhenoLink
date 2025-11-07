@@ -601,13 +601,17 @@ ImageInfos* SequenceInteractor::imageInfos(QString file, int channel, QString ke
         // lock_infos.lock();
         // _infos[file] = info;
         // lock_infos.unlock();
+        //qDebug() << "ImageInfos for file:" << file << "channel:" << ii << "exists:" << exists << "exp:" << exp << "key:" << key;
         if (!exists)
         {
+        
             if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
             {
+
                 QString cname = _mdl->getOwner()->property(QString("ChannelsColor%1").arg(ii));
                 QColor col = QColor::fromString(cname);
                 info->setColor(col, false);
+
             }
             else
                 info->setDefaultColor(ii, false);
@@ -1194,7 +1198,18 @@ void SequenceInteractor::initImageInfos(int field)
         QString exp =  set.value("ShareControls", false).toBool() ? QString("%1").arg(ii) : getExperimentName() + QString("%1").arg(ii);
 
 
-        ImageInfos::getInstance(this, file, exp, ii, exists, loadkey);
+        ImageInfos* info = ImageInfos::getInstance(this, file, exp, ii, exists, loadkey);
+        if (!exists)
+        {
+            if (_mdl->getOwner()->hasProperty("ChannelsColor" + QString("%1").arg(ii)))
+            {
+                QString cname = _mdl->getOwner()->property(QString("ChannelsColor%1").arg(ii));
+                QColor col = QColor::fromString(cname);
+                info->setColor(col, false);
+            }
+            else
+                info->setDefaultColor(ii, false);
+        }
     }
 }
 
