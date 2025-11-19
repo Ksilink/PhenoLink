@@ -23,12 +23,17 @@
 #define MDPW_PROCESSLIST    (char*)"\006"
 #define MDPW_FINISHED       (char*)"\007"
 
+//  MDP/Client notification commands (broker to client)
+#define MDPC_WORKER_DIED    (char*)"\010"    // Worker crashed during job
+#define MDPC_NO_WORKERS     (char*)"\011"    // No workers available for service
+
 static char *mdps_commands [] = {
     NULL,
     (char*)"READY", (char*)"REQUEST",
     (char*)"REPLY", (char*)"HEARTBEAT",
     (char*)"DISCONNECT", (char*)"PROCESSES",
-    (char*)"FINISHED"
+    (char*)"FINISHED", (char*)"WORKER_DIED",
+    (char*)"NO_WORKERS"
 };
 
 

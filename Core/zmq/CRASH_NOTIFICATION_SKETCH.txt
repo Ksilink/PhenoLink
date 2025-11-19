@@ -1,0 +1,346 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║           WORKER CRASH NOTIFICATION FEATURE - VISUAL SKETCH                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════════
+  SCENARIO 1: WORKER CRASHES DURING JOB EXECUTION
+═══════════════════════════════════════════════════════════════════════════════
+
+    ┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+    │   CLIENT     │         │    BROKER    │         │   WORKER     │
+    │ mainzCli.cpp │         │ mdbroker.hpp │         │ mdwrkapi.cpp │
+    └──────┬───────┘         └──────┬───────┘         └──────┬───────┘
+           │                        │                        │
+           │ ① Submit Job           │                        │
+           │ session.send(proc,req) │                        │
+           ├───────────────────────>│                        │
+           │                        │                        │
+           │                        │ ② Dispatch to Worker   │
+           │                        │  worker_send(REQUEST)  │
+           │                        ├───────────────────────>│
+           │                        │                        │
+           │                        │                        │ ③ Processing
+           │                        │                        │   plugin->exec()
+           │                        │                        ║
+           │                        │                        ║
+           │                        │                        ▼
+           │                        │                        ✗ CRASH!
+           │                        │                        
+           │                        │ ④ Heartbeat Timeout    
+           │                        │   (7.5 sec expired)    
+           │                        │   purge_workers()      
+           │                        │   • Detect dead worker 
+           │                        │   • Recover lost jobs  
+           │                        │   • Re-queue for retry 
+           │                        │                        
+           │ ⑤ CRASH NOTIFICATION   │                        
+           │   MDPC_WORKER_DIED     │                        
+           │<───────────────────────┤                        
+           │                        │                        
+           ▼                        │                        
+    ┌─────────────────────┐        │                        
+    │  ⚠️  POPUP WINDOW   │        │                        
+    ├─────────────────────┤        │                        
+    │ Worker Crashed!     │        │                        
+    │                     │        │                        
+    │ A worker processing │        │ ⑥ Assign to New Worker
+    │ your job has        │        │   (if available)       
+    │ crashed. Job will   │        │                        
+    │ be retried.         │        ├───────────────────────> NEW WORKER
+    │                     │        │                        
+    │      [ OK ]         │        │                        
+    └─────────────────────┘        ▼                        
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  SCENARIO 2: NO WORKERS AVAILABLE FOR SERVICE
+═══════════════════════════════════════════════════════════════════════════════
+
+    ┌──────────────┐         ┌──────────────┐         
+    │   CLIENT     │         │    BROKER    │         (NO WORKERS)
+    │ mainzCli.cpp │         │ mdbroker.hpp │         
+    └──────┬───────┘         └──────┬───────┘         
+           │                        │                  
+           │ ① Submit Job           │                  
+           │ session.send(proc,req) │                  
+           ├───────────────────────>│                  
+           │                        │                  
+           │                        │ ② Check Workers  
+           │                        │   for service    
+           │                        │                  
+           │                        │   for (worker in m_workers)
+           │                        │     if (srv->m_process.contains(worker))
+           │                        │                  
+           │                        │   Result: EMPTY! 
+           │                        │   No capable workers found
+           │                        │                  
+           │ ③ IMMEDIATE REJECT     │                  
+           │   MDPC_NO_WORKERS      │                  
+           │<───────────────────────┤                  
+           │                        │                  
+           ▼                        │                  
+    ┌─────────────────────┐        │                  
+    │  🚫 POPUP WINDOW    │        │                  
+    ├─────────────────────┤        │                  
+    │ No Workers!         │        │ ④ Job Queued     
+    │                     │        │   (waiting for   
+    │ No workers are      │        │    workers to    
+    │ available to        │        │    come online)  
+    │ process this job.   │        │                  
+    │                     │        ▼                  
+    │ Please start worker │                           
+    │ servers and retry.  │                           
+    │                     │                           
+    │      [ OK ]         │                           
+    └─────────────────────┘                           
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  KEY COMPONENTS & MODIFICATIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ 1. PROTOCOL EXTENSIONS (mdp.hpp)                                           │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│   #define MDPC_WORKER_DIED    (char*)"\010"    // New message type        │
+│   #define MDPC_NO_WORKERS     (char*)"\011"    // New message type        │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ 2. BROKER ENHANCEMENTS (mdbroker.hpp)                                     │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│   A) purge_workers() [Line 231-261]                                       │
+│      • Track jobs being processed by dying workers                        │
+│      • Call send_worker_crash_notification(job)                           │
+│      • Re-queue failed jobs for retry                                     │
+│                                                                            │
+│   B) service_dispatch() [Line 286-415]                                    │
+│      • Check if ANY workers can handle service                            │
+│      • If no workers: call send_no_workers_notification()                 │
+│                                                                            │
+│   C) New Methods:                                                          │
+│      • send_worker_crash_notification(service_call* job)                  │
+│        - Build CBOR notification with error details                       │
+│        - Send MDPC_WORKER_DIED message to client                          │
+│                                                                            │
+│      • send_no_workers_notification(QString client, QString service)      │
+│        - Build CBOR notification with error details                       │
+│        - Send MDPC_NO_WORKERS message to client                           │
+│                                                                            │
+│   D) Enhanced service_call Structure:                                     │
+│      struct service_call {                                                │
+│          QString client;          // Existing                             │
+│          int64_t submit_time;     // NEW: Track submission time           │
+│          bool client_notified;    // NEW: Prevent duplicate notifications │
+│      }                                                                     │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ 3. CLIENT ENHANCEMENTS (mdcliapi.hpp)                                     │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│   A) recv() Method [Line 111-144]                                         │
+│      • Parse incoming message                                             │
+│      • Check if CBOR contains "error" field                               │
+│      • If error: call handle_error_notification()                         │
+│      • Return nullptr for error messages (don't treat as reply)           │
+│                                                                            │
+│   B) New Method:                                                           │
+│      virtual void handle_error_notification(QCborMap error)               │
+│      • Parse error type (WORKER_CRASHED / NO_WORKERS)                     │
+│      • Log to console                                                     │
+│      • Can be overridden for GUI popups                                   │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ 4. GUI CLIENT (mainzCli.cpp or new wrapper)                               │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│   class NotifyingMDCli : public mdcli {                                   │
+│   protected:                                                               │
+│       void handle_error_notification(QCborMap error) override {           │
+│           if (error["error"] == "WORKER_CRASHED") {                       │
+│               QMessageBox::warning(...);   // ⚠️ Show popup               │
+│           }                                                                │
+│           else if (error["error"] == "NO_WORKERS") {                      │
+│               QMessageBox::critical(...);  // 🚫 Show popup               │
+│           }                                                                │
+│       }                                                                    │
+│   };                                                                       │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  MESSAGE FORMAT
+═══════════════════════════════════════════════════════════════════════════════
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ Crash Notification Message (Broker → Client)                              │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│   Frame 0: Client ID         "client-xyz-123"                             │
+│   Frame 1: Empty             ""                                           │
+│   Frame 2: Protocol Header   "MDPC01_PL"                                  │
+│   Frame 3: Service Name      "PluginName"                                 │
+│   Frame 4: CBOR Data         {                                            │
+│                                "error": "WORKER_CRASHED",                 │
+│                                "service": "PluginName",                   │
+│                                "message": "Worker crashed. Retrying...",  │
+│                                "timestamp": "2025-11-18T15:30:00",       │
+│                                "job_id": "job-456"                        │
+│                              }                                             │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ No Workers Message (Broker → Client)                                      │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│   Frame 0: Client ID         "client-xyz-123"                             │
+│   Frame 1: Empty             ""                                           │
+│   Frame 2: Protocol Header   "MDPC01_PL"                                  │
+│   Frame 3: Service Name      "PluginName"                                 │
+│   Frame 4: CBOR Data         {                                            │
+│                                "error": "NO_WORKERS",                     │
+│                                "service": "PluginName",                   │
+│                                "message": "No workers available.",        │
+│                                "timestamp": "2025-11-18T15:30:00"        │
+│                              }                                             │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  IMPLEMENTATION TIMELINE
+═══════════════════════════════════════════════════════════════════════════════
+
+    Phase 1: Protocol Extensions (1 hour)
+    ├─ Add MDPC_WORKER_DIED and MDPC_NO_WORKERS constants
+    └─ Update protocol documentation
+
+    Phase 2: Broker Modifications (4-6 hours)
+    ├─ Modify purge_workers() for crash detection
+    ├─ Add send_worker_crash_notification()
+    ├─ Modify service_dispatch() for worker checks
+    ├─ Add send_no_workers_notification()
+    └─ Enhance service_call structure
+
+    Phase 3: Client Modifications (3-4 hours)
+    ├─ Modify mdcli::recv() for error handling
+    ├─ Add handle_error_notification()
+    └─ Create NotifyingMDCli subclass with popups
+
+    Phase 4: Testing (2-3 hours)
+    ├─ Test worker crash scenarios
+    ├─ Test no-worker scenarios
+    └─ Test backward compatibility
+
+    TOTAL ESTIMATED TIME: 10-14 hours
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  FILE MODIFICATIONS SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+    📁 Core/zmq/mdp.hpp
+       • Add 2 new protocol constants
+       • Update command array
+       Lines added: ~5
+
+    📁 Core/zmq/mdbroker.hpp
+       • Modify purge_workers()
+       • Modify service_dispatch()
+       • Add send_worker_crash_notification()
+       • Add send_no_workers_notification()
+       • Enhance service_call structure
+       Lines added: ~120
+
+    📁 Core/zmq/mdcliapi.hpp
+       • Modify recv() method
+       • Add handle_error_notification()
+       Lines added: ~40
+
+    📁 Main/mainzCli.cpp (or new file)
+       • Create NotifyingMDCli subclass
+       • Add QMessageBox popup handlers
+       Lines added: ~50
+
+    TOTAL CODE CHANGES: ~215 lines
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  BACKWARD COMPATIBILITY
+═══════════════════════════════════════════════════════════════════════════════
+
+    ✅ Existing clients continue to work unchanged
+       • Timeout mechanism still functions as fallback
+       • recv() returns nullptr on timeout (existing behavior)
+
+    ✅ Broker handles old and new clients simultaneously
+       • New notifications are additional, not replacement
+       • No breaking changes to existing protocol flow
+
+    ✅ Gradual migration path
+       • Update broker first
+       • Update clients at your own pace
+       • Mixed old/new clients supported
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  TESTING SCENARIOS
+═══════════════════════════════════════════════════════════════════════════════
+
+    Test 1: Simulate Worker Crash
+    ├─ Start: Broker + 1 Worker + Client
+    ├─ Action: Submit job, kill worker mid-execution
+    ├─ Expected: Client popup "Worker crashed" within 8 seconds
+    └─ Verify: Job re-queued and re-assigned
+
+    Test 2: No Workers Available
+    ├─ Start: Broker + Client (NO workers)
+    ├─ Action: Submit job
+    ├─ Expected: Client popup "No workers" immediately
+    └─ Verify: Job queued but not assigned
+
+    Test 3: Worker Recovery
+    ├─ Start: Broker + Client (NO workers), job queued
+    ├─ Action: Start new worker
+    ├─ Expected: Queued job automatically assigned
+    └─ Verify: Job completes successfully
+
+    Test 4: Multiple Crashes
+    ├─ Start: Broker + 3 Workers + Client
+    ├─ Action: Submit 10 jobs, kill all workers
+    ├─ Expected: Client notified 10 times
+    └─ Verify: All jobs re-queued
+
+    Test 5: Backward Compatibility
+    ├─ Start: New Broker + Old Client (no modifications)
+    ├─ Action: Simulate crash
+    ├─ Expected: Old client timeout after 2.5 sec, no popup
+    └─ Verify: No crashes, graceful degradation
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+    ✅ FEASIBILITY:          YES - Fully supported by current architecture
+    ✅ CODE CHANGES:         Minimal (~215 lines across 4 files)
+    ✅ BREAKING CHANGES:     None - Backward compatible
+    ✅ PERFORMANCE IMPACT:   Negligible - Async notifications
+    ✅ IMPLEMENTATION TIME:  10-14 hours
+    ✅ USER EXPERIENCE:      Significantly improved
+
+    The design leverages existing infrastructure:
+    • Heartbeat mechanism already detects crashes
+    • Internal service commands already support custom messages
+    • ZMQ messaging already supports broker→client communication
+
+    Recommendation: ✅ PROCEED WITH IMPLEMENTATION

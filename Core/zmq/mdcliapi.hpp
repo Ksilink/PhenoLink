@@ -4,6 +4,8 @@
 #include <Dll.h>
 #include "zmsg.hpp"
 #include "mdp.hpp"
+#include <QCborValue>
+#include <QCborMap>
 
 //  Structure of our class
 //  We access these properties only via class methods
@@ -132,6 +134,32 @@ public:
 //            assert (header.compare((unsigned char *)MDPC_CLIENT) == 0);
             auto service = msg->pop_front();
 
+            // Check if this is an error notification
+            // We need to peek at the first frame without removing it
+            if (msg->parts() > 0)
+            {
+                // Peek at first frame by popping and checking, then pushing back if not error
+                auto firstFrame = msg->pop_front();
+                auto data = QCborValue::fromCbor(firstFrame);
+                
+                if (data.isMap())
+                {
+                    auto map = data.toMap();
+                    if (map.contains(QString("error")))
+                    {
+                        // This is an error notification!
+                        qDebug() << "[CLIENT] Received error notification from broker";
+                        handle_error_notification(map);
+                        // Don't return this as normal reply
+                        delete msg;
+                        return nullptr;
+                    }
+                }
+                
+                // Not an error - push the frame back so caller gets complete message
+                msg->push_front(firstFrame);
+            }
+
             return msg;     //  Success
         }
         if (s_interrupted)
@@ -146,6 +174,27 @@ public:
     bool getStatus()
     {
         return _status;
+    }
+
+protected:
+    //  ---------------------------------------------------------------------
+    //  Handle error notification from broker
+    //  Virtual method that can be overridden for custom error handling (e.g., GUI popups)
+
+    virtual void
+    handle_error_notification(const QCborMap& error)
+    {
+        QString errorType = error[QString("error")].toString();
+        QString message = error[QString("message")].toString();
+        QString service = error[QString("service")].toString();
+        
+        qWarning() << "[CLIENT ERROR HANDLER] ========================================";
+        qWarning() << "[CLIENT ERROR HANDLER] ERROR from broker:" << errorType;
+        qWarning() << "[CLIENT ERROR HANDLER] Service:" << service;
+        qWarning() << "[CLIENT ERROR HANDLER] Message:" << message;
+        qWarning() << "[CLIENT ERROR HANDLER] ========================================";
+        
+        // Subclasses can override this for GUI popups or other handling
     }
 
 private:

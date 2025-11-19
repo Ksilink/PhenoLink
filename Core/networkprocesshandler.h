@@ -18,7 +18,7 @@ extern  QTextStream *hash_logfile;
 //    quint16      port;
 //};
 
-#include <zmq/mdcliapi.hpp>
+#include <zmq/mdcliapi_notifying.hpp>
 
 #include "qhttp/qhttpserver.hpp"
 #include "qhttp/qhttpserverconnection.hpp"

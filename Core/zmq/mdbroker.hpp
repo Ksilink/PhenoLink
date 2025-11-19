@@ -69,6 +69,10 @@ struct  service_call
     worker_threads* worker_thread = 0;
     QDateTime start_time;
 
+    // Crash notification tracking
+    int64_t submit_time = 0;        // When job was submitted
+    bool client_notified = false;   // Prevent duplicate notifications
+
 };
 
 
@@ -225,12 +229,83 @@ public:
 private:
 
     //  ---------------------------------------------------------------------
+    //  Send worker crash notification to client
+
+    void
+    send_worker_crash_notification(service_call* job)
+    {
+        if (!job || job->client.isEmpty()) {
+            qDebug() << "[CRASH NOTIFICATION] Cannot send - invalid job or empty client";
+            return;
+        }
+        
+        qDebug() << "[CRASH NOTIFICATION] Sending WORKER_CRASHED notification to client" << job->client << "for job" << job->path;
+        
+        zmsg* msg = new zmsg();
+        
+        // Build notification message
+        QCborMap notification;
+        notification[QString("error")] = QString("WORKER_CRASHED");
+        notification[QString("service")] = job->path;
+        notification[QString("message")] = QString("Worker processing your job has crashed. Job will be retried.");
+        notification[QString("timestamp")] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        if (job->parameters.contains(QString("JobID")))
+            notification[QString("job_id")] = job->parameters.value(QString("JobID")).toString();
+        
+        msg->push_back(notification.toCborValue().toCbor());
+        
+        // Format as MDP client message
+        msg->wrap(QString(MDPC_CLIENT));
+        msg->wrap(job->client, "");
+        
+        // Send to client
+        msg->send(*m_socket);
+        qDebug() << "[CRASH NOTIFICATION] WORKER_CRASHED notification sent successfully";
+        delete msg;
+    }
+
+    //  ---------------------------------------------------------------------
+    //  Send no workers available notification to client
+
+    void
+    send_no_workers_notification(const QString& client, const QString& service)
+    {
+        if (client.isEmpty()) {
+            qDebug() << "[NO WORKERS NOTIFICATION] Cannot send - empty client";
+            return;
+        }
+        
+        qDebug() << "[NO WORKERS NOTIFICATION] Sending NO_WORKERS notification to client" << client << "for service" << service;
+        
+        zmsg* msg = new zmsg();
+        
+        // Build notification message
+        QCborMap notification;
+        notification[QString("error")] = QString("NO_WORKERS");
+        notification[QString("service")] = service;
+        notification[QString("message")] = QString("No workers are currently available to process this job.");
+        notification[QString("timestamp")] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        
+        msg->push_back(notification.toCborValue().toCbor());
+        
+        // Format as MDP client message
+        msg->wrap(QString(MDPC_CLIENT));
+        msg->wrap(client, "");
+        
+        // Send to client
+        msg->send(*m_socket);
+        qDebug() << "[NO WORKERS NOTIFICATION] NO_WORKERS notification sent successfully";
+        delete msg;
+    }
+
+    //  ---------------------------------------------------------------------
     //  Delete any idle workers that haven't pinged us in a while.
 
     void
     purge_workers ()
     {
         QSet<worker*> toCull;
+        QSet<service_call*> failedJobs;  // Track failed jobs for notification
         int64_t now = s_clock();
         for (QSet<worker_threads*>::iterator wrk = m_workers_threads.begin(), ewrk = m_workers_threads.end();
              wrk != ewrk; ++wrk)
@@ -243,6 +318,13 @@ private:
                     for (auto& job: m_ongoing_jobs)
                         if (job == (*wrk)->parameters)
                         {
+                            // Track failed job for notification
+                            if (!job->client_notified)
+                            {
+                                failedJobs.insert(job);
+                                job->client_notified = true;
+                            }
+                            
                             m_requests.push_front(job); // push back in front lost jobs
                         }
                 }
@@ -257,6 +339,16 @@ private:
             qDebug() << "I: deleting expired worker:" << (*wrk)->m_identity;
             //            }
             worker_delete((*wrk), 0);
+        }
+        
+        // Send crash notifications to affected clients
+        if (!failedJobs.isEmpty())
+        {
+            qDebug() << "[PURGE_WORKERS] Found" << failedJobs.size() << "failed jobs, sending crash notifications";
+        }
+        for (auto job : failedJobs)
+        {
+            send_worker_crash_notification(job);
         }
     }
 
@@ -323,6 +415,8 @@ private:
                 call->project = call->parameters.value("Project").toString();
 
                 call->priority = 0;
+                call->submit_time = s_clock();  // Track submission time
+                call->client_notified = false;  // Initialize notification flag
 
 
                 m_requests.push_back(call);
@@ -330,6 +424,24 @@ private:
 
 
             srv->m_requests.push_back(msg);
+            
+            // Check if ANY workers can handle this service
+            bool has_capable_worker = false;
+            for (auto w = m_workers.begin(); w != m_workers.end(); ++w)
+            {
+                if (srv->m_process.contains(w.value()))
+                {
+                    has_capable_worker = true;
+                    break;
+                }
+            }
+            
+            // If no workers exist for this service, notify client immediately
+            if (!has_capable_worker)
+            {
+                qDebug() << "No workers available for service" << srv->m_name;
+                send_no_workers_notification(client, srv->m_name);
+            }
         }
 
         purge_workers ();

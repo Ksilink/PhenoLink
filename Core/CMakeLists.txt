@@ -50,7 +50,7 @@ add_library(PhenoLinkCore SHARED
             ck_mongo.h ck_mongo.cpp
             phenolinkimage.h phenolinkimage.cpp
             Cloud/PhenoLinkDir.h Cloud/PhenoLinkDir.cpp
-            zmq/mdcliapi.hpp zmq/mdp.hpp
+            zmq/mdcliapi.hpp zmq/mdp.hpp zmq/mdcliapi_notifying.hpp
             zmq/mdwrkapi.cpp zmq/mdwrkapi.hpp
             zmq/zhelpers.hpp
             zmq/zmsg.hpp zmq/zmsg.cpp

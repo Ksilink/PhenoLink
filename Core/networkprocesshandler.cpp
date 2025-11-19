@@ -15,7 +15,7 @@
 #include "qhttp/qhttpserverrequest.hpp"
 #include "qhttp/qhttpserverresponse.hpp"
 
-#include <zmq/mdcliapi.hpp>
+#include <zmq/mdcliapi_notifying.hpp>
 
 
 using namespace qhttp::client;
@@ -699,9 +699,9 @@ mdcli &NetworkProcessHandler::getSession()
         QByteArray indata = QString("%1@%2").arg(username).arg(hostname).toLatin1();
         QString hash = QCryptographicHash::hash(indata, QCryptographicHash::Md5).toHex();
 
-        qDebug() << "Session ID" << hash;
+        qDebug() << "[GUI CLIENT] Creating NotifyingMDCli session with ID" << hash;
 
-        session = new mdcli(srv, hash);
+        session = new NotifyingMDCli(srv, hash);
     }
 
 
@@ -715,7 +715,7 @@ bool NetworkProcessHandler::queryJobStatus()
     auto req = new zmsg();
     session.send("mmi.status", req);
     auto reply = session.recv();
-    // qDebug() << "Reply status" << reply;
+    qDebug() << "Reply status" << reply;
 
 
     if (reply == nullptr)
