@@ -738,13 +738,43 @@ bool NetworkProcessHandler::queryJobStatus()
     
     auto req = new zmsg();
     session.send("mmi.status", req);
-    auto reply = session.recv();
-    qDebug() << "Reply status" << reply;
-
+    
+    // Try to receive reply - may need multiple attempts if errors are queued
+    zmsg* reply = nullptr;
+    int maxRetries = 10;  // Allow draining up to 10 error notifications
+    
+    for (int attempt = 0; attempt < maxRetries; attempt++)
+    {
+        reply = session.recv();
+        
+        if (reply != nullptr)
+        {
+            // Got a real reply, break out
+            qDebug() << "Reply status received" << (attempt > 0 ? QString("(after %1 error(s))").arg(attempt) : "");
+            break;
+        }
+        
+        // recv() returned nullptr, meaning it consumed an error notification
+        // The error is now stored in the session
+        if (session.hasPendingError())
+        {
+            QString errType, errMsg, errSvc;
+            session.getLastError(errType, errMsg, errSvc);
+            session.clearError();
+            qDebug() << "[queryJobStatus] Drained error from queue (" << (attempt+1) << "):" << errType << errSvc;
+            // Continue loop to try recv() again for the actual status reply
+        }
+        else
+        {
+            // nullptr but no error stored - real failure (timeout/disconnect)
+            qDebug() << "Null reply (not an error notification)";
+            return false;
+        }
+    }
 
     if (reply == nullptr)
     {
-        qDebug() << "Null reply";
+        qDebug() << "Null reply after" << maxRetries << "retries - too many queued errors";
         return false;
     }
     if (reply->parts() <= 0)
