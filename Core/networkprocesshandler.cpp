@@ -15,7 +15,7 @@
 #include "qhttp/qhttpserverrequest.hpp"
 #include "qhttp/qhttpserverresponse.hpp"
 
-#include <zmq/mdcliapi_notifying.hpp>
+#include <zmq/mdcliapi.hpp>
 
 
 using namespace qhttp::client;
@@ -699,9 +699,7 @@ mdcli &NetworkProcessHandler::getSession()
         QByteArray indata = QString("%1@%2").arg(username).arg(hostname).toLatin1();
         QString hash = QCryptographicHash::hash(indata, QCryptographicHash::Md5).toHex();
 
-        qDebug() << "[GUI CLIENT] Creating NotifyingMDCli session with ID" << hash;
-
-        session = new NotifyingMDCli(srv, hash);
+        session = new mdcli(srv, hash);
     }
 
 
@@ -709,9 +707,35 @@ mdcli &NetworkProcessHandler::getSession()
 }
 
 
+bool NetworkProcessHandler::checkForErrors(QString& errorType, QString& errorMsg, QString& service)
+{
+    auto& session = getSession();
+    
+    if (session.hasPendingError())
+    {
+        session.getLastError(errorType, errorMsg, service);
+        session.clearError();  // Clear immediately to prevent duplicate notifications
+        qDebug() << "[NetworkProcessHandler] Error detected:" << errorType << service;
+        return true;
+    }
+    
+    return false;
+}
+
 bool NetworkProcessHandler::queryJobStatus()
 {
     auto& session = getSession();
+    
+    // Check and clear any pending errors BEFORE sending status query
+    // This ensures error notifications don't interfere with status replies
+    QString dummyType, dummyMsg, dummyService;
+    if (session.hasPendingError())
+    {
+        session.getLastError(dummyType, dummyMsg, dummyService);
+        session.clearError();
+        qDebug() << "[queryJobStatus] Cleared pending error before status query:" << dummyType;
+    }
+    
     auto req = new zmsg();
     session.send("mmi.status", req);
     auto reply = session.recv();

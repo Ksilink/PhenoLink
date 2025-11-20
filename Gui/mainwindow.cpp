@@ -2290,6 +2290,29 @@ void MainWindow::timerEvent(QTimerEvent *event)
         auto &nhandler = NetworkProcessHandler::handler();
 //        qDebug() << "Status" << _StatusProgress->value() <<  _StatusProgress->maximum();
 
+        // Check for error notifications from broker
+        QString errorType, errorMsg, service;
+        if (nhandler.checkForErrors(errorType, errorMsg, service))
+        {
+            if (errorType == "WORKER_CRASHED")
+            {
+                // Non-blocking notification for worker crash (job will retry automatically)
+                this->statusBar()->showMessage(
+                    QString("⚠️ Worker Crashed: Job '%1' will be automatically retried").arg(service),
+                    10000  // Show for 10 seconds
+                );
+                qWarning() << "Worker crashed for service:" << service << "-" << errorMsg;
+            }
+            else if (errorType == "NO_WORKERS")
+            {
+                // CRITICAL blocking message - user needs to take action!
+                QMessageBox::critical(this, "No Workers Available",
+                    QString("No workers are available for service '%1'.\n\n%2\n\nPlease start worker servers to process jobs.")
+                    .arg(service).arg(errorMsg));
+            }
+        }
+
+        // Always query status (even if error occurred, we still need job progress)
         if (!nhandler.queryJobStatus())
             qDebug() << "Job Status Query not successful";
 

@@ -18,7 +18,7 @@ extern  QTextStream *hash_logfile;
 //    quint16      port;
 //};
 
-#include <zmq/mdcliapi_notifying.hpp>
+#include <zmq/mdcliapi.hpp>
 
 #include "qhttp/qhttpserver.hpp"
 #include "qhttp/qhttpserverconnection.hpp"
@@ -97,7 +97,10 @@ public:
     void setNoProxyMode();
     void addProxyPort(uint16_t port);
     void setServerAddress(QString srv);
-    QString getServer();;
+    QString getServer();
+    
+    // Check for error notifications from broker
+    bool checkForErrors(QString& errorType, QString& errorMsg, QString& service);
 
 
     QStringList getProcesses();

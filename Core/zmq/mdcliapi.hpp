@@ -175,6 +175,29 @@ public:
     {
         return _status;
     }
+    
+    // Check if there's a pending error notification
+    bool hasPendingError() const
+    {
+        return m_has_pending_error;
+    }
+    
+    // Get last error details
+    void getLastError(QString& errorType, QString& message, QString& service)
+    {
+        errorType = m_last_error_type;
+        message = m_last_error_message;
+        service = m_last_error_service;
+    }
+    
+    // Clear the error flag
+    void clearError()
+    {
+        m_has_pending_error = false;
+        m_last_error_type.clear();
+        m_last_error_message.clear();
+        m_last_error_service.clear();
+    }
 
 protected:
     //  ---------------------------------------------------------------------
@@ -194,7 +217,11 @@ protected:
         qWarning() << "[CLIENT ERROR HANDLER] Message:" << message;
         qWarning() << "[CLIENT ERROR HANDLER] ========================================";
         
-        // Subclasses can override this for GUI popups or other handling
+        // Store error for GUI to retrieve
+        m_last_error_type = errorType;
+        m_last_error_message = message;
+        m_last_error_service = service;
+        m_has_pending_error = true;
     }
 
 private:
@@ -204,6 +231,12 @@ private:
     int m_verbose;                //  Print activity to stdout
     int m_timeout;                //  Request timeout
     bool _status;
+    
+    // Error notification storage
+    QString m_last_error_type;
+    QString m_last_error_message;
+    QString m_last_error_service;
+    bool m_has_pending_error = false;
 };
 
 #endif // MDCLIAPI_HPP
