@@ -1,6 +1,7 @@
 #ifndef REGISTRABLESTDCONTAINERTYPE_H
 #define REGISTRABLESTDCONTAINERTYPE_H
 
+#include <cstring>
 
 
 // Allows the registration of std::list, std::vector, std::set or std::map
@@ -88,14 +89,14 @@ inline double toValF(QJsonValue v)
                 {\
                     QJsonArray ar = json["Value"].toArray();\
                     for (int i = 0; i < ar.size(); ++i)\
-                        if (Str(InnerType) == "double" || Str(InnerType) == "float")\
+                        if (strcmp(Str(InnerType), "double") == 0 || strcmp(Str(InnerType), "float") == 0)\
                             (*_value).push_back((InnerType)toValF(ar.at(i)));\
                         else\
                             (*_value).push_back((InnerType)toValI(ar.at(i)));\
                 }\
                 else\
                 {\
-                    if (Str(InnerType) == "double" || Str(InnerType) == "float")\
+                    if (strcmp(Str(InnerType), "double") == 0 || strcmp(Str(InnerType), "float") == 0)\
                         (*_value).push_back((InnerType) toValF(json["Value"]));\
                     else\
                         (*_value).push_back((InnerType) toValI(json["Value"]));\
@@ -156,7 +157,7 @@ inline double toValF(QJsonValue v)
             QStringList l = fr.split(";");\
             for (QStringList::const_iterator it = l.cbegin(), e = l.cend(); it != e; ++it)\
             {\
-                 if (Str(InnerType) == "double" || Str(InnerType) == "float")   {\
+                 if (strcmp(Str(InnerType), "double") == 0 || strcmp(Str(InnerType), "float") == 0)   {\
                      _value->push_back((InnerType)it->toDouble());\
                  }\
                  else {\
