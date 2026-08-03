@@ -873,12 +873,12 @@ QString generatePlate(QFile& file, ExperimentFileModel* mdl)
         {
             chanChange+="<option value='bv2composite' >Adjusted Composite</option>";
             for (auto chan : mdl->getChannelNames())
-                chanChange += QString("<option value='bv2%1'>Adjusted %1</option>").arg(chan.replace(" ", "_"));
+                chanChange += QString("<option value='bv2%1'>Adjusted %1</option>").arg(chan.replace(" ", "_").replace("/" , "_"));
 
         }
         chanChange+="<option value='composite' >Composite</option>";
         for (auto chan : mdl->getChannelNames())
-            chanChange += QString("<option value='%1'>%1</option>").arg(chan.replace(" ", "_"));
+            chanChange += QString("<option value='%1'>%1</option>").arg(chan.replace(" ", "_").replace("/", "_"));
         chanChange += "</select>";
 
 
@@ -965,7 +965,10 @@ void MainWindow::createBirdView()
     QString fpath = QString("%1/PROJECTS/%2/Checkout_Results/BirdView/birdview_%3.html").arg(dbP,mdl->getProjectName(), mdl->name());
 
     QFile file(fpath);
-    QString imgName = generatePlate(file, mdl);
+    QString imgName;
+    if (!file.exists()) {
+        imgName = generatePlate(file, mdl);
+    }
     file.close();
 
     // // Launch the HTML viewer on the birdview file
